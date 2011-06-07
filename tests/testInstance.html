@@ -1,0 +1,23 @@
+<html>
+  <head>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.5.2/jquery.min.js"></script>
+    <script type="text/javascript">
+var makeNote = function(message) {
+  var line = $('<pre></pre>').append(document.createTextNode(message));
+  $('#transcript').append(line);
+};
+
+$(window).bind('message', function (e) {
+  makeNote("received: " + JSON.stringify(e.data));
+});
+    </script>
+  </head>
+  <body>
+    <h1>Transcript:</h1>
+    <div id="transcript"></div>
+    <script type="text/javascript">
+window.opener.postMessage("ready", '*');
+makeNote("sent to parent: ready");
+    </script>
+  </body>
+</html>

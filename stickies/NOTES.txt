@@ -1,0 +1,10 @@
+Stickies is a simple Belay application
+
+Stickies stores the note data itself, in its own database. Each sticky note,
+therefore, has its own unique URL. This enables sharing - since if the data
+were stored on the user's belay station (like hello does), then there would be
+no way for another user to view it.
+
+Station is free to update its code and data formats at anytime, since it is
+in position of both on its servers.
+

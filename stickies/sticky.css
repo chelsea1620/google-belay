@@ -1,0 +1,21 @@
+.sticky-thing {
+  width: 100%;
+  height: 100%;
+  background-color: #fdfbc6;
+}
+
+.sticky-thing .textarea-wrapper {
+  width: 100%;
+  height: 100%;
+  padding: 5px;
+  margin: 0;
+  overflow: hidden;
+}
+.sticky-thing textarea {
+  width: 90%;
+  height: 90%;
+  border-style: none;
+  background-color: #fdfbc6;
+  padding: 0;
+  margin: 0;
+}

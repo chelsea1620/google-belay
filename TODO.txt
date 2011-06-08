@@ -2,21 +2,31 @@ TODO
 ====
 :: multi-window ::
 
-[] re-write CapServer along new design lines
-  [x] explicit external interface
-    [x] local capServer externalInterface
-    [~] http transport
-  [] decide if things should take capID or ser
-    -- especially the APIs on the externalInterface
-  [] handle stale interfaces -- re-resolve
-    [] bigger issue of how Capability objects "know" to use local CapServer
-      for locate operation when needed
+[] define the public interface API
 
-[] move instance -> transport resolution into general purpose class
+[] decide if things should take capID or ser
+  -- especially the APIs on the externalInterface
 
-[] message port transport
+[] change invoke interface to not expect JQuery opts and match docs
+[] remove revoke from the Capability interface (only have it on CapServer)
+
+[] create a Router that maps instanceID -> public interface
+   [] needs a public interface (with common API)
+   [] each capServer gets told this public interface (rather than instance router)
+
+[] refactor how Capability objects are constructed so they are "local"
+   [] grant needs to not create a Cap object, but just return a ser.
+   [] restore -> enliven(?) a function a modules uses on its own capserver to create
+      a useful object interface to the cap (from a ser.)
+   [] Capability.invoke does the routing up and over to the public interface each time
+   [] revive becomes a function called on invocation if needed
+
+[] message port transport tunnel
+  [] implement public interface (with common API)
   [] serializes the request to postMessage
-  [] remote handler that deserializes and calls local CapServer transport
+  [] remote handler that deserializes and calls local CapServer public interface
+
+[] belay station has a Router
 
 [] ui call to allow spawn into new window
   [] user click causes new window, with handler
@@ -27,14 +37,7 @@ TODO
 [] partition instance state in database
   [] so capServer and instance data can save from remote window w/o protocol
   
-[] remove opts from invoke - just make it a plain request data object
-[] remove Capability.prototype.revoke()
-  [] adjust tests to not have to do this
   
-[] ? Should we make clear the relationship between invoking and resolving,
-  and the dependence that invokers have upon their resolvers
-  [] CapResolver.invoke()
-    -- would take care of the auto re-resolve
 
 :: later ::
 

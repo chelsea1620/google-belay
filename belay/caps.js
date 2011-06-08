@@ -174,11 +174,11 @@ var CapServer = (function() {
     }
     
     this.externalInterface = (function(me) {
-      return {
+      return Object.freeze({
         invoke: function(capID, opts) { me._getImpl(capID).invoke(opts); },
         invokeSync: function(capID, v) { return me._getImpl(capID).invokeSync(v); },
         revoke: function(cap) { me.revoke(cap); }
-      };
+      });
     })(this);
   };
   
@@ -209,6 +209,7 @@ var CapServer = (function() {
     return this._mint(capID);
   };
   
+  // TODO(jpolitz): get rid of wrap?  get rid of resolvable?
   CapServer.prototype.wrap = function(innerCap, resolvable) {
     var capID = newCapID();
 

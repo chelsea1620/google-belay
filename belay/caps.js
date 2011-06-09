@@ -67,7 +67,7 @@ var CapServer = (function() {
   
   var errorAsAJAX = function(opts) {
     setTimeout(function() {
-      if (opts.error) opts.error({}, "error", undefined);
+      if (opts.error) opts.error({status: 404}, "error", undefined);
       if (opts.complete) opts.complete("error", {});
     }, 0);
   }
@@ -106,7 +106,8 @@ var CapServer = (function() {
   ImplURL.prototype.invokeSync = function(v) { return makeSyncAJAX(this.url, 'POST', v); };
   
   var ImplWrap = function(innerCap) { this.inner = innerCap; }
-  ImplWrap.prototype.invoke = function(opts) { this.inner.invoke(opts); }
+  ImplWrap.prototype.invoke = function(opts) { 
+      this.inner.invoke(opts.data, opts.success, opts.failure); }
   ImplWrap.prototype.invokeSync = function(v) { return this.inner.invokeSync(v); }
   
   var buildImplementation = function(item) {
@@ -131,18 +132,14 @@ var CapServer = (function() {
     this.ser = ser;
     this.iface = iface;
   };
-  Capability.prototype.invoke = function(opts) {
+  Capability.prototype.invoke = function(data, success, failure) {
     // TODO(mzero): should check if iface is dead, and if so, re-resolve it
-    this.iface.invoke(this.capID, opts);
+    this.iface.invoke(this.ser, data, success, failure);
   };
-  Capability.prototype.invokeSync = function(v) {
+  Capability.prototype.invokeSync = function(data) {
     // TODO(mzero): should check if iface is dead, and if so, re-resolve it
-    return this.iface.invokeSync(this.capID, v);
+    return this.iface.invokeSync(this.ser, data);
   };
-  Capability.prototype.revoke = function() {
-    // TODO(mzero): this is probably not right to have available
-    this.iface.revoke(this);
-  }
   Capability.prototype.serialize = function() {
     return this.ser;
   }
@@ -152,7 +149,7 @@ var CapServer = (function() {
   }
 
   
-  // FIXME(mzero): this is bork'd (maybe?)
+  // FIXME(mzero): this is bork'd (definitely)
   var deadCap = Object.freeze(new Capability(nullCapID, nullCapID, deadImpl));
   
   
@@ -183,16 +180,22 @@ var CapServer = (function() {
         invoke: function(ser, data, success, failure) {
           var m = decodeSerialization(ser);
           var capID = m[1];
-          var opts = { success: function(data, status, xhr) { success(data); },
-                       failure: function(xhr, status, message) { 
-                                  failure({status: status,
+          var opts = { success: function(data, status, xhr) { 
+                  success(data); },
+                       error: function(xhr, status, message) { 
+                                  failure({status: Number(xhr.status) || 501,
                                            message: message});
                                 },
                        data: data,
                        type: 'POST' };
           me._getImpl(capID).invoke(opts);
-
-      }});
+        },
+        invokeSync: function(ser, data) {
+          var m = decodeSerialization(ser);
+          var capID = m[1];
+          return me._getImpl(capID).invokeSync(data);
+        }
+      });
     })(this);
   };
   
@@ -201,7 +204,7 @@ var CapServer = (function() {
       return this.capMap[capID];
     }
     var ser = encodeSerialization(this.instanceID, capID);
-    var cap = Object.freeze(new Capability(capID, ser, this.externalInterface));
+    var cap = Object.freeze(new Capability(capID, ser, this.publicInterface));
     this.capMap[capID] = cap;
     return cap;
   }
@@ -233,8 +236,9 @@ var CapServer = (function() {
     return this._mint(capID);
   };
   
-  CapServer.prototype.revoke = function(cap) {
-    var capID = cap.capID;
+  CapServer.prototype.revoke = function(ser) {
+    var m = decodeSerialization(ser);
+    var capID = m[1];
     delete this.reviveMap[capID];
     delete this.implMap[capID];
     delete this.capMap[capID];

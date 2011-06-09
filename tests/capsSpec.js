@@ -49,49 +49,41 @@ var mockAjax = new MockAjax();
 
 var InvokeRunner = function(cap) {
   this.cap = cap;
-  this.completeStatus = this.errorStatus = this.successStatus = undefined;
-  this.completeCalled = this.errorCalled = this.successCalled = false;
+  this.failureStatus = undefined;
+  this.failureCalled = this.successCalled = false;
   this.result = "something funky";
 };
-InvokeRunner.prototype.runs = function(opts) {
+InvokeRunner.prototype.runs = function(data) {
   var me = this;
   runs(function() {              
-    me.completeStatus = me.errorStatus = me.successStatus = undefined;
-    me.completeCalled = me.errorCalled = me.successCalled = false;
+    me.failureStatus = undefined;
+    me.failureCalled = me.successCalled = false;
     me.result = "something funky";
-    opts.complete = function(xhr, status) {
-      me.completeStatus = status; me.completeCalled = true;
+    var failure = function(err) {
+      me.failureStatus = err.status; me.failureCalled = true;
     };
-    opts.error = function(xhr, status, err) {
-      me.errorStatus = status; me.errorCalled = true;
+    var success = function(data) {
+      me.result = data; me.successCalled = true;
     };
-    opts.success = function(data, status, xhr) {
-      me.result = data; me.successStatus = status, me.successCalled = true;
-    };
-    me.cap.invoke(opts);
+    me.cap.invoke(data, success, failure);
   });
 };
 InvokeRunner.prototype.waits = function() {
   var me = this;
-  waitsFor(function() { return me.completeCalled; }, "invoke timeout", 250);
+  waitsFor(function() { return me.failureCalled || me.successCalled; }, "invoke timeout", 250);
 };
 InvokeRunner.prototype.expectSuccess = function(resultChecker) {
-  expect(this.completeCalled).toBe(true);
-  expect(this.errorCalled).toBe(false);
+  expect(this.failureCalled).toBe(false);
   expect(this.successCalled).toBe(true);
-  expect(this.completeStatus).toEqual('success');
-  expect(this.successStatus).toEqual('success');
   resultChecker(this.result);    
 };
 InvokeRunner.prototype.expectFailure = function() {
-  expect(this.completeCalled).toBe(true);
-  expect(this.errorCalled).toBe(true);
+  expect(this.failureCalled).toBe(true);
   expect(this.successCalled).toBe(false);
-  expect(this.completeStatus).not.toEqual('success');
-  expect(this.errorStatus).not.toEqual('success');
+  expect(typeof this.failureStatus).toEqual('number');
 };
-InvokeRunner.prototype.runsAndWaits = function(opts) {
-  this.runs(opts);
+InvokeRunner.prototype.runsAndWaits = function(data) {
+  this.runs(data);
   this.waits();
 };
 InvokeRunner.prototype.runsExpectSuccess = function(resultChecker) {
@@ -143,7 +135,7 @@ describe("CapServer", function() {
     });
     
     it("should revoke, then not invokeSync", function() {
-      c1.revoke();
+      capServer1.revoke(c1.serialize());
       var r1 = c1.invokeSync();
       expect(r1).not.toBeDefined();
     });
@@ -157,7 +149,7 @@ describe("CapServer", function() {
       var c2 = capServer1.grant(f);
       expect(c2).not.toBe(c1);
       expect(c2.serialize()).not.toEqual(c1.serialize());
-      c1.revoke();
+      capServer1.revoke(c1.serialize());
       expect(c2.invokeSync()).toBe(42);
     });
   });
@@ -237,23 +229,19 @@ describe("CapServer", function() {
         it("should do asynchronous calls", function() {
           var invoker = new InvokeRunner(c1);
                  
-          invoker.runsAndWaits({});
+          invoker.runsAndWaits();
           invoker.runsExpectSuccess(
             function(result) { expect(result).toBe("#0"); });
 
-          invoker.runsAndWaits({data: 7, type: 'PUT'});
-          invoker.runsExpectSuccess(
-            function(result) { expect(result).not.toBeDefined(); });
-
-          invoker.runsAndWaits({});
+          invoker.runsAndWaits(7);
           invoker.runsExpectSuccess(
             function(result) { expect(result).toBe("#7"); });
 
-          invoker.runsAndWaits({data: 11, type: 'POST'});
+          invoker.runsAndWaits(11);
           invoker.runsExpectSuccess(
             function(result) { expect(result).toBe("#11"); });
 
-          invoker.runsAndWaits({});
+          invoker.runsAndWaits();
           invoker.runsExpectSuccess(
             function(result) { expect(result).toBe("#11"); });
         });
@@ -291,13 +279,13 @@ describe("CapServer", function() {
       it("should do asynchronous calls", function() {
         var invoker = new InvokeRunner(deadCap);
         
-        invoker.runsAndWaits({});
+        invoker.runsAndWaits();
         invoker.runsExpectFailure();
 
-        invoker.runsAndWaits({data: 7, type: 'PUT'});
+        invoker.runsAndWaits(7);
         invoker.runsExpectFailure();
 
-        invoker.runsAndWaits({data: 11, type: 'POST'});
+        invoker.runsAndWaits(11);
         invoker.runsExpectFailure();
       });
     });
@@ -321,7 +309,7 @@ describe("CapServer", function() {
     });
     
     it("should be revokable at the wrapper", function() {
-      w1.revoke();
+      capServer2.revoke(w1.serialize());
       var r1 = c1.invokeSync();
       var r2 = w1.invokeSync();
       expect(r1).toBe(99);
@@ -329,7 +317,7 @@ describe("CapServer", function() {
     });
     
     it("should be revokable at the source", function() {
-      c1.revoke();
+      capServer1.revoke(c1.serialize());
       var r1 = c1.invokeSync();
       var r2 = w1.invokeSync();
       expect(r1).not.toBeDefined();
@@ -378,7 +366,7 @@ describe("CapServer", function() {
       });
     
       it("should revive a dead cap as dead", function() {
-        c1.revoke();
+        capServer1.revoke(c1.serialize());
         var c2 = capServer1.revive(id1);
         expect(c2.invokeSync()).not.toBeDefined();
       });
@@ -404,7 +392,7 @@ describe("CapServer", function() {
       });
       
       it("should not revive a dead cap from a role", function() {
-        c1.revoke();
+        capServer1.revoke(c1.serialize());
         var state = capServer1.snapshot();
         capServer1.revokeAll();
 

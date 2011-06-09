@@ -12,7 +12,7 @@ TODO
 
 [x] refactor decode & m[1] into a getCapID function
 [x] delete externalInterface
-[] change impls' interface to not expect JQuery opts and match docs
+[x] change impls' interface to not expect JQuery opts and match docs
 
 [] create a Router that maps instanceID -> public interface
    [] needs a public interface (with common API)

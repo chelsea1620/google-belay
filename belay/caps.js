@@ -45,41 +45,35 @@ var CapServer = (function() {
   
   var nullCapID = "urn:x-cap:00000000-0000-0000-0000-000000000000";
   
-  var emptyXHR = undefined; // should be a frozen structure
-  
-  var callAsAJAX = function(f, opts) {
-    var type = opts.type || 'GET';
-    var request = opts.data;
+  var callAsAJAX = function(f, data, success, failure) {
     setTimeout(function() {
-      var response;
-      var ok = true;
-      if (type == 'GET')        response = f();
-      else if (type == 'PUT')   f(request);
-      else if (type == 'POST')  response = f(request);
-      else                      ok = false;
-      
-      if (ok) {
-        if (opts.success) opts.success(response, "success", {});
-        if (opts.complete) opts.complete({}, "success");
+      try {
+          var response;
+          response = f(data);
+          if(success) success(response);
       }
-      else {
-        if (opts.error) opts.error({}, "error", undefined);
-        if (opts.complete) opts.complete({}, "error");
+      catch(e) {
+          if(failure) failure({status: 500, 
+                               message: "exception thrown"});
       }
     }, 0);
   }
   
-  var errorAsAJAX = function(opts) {
+  var errorAsAJAX = function(data, success, failure) {
     setTimeout(function() {
-      if (opts.error) opts.error({status: 404}, "error", undefined);
-      if (opts.complete) opts.complete("error", {});
+      if (failure) failure({status: 404});
     }, 0);
   }
   
-  var makeAsyncAJAX = function(url, opts) {
-    opts.url = url;
-    jQuery.ajax(opts);
-    // TODO(mzero): this probably needs more sanitization options
+  var makeAsyncAJAX = function(url, data, success, failure) {
+    jQuery.ajax({ data: data,
+                  type: 'POST',
+                  url: url,
+                  success: function(data, status, xhr) { success(data); },
+                  error: function(xhr, status, message) { 
+                           failure({status: Number(xhr.status) || 501,
+                                    message: message});
+                }});
   }
   
   var makeSyncAJAX = function(url, method, data) {
@@ -97,21 +91,20 @@ var CapServer = (function() {
   // == THE FOUR IMPLEMENTATION TYPES ==
   
   var deadImpl = Object.freeze({
-    invoke:     function(opts) { errorAsAJAX(opts); },
+    invoke:     function(d, s, f) { errorAsAJAX(d, s, f); },
     invokeSync: function(v) { return undefined; },
   });
 
-  var ImplFunction = function(f) { this.f = f; }
-  ImplFunction.prototype.invoke = function(opts) { callAsAJAX(this.f, opts); };
-  ImplFunction.prototype.invokeSync = function(v) { return this.f(v); };
+  var ImplFunction = function(fn) { this.fn = fn; }
+  ImplFunction.prototype.invoke = function(d, s, f) { callAsAJAX(this.fn, d, s, f); };
+  ImplFunction.prototype.invokeSync = function(v) { return this.fn(v); };
 
   var ImplURL = function(url) { this.url = url; }
-  ImplURL.prototype.invoke = function(opts) { makeAsyncAJAX(this.url, opts); };
+  ImplURL.prototype.invoke = function(d, s, f) { makeAsyncAJAX(this.url, d, s, f); };
   ImplURL.prototype.invokeSync = function(v) { return makeSyncAJAX(this.url, 'POST', v); };
   
   var ImplWrap = function(innerCap) { this.inner = innerCap; }
-  ImplWrap.prototype.invoke = function(opts) { 
-      this.inner.invoke(opts.data, opts.success, opts.failure); }
+  ImplWrap.prototype.invoke = function(d, s, f) { this.inner.invoke(d, s, f); }
   ImplWrap.prototype.invokeSync = function(v) { return this.inner.invokeSync(v); }
   
   var buildImplementation = function(item) {
@@ -174,15 +167,7 @@ var CapServer = (function() {
     this.publicInterface = (function(me) {
       return Object.freeze({
         invoke: function(ser, data, success, failure) {
-          var opts = { success: function(data, status, xhr) { 
-                  success(data); },
-                       error: function(xhr, status, message) { 
-                                  failure({status: Number(xhr.status) || 501,
-                                           message: message});
-                                },
-                       data: data,
-                       type: 'POST' };
-          me._getImpl(ser).invoke(opts);
+          me._getImpl(ser).invoke(data, success, failure);
         },
         invokeSync: function(ser, data) {
           return me._getImpl(ser).invokeSync(data);

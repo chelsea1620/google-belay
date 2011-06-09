@@ -164,39 +164,35 @@ describe("CapServer", function() {
   
   describe("PublicInterface", function() {
     it("should support invoke", function() {
-	    var startingInstances = {};
-	    expect(typeof capServer1).toBe('object');
-	    expect(typeof PublicInterface).toBe('function');
-	    startingInstances[capServer1.instanceID] = capServer1;
-	    var publicIface = new PublicInterface(startingInstances);
-	    var invocableFunc;
-	    var cap;
-	    var result;
-	    var failed = false;
-	    var succeeded = false;
-	    
-	    invocableFunc = function(v) {
-		return "value:" + v;
-	    }
-	    cap = capServer1.grant(invocableFunc);
+            var publicIface = capServer1.publicInterface;
+            var invocableFunc;
+            var cap;
+            var result;
+            var failed = false;
+            var succeeded = false;
+            
+            invocableFunc = function(v) {
+                return "value:" + v;
+            }
+            cap = capServer1.grant(invocableFunc);
 
-	    runs(function() {
-		    publicIface.invoke(cap.serialize(), "some-value", 
-				       function(data, status, xhr) {
-					   succeeded = true;
-					   result = data;
-				       },
-				       function(xhr, status, err) {
-					   failed = true;
-				       })});
-	    waitsFor(function() { return succeeded || failed; },
-		     "PublicInterface invoke timeout", 250);
-	    runs(function() { 
-		    expect(result).toBe("value:some-value"); 
-		    expect(failed).toBe(false); 
-		    expect(succeeded).toBe(true);
-		});
-	});
+            runs(function() {
+                    publicIface.invoke(cap.serialize(), "some-value", 
+                                       function(data, status, xhr) {
+                                           succeeded = true;
+                                           result = data;
+                                       },
+                                       function(xhr, status, err) {
+                                           failed = true;
+                                       })});
+            waitsFor(function() { return succeeded || failed; },
+                     "PublicInterface invoke timeout", 250);
+            runs(function() { 
+                    expect(result).toBe("value:some-value"); 
+                    expect(failed).toBe(false); 
+                    expect(succeeded).toBe(true);
+                });
+        });
   });
 
   describe("Invocation", function() {    

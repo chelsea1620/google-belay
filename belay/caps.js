@@ -200,13 +200,27 @@ var CAPS_EXPORTS = (function() {
         revoke: function(cap) { me.revoke(cap); }
       });
     })(this);
+
+    this.publicInterface = (function(me) {
+      return Object.freeze({
+        invoke: function(ser, data, success, failure) {
+          var m = decodeSerialization(ser);
+          var capID = m[1];
+          var opts = { success: success,
+                       failure: failure,
+                       data: data,
+                       type: 'POST' };
+          me._getImpl(capID).invoke(opts);
+
+      }});
+    })(this);
   };
   
   CapServer.prototype._mint = function(capID) {
     if (capID in this.capMap) {
       return this.capMap[capID];
     }
-    var ser = encodeSerialization(this.instanceID, capID)
+    var ser = encodeSerialization(this.instanceID, capID);
     var cap = Object.freeze(new Capability(capID, ser, this.externalInterface));
     this.capMap[capID] = cap;
     return cap;

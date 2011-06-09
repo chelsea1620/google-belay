@@ -14,8 +14,7 @@ if (!('freeze' in Object)) {
   Object.freeze = function(x) { return x; };
 };
 
-var CapServer, PublicInterface;
-var CAPS_EXPORTS = (function() {
+var CapServer = (function() {
   
   // == UTILITIES ==
   
@@ -157,28 +156,6 @@ var CAPS_EXPORTS = (function() {
   var deadCap = Object.freeze(new Capability(nullCapID, nullCapID, deadImpl));
   
   
-  var PublicInterface = function(startingInstances) {
-      var instances = startingInstances;
-      this.invoke = function(ser, data, success, failure) {
-	  var m = decodeSerialization(ser);
-	  var instID = m[0];
-	  var capID = m[1];
-	  var opts = { success: success,
-		       failure: failure,
-		       data: data,
-		       type: 'POST' };
-	  if(instID in instances) {
-	      instances[instID].restore(ser).invoke(opts);
-	  }
-      };
-      
-      this.addInstance = function(newInstance) {
-	  if(!newInstance || (typeof newInstance.instanceID !== 'string')) {
-	      throw "Bad instance in addInstance: " + String(newInstance);
-	  }
-	  instances[newInstance.instanceID] = newInstance;
-      };
-  };
   
   var CapServer = function(snapshot) {
     this.reviveMap = {};  // map capID -> key or cap or url
@@ -346,9 +323,5 @@ var CAPS_EXPORTS = (function() {
     }).value;
   };
   
-  return {CapServer: CapServer,
-	  PublicInterface: PublicInterface};
+  return CapServer;
 })();
-
-CapServer = CAPS_EXPORTS.CapServer;
-PublicInterface = CAPS_EXPORTS.PublicInterface;

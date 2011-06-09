@@ -178,11 +178,11 @@ describe("CapServer", function() {
 
             runs(function() {
                     publicIface.invoke(cap.serialize(), "some-value", 
-                                       function(data, status, xhr) {
+                                       function(data) {
                                            succeeded = true;
                                            result = data;
                                        },
-                                       function(xhr, status, err) {
+                                       function(err) {
                                            failed = true;
                                        })});
             waitsFor(function() { return succeeded || failed; },

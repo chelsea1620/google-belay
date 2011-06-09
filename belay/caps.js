@@ -183,8 +183,11 @@ var CapServer = (function() {
         invoke: function(ser, data, success, failure) {
           var m = decodeSerialization(ser);
           var capID = m[1];
-          var opts = { success: success,
-                       failure: failure,
+          var opts = { success: function(data, status, xhr) { success(data); },
+                       failure: function(xhr, status, message) { 
+                                  failure({status: status,
+                                           message: message});
+                                },
                        data: data,
                        type: 'POST' };
           me._getImpl(capID).invoke(opts);

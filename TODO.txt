@@ -2,7 +2,7 @@ TODO
 ====
 :: multi-window ::
 
-[] define the public interface API
+[x] define the public interface API
 
 [] decide if things should take capID or ser
   -- especially the APIs on the externalInterface

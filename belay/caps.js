@@ -38,6 +38,10 @@ var CapServer = (function() {
     }
     return m;
   }
+  var decodeCapID = function(ser) {
+    var m = decodeSerialization(ser);
+    return m[1];
+  }
   
   var nullCapID = "urn:x-cap:00000000-0000-0000-0000-000000000000";
   
@@ -167,19 +171,9 @@ var CapServer = (function() {
       this.instanceID = snapshot.id;
     }
     
-    this.externalInterface = (function(me) {
-      return Object.freeze({
-        invoke: function(capID, opts) { me._getImpl(capID).invoke(opts); },
-        invokeSync: function(capID, v) { return me._getImpl(capID).invokeSync(v); },
-        revoke: function(cap) { me.revoke(cap); }
-      });
-    })(this);
-
     this.publicInterface = (function(me) {
       return Object.freeze({
         invoke: function(ser, data, success, failure) {
-          var m = decodeSerialization(ser);
-          var capID = m[1];
           var opts = { success: function(data, status, xhr) { 
                   success(data); },
                        error: function(xhr, status, message) { 
@@ -188,12 +182,10 @@ var CapServer = (function() {
                                 },
                        data: data,
                        type: 'POST' };
-          me._getImpl(capID).invoke(opts);
+          me._getImpl(ser).invoke(opts);
         },
         invokeSync: function(ser, data) {
-          var m = decodeSerialization(ser);
-          var capID = m[1];
-          return me._getImpl(capID).invokeSync(data);
+          return me._getImpl(ser).invokeSync(data);
         }
       });
     })(this);
@@ -209,7 +201,8 @@ var CapServer = (function() {
     return cap;
   }
   
-  CapServer.prototype._getImpl = function(capID) {
+  CapServer.prototype._getImpl = function(ser) {
+    var capID = decodeCapID(ser);
     if (! (capID in this.implMap)) {
       this.revive(capID);
     }
@@ -237,8 +230,7 @@ var CapServer = (function() {
   };
   
   CapServer.prototype.revoke = function(ser) {
-    var m = decodeSerialization(ser);
-    var capID = m[1];
+    var capID = decodeCapID(ser);
     delete this.reviveMap[capID];
     delete this.implMap[capID];
     delete this.capMap[capID];

@@ -10,8 +10,8 @@ TODO
 [x] change invoke interface to not expect JQuery opts and match docs
 [x] remove revoke from the Capability interface (only have it on CapServer)
 
-[] refactor decode & m[1] into a getCapID function
-[] delete externalInterface
+[x] refactor decode & m[1] into a getCapID function
+[x] delete externalInterface
 [] change impls' interface to not expect JQuery opts and match docs
 
 [] create a Router that maps instanceID -> public interface

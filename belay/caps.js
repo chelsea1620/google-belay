@@ -154,9 +154,9 @@ var CapServer = (function() {
     this.reviveMap = {};  // map capID -> key or cap or url
     this.implMap = {};    // map capID -> impls
     this.capMap = {};     // map capID -> caps
-    this.resolver = null;
+    this.reviver = null;
     this.instanceID = newUUIDv4();
-    this.instanceResolver = function(id) { return null; };
+    this.resolver = function(id) { return null; };
     if (snapshot) {
       snapshot = JSON.parse(snapshot);
       this.reviveMap = snapshot.map;
@@ -186,7 +186,10 @@ var CapServer = (function() {
             if(instID == me.instanceID) {
               me._getImpl(ser).invoke(data, success, failure);
             } else {
-              me.instanceResolver(instID).publicInterface.invoke(ser, data, success, failure);
+              var publicInterface = me.resolver(instID);
+              if(publicInterface) {
+                publicInterface.invoke(ser, data, success, failure);
+              }
             }
           }
           return deadImpl.invoke(data, success, failure);
@@ -201,7 +204,10 @@ var CapServer = (function() {
             if(instID == me.instanceID) {
               return me._getImpl(ser).invokeSync(data);
             } else {
-              return me.instanceResolver(instID).publicInterface.invokeSync(ser, data);
+              var publicInterface = me.resolver(instID);
+              if(publicInterface) {
+                return publicInterface.invokeSync(ser, data);
+              }
             }
           }
           return deadImpl.invokeSync(data);
@@ -226,8 +232,8 @@ var CapServer = (function() {
       var info = this.reviveMap[capID];
       if (info) {
         if (info.restoreKey) {
-          if (this.resolver) {
-            var item = this.resolver(info.restoreKey);
+          if (this.reviver) {
+            var item = this.reviver(info.restoreKey);
             this.implMap[capID] = buildImplementation(item);
           }
         }
@@ -274,10 +280,10 @@ var CapServer = (function() {
   };
     
   CapServer.prototype.restore = function(ser) {
-    return new Capability(decodeCapID(ser), ser, this.privateInterface);
+    return Object.freeze(new Capability(decodeCapID(ser), ser, this.privateInterface));
   };
   
-  CapServer.prototype.setResolver = function(r) { this.resolver = r; };
+  CapServer.prototype.setReviver = function(r) { this.reviver = r; };
   
   CapServer.prototype.snapshot = function() {
     snapshot = {
@@ -287,8 +293,8 @@ var CapServer = (function() {
     return JSON.stringify(snapshot);
   };
 
-  CapServer.prototype.setInstanceResolver = function(resolver) {
-    this.instanceResolver = resolver;
+  CapServer.prototype.setResolver = function(resolver) {
+    this.resolver = resolver;
   };
   
   CapServer.prototype.dataPreProcess = function(v) {

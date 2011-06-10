@@ -359,7 +359,7 @@ describe("CapServer", function() {
       
       var instanceResolver = function(id) {
         var i = ids.indexOf(id);
-        return servers[i] || null;
+        return servers[i].publicInterface || null;
       }
       
       beforeEach(function() {
@@ -367,11 +367,11 @@ describe("CapServer", function() {
         ids = [];
         for (var i in servers) {
           ids.push(servers[i].instanceID);
-          servers[i].setInstanceResolver(instanceResolver);
+          servers[i].setResolver(instanceResolver);
         }
         
-        capServer1.setResolver(function(role) { return f100; });
-        capServer2.setResolver(function(role) { return f200; });
+        capServer1.setReviver(function(role) { return f100; });
+        capServer2.setReviver(function(role) { return f200; });
       });
       
       describe("while instance is still running", function() {
@@ -410,10 +410,10 @@ describe("CapServer", function() {
         
         var makeNewServer = function() {
           servers[0] = capServer1 = new CapServer(snapshot);
-          capServer1.setInstanceResolver(instanceResolver);
+          capServer1.setResolver(instanceResolver);
         };
         var setNewResolver = function() {
-          capServer1.setResolver(function(role) {
+          capServer1.setReviver(function(role) {
             return role == "answer" ? f300 : null;
           });
         };
@@ -447,6 +447,14 @@ describe("CapServer", function() {
           var c2restored = capServer2.restore(s2);
           expect(c2restored.invokeSync()).not.toBeDefined();
         });
+      });
+
+      it ("should restore an unresolvable cap as dead", function() {
+        var c1 = capServer1.grant(f100);
+        var s1 = c1.serialize();
+        var capServer3 = new CapServer();
+        var c1restored = capServer3.restore(s1);
+        expect(c1restored.invokeSync()).not.toBeDefined();
       });
     });
     
@@ -513,9 +521,9 @@ describe("CapServer", function() {
         var ids = [];
         for (var i in servers) {
           ids.push(servers[i].instanceID);
-          servers[i].setInstanceResolver(function(id) {
+          servers[i].setResolver(function(id) {
             var j = ids.indexOf(id);
-            return servers[j] || null;
+            return servers[j].publicInterface || null;
           });
         }
 

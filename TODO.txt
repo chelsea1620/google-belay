@@ -25,14 +25,14 @@ TODO
    [x] revive becomes a function called on invocation if needed
    [x] fix deadCap (see bork'd FIXME)
 
+[x] belay station demo fixes
+  [x] calls to invoke
+  [x] change belay's resolver to return publicInterfaces rather than instances
+
 [] message port transport tunnel
   [] implement public interface (with common API)
   [] serializes the request to postMessage
   [] remote handler that deserializes and calls local CapServer public interface
-
-[] belay station demo fixes
-  [] calls to invoke
-  [] change belay's resolver to return publicInterfaces rather than instances
 
 [] ui call to allow spawn into new window
   [] user click causes new window, with handler

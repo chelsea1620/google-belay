@@ -76,8 +76,10 @@ var initialize = function(stationStateJSON) {
 
 
 	
-	var capServerMap = {}
-	var instanceResolver = function(id) { return capServerMap[id] || null; }
+	var capServerMap = {};
+	var instanceResolver = function(id) {
+	  return capServerMap[id] ? capServerMap[id].publicInterface : null;
+	};
 
   var setupCapServer = function(instInfo) {
   	var capServer;
@@ -90,7 +92,7 @@ var initialize = function(stationStateJSON) {
   	}
   	instInfo.capInstanceID = capServer.instanceID;
   	capServerMap[capServer.instanceID] = capServer;
-  	capServer.setInstanceResolver(instanceResolver);
+  	capServer.setResolver(instanceResolver);
   };
   
   var getCapServer = function(instInfo) {

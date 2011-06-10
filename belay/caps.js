@@ -53,8 +53,7 @@ var CapServer = (function() {
           if(success) success(response);
       }
       catch(e) {
-          if(failure) failure({status: 500, 
-                               message: "exception thrown"});
+          if(failure) failure({status: 500, message: "exception thrown"});
       }
     }, 0);
   }
@@ -174,6 +173,41 @@ var CapServer = (function() {
         }
       });
     })(this);
+
+    this.privateInterface = (function(me) {
+      return Object.freeze({
+        invoke: function(ser, data, success, failure) {
+          if (/^https?:/.test(ser)) {
+            return makeAsyncAjax(ser, data, success, failure);
+          }
+          var m = decodeSerialization(ser);
+          if (m) {
+            var instID = m[0];
+            if(instID == me.instanceID) {
+              me._getImpl(ser).invoke(data, success, failure);
+            } else {
+              me.instanceResolver(instID).publicInterface.invoke(ser, data, success, failure);
+            }
+          }
+          return deadImpl.invoke(data, success, failure);
+        },
+        invokeSync: function(ser, data) {
+          if (/^https?:/.test(ser)) {
+            return makeSyncAjax(ser, data);
+          }
+          var m = decodeSerialization(ser);
+          if (m) {
+            var instID = m[0];
+            if(instID == me.instanceID) {
+              return me._getImpl(ser).invokeSync(data);
+            } else {
+              return me.instanceResolver(instID).publicInterface.invokeSync(ser, data);
+            }
+          }
+          return deadImpl.invokeSync(data);
+        }
+      });
+    })(this);
   };
   
   CapServer.prototype._mint = function(capID) {
@@ -184,7 +218,7 @@ var CapServer = (function() {
     var cap = Object.freeze(new Capability(capID, ser, this.publicInterface));
     this.capMap[capID] = cap;
     return cap;
-  }
+  };
   
   CapServer.prototype._getImpl = function(ser) {
     var capID = decodeCapID(ser);
@@ -228,21 +262,7 @@ var CapServer = (function() {
   };
     
   CapServer.prototype.restore = function(ser) {
-    if (/^https?:/.test(ser)) {
-      return this.grant(ser);
-    }
-    var m = decodeSerialization(ser);
-    if (m) {
-      var instID = m[0];
-      var capID = m[1];
-      var instServer = 
-        (instID == this.instanceID) ? this : this.instanceResolver(instID);
-
-      if (instServer) {
-        return instServer.revive(capID);        
-      }
-    }
-    return deadCap;
+    return new Capability(decodeCapID(ser), ser, this.privateInterface);
   };
   
   CapServer.prototype.revive = function(capID) {

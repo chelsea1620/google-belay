@@ -349,7 +349,7 @@ describe("CapServer", function() {
       expect(c2.invokeSync()).not.toBeDefined();
     });
   });
-  
+
   describe("Serialization", function() {
     describe("Reviving", function() {
       var c1, id1;
@@ -426,7 +426,7 @@ describe("CapServer", function() {
       
       beforeEach(function() {
         servers = [ capServer1, capServer2 ];
-        ids = []
+        ids = [];
         for (var i in servers) {
           ids.push(servers[i].instanceID);
           servers[i].setInstanceResolver(instanceResolver);
@@ -443,7 +443,7 @@ describe("CapServer", function() {
           expect(s1).toBeTruthy();
 
           var c2 = capServer2.restore(s1);
-          expect(c2).toBe(c1);
+          expect(c2.invokeSync()).toEqual(100);
         });
       });
       
@@ -542,7 +542,7 @@ describe("CapServer", function() {
         var a = { name: "oracle", cap: c1 };
         var b = roundTrip(a);
         expect(b.name).toEqual(a.name);
-        expect(b.cap).toBe(a.cap);
+        expect(b.cap.serialize()).toEqual(a.cap.serialize());
         var r = b.cap.invokeSync();
         expect(r).toEqual(42);
       });
@@ -566,7 +566,7 @@ describe("CapServer", function() {
         var d = JSON.parse(c);
         var e = capServer2.dataPostProcess(d);
         expect(e.name).toEqual(a.name);
-        expect(e.cap).toBe(a.cap);
+        expect(e.cap.serialize()).toEqual(a.cap.serialize());
         r = e.cap.invokeSync();
         expect(r).toEqual(42);
       });

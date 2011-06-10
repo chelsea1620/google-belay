@@ -14,9 +14,9 @@ TODO
 [x] delete externalInterface
 [x] change impls' interface to not expect JQuery opts and match docs
 
-[] create a Router that maps instanceID -> public interface
-   [] needs a public interface (with common API)
-   [] each capServer gets told this public interface (rather than instance router)
+[] resolvers take a ser not an instanceID
+[] resolve our naming of resolver --- is it a router?  a gizmatchki?
+[] fix interface of instanceResolver to return a public interface and take a ser
 
 [] refactor how Capability objects are constructed so they are "local"
    [] grant needs to not create a Cap object, but just return a ser.
@@ -31,7 +31,8 @@ TODO
   [] serializes the request to postMessage
   [] remote handler that deserializes and calls local CapServer public interface
 
-[] belay station has a Router
+[] belay station demo fixes
+  [] calls to invoke
 
 [] ui call to allow spawn into new window
   [] user click causes new window, with handler

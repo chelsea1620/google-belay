@@ -18,6 +18,7 @@ To start up the demo do this:
   hello    9002
   stickies 9003
   buzzer   9004
+  emote    9005
 
 5) Select all five of them in GoogleAppEngineLauncher and click the Run button.
 

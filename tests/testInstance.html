@@ -1,23 +1,30 @@
 <html>
   <head>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.5.2/jquery.min.js"></script>
+    <script src="../belay/caps.js"></script>
     <script type="text/javascript">
-var makeNote = function(message) {
-  var line = $('<pre></pre>').append(document.createTextNode(message));
-  $('#transcript').append(line);
-};
+      var channel = new MessageChannel();
+      console.log("Constructed channel");
+      var tunnel = new CapTunnel(channel.port1);
+      console.log("Constructed tunnel");
+      var server = new CapServer();
+      console.log("Constructed server");
+      tunnel.setLocalResolver(function(instID) {
+        return server.publicInterface;
+      });
+      var cap1 = server.grant(function(v) { 
+        $('#transcript').append("<p>Invoking cap1: " + v + "</p>");
+        return v + 10; });
+      console.log("Constructed grant");
+      window.opener.postMessage({ ser: cap1.serialize(),
+                                  instID: server.instanceID }, 
+                                [channel.port2], '*');
 
-$(window).bind('message', function (e) {
-  makeNote("received: " + JSON.stringify(e.data));
-});
+      console.log("Posted");
     </script>
   </head>
   <body>
     <h1>Transcript:</h1>
     <div id="transcript"></div>
-    <script type="text/javascript">
-window.opener.postMessage("ready", '*');
-makeNote("sent to parent: ready");
-    </script>
   </body>
 </html>

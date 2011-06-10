@@ -14,7 +14,7 @@ if (!('freeze' in Object)) {
   Object.freeze = function(x) { return x; };
 };
 
-var CapServer = (function() {
+var CAP_EXPORTS = (function() {
   
   // == UTILITIES ==
   
@@ -120,7 +120,6 @@ var CapServer = (function() {
     if (t == "object")    return new ImplWrap(item)
     else                  return deadImpl;
   };
-  
   
   
   
@@ -311,5 +310,83 @@ var CapServer = (function() {
     }).value;
   };
   
-  return CapServer;
+  
+  var CapTunnel = function(port) {
+    this.port = port;
+    this.localResolver = function(instID) { return null; };
+    this.remoteResolverProxy = function(instID) { return this.sendInterface; };
+    this.txs = {};
+    this.txCounter = 1000;
+
+    var me = this;
+
+    this.sendInterface = Object.freeze({
+      invoke: function(ser, data, success, failure) {
+                var txID = me.txCounter++;
+                me.txs[txID] = { success: success, failure: failure };
+                var message = {
+                  op: "invoke",
+                  txID: txID,
+                  ser: ser,
+                  data: me.toWire(data)
+                };
+                me.port.postMessage(message);
+                // TODO(mzero): something with a timeout
+            }
+      });
+
+    port.onmessage = function(event) {
+      var message = event.data;
+      if (message.op == "invoke") {
+        var iface = me.localResolver(decodeInstID(message.ser));
+        if (iface) {
+          iface.invoke(message.ser, me.fromWire(message.data),
+              function(data) { me.respondOK(message.txID, data); },
+              function(err) { me.respondErr(message.txID, err); });
+        } else {
+          me.respondErr(message.txID, { status: 404 });
+        }
+      }
+      else if (message.op == "responseOK") {
+        var tx = me.txs[message.txID];
+        if (tx) {
+          delete me.txs[message.txID];
+          tx.success(me.fromWire(message.data));
+        }
+      }
+      else if (message.op == "responseErr") {
+        var tx = me.txs[message.txID];
+        if (tx) {
+          delete me.txs[message.txID];
+          tx.failure(me.fromWire(message.err));
+        }
+      }
+    }
+  };
+
+  CapTunnel.prototype.respondOK = function(txID, data) {
+    this.port.postMessage({ op: "responseOK", txID: txID, data: this.toWire(data) });
+  };
+
+  CapTunnel.prototype.respondErr = function(txID, err) {
+    this.port.postMessage({ op: "responseErr", txID: txID, err: this.toWire(err) });
+  };
+
+  CapTunnel.prototype.toWire = function(data) { return data; }
+  CapTunnel.prototype.fromWire = function(data) { return data; }
+
+  CapTunnel.prototype.setLocalResolver = function(resolver) {
+    this.localResolver = resolver;
+  };
+
+
+
+  return {
+    CapServer: CapServer,
+    CapTunnel: CapTunnel
+  };
 })();
+
+var CapServer = CAP_EXPORTS.CapServer;
+var CapTunnel = CAP_EXPORTS.CapTunnel;
+

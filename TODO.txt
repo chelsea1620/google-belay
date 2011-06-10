@@ -18,12 +18,12 @@ TODO
 [x] resolve our naming of resolver --- is it a router?  a gizmatchki?
 [x] fix interface of instanceResolver to return a public interface and take a ser
 
-[~] refactor how Capability objects are constructed so they are "local"
+[x] refactor how Capability objects are constructed so they are "local"
    [x] restore -> enliven(?) a function a modules uses on its own capserver to create
       a useful object interface to the cap (from a ser.)
    [x] Capability.invoke does the routing up and over to the public interface each time
    [x] revive becomes a function called on invocation if needed
-   [] fix deadCap (see bork'd FIXME)
+   [x] fix deadCap (see bork'd FIXME)
 
 [] message port transport tunnel
   [] implement public interface (with common API)

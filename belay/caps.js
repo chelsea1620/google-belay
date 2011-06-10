@@ -38,13 +38,19 @@ var CapServer = (function() {
     }
     return m;
   }
+  var decodeInstID = function(ser) {
+    var m = decodeSerialization(ser);
+    return m ? m[0] : nullInstID;
+  }
   var decodeCapID = function(ser) {
     var m = decodeSerialization(ser);
-    return m[1];
+    return m ? m[1] : nullCapID;
   }
   
-  var nullCapID = "urn:x-cap:00000000-0000-0000-0000-000000000000";
-  
+  var nullInstID = "00000000-0000-0000-0000-000000000000";
+  var nullCapID = "00000000-0000-0000-0000-000000000000";
+  var nullSer = encodeSerialization(nullInstID, nullCapID);
+
   var callAsAJAX = function(f, data, success, failure) {
     setTimeout(function() {
       try {
@@ -128,20 +134,15 @@ var CapServer = (function() {
     this.iface = iface;
   };
   Capability.prototype.invoke = function(data, success, failure) {
-    // TODO(mzero): should check if iface is dead, and if so, re-resolve it
     this.iface.invoke(this.ser, data, success, failure);
   };
   Capability.prototype.invokeSync = function(data) {
-    // TODO(mzero): should check if iface is dead, and if so, re-resolve it
     return this.iface.invokeSync(this.ser, data);
   };
   Capability.prototype.serialize = function() {
     return this.ser;
   }
 
-  
-  // FIXME(mzero): this is bork'd (definitely)
-  var deadCap = Object.freeze(new Capability(nullCapID, deadImpl));
   
   
   
@@ -174,36 +175,33 @@ var CapServer = (function() {
           if (/^https?:/.test(ser)) {
             return makeAsyncAjax(ser, data, success, failure);
           }
-          var m = decodeSerialization(ser);
-          if (m) {
-            var instID = m[0];
-            if(instID == me.instanceID) {
-              me._getImpl(ser).invoke(data, success, failure);
-            } else {
-              var publicInterface = me.resolver(instID);
-              if(publicInterface) {
-                publicInterface.invoke(ser, data, success, failure);
-              }
+
+          var instID = decodeInstID(ser);
+          if(instID == me.instanceID) {
+            me._getImpl(ser).invoke(data, success, failure);
+          } else {
+            var publicInterface = me.resolver(instID);
+            if(publicInterface) {
+              publicInterface.invoke(ser, data, success, failure);
             }
           }
+
           return deadImpl.invoke(data, success, failure);
         },
         invokeSync: function(ser, data) {
           if (/^https?:/.test(ser)) {
             return makeSyncAjax(ser, data);
           }
-          var m = decodeSerialization(ser);
-          if (m) {
-            var instID = m[0];
-            if(instID == me.instanceID) {
-              return me._getImpl(ser).invokeSync(data);
-            } else {
-              var publicInterface = me.resolver(instID);
-              if(publicInterface) {
-                return publicInterface.invokeSync(ser, data);
-              }
+          var instID = decodeInstID(ser);
+          if(instID == me.instanceID) {
+            return me._getImpl(ser).invokeSync(data);
+          } else {
+            var publicInterface = me.resolver(instID);
+            if(publicInterface) {
+              return publicInterface.invokeSync(ser, data);
             }
           }
+
           return deadImpl.invokeSync(data);
         }
       });

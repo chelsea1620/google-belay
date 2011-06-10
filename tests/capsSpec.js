@@ -359,7 +359,7 @@ describe("CapServer", function() {
       
       var instanceResolver = function(id) {
         var i = ids.indexOf(id);
-        return servers[i].publicInterface || null;
+        return servers[i] ? servers[i].publicInterface : null;
       }
       
       beforeEach(function() {
@@ -449,12 +449,22 @@ describe("CapServer", function() {
         });
       });
 
-      it ("should restore an unresolvable cap as dead", function() {
-        var c1 = capServer1.grant(f100);
-        var s1 = c1.serialize();
-        var capServer3 = new CapServer();
-        var c1restored = capServer3.restore(s1);
-        expect(c1restored.invokeSync()).not.toBeDefined();
+      describe("restoring invalid serializations", function() {
+        it ("should restore an unresolvable cap as dead", function() {
+          var c1 = capServer1.grant(f100);
+          var s1 = c1.serialize();
+          var capServer3 = new CapServer();
+          var c1restored = capServer3.restore(s1);
+          expect(c1restored.invokeSync()).not.toBeDefined();
+        });
+
+        it ("should restore invalid serializations as dead caps", function() {
+          var c1 = capServer1.restore("");
+          expect(c1.invokeSync()).not.toBeDefined();
+
+          var c2 = capServer1.restore("asdf");
+          expect(c2.invokeSync()).not.toBeDefined();
+        });
       });
     });
     
@@ -523,7 +533,7 @@ describe("CapServer", function() {
           ids.push(servers[i].instanceID);
           servers[i].setResolver(function(id) {
             var j = ids.indexOf(id);
-            return servers[j].publicInterface || null;
+            return servers[j] ? servers[j].publicInterface : null;
           });
         }
 

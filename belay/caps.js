@@ -123,8 +123,7 @@ var CapServer = (function() {
   
   
   
-  var Capability = function(capID, ser, iface) {
-    this.capID = capID;
+  var Capability = function(ser, iface) {
     this.ser = ser;
     this.iface = iface;
   };
@@ -139,21 +138,16 @@ var CapServer = (function() {
   Capability.prototype.serialize = function() {
     return this.ser;
   }
-  Capability.prototype.getCapID = function() {
-    // TODO(mzero): this is here for unit testing... not sure it should be
-    return this.capID;
-  }
 
   
   // FIXME(mzero): this is bork'd (definitely)
-  var deadCap = Object.freeze(new Capability(nullCapID, nullCapID, deadImpl));
+  var deadCap = Object.freeze(new Capability(nullCapID, deadImpl));
   
   
   
   var CapServer = function(snapshot) {
     this.reviveMap = {};  // map capID -> key or cap or url
     this.implMap = {};    // map capID -> impls
-    this.capMap = {};     // map capID -> caps
     this.reviver = null;
     this.instanceID = newUUIDv4();
     this.resolver = function(id) { return null; };
@@ -217,12 +211,8 @@ var CapServer = (function() {
   };
   
   CapServer.prototype._mint = function(capID) {
-    if (capID in this.capMap) {
-      return this.capMap[capID];
-    }
     var ser = encodeSerialization(this.instanceID, capID);
-    var cap = Object.freeze(new Capability(capID, ser, this.publicInterface));
-    this.capMap[capID] = cap;
+    var cap = Object.freeze(new Capability(ser, this.publicInterface));
     return cap;
   };
   
@@ -270,17 +260,15 @@ var CapServer = (function() {
     var capID = decodeCapID(ser);
     delete this.reviveMap[capID];
     delete this.implMap[capID];
-    delete this.capMap[capID];
   };
     
   CapServer.prototype.revokeAll = function() {
     this.reviveMap = {};
     this.implMap = {};
-    this.capMap = {}
   };
     
   CapServer.prototype.restore = function(ser) {
-    return Object.freeze(new Capability(decodeCapID(ser), ser, this.privateInterface));
+    return Object.freeze(new Capability(ser, this.privateInterface));
   };
   
   CapServer.prototype.setReviver = function(r) { this.reviver = r; };

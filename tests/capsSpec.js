@@ -351,68 +351,6 @@ describe("CapServer", function() {
   });
 
   describe("Serialization", function() {
-    describe("Reviving", function() {
-      var c1, id1;
-      beforeEach(function() {
-        c1 = capServer1.grant(function() { return 42; }, "answer");
-        id1 = c1.getCapID();
-      });
-      
-      it("should revive the same cap object", function() {
-        expect(id1).toBeTruthy();
-
-        var c2 = capServer1.revive(id1);
-        expect(c2).toBe(c1);
-      });
-    
-      it("should revive a dead cap as dead", function() {
-        capServer1.revoke(c1.serialize());
-        var c2 = capServer1.revive(id1);
-        expect(c2.invokeSync()).not.toBeDefined();
-      });
-      
-      it("should revive a cap from a role", function() {
-        var state = capServer1.snapshot();
-        capServer1.revokeAll();
-
-        var capServer1prime = new CapServer(state);
-        capServer1prime.setResolver(function(key) {
-          if (key == "answer") {
-            return function() { return 43; };        
-          }
-          return null;
-        });
-
-        var c1prime = capServer1prime.revive(id1);
-        expect(c1.invokeSync()).not.toBeDefined();
-        expect(c1prime.invokeSync()).toBe(43);
-        
-        var id1prime = c1prime.getCapID();
-        expect(id1prime).toEqual(id1);
-      });
-      
-      it("should not revive a dead cap from a role", function() {
-        capServer1.revoke(c1.serialize());
-        var state = capServer1.snapshot();
-        capServer1.revokeAll();
-
-        var capServer1prime = new CapServer(state);
-        capServer1prime.setResolver(function(key) {
-          if (key == "answer") {
-            return function() { return 43; };        
-          }
-          return null;
-        });
-
-        var c1prime = capServer1prime.revive(id1);
-        expect(c1.invokeSync()).not.toBeDefined();
-        expect(c1prime.invokeSync()).not.toBeDefined();
-        
-        var id1prime = c1prime.getCapID();
-        expect(id1prime).toEqual(id1);
-      });
-    });
-    
     describe("Restoring", function() {
       var servers, ids;
       var f100 = function() { return 100; };
@@ -437,7 +375,7 @@ describe("CapServer", function() {
       });
       
       describe("while instance is still running", function() {
-        it("should restore the same cap object", function() {
+        it("should restore the same cap functionality", function() {
           var c1 = capServer1.grant(f100);
           var s1 = c1.serialize();
           expect(s1).toBeTruthy();
@@ -445,6 +383,16 @@ describe("CapServer", function() {
           var c2 = capServer2.restore(s1);
           expect(c2.invokeSync()).toEqual(100);
         });
+
+        it("should restore a dead cap as dead", function() {
+          var c1 = capServer1.grant(f100);
+          var s1 = c1.serialize();
+          capServer1.revoke(c1.serialize());
+
+          var c2 = capServer1.restore(s1);
+          expect(c2.invokeSync()).not.toBeDefined();
+        });
+        
       });
       
       describe("after instance shutdown", function() {
@@ -452,6 +400,9 @@ describe("CapServer", function() {
         beforeEach(function() {
           c1 = capServer1.grant(f100, "answer");
           s1 = c1.serialize();
+          c2 = capServer1.grant(f100, "answer");
+          s2 = c2.serialize();
+          capServer1.revoke(s2);
           snapshot = capServer1.snapshot();
           capServer1.revokeAll();
           expect(c1.invokeSync()).not.toBeDefined();
@@ -462,30 +413,39 @@ describe("CapServer", function() {
           capServer1.setInstanceResolver(instanceResolver);
         };
         var setNewResolver = function() {
-          capServer1.setResolver(function(role) { return f300; });
+          capServer1.setResolver(function(role) {
+            return role == "answer" ? f300 : null;
+          });
         };
         
         it("should restore the cap after instance restart", function() {
           makeNewServer();
           setNewResolver();
-          var c2 = capServer2.restore(s1);
-          expect(c2.invokeSync()).toEqual(300);
+          var c1restored = capServer2.restore(s1);
+          expect(c1restored.invokeSync()).toEqual(300);
         });
 
         it("should restore a cap, even before the resolver is set", function() {
           makeNewServer();
-          var c2 = capServer2.restore(s1);
-          expect(c2.invokeSync()).not.toBeDefined();
+          var c1restored = capServer2.restore(s1);
+          expect(c1restored.invokeSync()).not.toBeDefined();
           setNewResolver();
-          expect(c2.invokeSync()).toEqual(300);
+          expect(c1restored.invokeSync()).toEqual(300);
         });
 
         xit("should restore a cap, even before the instance is restarted", function() {
-          var c2 = capServer2.restore(s1);
-          expect(c2.invokeSync()).not.toBeDefined();
+          var c1restored = capServer2.restore(s1);
+          expect(c1restored.invokeSync()).not.toBeDefined();
           makeNewServer();
           setNewResolver();
-          expect(c2.invokeSync()).toEqual(300);
+          expect(c1restored.invokeSync()).toEqual(300);
+        });
+
+        it("should restore a revoked cap as dead after instance restart", function() {
+          makeNewServer();
+          setNewResolver();
+          var c2restored = capServer2.restore(s2);
+          expect(c2restored.invokeSync()).not.toBeDefined();
         });
       });
     });

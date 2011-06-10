@@ -223,7 +223,19 @@ var CapServer = (function() {
   CapServer.prototype._getImpl = function(ser) {
     var capID = decodeCapID(ser);
     if (! (capID in this.implMap)) {
-      this.revive(capID);
+      var info = this.reviveMap[capID];
+      if (info) {
+        if (info.restoreKey) {
+          if (this.resolver) {
+            var item = this.resolver(info.restoreKey);
+            this.implMap[capID] = buildImplementation(item);
+          }
+        }
+        else if (info.restoreCap) {
+          var innerCap = this.restore(info.restoreCap);
+          this.implMap[capID] = new ImplWrap(innerCap);
+        }
+      }
     }
     return this.implMap[capID] || deadImpl;
   };
@@ -265,26 +277,6 @@ var CapServer = (function() {
     return new Capability(decodeCapID(ser), ser, this.privateInterface);
   };
   
-  CapServer.prototype.revive = function(capID) {
-    if (! (capID in this.implMap)) {
-      var info = this.reviveMap[capID];
-      if (info) {
-        if (info.restoreKey) {
-          if (this.resolver) {
-            var item = this.resolver(info.restoreKey);
-            this.implMap[capID] = buildImplementation(item);
-          }
-        }
-        else if (info.restoreCap) {
-          var innerCap = this.restore(info.restoreCap);
-          this.implMap[capID] = new ImplWrap(innerCap);
-        }
-      }
-    }
-    
-    return this._mint(capID);
-  };
-    
   CapServer.prototype.setResolver = function(r) { this.resolver = r; };
   
   CapServer.prototype.snapshot = function() {

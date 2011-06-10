@@ -18,12 +18,11 @@ TODO
 [] resolve our naming of resolver --- is it a router?  a gizmatchki?
 [] fix interface of instanceResolver to return a public interface and take a ser
 
-[] refactor how Capability objects are constructed so they are "local"
-   [] grant needs to not create a Cap object, but just return a ser.
-   [] restore -> enliven(?) a function a modules uses on its own capserver to create
+[-] refactor how Capability objects are constructed so they are "local"
+   [x] restore -> enliven(?) a function a modules uses on its own capserver to create
       a useful object interface to the cap (from a ser.)
-   [] Capability.invoke does the routing up and over to the public interface each time
-   [] revive becomes a function called on invocation if needed
+   [x] Capability.invoke does the routing up and over to the public interface each time
+   [x] revive becomes a function called on invocation if needed
    [] fix deadCap (see bork'd FIXME)
 
 [] message port transport tunnel
@@ -46,6 +45,8 @@ TODO
 [] where to put publicInterface tests
 
 :: later ::
+
+[] revisit two forms of Capabilities (public/privateInterface on construction)
 
 [] rework application model
   [] to support enlivening persistent caps

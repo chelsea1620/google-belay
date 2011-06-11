@@ -312,13 +312,13 @@ var CAP_EXPORTS = (function() {
   
   
   var CapTunnel = function(port) {
+    var me = this;
+
     this.port = port;
     this.localResolver = function(instID) { return null; };
-    this.remoteResolverProxy = function(instID) { return this.sendInterface; };
+    this.remoteResolverProxy = function(instID) { return me.sendInterface; };
     this.txs = {};
     this.txCounter = 1000;
-
-    var me = this;
 
     this.sendInterface = Object.freeze({
       invoke: function(ser, data, success, failure) {
@@ -351,14 +351,14 @@ var CAP_EXPORTS = (function() {
         var tx = me.txs[message.txID];
         if (tx) {
           delete me.txs[message.txID];
-          tx.success(me.fromWire(message.data));
+          if (tx.success) { tx.success(me.fromWire(message.data)); }
         }
       }
       else if (message.op == "responseErr") {
         var tx = me.txs[message.txID];
         if (tx) {
           delete me.txs[message.txID];
-          tx.failure(me.fromWire(message.err));
+          if (tx.failure) { tx.failure(me.fromWire(message.err)); }
         }
       }
     }

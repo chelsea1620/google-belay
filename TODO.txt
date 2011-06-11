@@ -39,8 +39,18 @@ TODO
   [x] remote handler that deserializes and calls local CapServer public interface
   [] passing caps in request and response data
   [] invoking a passed cap
+  [x] proof of concept invoking back from remote window
+    * caps have to be passed serialized, as dataPre/PostProcessing isn't done yet
+    * no way to grant invokeWithThree in such a way that it can delay its response
+      predicated on the response of its cap invocation
+      ? CapServer.grantAsyncFunc(function(d, s, f) { ... })
+    * code now implements a 'seedCap' pattern
+    * invoking a cap, fetched via a seedCap requires chaining
+      * this would require standard async JS techniques off of the success function
+      * but, in Jasmine tests, requires awkward blocks of runs/waits and status vars
+      * perhaps refactoring the Jasmine tests will yield a nicer technique
+      * perhaps we are just re-inventing futures (and web_send)
 
-  
 [] ui call to allow spawn into new window
   [] user click causes new window, with handler
   [] "open" message provides serializtion info, and capServer snapshot
@@ -56,6 +66,8 @@ TODO
   [] indenting is wrong
   [] responseOK/Err could be refactored into one response method & message
 
+[] handle invokeSync() calls on the tunnel... throw exception?
+
 
 :: later ::
 
@@ -63,6 +75,9 @@ TODO
 
 
 [] revisit two forms of Capabilities (public/privateInterface on construction)
+
+[] we don't have a way to call grant a cap to a function that itself
+  wants to do async. operations.. for example another invoke!
 
 [] rework application model
   [] to support enlivening persistent caps

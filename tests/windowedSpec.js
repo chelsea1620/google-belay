@@ -98,13 +98,39 @@ describe("CapTunnels", function() {
       var result;
       var done = false;
       runs(function() { 
-        var localCap = localServer1.restore(instance.initialSer);
-        localCap.invoke(45, 
-                        function(data) { result = data; done = true; },
-                        function(err) { done = true; })
+        var remoteSeedCap = localServer1.restore(instance.initialSer);
+        remoteSeedCap.invoke("answer", 
+          function(data) { result = data; done = true; },
+          function(err) { done = true; })
       });
       waitsFor(function() { return done; }, "invoke timeout", 250);
-      runs(function() { expect(result).toEqual(55); });
+      runs(function() { expect(result).toEqual(42); });
     });
+    
+    it("should be able to invoke a local cap from the remote side", function() {
+      var invokeWithThreeCap;
+      runs(function() {
+        var remoteSeedCap = localServer1.restore(instance.initialSer);
+        remoteSeedCap.invoke("invokeWithThree", 
+          function(data) { invokeWithThreeCap = localServer1.restore(data); },
+          function(err) { })
+      });
+      waitsFor(function() { return invokeWithThreeCap; }, "get invokeWithThree cap", 250);
+      
+      var received = false;
+      var receivedMessage;
+      runs(function() {
+        var receiveCap = localServer1.grant(function(v) {
+          received = true;
+          receivedMessage = v;
+        });
+        invokeWithThreeCap.invoke(receiveCap.serialize());
+      });
+      waitsFor(function() { return received; }, "invoking invokeWithThree cap", 250);
+      runs(function() {
+        expect(receivedMessage).toEqual(3);
+      });
+    });
+    
   });
 });

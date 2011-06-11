@@ -14,12 +14,24 @@
         tunnel.setLocalResolver(function(instID) {
           return server.publicInterface;
         });
-        var cap1 = server.grant(function(v) { 
-          log("cap1 invoked with: " + v);
-          return v + 10;
-        });                                         log("Constructed grant");
+        server.setResolver(tunnel.remoteResolverProxy);
+        
+        var invokeWithThreeCap = server.grant(function(v) {
+          log("invokeWithThree invoking " + v);
+          var remoteCap = server.restore(v);
+          remoteCap.invoke(3);
+          return undefined;
+        });
+        
+        var seedCap = server.grant(function(v) { 
+          log("seedCap invoked with: " + v);
+          if (v == "answer") { return 42; }
+          if (v == "invokeWithThree") { return invokeWithThreeCap.serialize(); }
+          return undefined;
+        });                                         log("Constructed seedCap");
+        
         window.opener.postMessage(
-          { ser: cap1.serialize(), instID: server.instanceID }, 
+          { ser: seedCap.serialize(), instID: server.instanceID }, 
           [channel.port2], '*');                    log("Posted ready message");        
       });
     </script>

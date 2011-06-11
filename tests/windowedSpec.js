@@ -54,11 +54,11 @@ InstanceManager.Instance.prototype.close = function() {
 };
 
 describe("CapTunnels", function() {
-
   var instance;
   
   beforeEach(function() {
     instance = instanceManager.openWindowed("testInstance.html");
+    waitsFor(function() { return instance.initialized(); }, "initialized timeout", 1000);
   });
   
   afterEach(function() {
@@ -67,8 +67,6 @@ describe("CapTunnels", function() {
   });
   
   it("should get notice of a new window", function() {
-    
-    waitsFor(function() { return instance.initialized(); }, "initialized timeout", 1000);
     runs(function() {
       expect(instance.ready).toBeTruthy();
       expect(typeof instance.initialSer).toEqual("string");
@@ -77,28 +75,36 @@ describe("CapTunnels", function() {
     });
   });
      
-  
-  it("should be able to invoke a remote cap", function() {
-    waitsFor(function() { return instance.initialized(); }, "initialized timeout", 1000);
-    var localServer;
-    var localCap;
-    var result;
-    var done = false;
-    runs(function() { 
-      localServer = new CapServer();
-      localCap = localServer.restore(instance.initialSer);
-      localServer.setResolver(function(instID) {
-        if(instID === instance.remoteInstID) {
-          return instance.tunnel.sendInterface;
-        }
-        return null;
-      });
-      localCap.invoke(45, 
-                      function(data) { result = data; done = true; },
-                      function(err) { done = true; })
-    });
-    waitsFor(function() { return done; }, "invoke timeout", 250);
-    runs(function() { expect(result).toEqual(55); });
-  });
 
+  describe("with local capservers", function() {
+    var localServer1, localServer2;
+    
+    beforeEach(function() {
+      localServer1 = new CapServer();
+      localServer2 = new CapServer();
+      
+      var ifaceMap = {};
+      ifaceMap[instance.remoteInstID] = instance.tunnel.sendInterface;
+      ifaceMap[localServer1.instanceID] = localServer1.publicInterface;
+      ifaceMap[localServer2.instanceID] = localServer2.publicInterface;
+      
+      var resolver = function(instID) { return ifaceMap[instID] || null; };
+      instance.tunnel.setLocalResolver(resolver);
+      localServer1.setResolver(resolver);
+      localServer2.setResolver(resolver);
+    });
+    
+    it("should be able to invoke a remote cap", function() {
+      var result;
+      var done = false;
+      runs(function() { 
+        var localCap = localServer1.restore(instance.initialSer);
+        localCap.invoke(45, 
+                        function(data) { result = data; done = true; },
+                        function(err) { done = true; })
+      });
+      waitsFor(function() { return done; }, "invoke timeout", 250);
+      runs(function() { expect(result).toEqual(55); });
+    });
+  });
 });

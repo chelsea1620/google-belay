@@ -3,28 +3,29 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.5.2/jquery.min.js"></script>
     <script src="../belay/caps.js"></script>
     <script type="text/javascript">
-      var channel = new MessageChannel();
-      console.log("Constructed channel");
-      var tunnel = new CapTunnel(channel.port1);
-      console.log("Constructed tunnel");
-      var server = new CapServer();
-      console.log("Constructed server");
-      tunnel.setLocalResolver(function(instID) {
-        return server.publicInterface;
+      var log = function(text) {
+        $("<li></li>").text(text).appendTo('#transcript');
+      };
+      
+      $(function(){
+        var channel = new MessageChannel();         log("Constructed channel");
+        var tunnel = new CapTunnel(channel.port1);  log("Constructed tunnel");
+        var server = new CapServer();               log("Constructed server");
+        tunnel.setLocalResolver(function(instID) {
+          return server.publicInterface;
+        });
+        var cap1 = server.grant(function(v) { 
+          log("cap1 invoked with: " + v);
+          return v + 10;
+        });                                         log("Constructed grant");
+        window.opener.postMessage(
+          { ser: cap1.serialize(), instID: server.instanceID }, 
+          [channel.port2], '*');                    log("Posted ready message");        
       });
-      var cap1 = server.grant(function(v) { 
-        $('#transcript').append("<p>Invoking cap1: " + v + "</p>");
-        return v + 10; });
-      console.log("Constructed grant");
-      window.opener.postMessage({ ser: cap1.serialize(),
-                                  instID: server.instanceID }, 
-                                [channel.port2], '*');
-
-      console.log("Posted");
     </script>
   </head>
   <body>
-    <h1>Transcript:</h1>
-    <div id="transcript"></div>
+    <h1>Transcript</h1>
+    <ol id="transcript"></ol>
   </body>
 </html>

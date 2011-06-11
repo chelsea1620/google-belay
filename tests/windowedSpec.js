@@ -58,7 +58,7 @@ describe("CapTunnels", function() {
   var instance;
   
   beforeEach(function() {
-    instance = instanceManager.openWindowed("file:///home/jpolitz/src/google-belay/tests/testInstance.html");
+    instance = instanceManager.openWindowed("testInstance.html");
   });
   
   afterEach(function() {

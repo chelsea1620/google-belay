@@ -29,11 +29,18 @@ TODO
   [x] calls to invoke
   [x] change belay's resolver to return publicInterfaces rather than instances
 
-[] message port transport tunnel
-  [] implement public interface (with common API)
-  [] serializes the request to postMessage
-  [] remote handler that deserializes and calls local CapServer public interface
+[x] test cleanups
+  [x] fix hard coded URL in tests
+  [x] clean up transcript logging in testInstance.html
 
+[~] message port transport tunnel
+  [x] implement public interface (with common API)
+  [x] serializes the request to postMessage
+  [x] remote handler that deserializes and calls local CapServer public interface
+  [] passing caps in request and response data
+  [] invoking a passed cap
+
+  
 [] ui call to allow spawn into new window
   [] user click causes new window, with handler
   [] "open" message provides serializtion info, and capServer snapshot
@@ -45,7 +52,15 @@ TODO
   
 [] where to put publicInterface tests
 
+[] clean up CapTunnel
+  [] indenting is wrong
+  [] responseOK/Err could be refactored into one response method & message
+
+
 :: later ::
+
+[] set up JavaScript linting on project
+
 
 [] revisit two forms of Capabilities (public/privateInterface on construction)
 

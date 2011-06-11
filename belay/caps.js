@@ -317,59 +317,65 @@ var CAP_EXPORTS = (function() {
     this.port = port;
     this.localResolver = function(instID) { return null; };
     this.remoteResolverProxy = function(instID) { return me.sendInterface; };
-    this.txs = {};
+    this.transactions = {};
     this.txCounter = 1000;
 
     this.sendInterface = Object.freeze({
-      invoke: function(ser, data, success, failure) {
-                var txID = me.txCounter++;
-                me.txs[txID] = { success: success, failure: failure };
-                var message = {
-                  op: "invoke",
-                  txID: txID,
-                  ser: ser,
-                  data: me.toWire(data)
-                };
-                me.port.postMessage(message);
-                // TODO(mzero): something with a timeout
-            }
+      invoke: function(ser, d, s, f) { me.sendInvoke(ser, d, s, f); },
+      invokeSync: function(ser, d) { throw "Can't invokeSync through a tunnel"; }
       });
 
     port.onmessage = function(event) {
       var message = event.data;
-      if (message.op == "invoke") {
-        var iface = me.localResolver(decodeInstID(message.ser));
-        if (iface) {
-          iface.invoke(message.ser, me.fromWire(message.data),
-              function(data) { me.respondOK(message.txID, data); },
-              function(err) { me.respondErr(message.txID, err); });
-        } else {
-          me.respondErr(message.txID, { status: 404 });
-        }
-      }
-      else if (message.op == "responseOK") {
-        var tx = me.txs[message.txID];
-        if (tx) {
-          delete me.txs[message.txID];
-          if (tx.success) { tx.success(me.fromWire(message.data)); }
-        }
-      }
-      else if (message.op == "responseErr") {
-        var tx = me.txs[message.txID];
-        if (tx) {
-          delete me.txs[message.txID];
-          if (tx.failure) { tx.failure(me.fromWire(message.err)); }
-        }
-      }
+      if (message.op == "invoke")         { me.handleInvoke(message); }
+      else if (message.op == "response")  { me.handleResponse(message); }
     }
   };
 
-  CapTunnel.prototype.respondOK = function(txID, data) {
-    this.port.postMessage({ op: "responseOK", txID: txID, data: this.toWire(data) });
+  CapTunnel.prototype.sendInvoke = function(ser, data, success, failure) {
+    var txID = this.txCounter++;
+    this.transactions[txID] = { success: success, failure: failure };
+    this.port.postMessage({
+      op: "invoke",
+      txID: txID,
+      ser: ser,
+      data: this.toWire(data)
+    });
+    // TODO(mzero): something with a timeout
   };
-
-  CapTunnel.prototype.respondErr = function(txID, err) {
-    this.port.postMessage({ op: "responseErr", txID: txID, err: this.toWire(err) });
+  
+  CapTunnel.prototype.handleInvoke = function(message) {
+    var iface = this.localResolver(decodeInstID(message.ser));
+    if (iface) {
+      var me = this;
+      iface.invoke(message.ser, this.fromWire(message.data),
+          function(data) { me.sendResponse(message.txID, "success", data); },
+          function(err) { me.sendResponse(message.txID, "failure", err); });
+    } else {
+      this.sendResponse(message.txID, "failure", { status: 404 });
+    }
+  };
+  
+  CapTunnel.prototype.sendResponse = function(txID, type, data) {
+    this.port.postMessage({
+      op: "response",
+      txID: txID,
+      type: type,
+      data: this.toWire(data)
+    });
+  };
+  
+  CapTunnel.prototype.handleResponse = function(message) {
+    var tx = this.transactions[message.txID];
+    if (tx) {
+      delete this.transactions[message.txID];
+      if (message.type == "success") {
+        if (tx.success) { tx.success(this.fromWire(message.data)); }
+      }
+      if (message.type == "failure") {
+        if (tx.failure) { tx.failure(this.fromWire(message.data)); }
+      }
+    }
   };
 
   CapTunnel.prototype.toWire = function(data) { return data; }

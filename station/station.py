@@ -36,7 +36,7 @@ class GenerateHandler(webapp.RequestHandler):
   def get(self):
     feed_uuid = uuid.uuid4()
     feed_id = str(feed_uuid)
-    content = server_url + "/?" + feed_id
+    content = server_url + "/?s=" + feed_id
     xhr_content(content, "text/plain", self.response)
 
 
@@ -46,7 +46,7 @@ class BaseHandler(webapp.RequestHandler):
 
   def validate_station(self):
     try:
-      station_uuid = uuid.UUID(self.request.query_string)
+      station_uuid = uuid.UUID(self.request.GET['s'])
       return str(station_uuid)
     except:
       raise BaseHandler.InvalidStation()
@@ -68,7 +68,7 @@ class LaunchHandler(BaseHandler):
 
     var app = {
       caps: {
-        data: "%(server_url)s/data?%(station_id)s",
+        data: "%(server_url)s/data?s=%(station_id)s",
       }
     };
 

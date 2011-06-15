@@ -47,7 +47,11 @@ class BaseHandler(webapp.RequestHandler):
   def validate_station(self):
     try:
       station_uuid = uuid.UUID(self.request.GET['s'])
-      return str(station_uuid)
+      station_id = str(station_uuid)
+      station = StationData.get_by_key_name(station_id)
+      if station == None:
+        station = StationData(key_name=station_id)
+      return station
     except:
       raise BaseHandler.InvalidStation()
 
@@ -60,8 +64,7 @@ class BaseHandler(webapp.RequestHandler):
 
 class LaunchHandler(BaseHandler):
   def get(self):
-    station_id = self.validate_station();
-    station = StationData.get_by_key_name(station_id);
+    station = self.validate_station();
 
     template = """
     var $ = os.jQuery;
@@ -89,7 +92,7 @@ class LaunchHandler(BaseHandler):
 
     content = template % {
       'server_url': server_url,
-      'station_id': station_id,
+      'station_id': station.key().name(),
     }
 
     xhr_content(content, "text/plain", self.response)
@@ -97,25 +100,14 @@ class LaunchHandler(BaseHandler):
 
 class DataHandler(BaseHandler):
   def get(self):
-    station_id = self.validate_station();
-    station = StationData.get_by_key_name(station_id);
-    
-    content = u""
-    if station != None:
-      content = station.data
-    
-    xhr_content(content, "text/plain;charset=UTF-8", self.response)
+    station = self.validate_station();    
+    xhr_content(station.data, "text/plain;charset=UTF-8", self.response)
     
       
   def post(self):
-    station_id = self.validate_station();
-    station = StationData.get_by_key_name(station_id);
-    if station == None:
-      station = StationData(key_name=station_id)
-      
+    station = self.validate_station();      
     station.data = db.Text(self.request.body, 'UTF-8')
     station.put()
-
     xhr_response(self.response)
 
 
@@ -125,6 +117,7 @@ application = webapp.WSGIApplication(
   ('/generate', GenerateHandler),
   ('/data',     DataHandler),
 #  ('/instance', InstanceHandler),
+#  ('/instances',InstancesHandler),
   ],
   debug=True)
 

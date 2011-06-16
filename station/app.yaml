@@ -6,16 +6,20 @@ api_version: 1
 handlers:
 
 - url: /
-  script: launch.py
+  script: station.py
 
 - url: /generate
-  script: generate.py
+  script: station.py
   
+- url: /instance
+  script: station.py
+
+- url: /instances
+  script: station.py
+
 - url: /(.*\.(html|css|js|png))
   script: lib/CORSstatic.py
 
 - url: /test
   script: lib/test.py
 
-- url: /data
-  script: data.py

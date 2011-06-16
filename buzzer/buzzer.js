@@ -56,7 +56,7 @@ var reload = function() {
       return false;
     });
     os.ui.capDraggable(me.find('.buzzer-chit'), rcPost, function(selectedRC) {
-      return os.capServer.grant(capResolver(selectedRC), selectedRC);
+      return os.capServer.grant(capReviver(selectedRC), selectedRC);
     });
   });
 };

@@ -57,22 +57,24 @@ TODO
     [] creates channels, remote handler, capServer
     [] foop's instnace into existance
 
-[] partition instance state in database
-  [] so capServer and instance data can save from remote window w/o protocol
+[x] partition instance state in database
+  [x] so capServer and instance data can save from remote window w/o protocol
   
 [] where to put publicInterface tests
 
-[] clean up CapTunnel
-  [] indenting is wrong
-  [] responseOK/Err could be refactored into one response method & message
-
-[] handle invokeSync() calls on the tunnel... throw exception?
+[x] clean up CapTunnel
+  [x] indenting is wrong
+  [x] responseOK/Err could be refactored into one response method & message
+  [x] handle invokeSync() calls on the tunnel... throw exception?
 
 
 :: later ::
 
 [] set up JavaScript linting on project
 
+[] convert station to use Capabilities rather than $.ajax 
+
+[] factor out boilerplate between station and buzzer
 
 [] revisit two forms of Capabilities (public/privateInterface on construction)
 

@@ -26,9 +26,10 @@ def xhr_content(content, content_type, response):
   
 
 class StationData(db.Model):
-  data = db.TextProperty()
+  pass
 
-#class InstanceData(db.Model):
+class InstanceData(db.Model):
+  data = db.TextProperty()
 
 
 
@@ -43,6 +44,8 @@ class GenerateHandler(webapp.RequestHandler):
 class BaseHandler(webapp.RequestHandler):
   class InvalidStation(Exception):
     pass
+  class InvalidInstance(Exception):
+    pass
 
   def validate_station(self):
     try:
@@ -55,8 +58,24 @@ class BaseHandler(webapp.RequestHandler):
     except:
       raise BaseHandler.InvalidStation()
 
+  def validate_instance(self):
+    try:
+      station = self.validate_station()
+      instance_uuid = uuid.UUID(self.request.GET['i'])
+      instance_id = str(instance_uuid)
+      instance = InstanceData.get_by_key_name(instance_id, parent=station)
+      if instance == None:
+        instance = InstanceData(key_name=instance_id, parent=station)
+      return instance
+    except:
+      raise BaseHandler.InvalidInstance()
+
   def handle_exception(self, exc, debug_mode):
     if isinstance(exc,BaseHandler.InvalidStation):
+      logging.getLogger().warn("unrecognized station")
+      self.error(404)
+    elif isinstance(exc,BaseHandler.InvalidInstance):
+      logging.getLogger().warn("unrecognized instance")
       self.error(404)
     else:
       super(BaseHandler, self).handle_exception(exc, debug_mode)
@@ -64,14 +83,17 @@ class BaseHandler(webapp.RequestHandler):
 
 class LaunchHandler(BaseHandler):
   def get(self):
-    station = self.validate_station();
+    station = self.validate_station()
+    if not station.is_saved():
+      station.put()
 
     template = """
     var $ = os.jQuery;
 
     var app = {
       caps: {
-        data: "%(server_url)s/data?s=%(station_id)s",
+        instances: "%(server_url)s/instances?s=%(station_id)s",
+        instanceBase: "%(server_url)s/instance?s=%(station_id)s&i=",
       }
     };
 
@@ -98,26 +120,48 @@ class LaunchHandler(BaseHandler):
     xhr_content(content, "text/plain", self.response)
 
 
-class DataHandler(BaseHandler):
+class InstanceHandler(BaseHandler):
   def get(self):
-    station = self.validate_station();    
-    xhr_content(station.data, "text/plain;charset=UTF-8", self.response)
-    
+    instance = self.validate_instance()
+    xhr_content(instance.data, "text/plain;charset=UTF-8", self.response)
       
   def post(self):
-    station = self.validate_station();      
-    station.data = db.Text(self.request.body, 'UTF-8')
-    station.put()
+    instance = self.validate_instance()
+    instance.data = db.Text(self.request.body, 'UTF-8')
+    instance.put()
+    xhr_response(self.response)
+  
+  def delete(self):
+    instance = self.validate_instance()
+    instance.delete()
     xhr_response(self.response)
 
+
+class InstancesHandler(BaseHandler):
+  def get(self):
+    station = self.validate_station()
+    
+    q = InstanceData.all(keys_only=True)
+    q.ancestor(station)
+    ids = []
+    for instanceKey in q:
+      template ='%(server_url)s/instance?s=%(station_id)s&i=%(instance_id)s'
+      instance_cap = template  % {
+          'server_url': server_url,
+          'station_id': station.key().name(),
+          'instance_id': instanceKey.name(),
+        }
+      ids.append('"' + instance_cap + '"')        
+    
+    content = '[' + ','.join(ids) + ']'
+    xhr_content(content, "text/plain;charset=UTF-8", self.response)
 
 
 application = webapp.WSGIApplication(
   [('/',        LaunchHandler),
   ('/generate', GenerateHandler),
-  ('/data',     DataHandler),
-#  ('/instance', InstanceHandler),
-#  ('/instances',InstancesHandler),
+  ('/instance', InstanceHandler),
+  ('/instances',InstancesHandler),
   ],
   debug=True)
 

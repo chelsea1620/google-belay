@@ -11,7 +11,10 @@ handlers:
 - url: /generate
   script: station.py
   
-- url: /data
+- url: /instance
+  script: station.py
+
+- url: /instances
   script: station.py
 
 - url: /(.*\.(html|css|js|png))

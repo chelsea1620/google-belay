@@ -28,7 +28,7 @@ var formAjax = function(form, callback) {
 
 var rcPost = "urn:x-belay://resouce-class/social-feed/post";
 
-var capResolver = function(resClass) {
+var capReviver = function(resClass) {
   if (resClass == rcPost) {
     return function(data) {
       os.jQuery.ajax({
@@ -45,7 +45,7 @@ var capResolver = function(resClass) {
   return null;
 };
 
-os.capServer.setResolver(capResolver);
+os.capServer.setReviver(capReviver);
 
 var reload = function() {
   me.load(app.caps.editor, function() {

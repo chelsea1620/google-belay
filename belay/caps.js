@@ -96,20 +96,26 @@ var CAP_EXPORTS = (function() {
   // == THE FOUR IMPLEMENTATION TYPES ==
   
   var deadImpl = Object.freeze({
-    invoke:     function(d, s, f) { errorAsAJAX(d, s, f); },
+    invoke:     function(d, s, f) { 
+      errorAsAJAX(d, s, f); 
+    },
     invokeSync: function(v) { return undefined; },
   });
 
   var ImplFunction = function(fn) { this.fn = fn; }
-  ImplFunction.prototype.invoke = function(d, s, f) { callAsAJAX(this.fn, d, s, f); };
+  ImplFunction.prototype.invoke = function(d, s, f) { 
+    callAsAJAX(this.fn, d, s, f); 
+  };
   ImplFunction.prototype.invokeSync = function(v) { return this.fn(v); };
 
   var ImplURL = function(url) { this.url = url; }
-  ImplURL.prototype.invoke = function(d, s, f) { makeAsyncAJAX(this.url, d, s, f); };
+  ImplURL.prototype.invoke = function(d, s, f) {
+     makeAsyncAJAX(this.url, d, s, f); };
   ImplURL.prototype.invokeSync = function(v) { return makeSyncAJAX(this.url, 'POST', v); };
   
   var ImplWrap = function(innerCap) { this.inner = innerCap; }
-  ImplWrap.prototype.invoke = function(d, s, f) { this.inner.invoke(d, s, f); }
+  ImplWrap.prototype.invoke = function(d, s, f) { 
+    this.inner.invoke(d, s, f); }
   ImplWrap.prototype.invokeSync = function(v) { return this.inner.invokeSync(v); }
   
   var buildImplementation = function(item) {
@@ -178,11 +184,13 @@ var CAP_EXPORTS = (function() {
           var instID = decodeInstID(ser);
           if(instID == me.instanceID) {
             me._getImpl(ser).invoke(data, success, failure);
+	    return;
           } else {
             var publicInterface = me.resolver(instID);
             if(publicInterface) {
               publicInterface.invoke(ser, data, success, failure);
             }
+	    return;
           }
 
           return deadImpl.invoke(data, success, failure);

@@ -3,9 +3,7 @@ var me = os.topDiv;
 var postComplete = function(succeeded) {
   me.find('.emote-message-posting').hide();
   var m = me.find(
-    succeeded
-      ? '.emote-message-posted'
-      : '.emote-message-failed');
+    succeeded ? '.emote-message-posted' : '.emote-message-failed');
   m.show();
   os.setTimeout(function() { m.fadeOut('slow'); }, 3000);
 };

@@ -5,7 +5,7 @@ var MockAjax = function() {
 };
 MockAjax.prototype.clear = function() { this.urlMap = {}; };
 MockAjax.prototype.setServer = function(server) { this.server = server; };
-MockAjax.prototype.handle = function(url,func) { this.urlMap[url] = func; };
+MockAjax.prototype.handle = function(url, func) { this.urlMap[url] = func; };
 MockAjax.prototype.makeAjax = function() {
   var me = this;
 
@@ -72,7 +72,8 @@ InvokeRunner.prototype.runs = function(data) {
 };
 InvokeRunner.prototype.waits = function() {
   var me = this;
-  waitsFor(function() { return me.failureCalled || me.successCalled; }, 'invoke timeout', 250);
+  waitsFor(function() { return me.failureCalled || me.successCalled; },
+      'invoke timeout', 250);
 };
 InvokeRunner.prototype.expectSuccess = function(resultChecker) {
   expect(this.failureCalled).toBe(false);
@@ -174,14 +175,14 @@ describe('CapServer', function() {
             cap = capServer1.grant(invocableFunc);
 
             runs(function() {
-                    publicIface.invoke(cap.serialize(), '{"value": "some-value"}',
-                                       function(data) {
-                                           succeeded = true;
-                                           result = data;
-                                       },
-                                       function(err) {
-                                           failed = true;
-                                       });});
+              publicIface.invoke(cap.serialize(), '{"value": "some-value"}',
+                                 function(data) {
+                                     succeeded = true;
+                                     result = data;
+                                 },
+                                 function(err) {
+                                     failed = true;
+                                 });});
             waitsFor(function() { return succeeded || failed; },
                      'PublicInterface invoke timeout', 250);
             runs(function() {
@@ -210,20 +211,20 @@ describe('CapServer', function() {
       invocableWrappedFunc = capServer2.grant(invocableFunc);
       invocableWrappedURL = capServer2.grant(invocableURL);
       invocableAsyncFunc = function(v, sk, fk) {
-	if (v === 'error') {
-	  fk(v);
-	  return;
-	}
+  if (v === 'error') {
+    fk(v);
+    return;
+  }
 
-	if (v === 'exception') {
-	  throw v;
-	}
+  if (v === 'exception') {
+    throw v;
+  }
 
-	if (v) {
-	   d = v;
-	}
-	sk('#' + d);
-	return;
+  if (v) {
+     d = v;
+  }
+  sk('#' + d);
+  return;
       };
       invocableWrappedAsyncFunc = capServer2.grantAsync(invocableAsyncFunc);
     });
@@ -522,7 +523,8 @@ describe('CapServer', function() {
           expect(c1restored.invokeSync()).toEqual(300);
         });
 
-        xit('should restore a cap, even before the instance is restarted', function() {
+        xit('should restore a cap, even before the instance is restarted',
+            function() {
           var c1restored = capServer2.restore(s1);
           expect(c1restored.invokeSync()).not.toBeDefined();
           makeNewServer();
@@ -530,7 +532,8 @@ describe('CapServer', function() {
           expect(c1restored.invokeSync()).toEqual(300);
         });
 
-        it('should restore a revoked cap as dead after instance restart', function() {
+        it('should restore a revoked cap as dead after instance restart',
+            function() {
           makeNewServer();
           setNewResolver();
           var c2restored = capServer2.restore(s2);

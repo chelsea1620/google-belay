@@ -24,7 +24,8 @@ var CAP_EXPORTS = (function() {
     var u = function() { return s(r()); };
     var v = function() { return s(r() & 0x0fff | 0x4000); };
     var w = function() { return s(r() & 0x3fff | 0x8000); };
-    return u() + u() + '-' + u() + '-' + v() + '-' + w() + '-' + u() + u() + u();
+    return u() + u() + '-' + u() + '-' + v() +
+           '-' + w() + '-' + u() + u() + u();
   };
 
   var newCapID = newUUIDv4;
@@ -115,9 +116,9 @@ var CAP_EXPORTS = (function() {
   /* constructor : CapServer
                  * (   'a:data
                      * 'b:result -> undef
-		     * { status: Num, and others : any }
-		    -> undef)
-		-> ImplAsyncFunc
+         * { status: Num, and others : any }
+        -> undef)
+    -> ImplAsyncFunc
    */
   var ImplAsyncFunction = function(server, asyncFn) {
     this.server = server;
@@ -127,7 +128,7 @@ var CAP_EXPORTS = (function() {
   /* invoke : serialized<'a>:data
             * serialized<'b:result> -> undef
             * { status: Num, and others : serialized<any> }
-	   -> undef
+     -> undef
    */
   ImplAsyncFunction.prototype.invoke = function(data, s, f) {
     var self = this;
@@ -141,38 +142,44 @@ var CAP_EXPORTS = (function() {
 
     setTimeout(function() {
       try {
-	self.asyncFn(serData, sHandler, eHandler);
+  self.asyncFn(serData, sHandler, eHandler);
       } catch (e) {
-	if (f) { f({ status: 500, message: 'exception thrown' }); }
+  if (f) { f({ status: 500, message: 'exception thrown' }); }
       }
     }, 0);
   };
 
   var ImplURL = function(url) { this.url = url; };
   ImplURL.prototype.invoke = function(d, s, f) {
-     makeAsyncAJAX(this.url, d, s, f); };
-  ImplURL.prototype.invokeSync = function(v) { return makeSyncAJAX(this.url, 'POST', v); };
+     makeAsyncAJAX(this.url, d, s, f);
+  };
+  ImplURL.prototype.invokeSync = function(v) {
+    return makeSyncAJAX(this.url, 'POST', v);
+  };
 
   var ImplWrap = function(server, innerCap) {
     this.server = server;
     this.inner = innerCap; };
   ImplWrap.prototype.invoke = function(d, s, f) {
     var me = this;
-    var wrappedS = function(result) { return s(me.server.dataPreProcess(result)); };
+    var wrappedS = function(result) {
+      return s(me.server.dataPreProcess(result));
+    };
     this.inner.invoke(this.server.dataPostProcess(d), wrappedS, f);
   };
   ImplWrap.prototype.invokeSync = function(v) {
-    return this.server.dataPreProcess(this.inner.invokeSync(this.server.dataPostProcess(v)));
+    return this.server.dataPreProcess(
+        this.inner.invokeSync(this.server.dataPostProcess(v)));
   };
 
   var buildImplementation = function(isAsync, server, item) {
     var t = typeof(item);
     if (t == 'function') {
       if (isAsync) {
-	return new ImplAsyncFunction(server, item);
+  return new ImplAsyncFunction(server, item);
       }
       else {
-	return new ImplFunction(server, item);
+  return new ImplFunction(server, item);
       }
     }
     if (t == 'string') return new ImplURL(item);
@@ -197,11 +204,12 @@ var CAP_EXPORTS = (function() {
     var wrappedData = this.server.dataPreProcess(data);
     var wrappedSuccess = function(result) {
       if (success) {
-	return success(me.server.dataPostProcess(result));
+  return success(me.server.dataPostProcess(result));
       }
       return undefined;
     };
-    this.server.privateInterface.invoke(this.ser, wrappedData, wrappedSuccess, failure);
+    this.server.privateInterface.invoke(this.ser, wrappedData,
+                                        wrappedSuccess, failure);
   };
   Capability.prototype.invokeSync = function(data) {
     var wrappedData = this.server.dataPreProcess(data);
@@ -364,7 +372,7 @@ var CAP_EXPORTS = (function() {
   };
 
   CapServer.prototype.dataPreProcess = function(v) {
-    return JSON.stringify({ value: v }, function(k,v) {
+    return JSON.stringify({ value: v }, function(k, v) {
       if (typeof(v) == 'function') {
         throw new TypeError('Passing a function');
       }
@@ -379,7 +387,7 @@ var CAP_EXPORTS = (function() {
 
   CapServer.prototype.dataPostProcess = function(w) {
     var me = this;
-    return JSON.parse(w, function(k,v) {
+    return JSON.parse(w, function(k, v) {
       try {
         var k = Object.keys(v);
         if (k.length == 1 && k[0] == '@') {
@@ -403,7 +411,7 @@ var CAP_EXPORTS = (function() {
 
     this.sendInterface = Object.freeze({
       invoke: function(ser, d, s, f) { me.sendInvoke(ser, d, s, f); },
-      invokeSync: function(ser, d) { throw "Can't invokeSync through a tunnel"; }
+      invokeSync: function(ser, d) { throw 'invokeSync through a tunnel'; }
       });
 
     port.onmessage = function(event) {

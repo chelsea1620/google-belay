@@ -31,11 +31,11 @@ me.load('http://localhost:9003/sticky.html', function() {
   $.ajax({
     url: app.caps.data,
     dataType: 'text',
-	  success: function(data, status, xhr) {
-	    initialize(data);
-	  },
-  	error: function(xhr, status, error) {
-  		os.alert('Failed to load data: ' + status);
-  	}
+    success: function(data, status, xhr) {
+      initialize(data);
+    },
+    error: function(xhr, status, error) {
+      os.alert('Failed to load data: ' + status);
+    }
   });
 });

@@ -13,7 +13,8 @@ var formAjax = function(form, callback) {
       // do nothing
     }
     else {
-      os.alert('Unhandled type of form input: ' + input.type + ' named ' + input.name);
+      os.alert('Unhandled type of form input: ' +
+               input.type + ' named ' + input.name);
     }
   }
   os.jQuery.ajax({
@@ -21,7 +22,9 @@ var formAjax = function(form, callback) {
     type: form.method || 'GET',
     data: data,
     dataType: 'json',
-    error: function(xhr,status,err) { os.alert('form update failed: ' + status); },
+    error: function(xhr, status, err) {
+      os.alert('form update failed: ' + status);
+    },
     success: function(data, status, xhr) { callback(data); }
   });
 };

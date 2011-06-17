@@ -1,7 +1,7 @@
 var InstanceManager = function() {
   this.instances = [];
   var my = this;
-  // TODO(mzero): better be only one of these, either assert or make work with multiple
+  // TODO(mzero): better be only one of these, should assert that
   window.addEventListener('message', function(e) {
     for (i in my.instances) {
       if (e.source == my.instances[i].window) {
@@ -58,7 +58,8 @@ describe('CapTunnels', function() {
 
   beforeEach(function() {
     instance = instanceManager.openWindowed('testInstance.html');
-    waitsFor(function() { return instance.initialized(); }, 'initialized timeout', 1000);
+    waitsFor(function() { return instance.initialized(); },
+        'initialized timeout', 1000);
   });
 
   afterEach(function() {
@@ -115,7 +116,8 @@ describe('CapTunnels', function() {
           function(data) { invokeWithThreeCap = data; },
           function(err) { });
       });
-      waitsFor(function() { return invokeWithThreeCap; }, 'get invokeWithThree cap', 250);
+      waitsFor(function() { return invokeWithThreeCap; },
+          'get invokeWithThree cap', 250);
 
       var received = false;
       var succeeded = false;
@@ -128,18 +130,19 @@ describe('CapTunnels', function() {
           return v + 42;
         });
         invokeWithThreeCap.invoke(receiveCap,
-				  function(result) {
-				     succeeded = true;
-				     threeResult = result;
-				  },
-				  function(result) {
-				  });
+          function(result) {
+             succeeded = true;
+             threeResult = result;
+          },
+          function(result) {
+          });
       });
-      waitsFor(function() { return received; }, 'invoking invokeWithThree cap', 250);
+      waitsFor(function() { return received; },
+          'invoking invokeWithThree cap', 250);
       runs(function() {
         expect(receivedMessage).toEqual(3);
-	expect(succeeded).toBe(true);
-	expect(threeResult).toBe(32);
+  expect(succeeded).toBe(true);
+  expect(threeResult).toBe(32);
       });
     });
 
@@ -156,8 +159,8 @@ describe('CapTunnels', function() {
       runs(function() {
         var remoteSeedCap = localServer1.restore(instance.initialSer);
         remoteSeedCap.invoke('remoteAsync',
-			    function(data) { remoteAsyncCap = data; },
-			    function(err) { });
+          function(data) { remoteAsyncCap = data; },
+          function(err) { });
       });
 
       waitsFor(function() { return remoteAsyncCap; },
@@ -172,14 +175,14 @@ describe('CapTunnels', function() {
           return v + 42;
         });
         remoteAsyncCap.invoke(receiveCap,
-		              function(v) { asyncResult = [v]; },
-			      function(result) { });
+                  function(v) { asyncResult = [v]; },
+            function(result) { });
       });
       waitsFor(function() { return asyncResult && messageFromRemote; },
                'get asyncResult', 250);
       runs(function() {
         expect(messageFromRemote[0]).toEqual(999);
-	expect(asyncResult[0]).toBe(1041);
+  expect(asyncResult[0]).toBe(1041);
       });
 
     });

@@ -120,14 +120,17 @@ describe("CapTunnels", function() {
       var received = false;
       var succeeded = false;
       var receivedMessage;
+      var threeResult;
       runs(function() {
         var receiveCap = localServer1.grant(function(v) {
           received = true;
           receivedMessage = v;
+          return v + 42;
         });
         invokeWithThreeCap.invoke(receiveCap,
 				  function(result) {
 				     succeeded = true;
+				     threeResult = result;
 				  },
 				  function(result) {
 				  });
@@ -136,9 +139,49 @@ describe("CapTunnels", function() {
       runs(function() {
         expect(receivedMessage).toEqual(3);
 	expect(succeeded).toBe(true);
-	return undefined;
+	expect(threeResult).toBe(32);
       });
     });
 
+    it("should be able to invoke remote caps in async-mode", function() {
+      /* receiveCap = function(v) { return v + 42; };
+       * asyncResult = 
+       *   remoteSeedCap.invoke("remoteAsync").invoke(receiveCap)
+       * 
+       * expect(force(asyncResult)).toBe(1041)
+       * 
+       */
+
+      var remoteAsyncCap;
+      runs(function() {
+        var remoteSeedCap = localServer1.restore(instance.initialSer);
+        remoteSeedCap.invoke("remoteAsync",
+			    function(data) { remoteAsyncCap = data; },
+			    function(err) { }); 
+      });
+
+      waitsFor(function() { return remoteAsyncCap; },
+               "get invokeWithThreeAsync cap", 250);
+
+      var asyncResult = false;
+      var messageFromRemote = false;
+
+      runs(function() {
+        var receiveCap = localServer1.grant(function(v) {
+          messageFromRemote = [v];
+          return v + 42;
+        });
+        remoteAsyncCap.invoke(receiveCap,
+		              function(v) { asyncResult = [v]; },
+			      function(result) { });
+      });
+      waitsFor(function() { return asyncResult && messageFromRemote; },
+               "invoking invokeWithThreeAsync cap", 250);
+      runs(function() {
+        expect(messageFromRemote[0]).toEqual(999);
+	expect(asyncResult[0]).toBe(1041);
+      });
+	 
+    });
   });
 });

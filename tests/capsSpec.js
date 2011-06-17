@@ -107,12 +107,14 @@ jQuery.ajax = mockAjax.makeAjax();
 describe("CapServer", function() {
   var capServer1;
   var capServer2;
+  var capServer3;
 
   beforeEach(function() {
     mockAjax.clear();
     capServer1 = new CapServer();
     capServer2 = new CapServer();
-    mockAjax.setServer(capServer1);
+    capServer3 = new CapServer();
+    mockAjax.setServer(capServer3);
   });
 
   it("should have built cap servers", function() {

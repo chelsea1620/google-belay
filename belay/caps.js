@@ -290,12 +290,6 @@ var CAP_EXPORTS = (function() {
   };
 
   CapServer.prototype.restore = function(ser) {
-    try {
-      decodeSerialization(ser);
-    }
-    catch(e) {
-      console.log("couldn't decode: " + String(ser));
-    }
     return Object.freeze(new Capability(ser, this));
   };
 

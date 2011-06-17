@@ -1,6 +1,6 @@
 var InstanceManager = function() {
   this.instances = [];
-  var my = this
+  var my = this;
   // TODO(mzero): better be only one of these, either assert or make work with multiple
   window.addEventListener('message', function(e) {
     for (i in my.instances) {
@@ -53,12 +53,12 @@ InstanceManager.Instance.prototype.close = function() {
 //  this.window.close();
 };
 
-describe("CapTunnels", function() {
+describe('CapTunnels', function() {
   var instance;
 
   beforeEach(function() {
-    instance = instanceManager.openWindowed("testInstance.html");
-    waitsFor(function() { return instance.initialized(); }, "initialized timeout", 1000);
+    instance = instanceManager.openWindowed('testInstance.html');
+    waitsFor(function() { return instance.initialized(); }, 'initialized timeout', 1000);
   });
 
   afterEach(function() {
@@ -66,17 +66,17 @@ describe("CapTunnels", function() {
     instance = null;
   });
 
-  it("should get notice of a new window", function() {
+  it('should get notice of a new window', function() {
     runs(function() {
       expect(instance.ready).toBeTruthy();
-      expect(typeof instance.initialSer).toEqual("string");
-      expect(typeof instance.remoteInstID).toEqual("string");
+      expect(typeof instance.initialSer).toEqual('string');
+      expect(typeof instance.remoteInstID).toEqual('string');
       expect(typeof instance.tunnel).not.toBe(null);
     });
   });
 
 
-  describe("with local capservers", function() {
+  describe('with local capservers', function() {
     var localServer1, localServer2;
 
     beforeEach(function() {
@@ -94,28 +94,28 @@ describe("CapTunnels", function() {
       localServer2.setResolver(resolver);
     });
 
-    it("should be able to invoke a remote cap", function() {
+    it('should be able to invoke a remote cap', function() {
       var result;
       var done = false;
       runs(function() {
         var remoteSeedCap = localServer1.restore(instance.initialSer);
-        remoteSeedCap.invoke("answer",
+        remoteSeedCap.invoke('answer',
           function(data) { result = data; done = true; },
           function(err) { done = true; });
       });
-      waitsFor(function() { return done; }, "invoke timeout", 250);
+      waitsFor(function() { return done; }, 'invoke timeout', 250);
       runs(function() { expect(result).toEqual(42); });
     });
 
-    it("should be able to invoke a local cap from the remote side", function() {
+    it('should be able to invoke a local cap from the remote side', function() {
       var invokeWithThreeCap;
       runs(function() {
         var remoteSeedCap = localServer1.restore(instance.initialSer);
-        remoteSeedCap.invoke("invokeWithThree",
+        remoteSeedCap.invoke('invokeWithThree',
           function(data) { invokeWithThreeCap = data; },
           function(err) { });
       });
-      waitsFor(function() { return invokeWithThreeCap; }, "get invokeWithThree cap", 250);
+      waitsFor(function() { return invokeWithThreeCap; }, 'get invokeWithThree cap', 250);
 
       var received = false;
       var succeeded = false;
@@ -135,7 +135,7 @@ describe("CapTunnels", function() {
 				  function(result) {
 				  });
       });
-      waitsFor(function() { return received; }, "invoking invokeWithThree cap", 250);
+      waitsFor(function() { return received; }, 'invoking invokeWithThree cap', 250);
       runs(function() {
         expect(receivedMessage).toEqual(3);
 	expect(succeeded).toBe(true);
@@ -143,25 +143,25 @@ describe("CapTunnels", function() {
       });
     });
 
-    it("should be able to invoke remote caps in async-mode", function() {
+    it('should be able to invoke remote caps in async-mode', function() {
       /* receiveCap = function(v) { return v + 42; };
-       * asyncResult = 
+       * asyncResult =
        *   remoteSeedCap.invoke("remoteAsync").invoke(receiveCap)
-       * 
+       *
        * expect(force(asyncResult)).toBe(1041)
-       * 
+       *
        */
 
       var remoteAsyncCap;
       runs(function() {
         var remoteSeedCap = localServer1.restore(instance.initialSer);
-        remoteSeedCap.invoke("remoteAsync",
+        remoteSeedCap.invoke('remoteAsync',
 			    function(data) { remoteAsyncCap = data; },
-			    function(err) { }); 
+			    function(err) { });
       });
 
       waitsFor(function() { return remoteAsyncCap; },
-               "get remoteAsync cap", 250);
+               'get remoteAsync cap', 250);
 
       var asyncResult = false;
       var messageFromRemote = false;
@@ -176,12 +176,12 @@ describe("CapTunnels", function() {
 			      function(result) { });
       });
       waitsFor(function() { return asyncResult && messageFromRemote; },
-               "get asyncResult", 250);
+               'get asyncResult', 250);
       runs(function() {
         expect(messageFromRemote[0]).toEqual(999);
 	expect(asyncResult[0]).toBe(1041);
       });
-	 
+
     });
   });
 });

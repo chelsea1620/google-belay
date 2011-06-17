@@ -11,21 +11,21 @@ MockAjax.prototype.makeAjax = function() {
 
   var reportResult = function(opts, response) {
     var f = function() {
-      if (opts.success) opts.success(response, "success", {});
-      if (opts.complete) opts.complete({}, "success");
+      if (opts.success) opts.success(response, 'success', {});
+      if (opts.complete) opts.complete({}, 'success');
     };
 
     if (opts.async) setTimeout(f, me.speed);
-    else            f();
+    else f();
   };
   var reportError = function(opts) {
     var f = function() {
-      if (opts.error) opts.error({},"error", undefined);
-      if (opts.complete) opts.complete({}, "error");
+      if (opts.error) opts.error({},'error', undefined);
+      if (opts.complete) opts.complete({}, 'error');
     };
 
     if (opts.async) setTimeout(f, me.speed);
-    else            f();
+    else f();
   };
 
   return function(opts) {
@@ -38,10 +38,10 @@ MockAjax.prototype.makeAjax = function() {
     var request = me.server.dataPostProcess(opts.data);
     var response;
 
-    if (t == 'GET')       response = f();
+    if (t == 'GET') response = f();
     else if (t == 'POST') response = f(request);
-    else if (t == 'PUT')  f(request);
-    else                  return reportError(opts);
+    else if (t == 'PUT') f(request);
+    else return reportError(opts);
 
     return reportResult(opts, me.server.dataPreProcess(response));
   };
@@ -53,14 +53,14 @@ var InvokeRunner = function(cap) {
   this.cap = cap;
   this.failureStatus = undefined;
   this.failureCalled = this.successCalled = false;
-  this.result = "something funky";
+  this.result = 'something funky';
 };
 InvokeRunner.prototype.runs = function(data) {
   var me = this;
   runs(function() {
     me.failureStatus = undefined;
     me.failureCalled = me.successCalled = false;
-    me.result = "something funky";
+    me.result = 'something funky';
     var failure = function(err) {
       me.failureStatus = err.status; me.failureCalled = true;
     };
@@ -72,7 +72,7 @@ InvokeRunner.prototype.runs = function(data) {
 };
 InvokeRunner.prototype.waits = function() {
   var me = this;
-  waitsFor(function() { return me.failureCalled || me.successCalled; }, "invoke timeout", 250);
+  waitsFor(function() { return me.failureCalled || me.successCalled; }, 'invoke timeout', 250);
 };
 InvokeRunner.prototype.expectSuccess = function(resultChecker) {
   expect(this.failureCalled).toBe(false);
@@ -91,11 +91,11 @@ InvokeRunner.prototype.runsAndWaits = function(data) {
 InvokeRunner.prototype.runsExpectSuccess = function(resultChecker) {
   var me = this;
   runs(function() { me.expectSuccess(resultChecker); });
-}
+};
 InvokeRunner.prototype.runsExpectFailure = function() {
   var me = this;
   runs(function() { me.expectFailure(); });
-}
+};
 
 
 
@@ -104,7 +104,7 @@ jQuery.ajax = mockAjax.makeAjax();
 
 
 
-describe("CapServer", function() {
+describe('CapServer', function() {
   var capServer1;
   var capServer2;
   var capServer3;
@@ -117,40 +117,40 @@ describe("CapServer", function() {
     mockAjax.setServer(capServer3);
   });
 
-  it("should have built cap servers", function() {
+  it('should have built cap servers', function() {
     expect(capServer1).not.toBeNull();
     expect(capServer2).not.toBeNull();
     expect(capServer1).not.toBe(capServer2);
   });
 
-  describe("Basic Life Cycle", function() {
+  describe('Basic Life Cycle', function() {
     var f, c1;
     beforeEach(function() {
       f = function() { return 42; };
       c1 = capServer1.grant(f);
     });
 
-    it("should grant", function() {
+    it('should grant', function() {
       expect(c1).not.toBeNull();
     });
 
-    it("should invokeSync", function() {
+    it('should invokeSync', function() {
       var r1 = c1.invokeSync();
       expect(r1).toBe(42);
     });
 
-    it("should revoke, then not invokeSync", function() {
+    it('should revoke, then not invokeSync', function() {
       capServer1.revoke(c1.serialize());
       var r1 = c1.invokeSync();
       expect(r1).not.toBeDefined();
     });
 
-    it("should create a dead cap", function() {
+    it('should create a dead cap', function() {
       var d = capServer1.grant(null);
       expect(d.invokeSync()).not.toBeDefined();
     });
 
-    it("should create distinct caps to same function", function() {
+    it('should create distinct caps to same function', function() {
       var c2 = capServer1.grant(f);
       expect(c2).not.toBe(c1);
       expect(c2.serialize()).not.toEqual(c1.serialize());
@@ -159,8 +159,8 @@ describe("CapServer", function() {
     });
   });
 
-  describe("PublicInterface", function() {
-    it("should support invoke", function() {
+  describe('PublicInterface', function() {
+    it('should support invoke', function() {
             var publicIface = capServer1.publicInterface;
             var invocableFunc;
             var cap;
@@ -169,7 +169,7 @@ describe("CapServer", function() {
             var succeeded = false;
 
             invocableFunc = function(v) {
-                return "value:" + v;
+                return 'value:' + v;
             };
             cap = capServer1.grant(invocableFunc);
 
@@ -183,16 +183,16 @@ describe("CapServer", function() {
                                            failed = true;
                                        });});
             waitsFor(function() { return succeeded || failed; },
-                     "PublicInterface invoke timeout", 250);
+                     'PublicInterface invoke timeout', 250);
             runs(function() {
-                    expect(result).toBe("{\"value\":\"value:some-value\"}");
+                    expect(result).toBe('{\"value\":\"value:some-value\"}');
                     expect(failed).toBe(false);
                     expect(succeeded).toBe(true);
                 });
         });
   });
 
-  describe("Invocation", function() {
+  describe('Invocation', function() {
     var invocableFunc;
     var invocableURL;
     var invocableWrappedFunc;
@@ -203,26 +203,26 @@ describe("CapServer", function() {
       var d = 0;
       invocableFunc = function(v) {
         if (v) d = v;
-        return "#" + d;
+        return '#' + d;
       };
-      invocableURL = "http://example.com/noodle";
+      invocableURL = 'http://example.com/noodle';
       mockAjax.handle(invocableURL, invocableFunc);
       invocableWrappedFunc = capServer2.grant(invocableFunc);
       invocableWrappedURL = capServer2.grant(invocableURL);
       invocableAsyncFunc = function(v, sk, fk) {
-	if (v === "error") {
+	if (v === 'error') {
 	  fk(v);
 	  return;
 	}
 
-	if (v === "exception") {
+	if (v === 'exception') {
 	  throw v;
 	}
 
 	if (v) {
 	   d = v;
 	}
-	sk("#" + d);
+	sk('#' + d);
 	return;
       };
       invocableWrappedAsyncFunc = capServer2.grantAsync(invocableAsyncFunc);
@@ -236,38 +236,38 @@ describe("CapServer", function() {
           c1 = capServer1.grant(makeItem());
         });
 
-        it("should do synchronous calls", function() {
+        it('should do synchronous calls', function() {
           var rGet0 = c1.invokeSync();
           var rSet1 = c1.invokeSync(7);
           var rGet1 = c1.invokeSync();
           var rSet2 = c1.invokeSync(11);
           var rGet2 = c1.invokeSync();
 
-          expect(rGet0).toBe("#0");
-          expect(rSet1).toBe("#7");
-          expect(rGet1).toBe("#7");
-          expect(rSet2).toBe("#11");
-          expect(rGet2).toBe("#11");
+          expect(rGet0).toBe('#0');
+          expect(rSet1).toBe('#7');
+          expect(rGet1).toBe('#7');
+          expect(rSet2).toBe('#11');
+          expect(rGet2).toBe('#11');
         });
 
-        it("should do asynchronous calls (grant)", function() {
+        it('should do asynchronous calls (grant)', function() {
           var invoker = new InvokeRunner(c1);
 
           invoker.runsAndWaits();
           invoker.runsExpectSuccess(
-            function(result) { expect(result).toBe("#0"); });
+            function(result) { expect(result).toBe('#0'); });
 
           invoker.runsAndWaits(7);
           invoker.runsExpectSuccess(
-            function(result) { expect(result).toBe("#7"); });
+            function(result) { expect(result).toBe('#7'); });
 
           invoker.runsAndWaits(11);
           invoker.runsExpectSuccess(
-            function(result) { expect(result).toBe("#11"); });
+            function(result) { expect(result).toBe('#11'); });
 
           invoker.runsAndWaits();
           invoker.runsExpectSuccess(
-            function(result) { expect(result).toBe("#11"); });
+            function(result) { expect(result).toBe('#11'); });
         });
       });
     };
@@ -279,64 +279,64 @@ describe("CapServer", function() {
           c1 = capServer1.grantAsync(makeAsyncItem());
         });
 
-        it("should do asynchronous calls (grantAsync)", function() {
+        it('should do asynchronous calls (grantAsync)', function() {
           var invoker = new InvokeRunner(c1);
 
           invoker.runsAndWaits();
           invoker.runsExpectSuccess(
-            function(result) { expect(result).toBe("#0"); });
+            function(result) { expect(result).toBe('#0'); });
 
           invoker.runsAndWaits(7);
           invoker.runsExpectSuccess(
-            function(result) { expect(result).toBe("#7"); });
+            function(result) { expect(result).toBe('#7'); });
 
           invoker.runsAndWaits(11);
           invoker.runsExpectSuccess(
-            function(result) { expect(result).toBe("#11"); });
+            function(result) { expect(result).toBe('#11'); });
 
           invoker.runsAndWaits();
           invoker.runsExpectSuccess(
-            function(result) { expect(result).toBe("#11"); });
+            function(result) { expect(result).toBe('#11'); });
 
-          invoker.runsAndWaits("error");
+          invoker.runsAndWaits('error');
           invoker.runsExpectFailure();
 
-          invoker.runsAndWaits("exception");
+          invoker.runsAndWaits('exception');
           invoker.runsExpectFailure();
 
         });
       });
     };
 
-    describeInvocation("of Functions",
+    describeInvocation('of Functions',
       function() { return invocableFunc; });
 
-    describeInvocation("of URLs",
+    describeInvocation('of URLs',
       function() { return invocableURL; });
 
-    describeInvocation("of Wrapped Function Caps",
+    describeInvocation('of Wrapped Function Caps',
       function() { return invocableWrappedFunc; });
 
-    describeInvocation("of Wrapped URL Caps",
+    describeInvocation('of Wrapped URL Caps',
       function() { return invocableWrappedURL; });
 
-    describeAsyncInvocation("of Async Functions",
+    describeAsyncInvocation('of Async Functions',
       function() { return invocableAsyncFunc; });
 
-    describeAsyncInvocation("of Wrapped Async Function Caps",
+    describeAsyncInvocation('of Wrapped Async Function Caps',
       function() { return invocableWrappedAsyncFunc; });
 
     // NOTE: async testing of URLs is not reasonable: requires passing
     // continuations to the remote cap, the URL, as caps themselves.
     // These continuations must be encoded in messages.
 
-    describe("of Dead caps", function() {
+    describe('of Dead caps', function() {
       var deadCap;
       beforeEach(function() {
         deadCap = capServer1.grant(null);
       });
 
-      it("should do synchronous calls", function() {
+      it('should do synchronous calls', function() {
         var rGet0 = deadCap.invokeSync();
         var rSet1 = deadCap.invokeSync(7);
         var rSet2 = deadCap.invokeSync(11);
@@ -346,7 +346,7 @@ describe("CapServer", function() {
         expect(rSet2).not.toBeDefined();
       });
 
-      it("should do asynchronous calls", function() {
+      it('should do asynchronous calls', function() {
         var invoker = new InvokeRunner(deadCap);
 
         invoker.runsAndWaits();
@@ -360,13 +360,13 @@ describe("CapServer", function() {
       });
     });
 
-    describe("of async dead caps", function() {
+    describe('of async dead caps', function() {
       var deadCap;
       beforeEach(function() {
         deadCap = capServer1.grantAsync(null);
       });
 
-      it("should do asynchronous calls", function() {
+      it('should do asynchronous calls', function() {
         var invoker = new InvokeRunner(deadCap);
 
         invoker.runsAndWaits();
@@ -381,23 +381,23 @@ describe("CapServer", function() {
     });
   });
 
-  describe("Wrapped Caps", function() {
+  describe('Wrapped Caps', function() {
     var c1, w1;
     beforeEach(function() {
       c1 = capServer1.grant(function() { return 99; });
       w1 = capServer2.wrap(c1);
     });
 
-    it("should wrap", function() {
+    it('should wrap', function() {
       expect(w1).not.toBeNull();
     });
 
-    it("should invokeSync via the wrapper", function() {
+    it('should invokeSync via the wrapper', function() {
       var r1 = w1.invokeSync();
       expect(r1).toBe(99);
     });
 
-    it("should be revokable at the wrapper", function() {
+    it('should be revokable at the wrapper', function() {
       capServer2.revoke(w1.serialize());
       var r1 = c1.invokeSync();
       var r2 = w1.invokeSync();
@@ -405,17 +405,17 @@ describe("CapServer", function() {
       expect(r2).not.toBeDefined();
     });
 
-    it("should be revokable at the source", function() {
+    it('should be revokable at the source', function() {
       capServer1.revoke(c1.serialize());
       var r1 = c1.invokeSync();
       var r2 = w1.invokeSync();
       expect(r1).not.toBeDefined();
       expect(r2).not.toBeDefined();
-    })
+    });
   });
 
-  describe("Server Life Cycle", function() {
-    it("should be able to revokeAll in a given server", function() {
+  describe('Server Life Cycle', function() {
+    it('should be able to revokeAll in a given server', function() {
       var c11 = capServer1.grant(function() { return 11; });
       var c12 = capServer1.grant(function() { return 12; });
       var c21 = capServer2.grant(function() { return 21; });
@@ -428,7 +428,7 @@ describe("CapServer", function() {
       expect(c21.invokeSync()).toBe(21);
     });
 
-    it("should be able to revokeAll a wrapped cap", function() {
+    it('should be able to revokeAll a wrapped cap', function() {
       var c1 = capServer1.grant(function() { return 42; });
       var c2 = capServer2.wrap(c1);
       expect(c1.invokeSync()).toBe(42);
@@ -439,8 +439,8 @@ describe("CapServer", function() {
     });
   });
 
-  describe("Serialization", function() {
-    describe("Restoring", function() {
+  describe('Serialization', function() {
+    describe('Restoring', function() {
       var servers, ids;
       var f100 = function() { return 100; };
       var f200 = function() { return 200; };
@@ -452,7 +452,7 @@ describe("CapServer", function() {
       }
 
       beforeEach(function() {
-        servers = [ capServer1, capServer2 ];
+        servers = [capServer1, capServer2];
         ids = [];
         for (var i in servers) {
           ids.push(servers[i].instanceID);
@@ -463,8 +463,8 @@ describe("CapServer", function() {
         capServer2.setReviver(function(role) { return f200; });
       });
 
-      describe("while instance is still running", function() {
-        it("should restore the same cap functionality", function() {
+      describe('while instance is still running', function() {
+        it('should restore the same cap functionality', function() {
           var c1 = capServer1.grant(f100);
           var s1 = c1.serialize();
           expect(s1).toBeTruthy();
@@ -473,7 +473,7 @@ describe("CapServer", function() {
           expect(c2.invokeSync()).toEqual(100);
         });
 
-        it("should restore a dead cap as dead", function() {
+        it('should restore a dead cap as dead', function() {
           var c1 = capServer1.grant(f100);
           var s1 = c1.serialize();
           capServer1.revoke(c1.serialize());
@@ -484,12 +484,12 @@ describe("CapServer", function() {
 
       });
 
-      describe("after instance shutdown", function() {
+      describe('after instance shutdown', function() {
         var c1, s1, snapshot;
         beforeEach(function() {
-          c1 = capServer1.grant(f100, "answer");
+          c1 = capServer1.grant(f100, 'answer');
           s1 = c1.serialize();
-          c2 = capServer1.grant(f100, "answer");
+          c2 = capServer1.grant(f100, 'answer');
           s2 = c2.serialize();
           capServer1.revoke(s2);
           snapshot = capServer1.snapshot();
@@ -503,34 +503,34 @@ describe("CapServer", function() {
         };
         var setNewResolver = function() {
           capServer1.setReviver(function(role) {
-            return role == "answer" ? f300 : null;
+            return role == 'answer' ? f300 : null;
           });
         };
 
-        it("should restore the cap after instance restart", function() {
+        it('should restore the cap after instance restart', function() {
           makeNewServer();
           setNewResolver();
           var c1restored = capServer2.restore(s1);
           expect(c1restored.invokeSync()).toEqual(300);
         });
 
-        it("should restore a cap, even before the resolver is set", function() {
+        it('should restore a cap, even before the resolver is set', function() {
           makeNewServer();
-          var c1restored = capServer2.restore(s1);
-          expect(c1restored.invokeSync()).not.toBeDefined();
-          setNewResolver();
-          expect(c1restored.invokeSync()).toEqual(300);
-        });
-
-        xit("should restore a cap, even before the instance is restarted", function() {
           var c1restored = capServer2.restore(s1);
           expect(c1restored.invokeSync()).not.toBeDefined();
+          setNewResolver();
+          expect(c1restored.invokeSync()).toEqual(300);
+        });
+
+        xit('should restore a cap, even before the instance is restarted', function() {
+          var c1restored = capServer2.restore(s1);
+          expect(c1restored.invokeSync()).not.toBeDefined();
           makeNewServer();
           setNewResolver();
           expect(c1restored.invokeSync()).toEqual(300);
         });
 
-        it("should restore a revoked cap as dead after instance restart", function() {
+        it('should restore a revoked cap as dead after instance restart', function() {
           makeNewServer();
           setNewResolver();
           var c2restored = capServer2.restore(s2);
@@ -538,8 +538,8 @@ describe("CapServer", function() {
         });
       });
 
-      describe("restoring invalid serializations", function() {
-        it ("should restore an unresolvable cap as dead", function() {
+      describe('restoring invalid serializations', function() {
+        it('should restore an unresolvable cap as dead', function() {
           var c1 = capServer1.grant(f100);
           var s1 = c1.serialize();
           var capServer3 = new CapServer();
@@ -547,17 +547,17 @@ describe("CapServer", function() {
           expect(c1restored.invokeSync()).not.toBeDefined();
         });
 
-        it ("should restore invalid serializations as dead caps", function() {
-          var c1 = capServer1.restore("");
+        it('should restore invalid serializations as dead caps', function() {
+          var c1 = capServer1.restore('');
           expect(c1.invokeSync()).not.toBeDefined();
 
-          var c2 = capServer1.restore("asdf");
+          var c2 = capServer1.restore('asdf');
           expect(c2.invokeSync()).not.toBeDefined();
         });
       });
     });
 
-    describe("Data Pre/Post Processing", function() {
+    describe('Data Pre/Post Processing', function() {
       var roundTrip = function(v) {
         var a = capServer1.dataPreProcess(v);
         var b = JSON.stringify(a);
@@ -568,26 +568,26 @@ describe("CapServer", function() {
       var expectRT = function(v) {
         expect(roundTrip(v)).toEqual(v);
       };
-      it("should round trip simple values", function() {
+      it('should round trip simple values', function() {
         expectRT(undefined);
         expectRT(null);
         expectRT(false);
         expectRT(true);
         expectRT(0);
         expectRT(123);
-        expectRT("");
-        expectRT("yo");
+        expectRT('');
+        expectRT('yo');
       });
 
-      it("should round trip simple structures", function() {
+      it('should round trip simple structures', function() {
         expectRT([1, 2, 3]);
-        expectRT({a: 42, b: "bob"});
-        expectRT({a: ["one", "two"], b: {q: true, p: false}});
+        expectRT({a: 42, b: 'bob'});
+        expectRT({a: ['one', 'two'], b: {q: true, p: false}});
       });
 
-      it("should throw when processing non-POD data", function() {
+      it('should throw when processing non-POD data', function() {
         var expectInvalid = function(v) {
-          expect(function(){capServer1.dataPreProcess(v);}).toThrow();
+          expect(function() {capServer1.dataPreProcess(v);}).toThrow();
         };
 
         var CircularThing = function() {
@@ -598,15 +598,15 @@ describe("CapServer", function() {
 
         expectInvalid(/abc/);
         expectInvalid(new CircularThing());
-        expectInvalid({a:/abc/});
-        expectInvalid({a:new CircularThing()});
+        expectInvalid({a: /abc/});
+        expectInvalid({a: new CircularThing()});
         expectInvalid([/abc/]);
         expectInvalid([new CircularThing()]);
       });
 
-      it("should round trip a capability", function() {
-        var c1 = capServer1.grant(function() { return 42; }, "answer");
-        var a = { name: "oracle", cap: c1 };
+      it('should round trip a capability', function() {
+        var c1 = capServer1.grant(function() { return 42; }, 'answer');
+        var a = { name: 'oracle', cap: c1 };
         var b = roundTrip(a);
         expect(b.name).toEqual(a.name);
         expect(b.cap.serialize()).toEqual(a.cap.serialize());
@@ -614,9 +614,9 @@ describe("CapServer", function() {
         expect(r).toEqual(42);
       });
 
-      it("should pass a capability", function() {
+      it('should pass a capability', function() {
         // TODO(mzero): this instance resolver logic should be factored out
-        var servers = [ capServer1, capServer2 ];
+        var servers = [capServer1, capServer2];
         var ids = [];
         for (var i in servers) {
           ids.push(servers[i].instanceID);
@@ -626,8 +626,8 @@ describe("CapServer", function() {
           });
         }
 
-        c1 = capServer1.grant(function() { return 42; }, "answer");
-        a = { name: "oracle", cap: c1 };
+        c1 = capServer1.grant(function() { return 42; }, 'answer');
+        a = { name: 'oracle', cap: c1 };
         var b = capServer1.dataPreProcess(a);
         var c = JSON.stringify(b);
         var d = JSON.parse(c);

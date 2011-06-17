@@ -1,9 +1,9 @@
 var me = os.topDiv;
 
-os.ui.resize(150,200,true);
+os.ui.resize(150, 200, true);
 
 var formAjax = function(form, callback) {
-  var data = {}
+  var data = {};
   for (var i = 0; i < form.elements.length; ++i) {
     var input = form.elements[i];
     if (input.type == 'text' || input.type == 'textarea') {
@@ -13,7 +13,7 @@ var formAjax = function(form, callback) {
       // do nothing
     }
     else {
-      os.alert('Unhandled type of form input: ' + input.type + " named " + input.name);
+      os.alert('Unhandled type of form input: ' + input.type + ' named ' + input.name);
     }
   }
   os.jQuery.ajax({
@@ -22,11 +22,11 @@ var formAjax = function(form, callback) {
     data: data,
     dataType: 'json',
     error: function(xhr,status,err) { os.alert('form update failed: ' + status); },
-    success: function(data, status, xhr) { callback(data); },
+    success: function(data, status, xhr) { callback(data); }
   });
 };
 
-var rcPost = "urn:x-belay://resouce-class/social-feed/post";
+var rcPost = 'urn:x-belay://resouce-class/social-feed/post';
 
 var capReviver = function(resClass) {
   if (resClass == rcPost) {
@@ -36,9 +36,9 @@ var capReviver = function(resClass) {
         type: 'POST',
         data: {
           body: '' + data.body,
-          via: '' + data.via, 
+          via: '' + data.via
         },
-        success: function() { reload(); },
+        success: function() { reload(); }
       });
     };
   }

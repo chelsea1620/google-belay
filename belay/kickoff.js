@@ -3,7 +3,7 @@ var foop = function(sourceURL, node, extras) {
 
 	$.ajax({
 		url: sourceURL,
-		dataType: "text",
+		dataType: 'text',
 		success: function(data, status, xhr) {
 			var jq = {
 				// A sanitized jQuery object
@@ -13,22 +13,22 @@ var foop = function(sourceURL, node, extras) {
 			  // A sanitized JSON object
 			  stringify: JSON.stringify,
 			  parse: JSON.parse
-			}
+			};
 
 			var os = {
 				topDiv: $('<div></div>').prependTo(node),
 				jQuery: jq,
 				JSON: js,
-				
+
 				// can't just pass these, you have to wrap them for some reason
 				alert: function(s) { alert(s); },
 				setTimeout: function(f, s) { setTimeout(f, s); },
 				clearTimeout: function(t) { clearTimeout(t); },
-				
+
 				foop: foop,
-				CapServer: CapServer,
+				CapServer: CapServer
 			};
-			
+
 			if (extras) {
   			for (p in extras) {
   			  os[p] = extras[p];
@@ -38,7 +38,7 @@ var foop = function(sourceURL, node, extras) {
       cajaVM.compileModule(data)({os: os});
 		},
 		error: function(xhr, status, error) {
-			alert("Failed to kickoff: " + status);
+			alert('Failed to kickoff: ' + status);
 		}
 	});
 };
@@ -46,7 +46,7 @@ var foop = function(sourceURL, node, extras) {
 
 (function() {
   var DEBUG = true;
-  
+
   whitelist['foop'] = true;
   if (DEBUG) {
     whitelist['console'] = 'skip';

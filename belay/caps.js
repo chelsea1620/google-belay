@@ -111,6 +111,43 @@ var CAP_EXPORTS = (function() {
     return this.server.dataPreProcess(this.fn(this.server.dataPostProcess(v)));
   };
 
+
+  /* constructor : CapServer 
+                 * (   'a:data 
+                     * 'b:result -> undef
+		     * { status: Num, and others : any } 
+		    -> undef)
+		-> ImplAsyncFunc
+   */
+  var ImplAsyncFunction = function(server, asyncFn) {
+    this.server = server;
+    this.asyncFn = asyncFn;
+  };
+
+  /* invoke : serialized<'a>:data 
+            * serialized<'b:result> -> undef
+            * { status: Num, and others : serialized<any> } 
+	   -> undef
+   */
+  ImplAsyncFunction.prototype.invoke = function(data, s, f) {
+    var self = this;
+    var serData = self.server.dataPostProcess(data);
+    var sHandler =  function(result) {
+      if (s) { s(self.server.dataPreProcess(result)); }
+    };
+    var eHandler = function(error) {
+      if (f) { f({ status: 500, value: self.server.dataPreProcess(error) }); }
+    };
+
+    setTimeout(function() { 
+      try {
+	self.asyncFn(serData, sHandler, eHandler);
+      } catch (e) {
+	if (f) { f({ status: 500, message: "exception thrown" }); }
+      }
+    }, 0);
+  };
+
   var ImplURL = function(url) { this.url = url; };
   ImplURL.prototype.invoke = function(d, s, f) {
      makeAsyncAJAX(this.url, d, s, f); };
@@ -128,9 +165,16 @@ var CAP_EXPORTS = (function() {
     return this.server.dataPreProcess(this.inner.invokeSync(this.server.dataPostProcess(v)));
   };
 
-  var buildImplementation = function(server, item) {
+  var buildImplementation = function(isAsync, server, item) {
     var t = typeof(item);
-    if (t == "function")  return new ImplFunction(server, item);
+    if (t == "function") {
+      if (isAsync) {
+	return new ImplAsyncFunction(server, item);
+      }
+      else {
+	return new ImplFunction(server, item);
+      }
+    }     
     if (t == "string")    return new ImplURL(item);
     if (item === null)    return deadImpl; // careful: typeof(null) == "object"
     if (t == "object")    return new ImplWrap(server, item);
@@ -246,7 +290,7 @@ var CAP_EXPORTS = (function() {
         if (info.restoreKey) {
           if (this.reviver) {
             var item = this.reviver(info.restoreKey);
-            this.implMap[capID] = buildImplementation(this, item);
+            this.implMap[capID] = buildImplementation(false, this, item);
           }
         }
         else if (info.restoreCap) {
@@ -258,14 +302,23 @@ var CAP_EXPORTS = (function() {
     return this.implMap[capID] || deadImpl;
   };
 
-  CapServer.prototype.grant = function(item, key) {
+  CapServer.prototype._grant = function(isAsync, item, key) {
     var capID = newCapID();
 
-    this.implMap[capID] = buildImplementation(this, item);
+    this.implMap[capID] = buildImplementation(isAsync, this, item);
     if (key) { this.reviveMap[capID] = { restoreKey: key }; }
     // TODO(mzero): should save URL and cap items in reviveMap
 
     return this._mint(capID);
+    
+  };
+
+  CapServer.prototype.grant = function(item, key) {
+    return this._grant(false, item, key);
+  };
+
+  CapServer.prototype.grantAsync = function(item, key) {
+    return this._grant(true, item, key);
   };
 
   // TODO(jpolitz): get rid of wrap?  get rid of resolvable?

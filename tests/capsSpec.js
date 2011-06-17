@@ -197,6 +197,8 @@ describe("CapServer", function() {
     var invocableURL;
     var invocableWrappedFunc;
     var invocableWrappedURL;
+    var invocableAsyncFunc;
+    var invocableWrappedAsyncFunc;
     beforeEach(function() {
       var d = 0;
       invocableFunc = function(v) {
@@ -207,7 +209,25 @@ describe("CapServer", function() {
       mockAjax.handle(invocableURL, invocableFunc);
       invocableWrappedFunc = capServer2.grant(invocableFunc);
       invocableWrappedURL = capServer2.grant(invocableURL);
+      invocableAsyncFunc = function(v, sk, fk) {
+	if (v === "error") {
+	  fk(v);
+	  return;
+	}
+
+	if (v === "exception") {
+	  throw v;
+	}
+
+	if (v) {
+	   d = v;
+	}
+	sk("#" + d);
+	return;
+      };
+      invocableWrappedAsyncFunc = capServer2.grantAsync(invocableAsyncFunc);
     });
+
 
     var describeInvocation = function(name, makeItem) {
       describe(name, function() {
@@ -230,7 +250,7 @@ describe("CapServer", function() {
           expect(rGet2).toBe("#11");
         });
 
-        it("should do asynchronous calls", function() {
+        it("should do asynchronous calls (grant)", function() {
           var invoker = new InvokeRunner(c1);
 
           invoker.runsAndWaits();
@@ -252,6 +272,42 @@ describe("CapServer", function() {
       });
     };
 
+    var describeAsyncInvocation = function(name, makeAsyncItem) {
+      describe(name, function() {
+        var c1;
+        beforeEach(function() {
+          c1 = capServer1.grantAsync(makeAsyncItem());
+        });
+
+        it("should do asynchronous calls (grantAsync)", function() {
+          var invoker = new InvokeRunner(c1);
+
+          invoker.runsAndWaits();
+          invoker.runsExpectSuccess(
+            function(result) { expect(result).toBe("#0"); });
+
+          invoker.runsAndWaits(7);
+          invoker.runsExpectSuccess(
+            function(result) { expect(result).toBe("#7"); });
+
+          invoker.runsAndWaits(11);
+          invoker.runsExpectSuccess(
+            function(result) { expect(result).toBe("#11"); });
+
+          invoker.runsAndWaits();
+          invoker.runsExpectSuccess(
+            function(result) { expect(result).toBe("#11"); });
+
+          invoker.runsAndWaits("error");
+          invoker.runsExpectFailure();
+
+          invoker.runsAndWaits("exception");
+          invoker.runsExpectFailure();
+
+        });
+      });
+    };
+
     describeInvocation("of Functions",
       function() { return invocableFunc; });
 
@@ -263,6 +319,16 @@ describe("CapServer", function() {
 
     describeInvocation("of Wrapped URL Caps",
       function() { return invocableWrappedURL; });
+
+    describeAsyncInvocation("of Async Functions",
+      function() { return invocableAsyncFunc; });
+
+    describeAsyncInvocation("of Wrapped Async Function Caps",
+      function() { return invocableWrappedAsyncFunc; });
+
+    // NOTE: async testing of URLs is not reasonable: requires passing
+    // continuations to the remote cap, the URL, as caps themselves.
+    // These continuations must be encoded in messages.
 
     describe("of Dead caps", function() {
       var deadCap;
@@ -293,8 +359,27 @@ describe("CapServer", function() {
         invoker.runsExpectFailure();
       });
     });
-  });
 
+    describe("of async dead caps", function() {
+      var deadCap;
+      beforeEach(function() {
+        deadCap = capServer1.grantAsync(null);
+      });
+
+      it("should do asynchronous calls", function() {
+        var invoker = new InvokeRunner(deadCap);
+
+        invoker.runsAndWaits();
+        invoker.runsExpectFailure();
+
+        invoker.runsAndWaits(7);
+        invoker.runsExpectFailure();
+
+        invoker.runsAndWaits(11);
+        invoker.runsExpectFailure();
+      });
+    });
+  });
 
   describe("Wrapped Caps", function() {
     var c1, w1;

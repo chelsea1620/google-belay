@@ -19,13 +19,20 @@
         var invokeWithThreeCap = server.grant(function(v) {
           log("invokeWithThree invoking " + v);
           v.invoke(3);
-          return undefined;
+          return 32;
+        });
+
+        var invokeMyAsync = 
+          server.grantAsync(function(remoteReceiveCap, sk, fk) {
+          setTimeout(function() { 
+            remoteReceiveCap.invoke(999, sk, fk); }, 0);
         });
         
         var seedCap = server.grant(function(v) { 
           log("seedCap invoked with: " + v);
           if (v == "answer") { return 42; }
           if (v == "invokeWithThree") { return invokeWithThreeCap; }
+          if (v == "remoteAsync") { return invokeMyAsync; }
           return undefined;
       });                                         log("Constructed seedCap");
         

@@ -161,7 +161,7 @@ describe("CapTunnels", function() {
       });
 
       waitsFor(function() { return remoteAsyncCap; },
-               "get invokeWithThreeAsync cap", 250);
+               "get remoteAsync cap", 250);
 
       var asyncResult = false;
       var messageFromRemote = false;
@@ -176,7 +176,7 @@ describe("CapTunnels", function() {
 			      function(result) { });
       });
       waitsFor(function() { return asyncResult && messageFromRemote; },
-               "invoking invokeWithThreeAsync cap", 250);
+               "get asyncResult", 250);
       runs(function() {
         expect(messageFromRemote[0]).toEqual(999);
 	expect(asyncResult[0]).toBe(1041);

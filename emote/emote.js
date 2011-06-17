@@ -10,8 +10,8 @@ var postComplete = function(succeeded) {
   os.setTimeout(function() { m.fadeOut('slow'); }, 3000);
 };
 
-var rcPost = "urn:x-belay://resouce-class/social-feed/post";
-var showPanel = function (feedCap) {
+var rcPost = 'urn:x-belay://resouce-class/social-feed/post';
+var showPanel = function(feedCap) {
   me.find('.emote-panel').show();
   me.find('.emote-post').click(function(ev) {
     me.find('.emote-message-posting').show();
@@ -25,11 +25,11 @@ var showPanel = function (feedCap) {
   });
 };
 
-me.load("http://localhost:9005/emote.html", function() {
-  os.ui.resize(160,90,false);
+me.load('http://localhost:9005/emote.html', function() {
+  os.ui.resize(160, 90, false);
 
   var feedCap = os.storage.get();
-  
+
   if (feedCap) {
     showPanel(os.capServer.restore(feedCap));
   }
@@ -41,5 +41,5 @@ me.load("http://localhost:9005/emote.html", function() {
       showPanel(cap);
       os.storage.put(cap.serialize());
     });
-  }  
+  }
 });

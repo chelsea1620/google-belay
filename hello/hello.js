@@ -22,26 +22,26 @@ var languageMap = {
   th: 'สวัสดีชาวโลก',
   vi: 'Xin chào thế giới!',
   yi: 'העלא וועלט!',
-  zh: '世界您好！',
-}
+  zh: '世界您好！'
+};
 
-var languages = []
+var languages = [];
 for (var l in languageMap) { languages.push(l); }
 
-me.load("http://localhost:9002/hello.html", function() {
+me.load('http://localhost:9002/hello.html', function() {
   var p = me.find('p');
-  
-  var setLang = function (l) {
+
+  var setLang = function(l) {
     p.text(languageMap[l]);
     if (os.storage.get() != l) {
       os.storage.put(l);
     }
   }
-  
+
   var l = os.storage.get() || 'en';
   setLang(l);
-   
-  me.find('#pick-language').click(function () {
+
+  me.find('#pick-language').click(function() {
     var l = languages[Math.floor(Math.random() * languages.length)];
     setLang(l);
     return false;

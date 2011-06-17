@@ -12,7 +12,7 @@ Globals used:
 
 if (!('freeze' in Object)) {
   Object.freeze = function(x) { return x; };
-};
+}
 
 var CAP_EXPORTS = (function() {
 
@@ -20,16 +20,16 @@ var CAP_EXPORTS = (function() {
 
   var newUUIDv4 = function() {
     var r = function() { return Math.floor(Math.random() * 0x10000); };
-    var s = function(x) { return ("000" + x.toString(16)).slice(-4); };
+    var s = function(x) { return ('000' + x.toString(16)).slice(-4); };
     var u = function() { return s(r()); };
     var v = function() { return s(r() & 0x0fff | 0x4000); };
     var w = function() { return s(r() & 0x3fff | 0x8000); };
-    return u()+u()+'-'+u()+'-'+v()+'-'+w()+'-'+u()+u()+u();
+    return u() + u() + '-' + u() + '-' + v() + '-' + w() + '-' + u() + u() + u();
   };
 
   var newCapID = newUUIDv4;
   var encodeSerialization = function(instID, capID) {
-    return "urn:x-cap:" + instID + ":" + capID;
+    return 'urn:x-cap:' + instID + ':' + capID;
   };
   var decodeSerialization = function(ser) {
     var m = ser.match(/^urn:x-cap:([-0-9a-f]{36}):([-0-9a-f]{36})$/);
@@ -47,8 +47,8 @@ var CAP_EXPORTS = (function() {
     return m ? m[1] : nullCapID;
   };
 
-  var nullInstID = "00000000-0000-0000-0000-000000000000";
-  var nullCapID = "00000000-0000-0000-0000-000000000000";
+  var nullInstID = '00000000-0000-0000-0000-000000000000';
+  var nullCapID = '00000000-0000-0000-0000-000000000000';
   var nullSer = encodeSerialization(nullInstID, nullCapID);
 
   var callAsAJAX = function(server, f, data, success, failure) {
@@ -56,10 +56,10 @@ var CAP_EXPORTS = (function() {
       try {
         var response;
         response = f(server.dataPostProcess(data));
-        if(success)  { success(server.dataPreProcess(response)); }
+        if (success) { success(server.dataPreProcess(response)); }
       }
-      catch(e) {
-        if(failure) failure({status: 500, message: "exception thrown"});
+      catch (e) {
+        if (failure) failure({status: 500, message: 'exception thrown'});
       }
     }, 0);
   };
@@ -96,8 +96,8 @@ var CAP_EXPORTS = (function() {
   // == THE FOUR IMPLEMENTATION TYPES ==
 
   var deadImpl = Object.freeze({
-    invoke:     function(d, s, f) { errorAsAJAX(d, s, f); },
-    invokeSync: function(v) { return "{}"; }
+    invoke: function(d, s, f) { errorAsAJAX(d, s, f); },
+    invokeSync: function(v) { return '{}'; }
   });
 
   var ImplFunction = function(server, fn) {
@@ -112,10 +112,10 @@ var CAP_EXPORTS = (function() {
   };
 
 
-  /* constructor : CapServer 
-                 * (   'a:data 
+  /* constructor : CapServer
+                 * (   'a:data
                      * 'b:result -> undef
-		     * { status: Num, and others : any } 
+		     * { status: Num, and others : any }
 		    -> undef)
 		-> ImplAsyncFunc
    */
@@ -124,26 +124,26 @@ var CAP_EXPORTS = (function() {
     this.asyncFn = asyncFn;
   };
 
-  /* invoke : serialized<'a>:data 
+  /* invoke : serialized<'a>:data
             * serialized<'b:result> -> undef
-            * { status: Num, and others : serialized<any> } 
+            * { status: Num, and others : serialized<any> }
 	   -> undef
    */
   ImplAsyncFunction.prototype.invoke = function(data, s, f) {
     var self = this;
     var serData = self.server.dataPostProcess(data);
-    var sHandler =  function(result) {
+    var sHandler = function(result) {
       if (s) { s(self.server.dataPreProcess(result)); }
     };
     var eHandler = function(error) {
       if (f) { f({ status: 500, value: self.server.dataPreProcess(error) }); }
     };
 
-    setTimeout(function() { 
+    setTimeout(function() {
       try {
 	self.asyncFn(serData, sHandler, eHandler);
       } catch (e) {
-	if (f) { f({ status: 500, message: "exception thrown" }); }
+	if (f) { f({ status: 500, message: 'exception thrown' }); }
       }
     }, 0);
   };
@@ -167,18 +167,18 @@ var CAP_EXPORTS = (function() {
 
   var buildImplementation = function(isAsync, server, item) {
     var t = typeof(item);
-    if (t == "function") {
+    if (t == 'function') {
       if (isAsync) {
 	return new ImplAsyncFunction(server, item);
       }
       else {
 	return new ImplFunction(server, item);
       }
-    }     
-    if (t == "string")    return new ImplURL(item);
-    if (item === null)    return deadImpl; // careful: typeof(null) == "object"
-    if (t == "object")    return new ImplWrap(server, item);
-    else                  return deadImpl;
+    }
+    if (t == 'string') return new ImplURL(item);
+    if (item === null) return deadImpl; // careful: typeof(null) == "object"
+    if (t == 'object') return new ImplWrap(server, item);
+    else return deadImpl;
   };
 
 
@@ -196,7 +196,7 @@ var CAP_EXPORTS = (function() {
     var me = this;
     var wrappedData = this.server.dataPreProcess(data);
     var wrappedSuccess = function(result) {
-      if(success) {
+      if (success) {
 	return success(me.server.dataPostProcess(result));
       }
       return undefined;
@@ -246,12 +246,12 @@ var CAP_EXPORTS = (function() {
           }
 
           var instID = decodeInstID(ser);
-          if(instID == me.instanceID) {
+          if (instID == me.instanceID) {
             me._getImpl(ser).invoke(data, success, failure);
             return;
           } else {
             var publicInterface = me.resolver(instID);
-            if(publicInterface) {
+            if (publicInterface) {
               publicInterface.invoke(ser, data, success, failure);
               return;
             }
@@ -264,11 +264,11 @@ var CAP_EXPORTS = (function() {
             return makeSyncAjax(ser, data);
           }
           var instID = decodeInstID(ser);
-          if(instID == me.instanceID) {
+          if (instID == me.instanceID) {
             return me._getImpl(ser).invokeSync(data);
           } else {
             var publicInterface = me.resolver(instID);
-            if(publicInterface) {
+            if (publicInterface) {
               return publicInterface.invokeSync(ser, data);
             }
           }
@@ -313,7 +313,7 @@ var CAP_EXPORTS = (function() {
     // TODO(mzero): should save URL and cap items in reviveMap
 
     return this._mint(capID);
-    
+
   };
 
   CapServer.prototype.grant = function(item, key) {
@@ -372,21 +372,21 @@ var CAP_EXPORTS = (function() {
         if (Object.getPrototypeOf(v) === Capability.prototype) {
           return { '@': v.serialize() };
         }
-      } catch(e) { }
+      } catch (e) { }
       return v;
     });
   };
 
   CapServer.prototype.dataPostProcess = function(w) {
     var me = this;
-    return JSON.parse(w, function(k,v){
+    return JSON.parse(w, function(k,v) {
       try {
         var k = Object.keys(v);
         if (k.length == 1 && k[0] == '@') {
           return me.restore(v['@']);
         }
       }
-      catch(e) { }
+      catch (e) { }
       return v;
     }).value;
   };
@@ -408,8 +408,8 @@ var CAP_EXPORTS = (function() {
 
     port.onmessage = function(event) {
       var message = event.data;
-      if (message.op == "invoke")         { me.handleInvoke(message); }
-      else if (message.op == "response")  { me.handleResponse(message); }
+      if (message.op == 'invoke') { me.handleInvoke(message); }
+      else if (message.op == 'response') { me.handleResponse(message); }
     };
   };
 
@@ -417,7 +417,7 @@ var CAP_EXPORTS = (function() {
     var txID = this.txCounter++;
     this.transactions[txID] = { success: success, failure: failure };
     this.port.postMessage({
-      op: "invoke",
+      op: 'invoke',
       txID: txID,
       ser: ser,
       data: this.toWire(data)
@@ -430,16 +430,16 @@ var CAP_EXPORTS = (function() {
     if (iface) {
       var me = this;
       iface.invoke(message.ser, this.fromWire(message.data),
-          function(data) { me.sendResponse(message.txID, "success", data); },
-          function(err) { me.sendResponse(message.txID, "failure", err); });
+          function(data) { me.sendResponse(message.txID, 'success', data); },
+          function(err) { me.sendResponse(message.txID, 'failure', err); });
     } else {
-      this.sendResponse(message.txID, "failure", { status: 404 });
+      this.sendResponse(message.txID, 'failure', { status: 404 });
     }
   };
 
   CapTunnel.prototype.sendResponse = function(txID, type, data) {
     this.port.postMessage({
-      op: "response",
+      op: 'response',
       txID: txID,
       type: type,
       data: this.toWire(data)
@@ -450,10 +450,10 @@ var CAP_EXPORTS = (function() {
     var tx = this.transactions[message.txID];
     if (tx) {
       delete this.transactions[message.txID];
-      if (message.type == "success") {
+      if (message.type == 'success') {
         if (tx.success) { tx.success(this.fromWire(message.data)); }
       }
-      if (message.type == "failure") {
+      if (message.type == 'failure') {
         if (tx.failure) { tx.failure(this.fromWire(message.data)); }
       }
     }

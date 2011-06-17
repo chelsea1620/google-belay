@@ -43,4 +43,6 @@ For JavaScript, we use Google's closure-linter (gjslint):
 Installation instructions:
   http://code.google.com/closure/utilities/docs/linter_howto.html
 
-
+The command to run to lint the code is:
+  gjslint --nojsdoc */*.js
+  (this avoids checking the .js files in libraries we use)

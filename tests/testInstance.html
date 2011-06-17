@@ -1,0 +1,42 @@
+<html>
+  <head>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.5.2/jquery.min.js"></script>
+    <script src="../belay/caps.js"></script>
+    <script type="text/javascript">
+      var log = function(text) {
+        $("<li></li>").text(text).appendTo('#transcript');
+      };
+      
+      $(function(){
+        var channel = new MessageChannel();         log("Constructed channel");
+        var tunnel = new CapTunnel(channel.port1);  log("Constructed tunnel");
+        var server = new CapServer();               log("Constructed server");
+        tunnel.setLocalResolver(function(instID) {
+          return server.publicInterface;
+        });
+        server.setResolver(tunnel.remoteResolverProxy);
+        
+        var invokeWithThreeCap = server.grant(function(v) {
+          log("invokeWithThree invoking " + v);
+          v.invoke(3);
+          return undefined;
+        });
+        
+        var seedCap = server.grant(function(v) { 
+          log("seedCap invoked with: " + v);
+          if (v == "answer") { return 42; }
+          if (v == "invokeWithThree") { return invokeWithThreeCap; }
+          return undefined;
+      });                                         log("Constructed seedCap");
+        
+        window.opener.postMessage(
+          { ser: seedCap.serialize(), instID: server.instanceID }, 
+          [channel.port2], '*');                    log("Posted ready message");        
+      });
+    </script>
+  </head>
+  <body>
+    <h1>Transcript</h1>
+    <ol id="transcript"></ol>
+  </body>
+</html>

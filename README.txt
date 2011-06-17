@@ -29,3 +29,18 @@ To start up the demo do this:
   
 ... And away you go!
 
+
+
+CODING CONVENTIONS
+==================
+
+This code strives to follow the Google style conventions:
+  JavaScript: http://google-styleguide.googlecode.com/svn/trunk/javascriptguide.xml
+  Python:     http://google-styleguide.googlecode.com/svn/trunk/pyguide.html
+
+For JavaScript, we use Google's closure-linter (gjslint): 
+  http://code.google.com/p/closure-linter/
+Installation instructions:
+  http://code.google.com/closure/utilities/docs/linter_howto.html
+
+

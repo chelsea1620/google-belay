@@ -196,7 +196,10 @@ var CAP_EXPORTS = (function() {
     var me = this;
     var wrappedData = this.server.dataPreProcess(data);
     var wrappedSuccess = function(result) {
-      return success(me.server.dataPostProcess(result));
+      if(success) {
+	return success(me.server.dataPostProcess(result));
+      }
+      return undefined;
     };
     this.server.privateInterface.invoke(this.ser, wrappedData, wrappedSuccess, failure);
   };

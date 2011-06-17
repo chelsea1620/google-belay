@@ -118,17 +118,25 @@ describe("CapTunnels", function() {
       waitsFor(function() { return invokeWithThreeCap; }, "get invokeWithThree cap", 250);
 
       var received = false;
+      var succeeded = false;
       var receivedMessage;
       runs(function() {
         var receiveCap = localServer1.grant(function(v) {
           received = true;
           receivedMessage = v;
         });
-        invokeWithThreeCap.invoke(receiveCap);
+        invokeWithThreeCap.invoke(receiveCap,
+				  function(result) {
+				     succeeded = true;
+				  },
+				  function(result) {
+				  });
       });
       waitsFor(function() { return received; }, "invoking invokeWithThree cap", 250);
       runs(function() {
         expect(receivedMessage).toEqual(3);
+	expect(succeeded).toBe(true);
+	return undefined;
       });
     });
 

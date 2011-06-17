@@ -18,17 +18,16 @@
         
         var invokeWithThreeCap = server.grant(function(v) {
           log("invokeWithThree invoking " + v);
-          var remoteCap = server.restore(v);
-          remoteCap.invoke(3);
+          v.invoke(3);
           return undefined;
         });
         
         var seedCap = server.grant(function(v) { 
           log("seedCap invoked with: " + v);
           if (v == "answer") { return 42; }
-          if (v == "invokeWithThree") { return invokeWithThreeCap.serialize(); }
+          if (v == "invokeWithThree") { return invokeWithThreeCap; }
           return undefined;
-        });                                         log("Constructed seedCap");
+      });                                         log("Constructed seedCap");
         
         window.opener.postMessage(
           { ser: seedCap.serialize(), instID: server.instanceID }, 

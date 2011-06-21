@@ -33,7 +33,7 @@ var rcPost = 'urn:x-belay://resouce-class/social-feed/post';
 
 var capReviver = function(resClass) {
   if (resClass == rcPost) {
-    return function(data) {
+    var poster = function(data) {
       os.jQuery.ajax({
         url: app.caps.post,
         type: 'POST',
@@ -44,6 +44,7 @@ var capReviver = function(resClass) {
         success: function() { reload(); }
       });
     };
+    return os.capServer.buildFunc(poster);
   }
   return null;
 };
@@ -59,7 +60,7 @@ var reload = function() {
       return false;
     });
     os.ui.capDraggable(me.find('.buzzer-chit'), rcPost, function(selectedRC) {
-      return os.capServer.grant(capReviver(selectedRC), selectedRC);
+      return os.capServer.grantKey(selectedRC);
     });
   });
 };

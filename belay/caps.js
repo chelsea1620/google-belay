@@ -296,16 +296,15 @@ var CAP_EXPORTS = (function() {
     return this.implMap[capID] || deadImpl;
   };
 
-  CapServer.prototype._grant = function(item, key) {
+  CapServer.prototype._grant = function(impl, key) {
     var capID = newCapID();
 
-    if (item === null) { item = deadImpl; }
-    this.implMap[capID] = item;
+    if (impl === null) { impl = deadImpl; }
+    this.implMap[capID] = impl;
     if (key) { this.reviveMap[capID] = { restoreKey: key }; }
     // TODO(mzero): should save URL and cap items in reviveMap
 
     return this._mint(capID);
-
   };
 
   CapServer.prototype.grant = function(item, key) {
@@ -331,6 +330,10 @@ var CAP_EXPORTS = (function() {
     if (typeof impl === 'undefined') { impl = deadImpl; }
 
     return this._grant(impl, key);
+  };
+
+  CapServer.prototype.grantKey = function(key) {
+    return this._grant(this.reviver(key), key);
   };
 
   CapServer.prototype.buildFunc = function(fn) {

@@ -172,22 +172,6 @@ var CAP_EXPORTS = (function() {
         this.inner.invokeSync(this.server.dataPostProcess(v)));
   };
 
-  var buildImplementation = function(isAsync, server, item) {
-    var t = typeof(item);
-    if (t == 'function') {
-      if (isAsync) {
-  return new ImplAsyncFunction(server, item);
-      }
-      else {
-  return new ImplFunction(server, item);
-      }
-    }
-    if (t == 'string') return new ImplURL(item);
-    if (item === null) return deadImpl; // careful: typeof(null) == "object"
-    if (t == 'object') return new ImplWrap(server, item);
-    else return deadImpl;
-  };
-
 
 
 
@@ -300,8 +284,7 @@ var CAP_EXPORTS = (function() {
       if (info) {
         if (info.restoreKey) {
           if (this.reviver) {
-            var item = this.reviver(info.restoreKey);
-            this.implMap[capID] = buildImplementation(false, this, item);
+            this.implMap[capID] = this.reviver(info.restoreKey);
           }
         }
         else if (info.restoreCap) {
@@ -313,10 +296,11 @@ var CAP_EXPORTS = (function() {
     return this.implMap[capID] || deadImpl;
   };
 
-  CapServer.prototype._grant = function(isAsync, item, key) {
+  CapServer.prototype._grant = function(item, key) {
     var capID = newCapID();
 
-    this.implMap[capID] = buildImplementation(isAsync, this, item);
+    if (item === null) { item = deadImpl; }
+    this.implMap[capID] = item; 
     if (key) { this.reviveMap[capID] = { restoreKey: key }; }
     // TODO(mzero): should save URL and cap items in reviveMap
 
@@ -325,11 +309,43 @@ var CAP_EXPORTS = (function() {
   };
 
   CapServer.prototype.grant = function(item, key) {
-    return this._grant(false, item, key);
+    var impl;
+    var typ = typeof item;
+
+    if(typ === 'function') { impl = this.buildFunc(item); }
+    if(typ === 'string')   { impl = this.buildURL(item); }
+    if(typ === 'object')   { impl = new ImplWrap(this, item); }
+    if(item === null)      { impl = deadImpl; }
+    if(typeof impl === 'undefined') { impl = deadImpl; }
+
+    return this._grant(impl, key);
   };
 
   CapServer.prototype.grantAsync = function(item, key) {
-    return this._grant(true, item, key);
+    var impl;
+    var typ = typeof item;
+
+    if(typ === 'function') { impl = this.buildAsyncFunc(item); }
+    if(typ === 'object')   { impl = new ImplWrap(this, item); }
+    if(item === null)      { impl = deadImpl; }
+    if(typeof impl === 'undefined') { impl = deadImpl; }
+
+    return this._grant(impl, key);
+  };
+
+  CapServer.prototype.buildFunc = function(fn) {
+    if(typeof fn !== 'function') { return deadImpl; }
+    return new ImplFunction(this, fn);
+  };
+
+  CapServer.prototype.buildAsyncFunc = function(fn) {
+    if(typeof fn !== 'function') { return deadImpl; }
+    return new ImplAsyncFunction(this, fn);
+  }
+
+  CapServer.prototype.buildURL = function(url) {
+    if(typeof url !== 'string') { return deadImpl; }
+    return new ImplURL(url);
   };
 
   // TODO(jpolitz): get rid of wrap?  get rid of resolvable?

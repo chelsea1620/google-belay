@@ -446,6 +446,9 @@ describe('CapServer', function() {
       var f100 = function() { return 100; };
       var f200 = function() { return 200; };
       var f300 = function() { return 300; };
+      var f400 = function() { return 400; };
+      var f500 = function(data, s, f) { s(500); };
+      var f400URL = "http://example.com/f400";
 
       var instanceResolver = function(id) {
         var i = ids.indexOf(id);
@@ -460,8 +463,8 @@ describe('CapServer', function() {
           servers[i].setResolver(instanceResolver);
         }
 
-        capServer1.setReviver(function(role) { return f100; });
-        capServer2.setReviver(function(role) { return f200; });
+        mockAjax.handle(f400URL, f400);
+
       });
 
       describe('while instance is still running', function() {
@@ -472,6 +475,26 @@ describe('CapServer', function() {
 
           var c2 = capServer2.restore(s1);
           expect(c2.invokeSync()).toEqual(100);
+        });
+
+        it('should restore a URL cap', function() {
+          var c2 = capServer1.grant(f400URL);
+          var s2 = c2.serialize();
+
+          var c3 = capServer2.restore(s2);
+          expect(c3.invokeSync()).toEqual(400);
+        });
+
+        it('should restore an async cap', function() {
+          var c1 = capServer1.grantAsync(f500);
+          var s1 = c1.serialize();
+
+          var c2 = capServer2.restore(s1);
+          var checkResult = false;
+          c2.invoke(null, function(result) { checkResult = result; });
+        
+          waitsFor(function() { return checkResult; }, "async restore invoke", 250);
+          runs(function() { expect(checkResult).toEqual(500) });
         });
 
         it('should restore a dead cap as dead', function() {
@@ -486,41 +509,77 @@ describe('CapServer', function() {
       });
 
       describe('after instance shutdown', function() {
-        var c1, s1, snapshot;
+        var c1, c2, c3, c4, s1, s2, s3, s4, snapshot;
         beforeEach(function() {
-          c1 = capServer1.grant(f100, 'answer');
+          c1 = capServer1.grant(f300, 'f300');
           s1 = c1.serialize();
-          c2 = capServer1.grant(f100, 'answer');
+          c2 = capServer1.grant(f100, 'f100');
           s2 = c2.serialize();
+          c3 = capServer1.grantAsync(f500, 'f500');
+          s3 = c3.serialize();
+          c4 = capServer1.grant(f400URL, 'f400URL');
+          s4 = c4.serialize();
           capServer1.revoke(s2);
           snapshot = capServer1.snapshot();
           capServer1.revokeAll();
           expect(c1.invokeSync()).not.toBeDefined();
+          expect(c4.invokeSync()).not.toBeDefined();
         });
 
         var makeNewServer = function() {
           servers[0] = capServer1 = new CapServer(snapshot);
           capServer1.setResolver(instanceResolver);
         };
-        var setNewResolver = function() {
+        var setNewReviver = function() {
           capServer1.setReviver(function(role) {
-            return role == 'answer' ? f300 : null;
+            if(role === 'f300')    { return capServer1.buildFunc(f300); }
+            if(role === 'f500')    { return capServer1.buildAsyncFunc(f500); }
+            if(role === 'f400URL') { return capServer1.buildURL(f400URL); }
+            return null;
           });
         };
 
-        it('should restore the cap after instance restart', function() {
+        it('should revive the cap after instance restart', function() {
           makeNewServer();
-          setNewResolver();
+          setNewReviver();
           var c1restored = capServer2.restore(s1);
           expect(c1restored.invokeSync()).toEqual(300);
+
+          var c4restored = capServer2.restore(s4);
+          expect(c4restored.invokeSync()).toEqual(400);          
         });
 
-        it('should restore a cap, even before the resolver is set', function() {
+        it('should revive async caps after instance restart', function() {
+          makeNewServer();
+          setNewReviver();
+
+          var c3restored = capServer2.restore(s3);
+          var checkResult2 = false;
+          c3restored.invoke(null, function(result) { checkResult2 = result; });
+          waitsFor(function() { return checkResult2; }, 'async revive invoke', 250);
+          runs(function() { expect(checkResult2).toEqual(500) });
+        });
+
+        it('should restore a cap, even before the reviver is set', function() {
           makeNewServer();
           var c1restored = capServer2.restore(s1);
+          var c4restored = capServer2.restore(s4);
           expect(c1restored.invokeSync()).not.toBeDefined();
-          setNewResolver();
+          expect(c4restored.invokeSync()).not.toBeDefined();
+          setNewReviver();
           expect(c1restored.invokeSync()).toEqual(300);
+          expect(c4restored.invokeSync()).toEqual(400);
+        });
+
+        it('should restore an async cap, even before the reviver is set', function() {
+          makeNewServer();
+          var c3restored = capServer2.restore(s3);
+          var checkResult2 = false;
+          setNewReviver();
+          c3restored.invoke(null, function(result) { checkResult2 = result; });
+          waitsFor(function() { return checkResult2; }, 'async revive invoke', 250);
+          runs(function() { expect(checkResult2).toEqual(500) });
+ 
         });
 
         xit('should restore a cap, even before the instance is restarted',
@@ -528,14 +587,14 @@ describe('CapServer', function() {
           var c1restored = capServer2.restore(s1);
           expect(c1restored.invokeSync()).not.toBeDefined();
           makeNewServer();
-          setNewResolver();
+          setNewReviver();
           expect(c1restored.invokeSync()).toEqual(300);
         });
 
         it('should restore a revoked cap as dead after instance restart',
             function() {
           makeNewServer();
-          setNewResolver();
+          setNewReviver();
           var c2restored = capServer2.restore(s2);
           expect(c2restored.invokeSync()).not.toBeDefined();
         });

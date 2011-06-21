@@ -448,7 +448,7 @@ describe('CapServer', function() {
       var f300 = function() { return 300; };
       var f400 = function() { return 400; };
       var f500 = function(data, s, f) { s(500); };
-      var f400URL = "http://example.com/f400";
+      var f400URL = 'http://example.com/f400';
 
       var instanceResolver = function(id) {
         var i = ids.indexOf(id);
@@ -492,8 +492,9 @@ describe('CapServer', function() {
           var c2 = capServer2.restore(s1);
           var checkResult = false;
           c2.invoke(null, function(result) { checkResult = result; });
-        
-          waitsFor(function() { return checkResult; }, "async restore invoke", 250);
+
+          waitsFor(function() { return checkResult; },
+              'async restore invoke', 250);
           runs(function() { expect(checkResult).toEqual(500) });
         });
 
@@ -532,9 +533,9 @@ describe('CapServer', function() {
         };
         var setNewReviver = function() {
           capServer1.setReviver(function(role) {
-            if(role === 'f300')    { return capServer1.buildFunc(f300); }
-            if(role === 'f500')    { return capServer1.buildAsyncFunc(f500); }
-            if(role === 'f400URL') { return capServer1.buildURL(f400URL); }
+            if (role === 'f300') { return capServer1.buildFunc(f300); }
+            if (role === 'f500') { return capServer1.buildAsyncFunc(f500); }
+            if (role === 'f400URL') { return capServer1.buildURL(f400URL); }
             return null;
           });
         };
@@ -546,7 +547,7 @@ describe('CapServer', function() {
           expect(c1restored.invokeSync()).toEqual(300);
 
           var c4restored = capServer2.restore(s4);
-          expect(c4restored.invokeSync()).toEqual(400);          
+          expect(c4restored.invokeSync()).toEqual(400);
         });
 
         it('should revive async caps after instance restart', function() {
@@ -556,7 +557,8 @@ describe('CapServer', function() {
           var c3restored = capServer2.restore(s3);
           var checkResult2 = false;
           c3restored.invoke(null, function(result) { checkResult2 = result; });
-          waitsFor(function() { return checkResult2; }, 'async revive invoke', 250);
+          waitsFor(function() { return checkResult2; },
+              'async revive invoke', 250);
           runs(function() { expect(checkResult2).toEqual(500) });
         });
 
@@ -571,15 +573,17 @@ describe('CapServer', function() {
           expect(c4restored.invokeSync()).toEqual(400);
         });
 
-        it('should restore an async cap, even before the reviver is set', function() {
-          makeNewServer();
-          var c3restored = capServer2.restore(s3);
-          var checkResult2 = false;
-          setNewReviver();
-          c3restored.invoke(null, function(result) { checkResult2 = result; });
-          waitsFor(function() { return checkResult2; }, 'async revive invoke', 250);
-          runs(function() { expect(checkResult2).toEqual(500) });
- 
+        it('should restore an async cap, even before the reviver is set',
+          function() {
+            makeNewServer();
+            var c3restored = capServer2.restore(s3);
+            var checkResult2 = false;
+            setNewReviver();
+            c3restored.invoke(null,
+                function(result) { checkResult2 = result; });
+            waitsFor(function() { return checkResult2; },
+                'async revive invoke', 250);
+            runs(function() { expect(checkResult2).toEqual(500) });
         });
 
         xit('should restore a cap, even before the instance is restarted',

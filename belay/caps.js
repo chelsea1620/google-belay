@@ -300,7 +300,7 @@ var CAP_EXPORTS = (function() {
     var capID = newCapID();
 
     if (item === null) { item = deadImpl; }
-    this.implMap[capID] = item; 
+    this.implMap[capID] = item;
     if (key) { this.reviveMap[capID] = { restoreKey: key }; }
     // TODO(mzero): should save URL and cap items in reviveMap
 
@@ -312,11 +312,11 @@ var CAP_EXPORTS = (function() {
     var impl;
     var typ = typeof item;
 
-    if(typ === 'function') { impl = this.buildFunc(item); }
-    if(typ === 'string')   { impl = this.buildURL(item); }
-    if(typ === 'object')   { impl = new ImplWrap(this, item); }
-    if(item === null)      { impl = deadImpl; }
-    if(typeof impl === 'undefined') { impl = deadImpl; }
+    if (typ === 'function') { impl = this.buildFunc(item); }
+    if (typ === 'string') { impl = this.buildURL(item); }
+    if (typ === 'object') { impl = new ImplWrap(this, item); }
+    if (item === null) { impl = deadImpl; }
+    if (typeof impl === 'undefined') { impl = deadImpl; }
 
     return this._grant(impl, key);
   };
@@ -325,26 +325,26 @@ var CAP_EXPORTS = (function() {
     var impl;
     var typ = typeof item;
 
-    if(typ === 'function') { impl = this.buildAsyncFunc(item); }
-    if(typ === 'object')   { impl = new ImplWrap(this, item); }
-    if(item === null)      { impl = deadImpl; }
-    if(typeof impl === 'undefined') { impl = deadImpl; }
+    if (typ === 'function') { impl = this.buildAsyncFunc(item); }
+    if (typ === 'object') { impl = new ImplWrap(this, item); }
+    if (item === null) { impl = deadImpl; }
+    if (typeof impl === 'undefined') { impl = deadImpl; }
 
     return this._grant(impl, key);
   };
 
   CapServer.prototype.buildFunc = function(fn) {
-    if(typeof fn !== 'function') { return deadImpl; }
+    if (typeof fn !== 'function') { return deadImpl; }
     return new ImplFunction(this, fn);
   };
 
   CapServer.prototype.buildAsyncFunc = function(fn) {
-    if(typeof fn !== 'function') { return deadImpl; }
+    if (typeof fn !== 'function') { return deadImpl; }
     return new ImplAsyncFunction(this, fn);
   }
 
   CapServer.prototype.buildURL = function(url) {
-    if(typeof url !== 'string') { return deadImpl; }
+    if (typeof url !== 'string') { return deadImpl; }
     return new ImplURL(url);
   };
 

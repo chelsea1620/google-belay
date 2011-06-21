@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Belay Station</title>
+  <link rel="stylesheet" href="base.css">
+  <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.4.4/jquery.min.js"></script>
+  <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.9/jquery-ui.min.js"></script>
+  <script type="text/javascript" src="ses/whitelist.js"></script>
+  <script type="text/javascript" src="ses/atLeastFreeVarNames.js"></script>
+  <script type="text/javascript" src="ses/WeakMap.js"></script>
+  <script type="text/javascript" src="ses/startSES.js"></script>
+  <script type="text/javascript" src="caps.js"></script>
+  <script type="text/javascript" src="kickoff.js"></script>
+</head>
+<body>
+  <h1><a href="/"><img src="http://www.google.com/intl/en/images/logo_sm.gif" alt="Google"></a> Belay Station <small>for {{ user_nickname }}</small></h1>
+  <ul id="nav">
+    <li>Home</li>
+    <li><a href="help.html">Help</a></li>
+    <li><a href="api.html">API</a></li>
+  </ul>
+  <div id="aux">
+    <!-- Content -->
+    <div id="about">©2011 Google</div>
+  </div>
+  <script type="text/javascript">
+	  foop("{{ station_url }}", $('#aux'));
+  </script>
+</body>

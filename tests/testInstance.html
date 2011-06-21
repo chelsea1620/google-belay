@@ -1,16 +1,17 @@
 <html>
   <head>
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.5.2/jquery.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.5.2/jquery.js"></script>
     <script src="../belay/caps.js"></script>
+    <script src="../belay/windowremote.js"></script>
     <script type="text/javascript">
       var log = function(text) {
         $("<li></li>").text(text).appendTo('#transcript');
       };
       
       $(function(){
-        var channel = new MessageChannel();         log("Constructed channel");
-        var tunnel = new CapTunnel(channel.port1);  log("Constructed tunnel");
-        var server = new CapServer();               log("Constructed server");
+        var openerPort = establishWindowOpenerPort(); log("Constructed port");
+        var tunnel = new CapTunnel(openerPort);       log("Constructed tunnel");
+        var server = new CapServer();                 log("Constructed server");
         tunnel.setLocalResolver(function(instID) {
           return server.publicInterface;
         });
@@ -34,11 +35,9 @@
           if (v == "invokeWithThree") { return invokeWithThreeCap; }
           if (v == "remoteAsync") { return invokeMyAsync; }
           return undefined;
-      });                                         log("Constructed seedCap");
+        });                                         log("Constructed seedCap");
         
-        window.opener.postMessage(
-          { ser: seedCap.serialize(), instID: server.instanceID }, 
-          [channel.port2], '*');                    log("Posted ready message");        
+        tunnel.initializeAsOutpost(server, seedCap)
       });
     </script>
   </head>

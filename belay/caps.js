@@ -408,6 +408,7 @@ var CAP_EXPORTS = (function() {
     this.remoteResolverProxy = function(instID) { return me.sendInterface; };
     this.transactions = {};
     this.txCounter = 1000;
+    this.outpost = undefined;
 
     this.sendInterface = Object.freeze({
       invoke: function(ser, d, s, f) { me.sendInvoke(ser, d, s, f); },
@@ -418,7 +419,24 @@ var CAP_EXPORTS = (function() {
       var message = event.data;
       if (message.op == 'invoke') { me.handleInvoke(message); }
       else if (message.op == 'response') { me.handleResponse(message); }
+      else if (message.op == 'outpost') { me.handleOutpost(message); }
     };
+  };
+
+  CapTunnel.prototype.initializeAsOutpost = function(server, seedCap) {
+    this.sendOutpost(server.instanceID, seedCap.serialize());
+  };
+
+  CapTunnel.prototype.sendOutpost = function(instID, seedSer) {
+    this.port.postMessage({
+      op: 'outpost',
+      instID: instID,
+      seedSer: seedSer
+    });
+  };
+
+  CapTunnel.prototype.handleOutpost = function(message) {
+    this.outpost = message;
   };
 
   CapTunnel.prototype.sendInvoke = function(ser, data, success, failure) {

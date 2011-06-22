@@ -67,7 +67,7 @@ InvokeRunner.prototype.runs = function(data) {
     var success = function(data) {
       me.result = data; me.successCalled = true;
     };
-    me.cap.invoke(data, success, failure);
+    me.cap.post(data, success, failure);
   });
 };
 InvokeRunner.prototype.waits = function() {
@@ -178,11 +178,11 @@ describe('CapServer', function() {
               publicIface.invoke(cap.serialize(),
                   'post', '{"value": "some-value"}',
                   function(data) {
-                    succeeded = true;
-                    result = data;
+                     succeeded = true;
+                     result = data;
                   },
                   function(err) {
-                    failed = true;
+                     failed = true;
                   });});
             waitsFor(function() { return succeeded || failed; },
                      'PublicInterface invoke timeout', 250);
@@ -192,6 +192,70 @@ describe('CapServer', function() {
                     expect(succeeded).toBe(true);
                 });
         });
+  });
+
+  describe('Capability Interface', function() {
+    var fn;
+    var fnCalledWith;
+    var sk, fk;
+    var result;
+    var finished, succeeded, failed;
+    var c1;
+
+    var waitAndExpectResults = function(expectedResult, expectedArgument) {
+      waitsFor(function() { return finished; }, 'cap timeout', 250);
+      runs(function() {
+        expect(succeeded).toBe(true);
+        expect(result).toEqual(expectedResult);
+        expect(fnCalledWith).toBe(expectedArgument);
+      });
+    };
+
+    beforeEach(function() {
+      fn = function(d) {
+        fnCalledWith = d;
+        return '*' + String(d) + '*';
+      };
+      c1 = capServer1.grant(fn);
+
+      fnCalledWith = 'not-yet-called';
+      result = 'no-result-yet';
+      finished = succeeded = failed = false;
+
+      sk = function(r) { result = r; finished = succeeded = true; }
+      fk = function(e) { finsihed = failed = true; }
+    });
+
+    it('should pass no argument to get', function() {
+      c1.get(sk, fk);
+      waitAndExpectResults('*undefined*', undefined);
+    });
+
+    it('should ignore result from put', function() {
+      c1.put(42, sk, fk);
+      waitAndExpectResults(undefined, 42);
+    });
+
+    it('should pass results from post', function() {
+      c1.post(42, sk, fk);
+      waitAndExpectResults('*42*', 42);
+    });
+
+    it('should ignore argument and result for delete', function() {
+      c1.delete(sk, fk);
+      waitAndExpectResults(undefined, undefined);
+    });
+
+    xit('should ignore the argument to get', function() {
+      var failed = false;
+      c1.invoke('get', 42, null,
+          function(err) { failed = true; });
+      waitsFor(function() { return failed; }, 'get timeout', 250);
+      runs(function() { expect(failed).toBe(true); });
+    });
+
+
+
   });
 
   describe('Invocation', function() {
@@ -492,7 +556,7 @@ describe('CapServer', function() {
 
           var c2 = capServer2.restore(s1);
           var checkResult = false;
-          c2.invoke(null, function(result) { checkResult = result; });
+          c2.get(function(result) { checkResult = result; });
 
           waitsFor(function() { return checkResult; },
               'async restore invoke', 250);
@@ -557,7 +621,7 @@ describe('CapServer', function() {
 
           var c3restored = capServer2.restore(s3);
           var checkResult2 = false;
-          c3restored.invoke(null, function(result) { checkResult2 = result; });
+          c3restored.get(function(result) { checkResult2 = result; });
           waitsFor(function() { return checkResult2; },
               'async revive invoke', 250);
           runs(function() { expect(checkResult2).toEqual(500) });
@@ -580,8 +644,7 @@ describe('CapServer', function() {
             var c3restored = capServer2.restore(s3);
             var checkResult2 = false;
             setNewReviver();
-            c3restored.invoke(null,
-                function(result) { checkResult2 = result; });
+            c3restored.get(function(result) { checkResult2 = result; });
             waitsFor(function() { return checkResult2; },
                 'async revive invoke', 250);
             runs(function() { expect(checkResult2).toEqual(500) });

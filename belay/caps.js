@@ -52,12 +52,20 @@ var CAP_EXPORTS = (function() {
   var nullCapID = '00000000-0000-0000-0000-000000000000';
   var nullSer = encodeSerialization(nullInstID, nullCapID);
 
-  var callAsAJAX = function(server, f, data, success, failure) {
+  var callAsAJAX = function(server, method, f, data, success, failure) {
     setTimeout(function() {
       try {
         var response;
-        response = f(server.dataPostProcess(data));
-        if (success) { success(server.dataPreProcess(response)); }
+        if (method == 'put' || method == 'post')
+          response = f(server.dataPostProcess(data));
+        else
+          response = f();
+
+        var result;
+        if (method == 'get' || method == 'post')
+          result = response;
+
+        if (success) { success(server.dataPreProcess(result)); }
       }
       catch (e) {
         if (failure) failure({status: 500, message: 'exception thrown'});
@@ -106,7 +114,7 @@ var CAP_EXPORTS = (function() {
     this.fn = fn;
   };
   ImplFunction.prototype.invoke = function(m, d, s, f) {
-    callAsAJAX(this.server, this.fn, d, s, f);
+    callAsAJAX(this.server, m, this.fn, d, s, f);
   };
   ImplFunction.prototype.invokeSync = function(v) {
     return this.server.dataPreProcess(this.fn(this.server.dataPostProcess(v)));
@@ -165,7 +173,7 @@ var CAP_EXPORTS = (function() {
     var wrappedS = function(result) {
       return s(me.server.dataPreProcess(result));
     };
-    this.inner.invoke(this.server.dataPostProcess(d), wrappedS, f);
+    this.inner.invoke(m, this.server.dataPostProcess(d), wrappedS, f);
   };
   ImplWrap.prototype.invokeSync = function(v) {
     return this.server.dataPreProcess(
@@ -183,7 +191,7 @@ var CAP_EXPORTS = (function() {
     this.ser = ser;
     this.server = server;
   };
-  Capability.prototype.invoke = function(data, success, failure) {
+  Capability.prototype.invoke = function(method, data, success, failure) {
     var me = this;
     var wrappedData = this.server.dataPreProcess(data);
     var wrappedSuccess = function(result) {
@@ -192,8 +200,20 @@ var CAP_EXPORTS = (function() {
       }
       return undefined;
     };
-    this.server.privateInterface.invoke(this.ser, 'post', wrappedData,
+    this.server.privateInterface.invoke(this.ser, method, wrappedData,
                                         wrappedSuccess, failure);
+  };
+  Capability.prototype.get = function(success, failure) {
+    this.invoke('get', undefined, success, failure);
+  };
+  Capability.prototype.put = function(data, success, failure) {
+    this.invoke('put', data, success, failure);
+  };
+  Capability.prototype.post = function(data, success, failure) {
+    this.invoke('post', data, success, failure);
+  };
+  Capability.prototype.delete = function(success, failure) {
+    this.invoke('delete', undefined, success, failure);
   };
   Capability.prototype.invokeSync = function(data) {
     var wrappedData = this.server.dataPreProcess(data);

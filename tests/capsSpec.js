@@ -523,6 +523,11 @@ describe('CapServer', function() {
           var c3 = capServer2.restore(s2);
           mkRunner(c3).runsGetAndExpect(400);
         });
+        
+        it('should restore a URL string', function() {
+          var c1 = capServer1.restore(f400URL);
+          mkRunner(c1).runsGetAndExpect(400);
+        });
 
         it('should restore an async cap', function() {
           var c1 = capServer1.grantAsync(f500);

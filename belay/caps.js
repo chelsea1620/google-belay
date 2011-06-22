@@ -221,7 +221,7 @@ var CAP_EXPORTS = (function() {
       return Object.freeze({
         invoke: function(ser, method, data, success, failure) {
           if (/^https?:/.test(ser)) {
-            return makeAsyncAjax(ser, data, success, failure);
+            return makeAsyncAJAX(ser, data, success, failure);
           }
 
           var instID = decodeInstID(ser);
@@ -350,7 +350,7 @@ var CAP_EXPORTS = (function() {
   CapServer.prototype.setReviver = function(r) { this.reviver = r; };
 
   CapServer.prototype.snapshot = function() {
-    snapshot = {
+    var snapshot = {
       id: this.instanceID,
       map: this.reviveMap
     };

@@ -97,7 +97,7 @@ var CAP_EXPORTS = (function() {
   // == THE FOUR IMPLEMENTATION TYPES ==
 
   var deadImpl = Object.freeze({
-    invoke: function(d, s, f) { errorAsAJAX(d, s, f); },
+    invoke: function(m, d, s, f) { errorAsAJAX(d, s, f); },
     invokeSync: function(v) { return '{}'; }
   });
 
@@ -105,7 +105,7 @@ var CAP_EXPORTS = (function() {
     this.server = server;
     this.fn = fn;
   };
-  ImplFunction.prototype.invoke = function(d, s, f) {
+  ImplFunction.prototype.invoke = function(m, d, s, f) {
     callAsAJAX(this.server, this.fn, d, s, f);
   };
   ImplFunction.prototype.invokeSync = function(v) {
@@ -130,7 +130,7 @@ var CAP_EXPORTS = (function() {
             * { status: Num, and others : serialized<any> }
      -> undef
    */
-  ImplAsyncFunction.prototype.invoke = function(data, s, f) {
+  ImplAsyncFunction.prototype.invoke = function(m, data, s, f) {
     var self = this;
     var serData = self.server.dataPostProcess(data);
     var sHandler = function(result) {
@@ -150,7 +150,7 @@ var CAP_EXPORTS = (function() {
   };
 
   var ImplURL = function(url) { this.url = url; };
-  ImplURL.prototype.invoke = function(d, s, f) {
+  ImplURL.prototype.invoke = function(m, d, s, f) {
      makeAsyncAJAX(this.url, d, s, f);
   };
   ImplURL.prototype.invokeSync = function(v) {
@@ -160,7 +160,7 @@ var CAP_EXPORTS = (function() {
   var ImplWrap = function(server, innerCap) {
     this.server = server;
     this.inner = innerCap; };
-  ImplWrap.prototype.invoke = function(d, s, f) {
+  ImplWrap.prototype.invoke = function(m, d, s, f) {
     var me = this;
     var wrappedS = function(result) {
       return s(me.server.dataPreProcess(result));
@@ -188,11 +188,11 @@ var CAP_EXPORTS = (function() {
     var wrappedData = this.server.dataPreProcess(data);
     var wrappedSuccess = function(result) {
       if (success) {
-  return success(me.server.dataPostProcess(result));
+        return success(me.server.dataPostProcess(result));
       }
       return undefined;
     };
-    this.server.privateInterface.invoke(this.ser, wrappedData,
+    this.server.privateInterface.invoke(this.ser, 'post', wrappedData,
                                         wrappedSuccess, failure);
   };
   Capability.prototype.invokeSync = function(data) {
@@ -221,8 +221,8 @@ var CAP_EXPORTS = (function() {
 
     this.publicInterface = (function(me) {
       return Object.freeze({
-        invoke: function(ser, data, success, failure) {
-          me._getImpl(ser).invoke(data, success, failure);
+        invoke: function(ser, method, data, success, failure) {
+          me._getImpl(ser).invoke(method, data, success, failure);
         },
         invokeSync: function(ser, data) {
           return me._getImpl(ser).invokeSync(data);
@@ -232,24 +232,24 @@ var CAP_EXPORTS = (function() {
 
     this.privateInterface = (function(me) {
       return Object.freeze({
-        invoke: function(ser, data, success, failure) {
+        invoke: function(ser, method, data, success, failure) {
           if (/^https?:/.test(ser)) {
             return makeAsyncAjax(ser, data, success, failure);
           }
 
           var instID = decodeInstID(ser);
           if (instID == me.instanceID) {
-            me._getImpl(ser).invoke(data, success, failure);
+            me._getImpl(ser).invoke(method, data, success, failure);
             return;
           } else {
             var publicInterface = me.resolver(instID);
             if (publicInterface) {
-              publicInterface.invoke(ser, data, success, failure);
+              publicInterface.invoke(ser, method, data, success, failure);
               return;
             }
           }
 
-          return deadImpl.invoke(data, success, failure);
+          return deadImpl.invoke(method, data, success, failure);
         },
         invokeSync: function(ser, data) {
           if (/^https?:/.test(ser)) {
@@ -430,7 +430,7 @@ var CAP_EXPORTS = (function() {
     this.outpost = undefined;
 
     this.sendInterface = Object.freeze({
-      invoke: function(ser, d, s, f) { me.sendInvoke(ser, d, s, f); },
+      invoke: function(ser, m, d, s, f) { me.sendInvoke(ser, m, d, s, f); },
       invokeSync: function(ser, d) { throw 'invokeSync through a tunnel'; }
       });
 
@@ -458,13 +458,15 @@ var CAP_EXPORTS = (function() {
     this.outpost = message;
   };
 
-  CapTunnel.prototype.sendInvoke = function(ser, data, success, failure) {
+  CapTunnel.prototype.sendInvoke = function(ser, method, data, success, failure)
+  {
     var txID = this.txCounter++;
     this.transactions[txID] = { success: success, failure: failure };
     this.port.postMessage({
       op: 'invoke',
       txID: txID,
       ser: ser,
+      method: method,
       data: this.toWire(data)
     });
     // TODO(mzero): something with a timeout
@@ -474,7 +476,7 @@ var CAP_EXPORTS = (function() {
     var iface = this.localResolver(decodeInstID(message.ser));
     if (iface) {
       var me = this;
-      iface.invoke(message.ser, this.fromWire(message.data),
+      iface.invoke(message.ser, message.method, this.fromWire(message.data),
           function(data) { me.sendResponse(message.txID, 'success', data); },
           function(err) { me.sendResponse(message.txID, 'failure', err); });
     } else {

@@ -265,7 +265,7 @@ describe('CapServer', function() {
     });
 
     it('should ignore argument and result for delete', function() {
-      c1.delete(sk, fk);
+      c1.remove(sk, fk);
       waitAndExpectResults(undefined, undefined);
     });
 

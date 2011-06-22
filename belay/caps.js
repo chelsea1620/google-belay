@@ -187,7 +187,7 @@ var CAP_EXPORTS = (function() {
   Capability.prototype.post = function(data, success, failure) {
     this.invoke('post', data, success, failure);
   };
-  Capability.prototype.delete = function(success, failure) {
+  Capability.prototype.remove = function(success, failure) {
     this.invoke('delete', undefined, success, failure);
   };
   Capability.prototype.serialize = function() {

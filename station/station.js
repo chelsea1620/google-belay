@@ -43,6 +43,15 @@ var setupDeskSizes = function(top) {
 };
 
 //
+// Testing
+//
+var setupTestButton = function(top, f) {
+  var controls = top.find('#belay-controls');
+  controls.append('<a href="#">test</a>');
+  controls.find(':last-child').click(f);
+};
+
+//
 // Instance Data
 //
 var instances = {};
@@ -135,6 +144,7 @@ var initialize = function(instanceCaps) {
   desk.find('.belay-container').remove(); // remove the rest
 
   setupDeskSizes(top);
+  setupTestButton(top, function() { os.alert('test!'); });
 
   var nextLeft = 100;
   var nextTop = 50;

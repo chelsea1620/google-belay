@@ -19,14 +19,14 @@
         
         var invokeWithThreeCap = server.grant(function(v) {
           log("invokeWithThree invoking " + v);
-          v.invoke(3);
+          v.post(3);
           return 32;
         });
 
         var invokeMyAsync = 
           server.grantAsync(function(remoteReceiveCap, sk, fk) {
           setTimeout(function() { 
-            remoteReceiveCap.invoke(999, sk, fk); }, 0);
+            remoteReceiveCap.post(999, sk, fk); }, 0);
         });
         
         var seedCap = server.grant(function(v) { 

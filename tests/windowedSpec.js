@@ -52,7 +52,7 @@ describe('CapTunnels', function() {
       var done = false;
       runs(function() {
         var remoteSeedCap = localServer1.restore(tunnel.outpost.seedSer);
-        remoteSeedCap.invoke('answer',
+        remoteSeedCap.post('answer',
           function(data) { result = data; done = true; },
           function(err) { done = true; });
       });
@@ -64,7 +64,7 @@ describe('CapTunnels', function() {
       var invokeWithThreeCap;
       runs(function() {
         var remoteSeedCap = localServer1.restore(tunnel.outpost.seedSer);
-        remoteSeedCap.invoke('invokeWithThree',
+        remoteSeedCap.post('invokeWithThree',
           function(data) { invokeWithThreeCap = data; },
           function(err) { });
       });
@@ -81,7 +81,7 @@ describe('CapTunnels', function() {
           receivedMessage = v;
           return v + 42;
         });
-        invokeWithThreeCap.invoke(receiveCap,
+        invokeWithThreeCap.post(receiveCap,
           function(result) {
              succeeded = true;
              threeResult = result;
@@ -110,7 +110,7 @@ describe('CapTunnels', function() {
       var remoteAsyncCap;
       runs(function() {
         var remoteSeedCap = localServer1.restore(tunnel.outpost.seedSer);
-        remoteSeedCap.invoke('remoteAsync',
+        remoteSeedCap.post('remoteAsync',
           function(data) { remoteAsyncCap = data; },
           function(err) { });
       });
@@ -126,7 +126,7 @@ describe('CapTunnels', function() {
           messageFromRemote = [v];
           return v + 42;
         });
-        remoteAsyncCap.invoke(receiveCap,
+        remoteAsyncCap.post(receiveCap,
                   function(v) { asyncResult = [v]; },
             function(result) { });
       });

@@ -55,7 +55,7 @@ var InvokeRunner = function(cap) {
   this.failureCalled = this.successCalled = false;
   this.result = 'something funky';
 };
-InvokeRunner.prototype.runs = function(data) {
+InvokeRunner.prototype.runsInvoke = function(method, data) {
   var me = this;
   runs(function() {
     me.failureStatus = undefined;
@@ -67,37 +67,59 @@ InvokeRunner.prototype.runs = function(data) {
     var success = function(data) {
       me.result = data; me.successCalled = true;
     };
-    me.cap.invoke(data, success, failure);
+    me.cap.invoke(method, data, success, failure);
   });
-};
-InvokeRunner.prototype.waits = function() {
-  var me = this;
   waitsFor(function() { return me.failureCalled || me.successCalled; },
       'invoke timeout', 250);
 };
-InvokeRunner.prototype.expectSuccess = function(resultChecker) {
-  expect(this.failureCalled).toBe(false);
-  expect(this.successCalled).toBe(true);
-  resultChecker(this.result);
+InvokeRunner.prototype.runsGet = function() {
+    this.runsInvoke('get', undefined);
 };
-InvokeRunner.prototype.expectFailure = function() {
-  expect(this.failureCalled).toBe(true);
-  expect(this.successCalled).toBe(false);
-  expect(typeof this.failureStatus).toEqual('number');
+InvokeRunner.prototype.runsPut = function(data) {
+    this.runsInvoke('put', data);
 };
-InvokeRunner.prototype.runsAndWaits = function(data) {
-  this.runs(data);
-  this.waits();
+InvokeRunner.prototype.runsPost = function(data) {
+    this.runsInvoke('post', data);
 };
+InvokeRunner.prototype.runsDelete = function() {
+    this.runsInvoke('delete', undefined);
+};
+
 InvokeRunner.prototype.runsExpectSuccess = function(resultChecker) {
   var me = this;
-  runs(function() { me.expectSuccess(resultChecker); });
+  runs(function() {
+    expect(me.failureCalled).toBe(false);
+    expect(me.successCalled).toBe(true);
+    resultChecker(me.result);
+  });
 };
 InvokeRunner.prototype.runsExpectFailure = function() {
   var me = this;
-  runs(function() { me.expectFailure(); });
+  runs(function() {
+    expect(me.failureCalled).toBe(true);
+    expect(me.successCalled).toBe(false);
+    expect(typeof me.failureStatus).toEqual('number');
+  });
 };
 
+InvokeRunner.prototype.runsGetAndExpect = function(expectedResult) {
+  this.runsGet();
+  this.runsExpectSuccess(function(result) {
+      expect(result).toEqual(expectedResult);
+  });
+};
+InvokeRunner.prototype.runsGetAndExpectFailure = function() {
+  this.runsGet();
+  this.runsExpectFailure();
+};
+InvokeRunner.prototype.runsPostAndExpect = function(data, expectedResult) {
+  this.runsPost(data);
+  this.runsExpectSuccess(function(result) {
+      expect(result).toEqual(expectedResult);
+  });
+};
+
+var mkRunner = function(c) { return new InvokeRunner(c); };
 
 
 jQuery = {};
@@ -125,38 +147,39 @@ describe('CapServer', function() {
   });
 
   describe('Basic Life Cycle', function() {
-    var f, c1;
+    var f, c1, i1;
     beforeEach(function() {
       f = function() { return 42; };
       c1 = capServer1.grant(f);
+      i1 = new InvokeRunner(c1);
     });
 
     it('should grant', function() {
       expect(c1).not.toBeNull();
     });
 
-    it('should invokeSync', function() {
-      var r1 = c1.invokeSync();
-      expect(r1).toBe(42);
+    it('should invoke', function() {
+      i1.runsGetAndExpect(42);
     });
 
-    it('should revoke, then not invokeSync', function() {
+    it('should revoke, then not invoke', function() {
       capServer1.revoke(c1.serialize());
-      var r1 = c1.invokeSync();
-      expect(r1).not.toBeDefined();
+      i1.runsGetAndExpectFailure();
     });
 
     it('should create a dead cap', function() {
       var d = capServer1.grant(null);
-      expect(d.invokeSync()).not.toBeDefined();
+      var i2 = new InvokeRunner(d);
+      i2.runsGetAndExpectFailure();
     });
 
     it('should create distinct caps to same function', function() {
       var c2 = capServer1.grant(f);
+      var i2 = new InvokeRunner(c2);
       expect(c2).not.toBe(c1);
       expect(c2.serialize()).not.toEqual(c1.serialize());
       capServer1.revoke(c1.serialize());
-      expect(c2.invokeSync()).toBe(42);
+      i2.runsGetAndExpect(42);
     });
   });
 
@@ -175,14 +198,15 @@ describe('CapServer', function() {
             cap = capServer1.grant(invocableFunc);
 
             runs(function() {
-              publicIface.invoke(cap.serialize(), '{"value": "some-value"}',
-                                 function(data) {
-                                     succeeded = true;
-                                     result = data;
-                                 },
-                                 function(err) {
-                                     failed = true;
-                                 });});
+              publicIface.invoke(cap.serialize(),
+                  'post', '{"value": "some-value"}',
+                  function(data) {
+                     succeeded = true;
+                     result = data;
+                  },
+                  function(err) {
+                     failed = true;
+                  });});
             waitsFor(function() { return succeeded || failed; },
                      'PublicInterface invoke timeout', 250);
             runs(function() {
@@ -191,6 +215,70 @@ describe('CapServer', function() {
                     expect(succeeded).toBe(true);
                 });
         });
+  });
+
+  describe('Capability Interface', function() {
+    var fn;
+    var fnCalledWith;
+    var sk, fk;
+    var result;
+    var finished, succeeded, failed;
+    var c1;
+
+    var waitAndExpectResults = function(expectedResult, expectedArgument) {
+      waitsFor(function() { return finished; }, 'cap timeout', 250);
+      runs(function() {
+        expect(succeeded).toBe(true);
+        expect(result).toEqual(expectedResult);
+        expect(fnCalledWith).toBe(expectedArgument);
+      });
+    };
+
+    beforeEach(function() {
+      fn = function(d) {
+        fnCalledWith = d;
+        return '*' + String(d) + '*';
+      };
+      c1 = capServer1.grant(fn);
+
+      fnCalledWith = 'not-yet-called';
+      result = 'no-result-yet';
+      finished = succeeded = failed = false;
+
+      sk = function(r) { result = r; finished = succeeded = true; }
+      fk = function(e) { finsihed = failed = true; }
+    });
+
+    it('should pass no argument to get', function() {
+      c1.get(sk, fk);
+      waitAndExpectResults('*undefined*', undefined);
+    });
+
+    it('should ignore result from put', function() {
+      c1.put(42, sk, fk);
+      waitAndExpectResults(undefined, 42);
+    });
+
+    it('should pass results from post', function() {
+      c1.post(42, sk, fk);
+      waitAndExpectResults('*42*', 42);
+    });
+
+    it('should ignore argument and result for delete', function() {
+      c1.delete(sk, fk);
+      waitAndExpectResults(undefined, undefined);
+    });
+
+    xit('should ignore the argument to get', function() {
+      var failed = false;
+      c1.invoke('get', 42, null,
+          function(err) { failed = true; });
+      waitsFor(function() { return failed; }, 'get timeout', 250);
+      runs(function() { expect(failed).toBe(true); });
+    });
+
+
+
   });
 
   describe('Invocation', function() {
@@ -237,38 +325,14 @@ describe('CapServer', function() {
           c1 = capServer1.grant(makeItem());
         });
 
-        it('should do synchronous calls', function() {
-          var rGet0 = c1.invokeSync();
-          var rSet1 = c1.invokeSync(7);
-          var rGet1 = c1.invokeSync();
-          var rSet2 = c1.invokeSync(11);
-          var rGet2 = c1.invokeSync();
-
-          expect(rGet0).toBe('#0');
-          expect(rSet1).toBe('#7');
-          expect(rGet1).toBe('#7');
-          expect(rSet2).toBe('#11');
-          expect(rGet2).toBe('#11');
-        });
-
-        it('should do asynchronous calls (grant)', function() {
+        it('should do invoke (grant)', function() {
           var invoker = new InvokeRunner(c1);
 
-          invoker.runsAndWaits();
-          invoker.runsExpectSuccess(
-            function(result) { expect(result).toBe('#0'); });
-
-          invoker.runsAndWaits(7);
-          invoker.runsExpectSuccess(
-            function(result) { expect(result).toBe('#7'); });
-
-          invoker.runsAndWaits(11);
-          invoker.runsExpectSuccess(
-            function(result) { expect(result).toBe('#11'); });
-
-          invoker.runsAndWaits();
-          invoker.runsExpectSuccess(
-            function(result) { expect(result).toBe('#11'); });
+          invoker.runsGetAndExpect('#0');
+          invoker.runsPostAndExpect(7, '#7');
+          invoker.runsGetAndExpect('#7');
+          invoker.runsPostAndExpect(11, '#11');
+          invoker.runsGetAndExpect('#11');
         });
       });
     };
@@ -283,26 +347,15 @@ describe('CapServer', function() {
         it('should do asynchronous calls (grantAsync)', function() {
           var invoker = new InvokeRunner(c1);
 
-          invoker.runsAndWaits();
-          invoker.runsExpectSuccess(
-            function(result) { expect(result).toBe('#0'); });
+          invoker.runsGetAndExpect('#0');
+          invoker.runsPostAndExpect(7, '#7');
+          invoker.runsPostAndExpect(11, '#11');
+          invoker.runsGetAndExpect('#11');
 
-          invoker.runsAndWaits(7);
-          invoker.runsExpectSuccess(
-            function(result) { expect(result).toBe('#7'); });
-
-          invoker.runsAndWaits(11);
-          invoker.runsExpectSuccess(
-            function(result) { expect(result).toBe('#11'); });
-
-          invoker.runsAndWaits();
-          invoker.runsExpectSuccess(
-            function(result) { expect(result).toBe('#11'); });
-
-          invoker.runsAndWaits('error');
+          invoker.runsPost('error');
           invoker.runsExpectFailure();
 
-          invoker.runsAndWaits('exception');
+          invoker.runsPost('exception');
           invoker.runsExpectFailure();
 
         });
@@ -337,26 +390,16 @@ describe('CapServer', function() {
         deadCap = capServer1.grant(null);
       });
 
-      it('should do synchronous calls', function() {
-        var rGet0 = deadCap.invokeSync();
-        var rSet1 = deadCap.invokeSync(7);
-        var rSet2 = deadCap.invokeSync(11);
-
-        expect(rGet0).not.toBeDefined();
-        expect(rSet1).not.toBeDefined();
-        expect(rSet2).not.toBeDefined();
-      });
-
-      it('should do asynchronous calls', function() {
+      it('should invoke and fail', function() {
         var invoker = new InvokeRunner(deadCap);
 
-        invoker.runsAndWaits();
+        invoker.runsGet();
         invoker.runsExpectFailure();
 
-        invoker.runsAndWaits(7);
+        invoker.runsPost(7);
         invoker.runsExpectFailure();
 
-        invoker.runsAndWaits(11);
+        invoker.runsPost(11);
         invoker.runsExpectFailure();
       });
     });
@@ -370,13 +413,13 @@ describe('CapServer', function() {
       it('should do asynchronous calls', function() {
         var invoker = new InvokeRunner(deadCap);
 
-        invoker.runsAndWaits();
+        invoker.runsGet();
         invoker.runsExpectFailure();
 
-        invoker.runsAndWaits(7);
+        invoker.runsPost(7);
         invoker.runsExpectFailure();
 
-        invoker.runsAndWaits(11);
+        invoker.runsPost(11);
         invoker.runsExpectFailure();
       });
     });
@@ -393,25 +436,20 @@ describe('CapServer', function() {
       expect(w1).not.toBeNull();
     });
 
-    it('should invokeSync via the wrapper', function() {
-      var r1 = w1.invokeSync();
-      expect(r1).toBe(99);
+    it('should invoke via the wrapper', function() {
+      mkRunner(w1).runsGetAndExpect(99);
     });
 
     it('should be revokable at the wrapper', function() {
       capServer2.revoke(w1.serialize());
-      var r1 = c1.invokeSync();
-      var r2 = w1.invokeSync();
-      expect(r1).toBe(99);
-      expect(r2).not.toBeDefined();
+      mkRunner(c1).runsGetAndExpect(99);
+      mkRunner(w1).runsGetAndExpectFailure();
     });
 
     it('should be revokable at the source', function() {
       capServer1.revoke(c1.serialize());
-      var r1 = c1.invokeSync();
-      var r2 = w1.invokeSync();
-      expect(r1).not.toBeDefined();
-      expect(r2).not.toBeDefined();
+      mkRunner(c1).runsGetAndExpectFailure();
+      mkRunner(w1).runsGetAndExpectFailure();
     });
   });
 
@@ -420,23 +458,24 @@ describe('CapServer', function() {
       var c11 = capServer1.grant(function() { return 11; });
       var c12 = capServer1.grant(function() { return 12; });
       var c21 = capServer2.grant(function() { return 21; });
-      expect(c11.invokeSync()).toBe(11);
-      expect(c12.invokeSync()).toBe(12);
-      expect(c21.invokeSync()).toBe(21);
-      capServer1.revokeAll();
-      expect(c11.invokeSync()).not.toBeDefined();
-      expect(c12.invokeSync()).not.toBeDefined();
-      expect(c21.invokeSync()).toBe(21);
+
+      mkRunner(c11).runsGetAndExpect(11);
+      mkRunner(c12).runsGetAndExpect(12);
+      mkRunner(c21).runsGetAndExpect(21);
+      runs(function() { capServer1.revokeAll(); });
+      mkRunner(c11).runsGetAndExpectFailure();
+      mkRunner(c12).runsGetAndExpectFailure();
+      mkRunner(c21).runsGetAndExpect(21);
     });
 
     it('should be able to revokeAll a wrapped cap', function() {
       var c1 = capServer1.grant(function() { return 42; });
       var c2 = capServer2.wrap(c1);
-      expect(c1.invokeSync()).toBe(42);
-      expect(c2.invokeSync()).toBe(42);
-      capServer2.revokeAll();
-      expect(c1.invokeSync()).toBe(42);
-      expect(c2.invokeSync()).not.toBeDefined();
+      mkRunner(c1).runsGetAndExpect(42);
+      mkRunner(c2).runsGetAndExpect(42);
+      runs(function() { capServer2.revokeAll(); });
+      mkRunner(c1).runsGetAndExpect(42);
+      mkRunner(c2).runsGetAndExpectFailure();
     });
   });
 
@@ -474,7 +513,7 @@ describe('CapServer', function() {
           expect(s1).toBeTruthy();
 
           var c2 = capServer2.restore(s1);
-          expect(c2.invokeSync()).toEqual(100);
+          mkRunner(c2).runsGetAndExpect(100);
         });
 
         it('should restore a URL cap', function() {
@@ -482,7 +521,7 @@ describe('CapServer', function() {
           var s2 = c2.serialize();
 
           var c3 = capServer2.restore(s2);
-          expect(c3.invokeSync()).toEqual(400);
+          mkRunner(c3).runsGetAndExpect(400);
         });
 
         it('should restore an async cap', function() {
@@ -491,7 +530,7 @@ describe('CapServer', function() {
 
           var c2 = capServer2.restore(s1);
           var checkResult = false;
-          c2.invoke(null, function(result) { checkResult = result; });
+          c2.get(function(result) { checkResult = result; });
 
           waitsFor(function() { return checkResult; },
               'async restore invoke', 250);
@@ -504,7 +543,7 @@ describe('CapServer', function() {
           capServer1.revoke(c1.serialize());
 
           var c2 = capServer1.restore(s1);
-          expect(c2.invokeSync()).not.toBeDefined();
+          mkRunner(c2).runsGetAndExpectFailure();
         });
 
       });
@@ -523,8 +562,8 @@ describe('CapServer', function() {
           capServer1.revoke(s2);
           snapshot = capServer1.snapshot();
           capServer1.revokeAll();
-          expect(c1.invokeSync()).not.toBeDefined();
-          expect(c4.invokeSync()).not.toBeDefined();
+          mkRunner(c1).runsGetAndExpectFailure();
+          mkRunner(c4).runsGetAndExpectFailure();
         });
 
         var makeNewServer = function() {
@@ -544,10 +583,10 @@ describe('CapServer', function() {
           makeNewServer();
           setNewReviver();
           var c1restored = capServer2.restore(s1);
-          expect(c1restored.invokeSync()).toEqual(300);
-
           var c4restored = capServer2.restore(s4);
-          expect(c4restored.invokeSync()).toEqual(400);
+
+          mkRunner(c1restored).runsGetAndExpect(300);
+          mkRunner(c4restored).runsGetAndExpect(400);
         });
 
         it('should revive async caps after instance restart', function() {
@@ -556,7 +595,8 @@ describe('CapServer', function() {
 
           var c3restored = capServer2.restore(s3);
           var checkResult2 = false;
-          c3restored.invoke(null, function(result) { checkResult2 = result; });
+
+          c3restored.get(function(result) { checkResult2 = result; });
           waitsFor(function() { return checkResult2; },
               'async revive invoke', 250);
           runs(function() { expect(checkResult2).toEqual(500) });
@@ -566,11 +606,11 @@ describe('CapServer', function() {
           makeNewServer();
           var c1restored = capServer2.restore(s1);
           var c4restored = capServer2.restore(s4);
-          expect(c1restored.invokeSync()).not.toBeDefined();
-          expect(c4restored.invokeSync()).not.toBeDefined();
-          setNewReviver();
-          expect(c1restored.invokeSync()).toEqual(300);
-          expect(c4restored.invokeSync()).toEqual(400);
+          mkRunner(c1restored).runsGetAndExpectFailure();
+          mkRunner(c4restored).runsGetAndExpectFailure();
+          runs(function() { setNewReviver(); });
+          mkRunner(c1restored).runsGetAndExpect(300);
+          mkRunner(c4restored).runsGetAndExpect(400);
         });
 
         it('should restore an async cap, even before the reviver is set',
@@ -579,20 +619,21 @@ describe('CapServer', function() {
             var c3restored = capServer2.restore(s3);
             var checkResult2 = false;
             setNewReviver();
-            c3restored.invoke(null,
-                function(result) { checkResult2 = result; });
+            c3restored.get(function(result) { checkResult2 = result; });
             waitsFor(function() { return checkResult2; },
                 'async revive invoke', 250);
             runs(function() { expect(checkResult2).toEqual(500) });
         });
 
-        xit('should restore a cap, even before the instance is restarted',
+        it('should restore a cap, even before the instance is restarted',
             function() {
           var c1restored = capServer2.restore(s1);
-          expect(c1restored.invokeSync()).not.toBeDefined();
-          makeNewServer();
-          setNewReviver();
-          expect(c1restored.invokeSync()).toEqual(300);
+          mkRunner(c1restored).runsGetAndExpectFailure();
+          runs(function() {
+            makeNewServer();
+            setNewReviver();
+          });
+          mkRunner(c1restored).runsGetAndExpect(300);
         });
 
         it('should restore a revoked cap as dead after instance restart',
@@ -600,7 +641,7 @@ describe('CapServer', function() {
           makeNewServer();
           setNewReviver();
           var c2restored = capServer2.restore(s2);
-          expect(c2restored.invokeSync()).not.toBeDefined();
+          mkRunner(c2restored).runsGetAndExpectFailure();
         });
       });
 
@@ -610,15 +651,15 @@ describe('CapServer', function() {
           var s1 = c1.serialize();
           var capServer3 = new CapServer();
           var c1restored = capServer3.restore(s1);
-          expect(c1restored.invokeSync()).not.toBeDefined();
+          mkRunner(c1restored).runsGetAndExpectFailure();
         });
 
         it('should restore invalid serializations as dead caps', function() {
           var c1 = capServer1.restore('');
-          expect(c1.invokeSync()).not.toBeDefined();
-
           var c2 = capServer1.restore('asdf');
-          expect(c2.invokeSync()).not.toBeDefined();
+
+          mkRunner(c1).runsGetAndExpectFailure();
+          mkRunner(c2).runsGetAndExpectFailure();
         });
       });
     });
@@ -676,8 +717,7 @@ describe('CapServer', function() {
         var b = roundTrip(a);
         expect(b.name).toEqual(a.name);
         expect(b.cap.serialize()).toEqual(a.cap.serialize());
-        var r = b.cap.invokeSync();
-        expect(r).toEqual(42);
+        mkRunner(b.cap).runsGetAndExpect(42);
       });
 
       it('should pass a capability', function() {
@@ -700,8 +740,7 @@ describe('CapServer', function() {
         var e = capServer2.dataPostProcess(d);
         expect(e.name).toEqual(a.name);
         expect(e.cap.serialize()).toEqual(a.cap.serialize());
-        r = e.cap.invokeSync();
-        expect(r).toEqual(42);
+        mkRunner(e.cap).runsGetAndExpect(42);
       });
     });
   });

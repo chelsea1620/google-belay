@@ -90,23 +90,10 @@ var CAP_EXPORTS = (function() {
                 }});
   };
 
-  var makeSyncAJAX = function(url, method, data) {
-    var resp;
-    jQuery.ajax({
-      url: url,
-      type: method,
-      data: data,
-      async: false,
-      success: function(v) { resp = v; }
-    });
-    return resp;
-  };
-
   // == THE FOUR IMPLEMENTATION TYPES ==
 
   var deadImpl = Object.freeze({
-    invoke: function(m, d, s, f) { errorAsAJAX(d, s, f); },
-    invokeSync: function(v) { return '{}'; }
+    invoke: function(m, d, s, f) { errorAsAJAX(d, s, f); }
   });
 
   var ImplFunction = function(server, fn) {
@@ -116,10 +103,6 @@ var CAP_EXPORTS = (function() {
   ImplFunction.prototype.invoke = function(m, d, s, f) {
     callAsAJAX(this.server, m, this.fn, d, s, f);
   };
-  ImplFunction.prototype.invokeSync = function(v) {
-    return this.server.dataPreProcess(this.fn(this.server.dataPostProcess(v)));
-  };
-
 
   /* constructor : CapServer
                  * (   'a:data
@@ -161,9 +144,6 @@ var CAP_EXPORTS = (function() {
   ImplURL.prototype.invoke = function(m, d, s, f) {
      makeAsyncAJAX(this.url, d, s, f);
   };
-  ImplURL.prototype.invokeSync = function(v) {
-    return makeSyncAJAX(this.url, 'POST', v);
-  };
 
   var ImplWrap = function(server, innerCap) {
     this.server = server;
@@ -175,11 +155,6 @@ var CAP_EXPORTS = (function() {
     };
     this.inner.invoke(m, this.server.dataPostProcess(d), wrappedS, f);
   };
-  ImplWrap.prototype.invokeSync = function(v) {
-    return this.server.dataPreProcess(
-        this.inner.invokeSync(this.server.dataPostProcess(v)));
-  };
-
 
 
 
@@ -215,11 +190,6 @@ var CAP_EXPORTS = (function() {
   Capability.prototype.delete = function(success, failure) {
     this.invoke('delete', undefined, success, failure);
   };
-  Capability.prototype.invokeSync = function(data) {
-    var wrappedData = this.server.dataPreProcess(data);
-    var result = this.server.privateInterface.invokeSync(this.ser, wrappedData);
-    return this.server.dataPostProcess(result);
-  };
   Capability.prototype.serialize = function() {
     return this.ser;
   };
@@ -243,9 +213,6 @@ var CAP_EXPORTS = (function() {
       return Object.freeze({
         invoke: function(ser, method, data, success, failure) {
           me._getImpl(ser).invoke(method, data, success, failure);
-        },
-        invokeSync: function(ser, data) {
-          return me._getImpl(ser).invokeSync(data);
         }
       });
     })(this);
@@ -270,22 +237,6 @@ var CAP_EXPORTS = (function() {
           }
 
           return deadImpl.invoke(method, data, success, failure);
-        },
-        invokeSync: function(ser, data) {
-          if (/^https?:/.test(ser)) {
-            return makeSyncAjax(ser, data);
-          }
-          var instID = decodeInstID(ser);
-          if (instID == me.instanceID) {
-            return me._getImpl(ser).invokeSync(data);
-          } else {
-            var publicInterface = me.resolver(instID);
-            if (publicInterface) {
-              return publicInterface.invokeSync(ser, data);
-            }
-          }
-
-          return deadImpl.invokeSync(data);
         }
       });
     })(this);
@@ -450,9 +401,8 @@ var CAP_EXPORTS = (function() {
     this.outpost = undefined;
 
     this.sendInterface = Object.freeze({
-      invoke: function(ser, m, d, s, f) { me.sendInvoke(ser, m, d, s, f); },
-      invokeSync: function(ser, d) { throw 'invokeSync through a tunnel'; }
-      });
+      invoke: function(ser, m, d, s, f) { me.sendInvoke(ser, m, d, s, f); }
+    });
 
     port.onmessage = function(event) {
       var message = event.data;

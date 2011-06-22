@@ -67,16 +67,16 @@ var CAP_EXPORTS = (function() {
   // == IMPLEMENTATIONS ==
 
   var badRequest = Object.freeze(
-      {status: 400, message: "bad request"});
+      {status: 400, message: 'bad request'});
   var notFound = Object.freeze(
-      {status: 404, message: "not found"});
+      {status: 404, message: 'not found'});
   var methodNotAllowed = Object.freeze(
-      {status: 405, message: "method not allowed"});
+      {status: 405, message: 'method not allowed'});
   var internalServerError = Object.freeze(
-      {status: 500, message: "internal server error"});
+      {status: 500, message: 'internal server error'});
 
   var deadImpl = Object.freeze({
-    invoke: function(method, d, sk, fk) { fk(notFound); },
+    invoke: function(method, d, sk, fk) { fk(notFound); }
   });
 
   var ImplHandler = function(server, handler) {
@@ -85,14 +85,14 @@ var CAP_EXPORTS = (function() {
   };
   ImplHandler.prototype.invoke = function(method, data, sk, fk) {
     data = this.server.dataPostProcess(data);
-    
+
     if (method == 'get' || method == 'delete') {
       if (data !== undefined) {
         fk(badRequest);
         return;
       }
     }
-  
+
     var skk;
     if (method == 'put' || method == 'delete') {
       skk = function(result) {
@@ -106,16 +106,16 @@ var CAP_EXPORTS = (function() {
         sk(server.dataPreProcess(result));
       }
     }
-  
+
     try {
       var h = this.handler;
-      if      (method == 'get'    && h.get)     h.get(skk, fk);
-      else if (method == 'put'    && h.put)     h.put(data, skk, fk);
-      else if (method == 'post'   && h.post)    h.post(data, skk, fk);
-      else if (method == 'delete' && h.remove)  h.remove(skk, fk);
-      else                                      fk(methodNotAllowed);
+      if (method == 'get' && h.get) h.get(skk, fk);
+      else if (method == 'put' && h.put) h.put(data, skk, fk);
+      else if (method == 'post' && h.post) h.post(data, skk, fk);
+      else if (method == 'delete' && h.remove) h.remove(skk, fk);
+      else fk(methodNotAllowed);
     }
-    catch(e) {
+    catch (e) {
       fk(internalServerError);
     }
   };
@@ -306,32 +306,32 @@ var CAP_EXPORTS = (function() {
 
   CapServer.prototype.buildSyncHandler = function(h) {
     ah = {};
-    if (h.get)    ah.get =    function(sk, fk)    { sk(h.get()); };
-    if (h.put)    ah.put =    function(d, sk, fk) { sk(h.put(d)); };
-    if (h.post)   ah.post =   function(d, sk, fk) { sk(h.post(d)); };
+    if (h.get) ah.get = function(sk, fk)    { sk(h.get()); };
+    if (h.put) ah.put = function(d, sk, fk) { sk(h.put(d)); };
+    if (h.post) ah.post = function(d, sk, fk) { sk(h.post(d)); };
     if (h.remove) ah.remove = function(sk, fk)    { sk(h.remove()); };
     return new ImplHandler(this, ah);
   };
 
   CapServer.prototype.buildSyncFunction = function(f) {
     return new ImplHandler(this, {
-      get:    function(sk, fk)    { sk(f()); },
-      put:    function(d, sk, fk) { sk(f(d)); },
-      post:   function(d, sk, fk) { sk(f(d)); },
+      get: function(sk, fk)    { sk(f()); },
+      put: function(d, sk, fk) { sk(f(d)); },
+      post: function(d, sk, fk) { sk(f(d)); }
     });
   };
 
   CapServer.prototype.buildAsyncFunction = function(f) {
     return new ImplHandler(this, {
-      get:    function(sk, fk)    { f(undefined, sk, fk); },
-      put:    function(d, sk, fk) { f(d, sk, fk); },
-      post:   function(d, sk, fk) { f(d, sk, fk); },
+      get: function(sk, fk)    { f(undefined, sk, fk); },
+      put: function(d, sk, fk) { f(d, sk, fk); },
+      post: function(d, sk, fk) { f(d, sk, fk); }
     });
   };
 
   CapServer.prototype.buildFunc = CapServer.prototype.buildSyncFunction;
   CapServer.prototype.buildAsyncFunc = CapServer.prototype.buildAsyncFunction;
-  
+
   CapServer.prototype.buildURL = function(url) {
     if (typeof url !== 'string') { return deadImpl; }
     return new ImplURL(url);

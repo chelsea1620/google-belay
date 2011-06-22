@@ -235,7 +235,7 @@ describe('CapServer', function() {
         fnCalledWith = d;
          // no return, called with put
       });
-      
+
       fnCalledWith = 'not-yet-called';
     });
 
@@ -250,27 +250,27 @@ describe('CapServer', function() {
     });
 
     it('should fail on return from put', function() {
-      var r = mkRunner(c1)
+      var r = mkRunner(c1);
       r.runsPut(42);
       r.runsExpectFailure();
       runs(function() { expect(fnCalledWith).toEqual(42); });
     });
 
     it('should pass results from post', function() {
-      var r = mkRunner(c1)
+      var r = mkRunner(c1);
       r.runsPost(42);
       r.runsExpectSuccess(function(d) { expect(d).toEqual('*42*'); });
       runs(function() { expect(fnCalledWith).toEqual(42); });
     });
 
     it('should fail on delete', function() {
-      var r = mkRunner(c1)
+      var r = mkRunner(c1);
       r.runsDelete();
       r.runsExpectFailure();
     });
 
     it('should ignore the argument to get', function() {
-      var r = mkRunner(c1)
+      var r = mkRunner(c1);
       r.runsInvoke('get', 42);
       r.runsExpectFailure();
       runs(function() { expect(fnCalledWith).toEqual('not-yet-called'); });
@@ -522,7 +522,7 @@ describe('CapServer', function() {
           var c3 = capServer2.restore(s2);
           mkRunner(c3).runsGetAndExpect(400);
         });
-        
+
         it('should restore a URL string', function() {
           var c1 = capServer1.restore(f400URL);
           mkRunner(c1).runsGetAndExpect(400);

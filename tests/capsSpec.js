@@ -175,14 +175,15 @@ describe('CapServer', function() {
             cap = capServer1.grant(invocableFunc);
 
             runs(function() {
-              publicIface.invoke(cap.serialize(), '{"value": "some-value"}',
-                                 function(data) {
-                                     succeeded = true;
-                                     result = data;
-                                 },
-                                 function(err) {
-                                     failed = true;
-                                 });});
+              publicIface.invoke(cap.serialize(),
+                  'post', '{"value": "some-value"}',
+                  function(data) {
+                    succeeded = true;
+                    result = data;
+                  },
+                  function(err) {
+                    failed = true;
+                  });});
             waitsFor(function() { return succeeded || failed; },
                      'PublicInterface invoke timeout', 250);
             runs(function() {

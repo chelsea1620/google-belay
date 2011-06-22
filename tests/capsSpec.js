@@ -62,7 +62,11 @@ InvokeRunner.prototype.runsInvoke = function(method, data) {
     me.failureCalled = me.successCalled = false;
     me.result = 'something funky';
     var failure = function(err) {
-      me.failureStatus = err.status; me.failureCalled = true;
+      me.failureCalled = true;
+      me.failureStatus = 999;
+      if (err.status && typeof err.status == 'number') {
+        me.failureStatus = err.status;
+      }
     };
     var success = function(data) {
       me.result = data; me.successCalled = true;
@@ -218,63 +222,58 @@ describe('CapServer', function() {
   });
 
   describe('Capability Interface', function() {
-    var fn;
     var fnCalledWith;
-    var sk, fk;
-    var result;
-    var finished, succeeded, failed;
-    var c1;
-
-    var waitAndExpectResults = function(expectedResult, expectedArgument) {
-      waitsFor(function() { return finished; }, 'cap timeout', 250);
-      runs(function() {
-        expect(succeeded).toBe(true);
-        expect(result).toEqual(expectedResult);
-        expect(fnCalledWith).toBe(expectedArgument);
-      });
-    };
+    var c1, c2;
 
     beforeEach(function() {
-      fn = function(d) {
+      c1 = capServer1.grant(function(d) {
         fnCalledWith = d;
         return '*' + String(d) + '*';
-      };
-      c1 = capServer1.grant(fn);
+      });
 
+      c2 = capServer1.grant(function(d) {
+        fnCalledWith = d;
+         // no return, called with put
+      });
+      
       fnCalledWith = 'not-yet-called';
-      result = 'no-result-yet';
-      finished = succeeded = failed = false;
-
-      sk = function(r) { result = r; finished = succeeded = true; }
-      fk = function(e) { finsihed = failed = true; }
     });
 
     it('should pass no argument to get', function() {
-      c1.get(sk, fk);
-      waitAndExpectResults('*undefined*', undefined);
+      mkRunner(c1).runsGetAndExpect('*undefined*');
+      runs(function() { expect(fnCalledWith).toBe(undefined); });
     });
 
-    it('should ignore result from put', function() {
-      c1.put(42, sk, fk);
-      waitAndExpectResults(undefined, 42);
+    it('should pass argument to put', function() {
+      mkRunner(c2).runsPut(42);
+      runs(function() { expect(fnCalledWith).toEqual(42); });
+    });
+
+    it('should fail on return from put', function() {
+      var r = mkRunner(c1)
+      r.runsPut(42);
+      r.runsExpectFailure();
+      runs(function() { expect(fnCalledWith).toEqual(42); });
     });
 
     it('should pass results from post', function() {
-      c1.post(42, sk, fk);
-      waitAndExpectResults('*42*', 42);
+      var r = mkRunner(c1)
+      r.runsPost(42);
+      r.runsExpectSuccess(function(d) { expect(d).toEqual('*42*'); });
+      runs(function() { expect(fnCalledWith).toEqual(42); });
     });
 
-    it('should ignore argument and result for delete', function() {
-      c1.remove(sk, fk);
-      waitAndExpectResults(undefined, undefined);
+    it('should fail on delete', function() {
+      var r = mkRunner(c1)
+      r.runsDelete();
+      r.runsExpectFailure();
     });
 
-    xit('should ignore the argument to get', function() {
-      var failed = false;
-      c1.invoke('get', 42, null,
-          function(err) { failed = true; });
-      waitsFor(function() { return failed; }, 'get timeout', 250);
-      runs(function() { expect(failed).toBe(true); });
+    it('should ignore the argument to get', function() {
+      var r = mkRunner(c1)
+      r.runsInvoke('get', 42);
+      r.runsExpectFailure();
+      runs(function() { expect(fnCalledWith).toEqual('not-yet-called'); });
     });
 
 

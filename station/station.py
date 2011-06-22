@@ -5,6 +5,7 @@ import logging
 import os
 import sys
 import uuid
+from django.utils import simplejson as json
 
 from google.appengine.ext import db
 from google.appengine.ext import webapp
@@ -87,15 +88,17 @@ class LaunchHandler(BaseHandler):
     if not station.is_saved():
       station.put()
 
+    app = {
+	  'caps': {
+	    'instances': "%s/instances?s=%s" % (server_url, station.key().name()),
+	    'instanceBase': '%s/instance?s=%s&i=' % (server_url, station.key().name())
+	  }
+	}
+
     template = """
     var $ = os.jQuery;
 
-    var app = {
-      caps: {
-        instances: "%(server_url)s/instances?s=%(station_id)s",
-        instanceBase: "%(server_url)s/instance?s=%(station_id)s&i=",
-      }
-    };
+    var app = %(app)s;
 
     $.ajax({
       url: "%(server_url)s/station.js",
@@ -113,8 +116,8 @@ class LaunchHandler(BaseHandler):
     # to get to the json serializer...
 
     content = template % {
+      'app': json.dumps(app),
       'server_url': server_url,
-      'station_id': station.key().name(),
     }
 
     xhr_content(content, "text/plain", self.response)
@@ -151,10 +154,9 @@ class InstancesHandler(BaseHandler):
           'station_id': station.key().name(),
           'instance_id': instanceKey.name(),
         }
-      ids.append('"' + instance_cap + '"')        
+      ids.append(instance_cap)
     
-    content = '[' + ','.join(ids) + ']'
-    xhr_content(content, "text/plain;charset=UTF-8", self.response)
+    xhr_content(json.dumps(ids), "text/plain;charset=UTF-8", self.response)
 
 
 application = webapp.WSGIApplication(

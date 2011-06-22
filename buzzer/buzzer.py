@@ -88,18 +88,20 @@ class LaunchHandler(BaseHandler):
     feed_id = self.validate_feed();
     feed = FeedData.get_by_key_name(feed_id);
 
+    app = {
+      'caps': {
+        'editor': '%s/view/editor?%s' % (server_url, feed_id),
+        'post': '%s/data/post?%s' % (server_url, feed_id)
+      },
+      'data': {
+        'name': feed and (feed.name + " in " + feed.location) or ''
+      }
+    }
+
     template = """
 var $ = os.jQuery;
 
-var app = {
-  caps: {
-    editor: "%(editor_cap)s",
-    post: "%(post_cap)s"
-  },
-  data: {
-    name: "%(feed_name)s"
-  }
-};
+var app = %(app)s;
 
 $.ajax({
   url: "%(server_url)s/buzzer.js",
@@ -114,9 +116,7 @@ $.ajax({
 """
     content = template % {
       'server_url': server_url,
-      'editor_cap': server_url + '/view/editor?' + feed_id,
-      'post_cap': server_url + '/data/post?' + feed_id,
-      'feed_name': feed and (feed.name + " in " + feed.location) or '',
+      'app': app
     }
     
     xhr_content(content, "text/plain", self.response)

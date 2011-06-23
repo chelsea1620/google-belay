@@ -77,16 +77,16 @@ InvokeRunner.prototype.runsInvoke = function(method, data) {
       'invoke timeout', 250);
 };
 InvokeRunner.prototype.runsGet = function() {
-    this.runsInvoke('get', undefined);
+    this.runsInvoke('GET', undefined);
 };
 InvokeRunner.prototype.runsPut = function(data) {
-    this.runsInvoke('put', data);
+    this.runsInvoke('PUT', data);
 };
 InvokeRunner.prototype.runsPost = function(data) {
-    this.runsInvoke('post', data);
+    this.runsInvoke('POST', data);
 };
 InvokeRunner.prototype.runsDelete = function() {
-    this.runsInvoke('delete', undefined);
+    this.runsInvoke('DELETE', undefined);
 };
 
 InvokeRunner.prototype.runsExpectSuccess = function(resultChecker) {
@@ -203,7 +203,7 @@ describe('CapServer', function() {
 
             runs(function() {
               publicIface.invoke(cap.serialize(),
-                  'post', '{"value": "some-value"}',
+                  'POST', '{"value": "some-value"}',
                   function(data) {
                      succeeded = true;
                      result = data;
@@ -271,7 +271,7 @@ describe('CapServer', function() {
 
     it('should ignore the argument to get', function() {
       var r = mkRunner(c1);
-      r.runsInvoke('get', 42);
+      r.runsInvoke('GET', 42);
       r.runsExpectFailure();
       runs(function() { expect(fnCalledWith).toEqual('not-yet-called'); });
     });
@@ -534,11 +534,8 @@ describe('CapServer', function() {
 
           var c2 = capServer2.restore(s1);
           var checkResult = false;
-          c2.get(function(result) { checkResult = result; });
 
-          waitsFor(function() { return checkResult; },
-              'async restore invoke', 250);
-          runs(function() { expect(checkResult).toEqual(500) });
+          mkRunner(c2).runsGetAndExpect(500);
         });
 
         it('should restore a dead cap as dead', function() {
@@ -600,10 +597,7 @@ describe('CapServer', function() {
           var c3restored = capServer2.restore(s3);
           var checkResult2 = false;
 
-          c3restored.get(function(result) { checkResult2 = result; });
-          waitsFor(function() { return checkResult2; },
-              'async revive invoke', 250);
-          runs(function() { expect(checkResult2).toEqual(500) });
+          mkRunner(c3restored).runsGetAndExpect(500);
         });
 
         it('should restore a cap, even before the reviver is set', function() {
@@ -623,10 +617,8 @@ describe('CapServer', function() {
             var c3restored = capServer2.restore(s3);
             var checkResult2 = false;
             setNewReviver();
-            c3restored.get(function(result) { checkResult2 = result; });
-            waitsFor(function() { return checkResult2; },
-                'async revive invoke', 250);
-            runs(function() { expect(checkResult2).toEqual(500) });
+
+            mkRunner(c3restored).runsGetAndExpect(500);
         });
 
         it('should restore a cap, even before the instance is restarted',

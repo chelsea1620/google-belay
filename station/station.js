@@ -1,5 +1,8 @@
 var $ = os.jQuery;
 
+var capServer = new os.CapServer();
+var instancesCap = capServer.restore(app.caps.instances);
+
 var defaultTools = [
     { name: 'Hello',
       icon: 'http://localhost:9002/tool-hello.png',
@@ -67,12 +70,7 @@ var dirtyProcess = function() {
   var instID = dirtyInstances.shift();
   var inst = instances[instID];
   inst.info.capSnapshot = inst.capServer.snapshot();
-  $.ajax({
-    url: inst.icap,
-    data: os.JSON.stringify(inst.info),
-    processData: false,
-    type: 'POST'
-  });
+  inst.icap.post(inst.info);
   if (dirtyInstances.length > 0) {
     os.setTimeout(dirtyProcess, 1000);
   }
@@ -253,7 +251,7 @@ var initialize = function(instanceCaps) {
       inst.capServer.revokeAll();
       delete instances[inst.id];
       container.hide(function() { container.remove(); });
-      $.ajax({ url: inst.icap, type: 'DELETE' });
+      inst.icap.remove(function() {}, function() {});
     });
     closeBox.hover(function() { closeBox.addClass('hover'); },
                    function() { closeBox.removeClass('hover'); });
@@ -274,7 +272,8 @@ var initialize = function(instanceCaps) {
           }
         };
         setupCapServer(inst);
-        inst.icap = app.caps.instanceBase + inst.id; // TODO(mzero): hack!
+        // TODO(arjun) still a hack. Should we be concatenaing URLs here?
+        inst.icap = capServer.grant(app.caps.instanceBase + inst.id);
         instances[inst.id] = inst;
         launchInstance(inst);
         dirty(inst);
@@ -294,41 +293,28 @@ var initialize = function(instanceCaps) {
   });
 
   instanceCaps.forEach(function(icap) {
-    $.ajax({
-      url: icap,
-      dataType: 'json',
-      success: function(instInfo, status, xhr) {
-        var inst = {
-          icap: icap,
-          info: instInfo
-        };
-        setupCapServer(inst);
-        inst.id = inst.capServer.instanceID; // TODO(mzero): hack!
-        instances[inst.id] = inst;
-        launchInstance(inst);
-      },
-      error: function(xhr, status, error) {
-        os.alert('Failed to load instance: ' + status);
-      }
-    });
+
+    icap.get(function(instInfo) {
+      var inst = {
+        icap: icap,
+        info: instInfo
+      };
+      setupCapServer(inst);
+      inst.id = inst.capServer.instanceID; // TODO(mzero): hack!
+      instances[inst.id] = inst;
+      launchInstance(inst);
+    },
+    function(status) { os.alert('Failed to load instance: ' + status); });
   });
 };
 
+// TODO(arjun): Retreiving vanilla HTML. Not a Belay cap?
 $.ajax({
   url: 'http://localhost:9001/station.html',
   dataType: 'text',
   success: function(data, status, xhr) {
     os.topDiv.html(data);
-    $.ajax({
-      url: app.caps.instances,
-      dataType: 'json',
-      success: function(data, status, xhr) {
-        initialize(data);
-      },
-      error: function(xhr, status, error) {
-        os.alert('Failed to load data: ' + status);
-      }
-    });
+    instancesCap.get(initialize, function(err) { os.alert(err.message); });
   },
   error: function(xhr, status, error) {
     os.alert('Failed to load station: ' + status);

@@ -44,7 +44,7 @@ var capReviver = function(resClass) {
         success: function() { reload(); }
       });
     };
-    return os.capServer.buildFunc(poster);
+    return os.capServer.buildSyncFunction(poster);
   }
   return null;
 };

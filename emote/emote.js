@@ -13,7 +13,7 @@ var showPanel = function(feedCap) {
   me.find('.emote-panel').show();
   me.find('.emote-post').click(function(ev) {
     me.find('.emote-message-posting').show();
-    feedCap.invoke(
+    feedCap.post(
       { body: ev.target.innerText, via: 'emote' },
       function() { postComplete(true); },
       function() { postComplete(false); }

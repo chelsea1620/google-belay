@@ -6,6 +6,7 @@ import os
 import sys
 import uuid
 
+from django.utils import simplejson as json
 from google.appengine.ext import db
 from google.appengine.ext import webapp
 from google.appengine.ext.webapp.util import run_wsgi_app
@@ -116,7 +117,7 @@ $.ajax({
 """
     content = template % {
       'server_url': server_url,
-      'app': app
+      'app': json.dumps(app)
     }
     
     xhr_content(content, "text/plain", self.response)

@@ -174,6 +174,8 @@ var CAP_EXPORTS = (function() {
     return this.ser;
   };
 
+  Object.freeze(Capability.prototype);
+  Object.freeze(Capability);
 
 
 
@@ -397,6 +399,8 @@ var CAP_EXPORTS = (function() {
     }).value;
   };
 
+  Object.freeze(CapServer.prototype);
+  Object.freeze(CapServer);
 
   var CapTunnel = function(port) {
     var me = this;
@@ -491,7 +495,8 @@ var CAP_EXPORTS = (function() {
     this.localResolver = resolver;
   };
 
-
+  Object.freeze(CapTunnel.prototype);
+  Object.freeze(CapTunnel);
 
   return {
     CapServer: CapServer,

@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Belay Station - API</title>
+  <link rel="stylesheet" href="base.css">
+</head>
+<body>
+  <h1><a href="/"><img src="http://www.google.com/intl/en/images/logo_sm.gif" alt="Google"></a> Belay Station - API</h1>
+  <ul id="nav">
+    <li><a href="index.html">Home</a></li>
+    <li><a href="help.html">Help</a></li>
+    <li>API</li>
+  </ul>
+  <div id="aux">
+    <!-- Content -->
+      <h2>Component API</h2>
+      <p>A component instance is referenced by a URL. That URL should return a
+        fragment of JavaScript that is executed to show the instance to the
+        user. The environment that this script executes in constitutes the API
+        that the enclosing system makes available to it.</p>
+      <p>The environment consists of exactly one variable, <code>os</code> which
+        contains all the capabilities given to the instance. All other globals
+        should be assumed to be absent. (In practice, they make be present, but
+        set to <code>undefined</code>. In addition, global functions are still
+        present, but should not be used.)</p>
+      <p>Properties in <code>os</code>:</p>
+      <dl class="belay-properties">
+        <dt>topDiv</dt>
+        <dd>A jQuery object for the top <code>div</code> element of the
+          instance. The instance script will typically populate this with HTML.
+          </dd>
+        
+        <dt>JSON</dt>
+        <dd>An interface for handling JSON data.
+          <dl>
+            <dt>.parse(s)</dt>
+            <dd>Parse s as JSON (without eval'ing it),
+              returning the object.</dd>
+        
+            <dt>.stringify(d)</dt>
+            <dd>Render the data structure d as JSON.
+              d must not be circular.</dd>
+          </dl>
+        </dd>
+        
+        <dt>jQuery</dt>
+        <dd>An object like jQuery's <code>$</code> global, but with restricted
+          functionality. See following entries for what's there.
+          <dl>
+            <dt>.ajax(...)</dt>
+            <dd>The <code>.ajax</code> method of jQuery.</dd>
+          </dl>
+        </dd>
+        <dt>alert(s)</dt>
+        <dd>Put up an alert dialog. May be rate limited.</dd>
+        <dt>setTimeout(f, t)</dt>
+        <dd>The standard <code>setTimeout</code> function.</dd>
+        <dt>clearTimeout(t)</dt>
+        <dd>The standard <code>clearTimeout</code> function.</dd>
+        
+        <dt>foop(url, container, extras)</dt>
+        <dd>Instantiate the <code>url</code> into a new <code>div</code> placed
+          within the <code>container</code>, which must be a jQuery node. If
+          <code>extras</code> is provided, its properties are added to the
+          <code>os</code> object passed the code.</dd>
+        
+        <dt>storage<dt>
+        <dd>Data storage interface. Not all containers provide this.
+          <dl>
+            <dt>.get()</dt><dd>Get a copy of the stored data</dd>
+            <dt>.put(d)</dt><dd>Put <code>d</code> as the new stored data</dd>
+          </dl>
+        </dd>
+        
+        <dt>ui</dt>
+        <dd>User Interface interface. Not all containers provide this.
+          <dl>
+            <dt>resize(mw, mh, r)</dt>
+            <dd>Set the item to be resizable with minimum width and height.
+              <code>r</code> is a flag that says to enable/disable the resize
+              handle.</dd>
+            <dt>capDraggable(node, resourceClass, generator)</dt>
+            <dd>Declare that a given node can be dragged to provide a capability
+              of the given resourceClass. The node must be styled to look right
+              w/o any style sheet. If the user completes a successful drag and
+              drop of this node, then the generator will be called with the
+              resourceClass, and should return a newly minted capability.</dd>
+            <dt>capDroppable(node, resourceClass, acceptor)</dt>
+            <dd>Declare that given node can accept drags of capabilitys of
+              the given resourceClass. If the user completes a successful drag
+              and drop, the acceptor will be called with the new capability.</dd>
+          </dl>
+        </dd>
+        
+        <dt>capServer</dt>
+        <dd>Capability server, specific to this instance.
+          <dl>
+            <dt>.grant(item, key)</dt>
+            <dd>Create a capability (see below). The argument can be a function,
+              a URL, or another capability. Any code that holds the capability
+              can then invoke the item, but not get at the item directly, until
+              the capability is revoked. The optional <code>key</code> parameter
+              can be used to reconstruct the capability if needed.
+              NB: The <code>key</code> is stored with the instance and not passed
+              with the capability. Hence, the instance can rely on it being
+              private data.</dd> 
+            <dt>.setResolver(func)</dt>
+            <dd>The supplied function will be called to recreate capabilities
+              to functions that were created in a prior running of this instance.
+              (Since functions &amp; closures can't be persisted.) The supplied
+              function will be called with both the <code>capID</code> and the
+              <code>key</code> from the original grant (if any). It should
+              return the item that implements the capability (usually a function)</dd>
+            <dt>.revokeAll()</dt>
+            <dd>Revoke all capabilities that this instance has issued.</dd>
+            <dt>.restore(string)</dt>
+            <dd>Given a string returned from a capability's <code>.serialize()</code>
+              function, recreate the capability. If the target of the capability
+              can't be recreated, then the cap will be a "dead" capability.</dd>
+          </dl>
+        </dd>
+      </dl> 
+      <hr />
+      <p>Properties of capabilities returned from <code>os.capServer.grant()</code>:</p>
+      <dl class="belay-properties">
+        <dt>.invoke(opts)</dt>
+        <dd>Invoke the cap as an HTTP based resource. Uses same interface as
+          <code>os.jQuery.ajax</code>, though no <code>url</code> should be
+          supplied. Sync and async versions are both supported.</dd>
+        <dt>.invokeSync(v)</dt>
+        <dd>Invoke the cap with one argument, and return the result, synchronously.
+          This is not guarunteed to work and may return <code>undefined</code>
+          even where the async. version (<code>invoke</code>) would succeed.</dd>
+        <dt>.revoke()</dt>
+        <dd>Revoke the capability. All invocation functions will then return
+          <code>undefined</code>.</dd>
+        <dt>.serialize()</dt>
+        <dd>Return a string that can be used to persist the capability. The
+          capability can be restored by passing this string to
+          <code>os.capServer.restore</code>.</dd>
+        
+      </dl>
+    <div id="about">©2011 Google</div>
+  </div>
+</body>

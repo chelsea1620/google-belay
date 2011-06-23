@@ -1,0 +1,21 @@
+application: belay-buzzer
+version: 1
+runtime: python
+api_version: 1
+
+handlers:
+
+- url: /
+  script: buzzer.py
+
+- url: /generate
+  script: buzzer.py
+
+- url: /view/.*
+  script: buzzer.py
+
+- url: /data/.*
+  script: buzzer.py
+
+- url: /(.*\.(html|css|js|png))
+  script: lib/CORSstatic.py

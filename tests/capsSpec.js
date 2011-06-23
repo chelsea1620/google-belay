@@ -77,16 +77,16 @@ InvokeRunner.prototype.runsInvoke = function(method, data) {
       'invoke timeout', 250);
 };
 InvokeRunner.prototype.runsGet = function() {
-    this.runsInvoke('get', undefined);
+    this.runsInvoke('GET', undefined);
 };
 InvokeRunner.prototype.runsPut = function(data) {
-    this.runsInvoke('put', data);
+    this.runsInvoke('PUT', data);
 };
 InvokeRunner.prototype.runsPost = function(data) {
-    this.runsInvoke('post', data);
+    this.runsInvoke('POST', data);
 };
 InvokeRunner.prototype.runsDelete = function() {
-    this.runsInvoke('delete', undefined);
+    this.runsInvoke('DELETE', undefined);
 };
 
 InvokeRunner.prototype.runsExpectSuccess = function(resultChecker) {
@@ -203,7 +203,7 @@ describe('CapServer', function() {
 
             runs(function() {
               publicIface.invoke(cap.serialize(),
-                  'post', '{"value": "some-value"}',
+                  'POST', '{"value": "some-value"}',
                   function(data) {
                      succeeded = true;
                      result = data;
@@ -271,7 +271,7 @@ describe('CapServer', function() {
 
     it('should ignore the argument to get', function() {
       var r = mkRunner(c1);
-      r.runsInvoke('get', 42);
+      r.runsInvoke('GET', 42);
       r.runsExpectFailure();
       runs(function() { expect(fnCalledWith).toEqual('not-yet-called'); });
     });

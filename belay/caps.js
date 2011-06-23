@@ -53,9 +53,9 @@ var CAP_EXPORTS = (function() {
   var nullSer = encodeSerialization(nullInstID, nullCapID);
 
 
-  var makeAsyncAJAX = function(url, data, success, failure) {
+  var makeAsyncAJAX = function(url, method, data, success, failure) {
     jQuery.ajax({ data: data,
-                  type: 'POST',
+                  type: method,
                   url: url,
                   success: function(data, status, xhr) { success(data); },
                   error: function(xhr, status, message) {
@@ -86,7 +86,7 @@ var CAP_EXPORTS = (function() {
   ImplHandler.prototype.invoke = function(method, data, sk, fk) {
     data = this.server.dataPostProcess(data);
 
-    if (method == 'get' || method == 'delete') {
+    if (method == 'GET' || method == 'DELETE') {
       if (data !== undefined) {
         fk(badRequest);
         return;
@@ -94,13 +94,13 @@ var CAP_EXPORTS = (function() {
     }
 
     var skk;
-    if (method == 'put' || method == 'delete') {
+    if (method == 'PUT' || method == 'DELETE') {
       skk = function(result) {
         if (result === undefined) sk();
         else fk(internalServerError);
       }
     }
-    else if (method == 'get' || method == 'post') {
+    else if (method == 'GET' || method == 'POST') {
       var server = this.server;
       skk = function(result) {
         sk(server.dataPreProcess(result));
@@ -109,10 +109,10 @@ var CAP_EXPORTS = (function() {
 
     try {
       var h = this.handler;
-      if (method == 'get' && h.get) h.get(skk, fk);
-      else if (method == 'put' && h.put) h.put(data, skk, fk);
-      else if (method == 'post' && h.post) h.post(data, skk, fk);
-      else if (method == 'delete' && h.remove) h.remove(skk, fk);
+      if (method == 'GET' && h.get) h.get(skk, fk);
+      else if (method == 'PUT' && h.put) h.put(data, skk, fk);
+      else if (method == 'POST' && h.post) h.post(data, skk, fk);
+      else if (method == 'DELETE' && h.remove) h.remove(skk, fk);
       else fk(methodNotAllowed);
     }
     catch (e) {
@@ -122,7 +122,7 @@ var CAP_EXPORTS = (function() {
 
   var ImplURL = function(url) { this.url = url; };
   ImplURL.prototype.invoke = function(m, d, s, f) {
-     makeAsyncAJAX(this.url, d, s, f); // TODO(mzero): take method
+     makeAsyncAJAX(this.url, m, d, s, f);
   };
 
   var ImplWrap = function(server, innerCap) {
@@ -159,16 +159,16 @@ var CAP_EXPORTS = (function() {
                                         wrappedSuccess, failure);
   };
   Capability.prototype.get = function(success, failure) {
-    this.invoke('get', undefined, success, failure);
+    this.invoke('GET', undefined, success, failure);
   };
   Capability.prototype.put = function(data, success, failure) {
-    this.invoke('put', data, success, failure);
+    this.invoke('PUT', data, success, failure);
   };
   Capability.prototype.post = function(data, success, failure) {
-    this.invoke('post', data, success, failure);
+    this.invoke('POST', data, success, failure);
   };
   Capability.prototype.remove = function(success, failure) {
-    this.invoke('delete', undefined, success, failure);
+    this.invoke('DELETE', undefined, success, failure);
   };
   Capability.prototype.serialize = function() {
     return this.ser;
@@ -201,7 +201,7 @@ var CAP_EXPORTS = (function() {
       return Object.freeze({
         invoke: function(ser, method, data, success, failure) {
           if (/^https?:/.test(ser)) {
-            return makeAsyncAJAX(ser, data, success, failure);
+            return makeAsyncAJAX(ser, method, data, success, failure);
           }
 
           var instID = decodeInstID(ser);

@@ -71,6 +71,17 @@ class BaseHandler(webapp.RequestHandler):
     except:
       raise BaseHandler.InvalidInstance()
 
+  def options(self):
+    m = self.request.headers["Access-Control-Request-Method"]
+    h = self.request.headers["Access-Control-Request-Headers"]
+
+    self.response.headers["Access-Control-Allow-Origin"] = "*"
+    self.response.headers["Access-Control-Max-Age"] = "2592000"
+    self.response.headers["Access-Control-Allow-Methods"] = m      
+    if h:
+      self.response.headers["Access-Control-Allow-Headers"] = h
+      
+          
   def handle_exception(self, exc, debug_mode):
     if isinstance(exc,BaseHandler.InvalidStation):
       logging.getLogger().warn("unrecognized station")

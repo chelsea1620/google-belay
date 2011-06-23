@@ -126,11 +126,13 @@ class LaunchHandler(BaseHandler):
 class InstanceHandler(BaseHandler):
   def get(self):
     instance = self.validate_instance()
-    xhr_content(instance.data, "text/plain;charset=UTF-8", self.response)
+    xhr_content(json.dumps({ 'value': json.loads(instance.data) }), 
+                "text/plain;charset=UTF-8", self.response)
       
   def post(self):
     instance = self.validate_instance()
-    instance.data = db.Text(self.request.body, 'UTF-8')
+    cap_value = json.loads(self.request.body)
+    instance.data = db.Text(json.dumps(cap_value['value']), 'UTF-8')
     instance.put()
     xhr_response(self.response)
   
@@ -149,14 +151,14 @@ class InstancesHandler(BaseHandler):
     ids = []
     for instanceKey in q:
       template ='%(server_url)s/instance?s=%(station_id)s&i=%(instance_id)s'
-      instance_cap = template  % {
+      instance_url = template  % {
           'server_url': server_url,
           'station_id': station.key().name(),
           'instance_id': instanceKey.name(),
         }
-      ids.append(instance_cap)
+      ids.append({ '@' : instance_url })
     
-    xhr_content(json.dumps(ids), "text/plain;charset=UTF-8", self.response)
+    xhr_content(json.dumps({ 'value': ids}), "text/plain;charset=UTF-8", self.response)
 
 
 application = webapp.WSGIApplication(

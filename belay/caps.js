@@ -261,28 +261,7 @@ var CAP_EXPORTS = (function() {
   };
 
   CapServer.prototype.grant = function(item, key) {
-    var impl;
-    var typ = typeof item;
-
-    if (typ === 'function') { impl = this.buildFunc(item); }
-    if (typ === 'string') { impl = this.buildURL(item); }
-    if (typ === 'object') { impl = new ImplWrap(this, item); }
-    if (item === null) { impl = deadImpl; }
-    if (typeof impl === 'undefined') { impl = deadImpl; }
-
-    return this._grant(impl, key);
-  };
-
-  CapServer.prototype.grantAsync = function(item, key) {
-    var impl;
-    var typ = typeof item;
-
-    if (typ === 'function') { impl = this.buildAsyncFunc(item); }
-    if (typ === 'object') { impl = new ImplWrap(this, item); }
-    if (item === null) { impl = deadImpl; }
-    if (typeof impl === 'undefined') { impl = deadImpl; }
-
-    return this._grant(impl, key);
+    return this._grant(this.build(item), key);
   };
 
   CapServer.prototype.grantKey = function(key) {
@@ -302,18 +281,18 @@ var CAP_EXPORTS = (function() {
   CapServer.prototype.build = function(item) {
     var t = typeof item;
 
-    var checkFnArgs = function(item, params) {
-      if (typeof item === 'function' && typeof item.length === 'number') {
-        return item.length >= params ? 'async' : 'sync';
+    var checkFnArgs = function(fn, params) {
+      if (typeof fn === 'function' && typeof fn.length === 'number') {
+        return fn.length >= params ? 'async' : 'sync';
       }
       return false;
     }
 
-    var consistentHandler = function(item) {
-      var a = [checkFnArgs(item.get, 1),
-                checkFnArgs(item.put, 2),
-                checkFnArgs(item.post, 2),
-                checkFnArgs(item.remove, 1)];
+    var consistentHandler = function(obj) {
+      var a = [checkFnArgs(obj.get, 1),
+                checkFnArgs(obj.put, 2),
+                checkFnArgs(obj.post, 2),
+                checkFnArgs(obj.remove, 1)];
 
       var foundHandler = false;
       var handlerType = false;
@@ -322,7 +301,7 @@ var CAP_EXPORTS = (function() {
           foundHandler = true;
           handlerType = a[i];
         }
-        if (handlerType && a[i] && handlerType !== a[i]) {
+        else if (handlerType && a[i] && handlerType !== a[i]) {
           throw 'Inconsistent handlers';
         }
       }
@@ -330,15 +309,15 @@ var CAP_EXPORTS = (function() {
     }
 
     if (item === null) return deadImpl;
-    if (t === 'string') return this.buildURL(item);
-    if (t === 'function') {
+    else if (t === 'string') return this.buildURL(item);
+    else if (t === 'function') {
       switch (checkFnArgs(item, 2)) {
         case 'sync': return this.buildSyncFunction(item);
         case 'async': return this.buildAsyncFunction(item);
         default: throw 'Invalid length on function';
       }
     }
-    if (t === 'object') {
+    else if (t === 'object') {
       if (Object.getPrototypeOf(item) === Capability.prototype) {
         return new ImplWrap(this, item);
       }
@@ -348,7 +327,7 @@ var CAP_EXPORTS = (function() {
         default: throw 'build() given an object with no handlers';
       }
     }
-    return deadImpl;
+    else return deadImpl;
   }
 
   CapServer.prototype.buildAsyncHandler = function(h) {

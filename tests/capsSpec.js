@@ -378,12 +378,15 @@ describe('CapServer', function() {
 
     it('should error on inconsistent handlers', function() {
       var badHandler1 = {get: function(success, failure) {},
-                         put: function() {}};
+                         put: function(v) {}};
       var badHandler2 = {get: function() {},
                          post: function(v, s, f) {}};
+      var badHandler3 = {put: function(v) {},
+                         remove: function(s, f) {}};
 
       buildAndExpectError(badHandler1, 'Inconsistent handlers');
       buildAndExpectError(badHandler2, 'Inconsistent handlers');
+      buildAndExpectError(badHandler3, 'Inconsistent handlers');
     });
 
     it('should error on empty handlers', function() {
@@ -434,7 +437,7 @@ describe('CapServer', function() {
         sk('#' + d);
         return;
       };
-      invocableWrappedAsyncFunc = capServer2.grantAsync(invocableAsyncFunc);
+      invocableWrappedAsyncFunc = capServer2.grant(invocableAsyncFunc);
     });
 
 
@@ -461,10 +464,10 @@ describe('CapServer', function() {
       describe(name, function() {
         var c1;
         beforeEach(function() {
-          c1 = capServer1.grantAsync(makeAsyncItem());
+          c1 = capServer1.grant(makeAsyncItem());
         });
 
-        it('should do asynchronous calls (grantAsync)', function() {
+        it('should do asynchronous calls (grant)', function() {
           var invoker = new InvokeRunner(c1);
 
           invoker.runsGetAndExpect('#0');
@@ -527,7 +530,7 @@ describe('CapServer', function() {
     describe('of async dead caps', function() {
       var deadCap;
       beforeEach(function() {
-        deadCap = capServer1.grantAsync(null);
+        deadCap = capServer1.grant(null);
       });
 
       it('should do asynchronous calls', function() {
@@ -650,7 +653,7 @@ describe('CapServer', function() {
         });
 
         it('should restore an async cap', function() {
-          var c1 = capServer1.grantAsync(f500);
+          var c1 = capServer1.grant(f500);
           var s1 = c1.serialize();
 
           var c2 = capServer2.restore(s1);
@@ -677,7 +680,7 @@ describe('CapServer', function() {
           s1 = c1.serialize();
           c2 = capServer1.grant(f100, 'f100');
           s2 = c2.serialize();
-          c3 = capServer1.grantAsync(f500, 'f500');
+          c3 = capServer1.grant(f500, 'f500');
           s3 = c3.serialize();
           c4 = capServer1.grant(f400URL, 'f400URL');
           s4 = c4.serialize();

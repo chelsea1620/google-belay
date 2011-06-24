@@ -24,7 +24,7 @@
         });
 
         var invokeMyAsync = 
-          server.grantAsync(function(remoteReceiveCap, sk, fk) {
+          server.grant(function(remoteReceiveCap, sk, fk) {
           setTimeout(function() { 
             remoteReceiveCap.post(999, sk, fk); }, 0);
         });

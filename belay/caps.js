@@ -299,8 +299,57 @@ var CAP_EXPORTS = (function() {
     return this._mint(capID);
   };
 
+  CapServer.prototype.build = function(item) {
+    var t = typeof item;
 
+    var checkFnArgs = function(item, params) {
+      if (typeof item === 'function' && typeof item.length === 'number') {
+        return item.length >= params ? 'async' : 'sync';
+      }
+      return false;
+    }
 
+    var consistentHandler = function(item) {
+      var a = [checkFnArgs(item.get, 1),
+                checkFnArgs(item.put, 2),
+                checkFnArgs(item.post, 2),
+                checkFnArgs(item.remove, 1)];
+
+      var foundHandler = false;
+      var handlerType = false;
+      for (var i = 0; i < a.length; i++) {
+        if (!foundHandler && a[i]) {
+          foundHandler = true;
+          handlerType = a[i];
+        }
+        if (handlerType && a[i] && handlerType !== a[i]) {
+          throw 'Inconsistent handlers';
+        }
+      }
+      return foundHandler ? handlerType : false;
+    }
+
+    if (item === null) return deadImpl;
+    if (t === 'string') return this.buildURL(item);
+    if (t === 'function') {
+      switch (checkFnArgs(item, 2)) {
+        case 'sync': return this.buildSyncFunction(item);
+        case 'async': return this.buildAsyncFunction(item);
+        default: throw 'Invalid length on function';
+      }
+    }
+    if (t === 'object') {
+      if (Object.getPrototypeOf(item) === Capability.prototype) {
+        return new ImplWrap(this, item);
+      }
+      switch (consistentHandler(item)) {
+        case 'sync': return this.buildSyncHandler(item);
+        case 'async': return this.buildAsyncHandler(item);
+        default: throw 'build() given an object with no handlers';
+      }
+    }
+    return deadImpl;
+  }
 
   CapServer.prototype.buildAsyncHandler = function(h) {
     return new ImplHandler(this, h);

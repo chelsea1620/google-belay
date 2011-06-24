@@ -79,6 +79,17 @@ class MainPage(webapp.RequestHandler):
       self.response)
 
 
+class SubMainPage(webapp.RequestHandler):
+  def get(self):
+    (user, acct) = get_account()
+
+    tvars = template_vars(user, acct)
+    tvars['suburl'] = self.request.get('url')
+
+    render_to_response('subindex.tmpl',
+        tvars,
+        self.response)
+
 class ManagePage(webapp.RequestHandler):
   def get(self):
     (user, acct) = get_account()
@@ -97,6 +108,7 @@ class ManagePage(webapp.RequestHandler):
 application = webapp.WSGIApplication(
   [('/', MainPage),
    ('/manage', ManagePage),
+   ('/subbelay', SubMainPage),
   ],
   debug=True)
 

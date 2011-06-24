@@ -65,6 +65,14 @@ var instances = {};
   //    capServer: caps -- the cap server for this instance
   //  }
 
+var remoteInstances = {};
+  // a map from instanceIDs to
+  //  { id: uuid,       -- the id of this instance
+  //    icap: url,      -- the URL of where to store/fetch the info
+  //    info: { },      -- the stored state of this instance
+  //    capTunnel: tunn -- the cap tunnel for this instance
+  //  }
+
 var dirtyInstances = [];
 var dirtyProcess = function() {
   var instID = dirtyInstances.shift();
@@ -88,7 +96,16 @@ var dirty = function(inst) {
 // CapServers
 //
 var instanceResolver = function(id) {
-  return instances[id] ? instances[id].capServer.publicInterface : null;
+  if(instances[id]) {
+    return instances[id].capServer.publicInterface;
+  }
+  if(remoteInstances[id]) {
+    return remoteInstances[id].capTunnel.sendInterface; 
+  }
+  if(id === capServer.instanceID) {
+    return capServer.publicInterface;
+  }
+  return null;
 };
 
 var setupCapServer = function(inst) {
@@ -102,6 +119,25 @@ var setupCapServer = function(inst) {
   }
   inst.capServer = capServer;
   capServer.setResolver(instanceResolver);
+};
+
+var setupCapTunnel = function(instID, port) {
+  var tunnel = new os.CapTunnel(port); 
+  var instance;
+  if(instances[instID]) {
+    instance = instances[instID];
+    delete instances[instID];
+  }
+  else { throw "Creating a tunnel for non-existent instanceID!"; }
+
+  remoteInstances[instID] = {
+    id:        instance.id,
+    icap:      instance.icap,    
+    info:      instance.info,
+    capTunnel: tunnel
+  };
+  tunnel.setLocalResolver(instanceResolver);
+  tunnel.initializeAsOutpost(capServer, instance.icap);
 };
 
 
@@ -255,6 +291,16 @@ var initialize = function(instanceCaps) {
     });
     closeBox.hover(function() { closeBox.addClass('hover'); },
                    function() { closeBox.removeClass('hover'); });
+
+    header.append('<div class="belay-control">↑</div>');
+    var maxBox = header.find(':last-child');
+    maxBox.click(function() {
+      os.window.open("http://localhost:9001/substation.js", inst.id,
+          function(port) { setupCapTunnel(inst.id, port); },
+          function() { os.alert("Oh noes!  No port"); });
+    });
+    maxBox.hover(function() { maxBox.addClass('hover'); },
+                 function() { maxBox.removeClass('hover'); });
 
     os.foop(instInfo.iurl, holder, extras);
   }

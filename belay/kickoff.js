@@ -22,11 +22,36 @@ var foop = function(sourceURL, node, extras) {
 
         // can't just pass these, you have to wrap them for some reason
         alert: function(s) { alert(s); },
-        setTimeout: function(f, s) { setTimeout(f, s); },
+        setTimeout: function(f, s) { return setTimeout(f, s); },
+        setInterval: function(f, s) { return setInterval(f, s); },
         clearTimeout: function(t) { clearTimeout(t); },
+        clearInterval: function(t) { clearInterval(t); },
 
         foop: foop,
-        CapServer: CapServer
+        CapServer: CapServer,
+        CapTunnel: CapTunnel,
+        window: { 
+          open: function(url, name, success, failure) {
+            var port = windowManager.open('http://localhost:9000/subbelay?url=' +
+                encodeURI(url), name);
+
+            var onReady = function() { 
+              if(port.ready()) { 
+                clearInterval(intervalID);
+                clearTimeout(timerID);
+                success(port);
+              }
+            }; 
+            var intervalID = setInterval(onReady, 100);
+
+            var timerID = setTimeout(function() { 
+              clearInterval(intervalID); 
+              failure();
+            }, 3000);
+          },
+          opener: window.opener ? establishWindowOpenerPort() : undefined 
+        }
+        
       };
 
       if (extras) {

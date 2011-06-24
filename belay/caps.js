@@ -444,13 +444,14 @@ var CAP_EXPORTS = (function() {
   {
     var txID = this.txCounter++;
     this.transactions[txID] = { success: success, failure: failure };
-    this.port.postMessage({
+    var msg = {
       op: 'invoke',
       txID: txID,
       ser: ser,
       method: method,
       data: this.toWire(data)
-    });
+    };
+    this.port.postMessage(msg);
     // TODO(mzero): something with a timeout
   };
 
@@ -467,12 +468,13 @@ var CAP_EXPORTS = (function() {
   };
 
   CapTunnel.prototype.sendResponse = function(txID, type, data) {
-    this.port.postMessage({
+    var msg = {
       op: 'response',
       txID: txID,
       type: type,
       data: this.toWire(data)
-    });
+    };
+    this.port.postMessage(msg);
   };
 
   CapTunnel.prototype.handleResponse = function(message) {

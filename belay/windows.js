@@ -38,7 +38,9 @@ var windowManager = (function() {
     var me = this;
     this.toRemotePort = {
       postMessage: function(data, ports) {
-        if (me.ready) me.rawToRemotePort.postMessage(data, ports);
+        if (me.ready) {
+          me.rawToRemotePort.postMessage(data, ports);
+        }
       },
       onmessage: undefined,
       ready: function() { return me.ready; }
@@ -51,6 +53,7 @@ var windowManager = (function() {
 
   WindowManager.Window.prototype.remoteReady = function(e) {
     this.rawToRemotePort = e.ports[0];
+    this.rawToRemotePort.start();
 
     var toRemotePort = this.toRemotePort;
     this.rawToRemotePort.onmessage = function(e) {

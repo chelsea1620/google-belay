@@ -49,7 +49,7 @@ var foop = function(sourceURL, node, extras) {
               failure();
             }, 3000);
           },
-          opener: window.opener ? establishWindowOpenerPort() : undefined 
+          opener: window.opener ? window.openerPort : undefined
         }
         
       };

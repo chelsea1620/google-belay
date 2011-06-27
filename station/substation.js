@@ -3,14 +3,13 @@ var tunnel;
 var capServer = new os.CapServer();
 
 var resolver = function(instID) {
-  if(instID === instance.instID) {
+  if(instID === instance.capServer.instanceID) {
     return instance.capServer.publicInterface;
-  }
-  if(instID === capServer.instanceID) {
-    return capServer.publicInterface;
   }
   return tunnel.sendInterface;
 }
+
+capServer.setResolver(resolver);
 
 tunnel = new os.CapTunnel(os.window.opener);
 tunnel.setLocalResolver(resolver);
@@ -33,16 +32,15 @@ function waitOnOutpost(tunnel, success, failure) {
 
 
 var setupCapServer = function(inst) {
-  var capServer;
+  var instServer;
   if ('capSnapshot' in inst.info) {
-    capServer = new os.CapServer(inst.info.capSnapshot);
+    instServer = new os.CapServer(inst.info.capSnapshot);
   }
   else {
-    capServer = new os.CapServer();
-    inst.id = capServer.instanceID;
+    instServer = new os.CapServer();
   }
-  inst.capServer = capServer;
-  capServer.setResolver(resolver);
+  inst.capServer = instServer;
+  instServer.setResolver(resolver);
 };
 
 var setupInstance = function(seedSer) {

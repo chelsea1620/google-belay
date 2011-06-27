@@ -359,9 +359,6 @@ var CAP_EXPORTS = (function() {
     });
   };
 
-  CapServer.prototype.buildFunc = CapServer.prototype.buildSyncFunction;
-  CapServer.prototype.buildAsyncFunc = CapServer.prototype.buildAsyncFunction;
-
   CapServer.prototype.buildURL = function(url) {
     if (typeof url !== 'string') { return deadImpl; }
     return new ImplURL(url);

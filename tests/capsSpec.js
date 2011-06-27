@@ -697,9 +697,9 @@ describe('CapServer', function() {
         };
         var setNewReviver = function() {
           capServer1.setReviver(function(role) {
-            if (role === 'f300') { return capServer1.buildFunc(f300); }
-            if (role === 'f500') { return capServer1.buildAsyncFunc(f500); }
-            if (role === 'f400URL') { return capServer1.buildURL(f400URL); }
+            if (role === 'f300') { return capServer1.build(f200); }
+            if (role === 'f500') { return capServer1.build(f500); }
+            if (role === 'f400URL') { return capServer1.build(f400URL); }
             return null;
           });
         };
@@ -710,7 +710,7 @@ describe('CapServer', function() {
           var c1restored = capServer2.restore(s1);
           var c4restored = capServer2.restore(s4);
 
-          mkRunner(c1restored).runsGetAndExpect(300);
+          mkRunner(c1restored).runsGetAndExpect(200);
           mkRunner(c4restored).runsGetAndExpect(400);
         });
 
@@ -731,7 +731,7 @@ describe('CapServer', function() {
           mkRunner(c1restored).runsGetAndExpectFailure();
           mkRunner(c4restored).runsGetAndExpectFailure();
           runs(function() { setNewReviver(); });
-          mkRunner(c1restored).runsGetAndExpect(300);
+          mkRunner(c1restored).runsGetAndExpect(200);
           mkRunner(c4restored).runsGetAndExpect(400);
         });
 
@@ -753,7 +753,7 @@ describe('CapServer', function() {
             makeNewServer();
             setNewReviver();
           });
-          mkRunner(c1restored).runsGetAndExpect(300);
+          mkRunner(c1restored).runsGetAndExpect(200);
         });
 
         it('should restore a revoked cap as dead after instance restart',

@@ -6,6 +6,7 @@ import os
 import sys
 import uuid
 from django.utils import simplejson as json
+from belay.belay import *
 
 from google.appengine.ext import db
 from google.appengine.ext import webapp
@@ -14,16 +15,6 @@ from google.appengine.ext.webapp.util import run_wsgi_app
 
 server_url = "http://" + os.environ['HTTP_HOST']
   # TODO(mzero): this should be safer
-
-def xhr_response(response):
-  response.headers.add_header("Access-Control-Allow-Origin", "*")
-
-def xhr_content(content, content_type, response):
-  xhr_response(response)
-  response.out.write(content)
-  response.headers.add_header("Cache-Control", "no-cache")
-  response.headers.add_header("Content-Type", content_type)
-  response.headers.add_header("Expires", "Fri, 01 Jan 1990 00:00:00 GMT")
   
 
 class StationData(db.Model):
@@ -42,7 +33,7 @@ class GenerateHandler(webapp.RequestHandler):
     xhr_content(content, "text/plain", self.response)
 
 
-class BaseHandler(webapp.RequestHandler):
+class BaseHandler(BcapHandler):
   class InvalidStation(Exception):
     pass
   class InvalidInstance(Exception):
@@ -71,17 +62,7 @@ class BaseHandler(webapp.RequestHandler):
     except:
       raise BaseHandler.InvalidInstance()
 
-  def options(self):
-    m = self.request.headers["Access-Control-Request-Method"]
-    h = self.request.headers["Access-Control-Request-Headers"]
 
-    self.response.headers["Access-Control-Allow-Origin"] = "*"
-    self.response.headers["Access-Control-Max-Age"] = "2592000"
-    self.response.headers["Access-Control-Allow-Methods"] = m      
-    if h:
-      self.response.headers["Access-Control-Allow-Headers"] = h
-      
-          
   def handle_exception(self, exc, debug_mode):
     if isinstance(exc,BaseHandler.InvalidStation):
       logging.getLogger().warn("unrecognized station")
@@ -123,27 +104,23 @@ class LaunchHandler(BaseHandler):
     });
     """
 
-    # would be simpler to do this with JSON, but then have to include Django
-    # to get to the json serializer...
-
     content = template % {
       'app': json.dumps(app),
       'server_url': server_url,
     }
-
+  
     xhr_content(content, "text/plain", self.response)
 
 
 class InstanceHandler(BaseHandler):
   def get(self):
     instance = self.validate_instance()
-    xhr_content(json.dumps({ 'value': json.loads(instance.data) }), 
-                "text/plain;charset=UTF-8", self.response)
+    self.bcapResponse(json.loads(instance.data))
       
   def post(self):
+    capValue = self.bcapRequest()
     instance = self.validate_instance()
-    cap_value = json.loads(self.request.body)
-    instance.data = db.Text(json.dumps(cap_value['value']), 'UTF-8')
+    instance.data = db.Text(json.dumps(capValue), 'UTF-8')
     instance.put()
     xhr_response(self.response)
   
@@ -169,7 +146,7 @@ class InstancesHandler(BaseHandler):
         }
       ids.append({ '@' : instance_url })
     
-    xhr_content(json.dumps({ 'value': ids}), "text/plain;charset=UTF-8", self.response)
+    self.bcapResponse(ids)
 
 
 application = webapp.WSGIApplication(

@@ -3,14 +3,16 @@ var tunnel;
 var capServer = new os.CapServer();
 
 var resolver = function(instID) {
-  if(instID === instance.instID) {
-    return instance.capServer.publicInterface;
+  if(!instance || !instance.capServer) {
+    return tunnel.sendInterface;
   }
-  if(instID === capServer.instanceID) {
-    return capServer.publicInterface;
+  if(instID === instance.capServer.instanceID) {
+    return instance.capServer.publicInterface;
   }
   return tunnel.sendInterface;
 }
+
+capServer.setResolver(resolver);
 
 tunnel = new os.CapTunnel(os.window.opener);
 tunnel.setLocalResolver(resolver);
@@ -33,16 +35,15 @@ function waitOnOutpost(tunnel, success, failure) {
 
 
 var setupCapServer = function(inst) {
-  var capServer;
+  var instServer;
   if ('capSnapshot' in inst.info) {
-    capServer = new os.CapServer(inst.info.capSnapshot);
+    instServer = new os.CapServer(inst.info.capSnapshot);
   }
   else {
-    capServer = new os.CapServer();
-    inst.id = capServer.instanceID;
+    instServer = new os.CapServer();
   }
-  inst.capServer = capServer;
-  capServer.setResolver(resolver);
+  inst.capServer = instServer;
+  instServer.setResolver(resolver);
 };
 
 var setupInstance = function(seedSer) {
@@ -77,7 +78,18 @@ os.jQuery.ajax({
 });
 
 
-var dirty = function() {};
+var isDirty = false;
+var dirtyProcess = function() {
+  if(!instance) { return; }
+  inst.info.capSnapshot = inst.capServer.snapshot();
+  inst.icap.post(inst.info);
+  isDirty = false;
+}
+var dirty = function() {
+  if (isDirty) { return; }
+  isDirty = true;
+  os.setTimeout(dirtyProcess, 1000);
+};
 
 var launchInstance = function(inst) {
   var instInfo = inst.info;

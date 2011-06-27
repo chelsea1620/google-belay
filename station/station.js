@@ -62,15 +62,8 @@ var instances = {};
   //  { id: uuid,       -- the id of this instance
   //    icap: url,      -- the URL of where to store/fetch the info
   //    info: { },      -- the stored state of this instance
-  //    capServer: caps -- the cap server for this instance
-  //  }
-
-var remoteInstances = {};
-  // a map from instanceIDs to
-  //  { id: uuid,       -- the id of this instance
-  //    icap: url,      -- the URL of where to store/fetch the info
-  //    info: { },      -- the stored state of this instance
-  //    capTunnel: tunn -- the cap tunnel for this instance
+  //    capServer: caps -- the cap server for this instance (if !info.remote)
+  //    capTunnel: capt -- the cap tunnel for this instance (if info.remote)
   //  }
 
 var dirtyInstances = [];
@@ -90,17 +83,25 @@ var dirty = function(inst) {
   if (dirtyInstances.length > 1) return;
   os.setTimeout(dirtyProcess, 1000);
 };
-
+var saveK = function(inst, k) {
+  var ix = dirtyInstances.indexOf(inst.id);
+  if(ix == -1) { k(); }
+  else {
+    inst.info.capSnapshot = inst.capServer.snapshot();
+    dirtyInstances.splice(ix, 1);
+    inst.icap.post(inst.info, k);
+  }
+}
 
 //
 // CapServers
 //
 var instanceResolver = function(id) {
-  if(instances[id]) {
+  if(instances[id] && !instances[id].info.remote) {
     return instances[id].capServer.publicInterface;
   }
-  if(remoteInstances[id]) {
-    return remoteInstances[id].capTunnel.sendInterface; 
+  if(instances[id] && instances[id].info.remote) {
+    return instances[id].capTunnel.sendInterface; 
   }
   if(id === capServer.instanceID) {
     return capServer.publicInterface;
@@ -126,16 +127,13 @@ var setupCapTunnel = function(instID, port) {
   var instance;
   if(instances[instID]) {
     instance = instances[instID];
-    delete instances[instID];
   }
   else { throw "Creating a tunnel for non-existent instanceID!"; }
 
-  remoteInstances[instID] = {
-    id:        instance.id,
-    icap:      instance.icap,    
-    info:      instance.info,
-    capTunnel: tunnel
-  };
+  instance.info.remote = true;
+  instance.capServer = undefined;
+  instance.capTunnel = tunnel;
+
   tunnel.setLocalResolver(instanceResolver);
   tunnel.initializeAsOutpost(capServer, instance.icap);
 };
@@ -185,6 +183,7 @@ var initialize = function(instanceCaps) {
 
 
   var launchInstance = function(inst) {
+    // TODO(jpolitz) check if inst.info claims to be remote, and pop out
     var instInfo = inst.info;
     var container = protoContainer.clone();
     var header = container.find('.belay-container-header');
@@ -295,12 +294,17 @@ var initialize = function(instanceCaps) {
     header.append('<div class="belay-control">↑</div>');
     var maxBox = header.find(':last-child');
     maxBox.click(function() {
-      os.window.open("http://localhost:9001/substation.js", inst.id,
-          function(port) { setupCapTunnel(inst.id, port); },
-          function() { os.alert("Oh noes!  No port"); });
+      saveK(inst, function() {
+        container.hide(function() { container.remove(); });
+        os.window.open("http://localhost:9001/substation.js", inst.id,
+            function(port) { setupCapTunnel(inst.id, port); },
+            function() { os.alert("Oh noes!  No port"); });
+      });
     });
     maxBox.hover(function() { maxBox.addClass('hover'); },
                  function() { maxBox.removeClass('hover'); });
+
+    dirty(inst);
 
     os.foop(instInfo.iurl, holder, extras);
   }
@@ -312,6 +316,7 @@ var initialize = function(instanceCaps) {
       success: function(data, status, xhr) {
         var inst = {
           info: {
+            remote: false,
             iurl: data,
             info: undefined,
             window: { top: nextTop += 10, left: nextLeft += 20}

@@ -280,6 +280,130 @@ describe('CapServer', function() {
 
   });
 
+
+  describe('Build', function() {
+
+    var buildAndExpect = function(item, method, value, expected) {
+      var impl = capServer1.build(item);
+      var called = false;
+      impl.invoke(method, capServer1.dataPreProcess(value),
+        function(r) {
+          called = true;
+          if (typeof r === 'undefined')
+            expect(expected).not.toBeDefined();
+          else
+            expect(capServer1.dataPostProcess(r)).toBe(expected);
+        });
+      expect(called).toBe(true);
+    }
+
+    var buildAndExpectError = function(item, expectedError) {
+      var built = false;
+      try {
+        capServer1.build(item);
+        built = true;
+      }
+      catch (e) {
+        expect(e).toEqual(expectedError);
+      }
+      expect(built).toBe(false);
+    }
+
+    var checkDead = function(impl) {
+      var succeeded = false;
+      var failed = false;
+      impl.invoke('GET', null, function() { succeeded = true; },
+          function() { failed = true; });
+      expect(succeeded).toBe(false);
+      expect(failed).toBe(true);
+    }
+
+    it('should build sync for zero or one argument', function() {
+      var syncFunc1 = function(v) { return 'syncFunc:' + v; };
+      var syncFunc2 = function() { return 'syncFunc:noargs'; };
+      buildAndExpect(syncFunc1, 'POST', 5, 'syncFunc:5');
+      buildAndExpect(syncFunc2, 'GET', undefined, 'syncFunc:noargs');
+    });
+
+    it('should build async for two or more arguments', function() {
+      var asyncFunc1 = function(v, s) { s('asyncFunc1:' + v); };
+      var asyncFunc2 = function(v, s, f) { s('asyncFunc2:' + v); };
+      buildAndExpect(asyncFunc1, 'POST', 5, 'asyncFunc1:5');
+      buildAndExpect(asyncFunc2, 'POST', 10, 'asyncFunc2:10');
+
+    });
+
+    it('should build sync handlers', function() {
+      var checkResult1 = 'not-yet-set1';
+      var syncHandler1 = {get: function() { return 22; },
+                          put: function(v) { checkResult1 = v; }};
+      var checkResult2 = 'not-yet-set2';
+      var checkResult3 = 'not-yet-set3';
+      var syncHandler2 = {put: function(v) { checkResult2 = v; },
+                          remove: function() { checkResult3 = 84; }};
+
+      buildAndExpect(syncHandler1, 'GET', undefined, 22);
+      buildAndExpect(syncHandler1, 'PUT', 55, undefined);
+      expect(checkResult1).toBe(55);
+
+      buildAndExpect(syncHandler2, 'PUT', 32, undefined);
+      buildAndExpect(syncHandler2, 'DELETE', undefined, undefined);
+      expect(checkResult2).toBe(32);
+      expect(checkResult3).toBe(84);
+    });
+
+    it('should build async handlers', function() {
+      var checkResult1 = 'not-yet-set1';
+      var syncHandler1 = {get: function(s) { s(22); },
+                          put: function(v, s) { checkResult1 = v; s(); }};
+      var checkResult2 = 'not-yet-set2';
+      var checkResult3 = 'not-yet-set3';
+      var syncHandler2 = {put: function(v, s) { checkResult2 = v; s(); },
+                          remove: function(s) { checkResult3 = 84; s(); }};
+
+      buildAndExpect(syncHandler1, 'GET', undefined, 22);
+      buildAndExpect(syncHandler1, 'PUT', 55, undefined);
+      expect(checkResult1).toBe(55);
+
+      buildAndExpect(syncHandler2, 'PUT', 32, undefined);
+      buildAndExpect(syncHandler2, 'DELETE', undefined, undefined);
+      expect(checkResult2).toBe(32);
+      expect(checkResult3).toBe(84);
+    });
+
+    it('should wrap caps', function() {
+      var c1 = capServer1.grant(function() { return 22; });
+      buildAndExpect(c1, 'GET', undefined, 22);
+    });
+
+    it('should error on inconsistent handlers', function() {
+      var badHandler1 = {get: function(success, failure) {},
+                         put: function(v) {}};
+      var badHandler2 = {get: function() {},
+                         post: function(v, s, f) {}};
+      var badHandler3 = {put: function(v) {},
+                         remove: function(s, f) {}};
+
+      buildAndExpectError(badHandler1, 'Inconsistent handlers');
+      buildAndExpectError(badHandler2, 'Inconsistent handlers');
+      buildAndExpectError(badHandler3, 'Inconsistent handlers');
+    });
+
+    it('should error on empty handlers', function() {
+      buildAndExpectError({}, 'build() given an object with no handlers');
+    });
+
+    it('should give a deadImpl on null', function() {
+      checkDead(capServer1.build(null));
+    });
+
+    it('should give a deadImpl on undefined, numbers, and bools', function() {
+      checkDead(capServer1.build());
+      checkDead(capServer1.build(22));
+      checkDead(capServer1.build(true));
+    });
+  });
+
   describe('Invocation', function() {
     var invocableFunc;
     var invocableURL;
@@ -298,22 +422,22 @@ describe('CapServer', function() {
       invocableWrappedFunc = capServer2.grant(invocableFunc);
       invocableWrappedURL = capServer2.grant(invocableURL);
       invocableAsyncFunc = function(v, sk, fk) {
-  if (v === 'error') {
-    fk(v);
-    return;
-  }
+        if (v === 'error') {
+          fk(v);
+          return;
+        }
 
-  if (v === 'exception') {
-    throw v;
-  }
+        if (v === 'exception') {
+          throw v;
+        }
 
-  if (v) {
-     d = v;
-  }
-  sk('#' + d);
-  return;
+        if (v) {
+          d = v;
+        }
+        sk('#' + d);
+        return;
       };
-      invocableWrappedAsyncFunc = capServer2.grantAsync(invocableAsyncFunc);
+      invocableWrappedAsyncFunc = capServer2.grant(invocableAsyncFunc);
     });
 
 
@@ -340,10 +464,10 @@ describe('CapServer', function() {
       describe(name, function() {
         var c1;
         beforeEach(function() {
-          c1 = capServer1.grantAsync(makeAsyncItem());
+          c1 = capServer1.grant(makeAsyncItem());
         });
 
-        it('should do asynchronous calls (grantAsync)', function() {
+        it('should do asynchronous calls (grant)', function() {
           var invoker = new InvokeRunner(c1);
 
           invoker.runsGetAndExpect('#0');
@@ -406,7 +530,7 @@ describe('CapServer', function() {
     describe('of async dead caps', function() {
       var deadCap;
       beforeEach(function() {
-        deadCap = capServer1.grantAsync(null);
+        deadCap = capServer1.grant(null);
       });
 
       it('should do asynchronous calls', function() {
@@ -529,7 +653,7 @@ describe('CapServer', function() {
         });
 
         it('should restore an async cap', function() {
-          var c1 = capServer1.grantAsync(f500);
+          var c1 = capServer1.grant(f500);
           var s1 = c1.serialize();
 
           var c2 = capServer2.restore(s1);
@@ -556,7 +680,7 @@ describe('CapServer', function() {
           s1 = c1.serialize();
           c2 = capServer1.grant(f100, 'f100');
           s2 = c2.serialize();
-          c3 = capServer1.grantAsync(f500, 'f500');
+          c3 = capServer1.grant(f500, 'f500');
           s3 = c3.serialize();
           c4 = capServer1.grant(f400URL, 'f400URL');
           s4 = c4.serialize();
@@ -573,9 +697,9 @@ describe('CapServer', function() {
         };
         var setNewReviver = function() {
           capServer1.setReviver(function(role) {
-            if (role === 'f300') { return capServer1.buildFunc(f300); }
-            if (role === 'f500') { return capServer1.buildAsyncFunc(f500); }
-            if (role === 'f400URL') { return capServer1.buildURL(f400URL); }
+            if (role === 'f300') { return capServer1.build(f200); }
+            if (role === 'f500') { return capServer1.build(f500); }
+            if (role === 'f400URL') { return capServer1.build(f400URL); }
             return null;
           });
         };
@@ -586,7 +710,7 @@ describe('CapServer', function() {
           var c1restored = capServer2.restore(s1);
           var c4restored = capServer2.restore(s4);
 
-          mkRunner(c1restored).runsGetAndExpect(300);
+          mkRunner(c1restored).runsGetAndExpect(200);
           mkRunner(c4restored).runsGetAndExpect(400);
         });
 
@@ -607,7 +731,7 @@ describe('CapServer', function() {
           mkRunner(c1restored).runsGetAndExpectFailure();
           mkRunner(c4restored).runsGetAndExpectFailure();
           runs(function() { setNewReviver(); });
-          mkRunner(c1restored).runsGetAndExpect(300);
+          mkRunner(c1restored).runsGetAndExpect(200);
           mkRunner(c4restored).runsGetAndExpect(400);
         });
 
@@ -629,7 +753,7 @@ describe('CapServer', function() {
             makeNewServer();
             setNewReviver();
           });
-          mkRunner(c1restored).runsGetAndExpect(300);
+          mkRunner(c1restored).runsGetAndExpect(200);
         });
 
         it('should restore a revoked cap as dead after instance restart',

@@ -5,3 +5,4 @@ var establishWindowOpenerPort = function() {
   channel.port2.start();
   return channel.port2;
 };
+var openerPort = window.opener ? establishWindowOpenerPort() : undefined;

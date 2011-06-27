@@ -3,6 +3,9 @@ var tunnel;
 var capServer = new os.CapServer();
 
 var resolver = function(instID) {
+  if(!instance || !instance.capServer) {
+    return tunnel.sendInterface;
+  }
   if(instID === instance.capServer.instanceID) {
     return instance.capServer.publicInterface;
   }
@@ -75,7 +78,18 @@ os.jQuery.ajax({
 });
 
 
-var dirty = function() {};
+var isDirty = false;
+var dirtyProcess = function() {
+  if(!instance) { return; }
+  inst.info.capSnapshot = inst.capServer.snapshot();
+  inst.icap.post(inst.info);
+  isDirty = false;
+}
+var dirty = function() {
+  if (isDirty) { return; }
+  isDirty = true;
+  os.setTimeout(dirtyProcess, 1000);
+};
 
 var launchInstance = function(inst) {
   var instInfo = inst.info;

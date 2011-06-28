@@ -17,23 +17,6 @@ capServer.setResolver(resolver);
 tunnel = new os.CapTunnel(os.window.opener);
 tunnel.setLocalResolver(resolver);
 
-function waitOnOutpost(tunnel, success, failure) {
-  var onReady = function() { 
-    if(tunnel.outpost) { 
-      os.clearInterval(intervalID);
-      os.clearTimeout(timerID);
-      success(tunnel);
-    }
-  }; 
-  var intervalID = os.setInterval(onReady, 100);
-
-  var timerID = os.setTimeout(function() { 
-    os.clearInterval(intervalID); 
-    failure();
-  }, 3000);
-}
-
-
 var setupCapServer = function(inst) {
   var instServer;
   if ('capSnapshot' in inst.info) {
@@ -62,11 +45,9 @@ var setupInstance = function(seedSers) {
   });
 }
 
-waitOnOutpost(tunnel,
-    function(tunnel) { setupInstance(tunnel.outpost.seedSers); },
-    function() {  } );
-
-
+tunnel.setOutpostHandler(function(message) {
+  setupInstance(message.seedSers);
+});
 
 os.jQuery.ajax({
   url: 'http://localhost:9001/substation.html',
@@ -78,7 +59,6 @@ os.jQuery.ajax({
     os.alert('Failed to load station: ' + status);
   }
 });
-
 
 var isDirty = false;
 var dirtyProcess = function() {

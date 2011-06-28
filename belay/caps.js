@@ -447,7 +447,12 @@ var CAP_EXPORTS = (function() {
       var message = event.data;
       if (message.op == 'invoke') { me.handleInvoke(message); }
       else if (message.op == 'response') { me.handleResponse(message); }
-      else if (message.op == 'outpost') { me.handleOutpost(message); }
+      else if (message.op == 'outpost') { 
+        me._outpostMessage = message;
+        if (me.hasOwnProperty('_outpostHandler')) {
+          me._outpostHandler(message);
+        }
+      };
     };
   };
 
@@ -463,9 +468,12 @@ var CAP_EXPORTS = (function() {
       seedSers: seedSers
     });
   };
-
-  CapTunnel.prototype.handleOutpost = function(message) {
-    this.outpost = message;
+  
+  CapTunnel.prototype.setOutpostHandler = function(callback) {
+    this._outpostHandler = callback;
+    if (this.hasOwnProperty('_outpostMessage')) {
+      this._outpostHandler(this._outpostMessage);
+    }
   };
 
   CapTunnel.prototype.sendInvoke = function(ser, method, data, success, failure)

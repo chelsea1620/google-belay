@@ -28,6 +28,8 @@ var foop = function(sourceURL, node, extras) {
         clearInterval: function(t) { clearInterval(t); },
 
         foop: foop,
+        poof: function() { window.close(); },
+        
         CapServer: CapServer,
         CapTunnel: CapTunnel,
         window: { 

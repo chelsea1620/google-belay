@@ -30,7 +30,8 @@ describe('CapTunnels', function() {
 
       runs(function() {
         expect(typeof tunnel.outpost.instID).toEqual('string');
-        expect(typeof tunnel.outpost.seedSer).toEqual('string');
+        expect(tunnel.outpost.seedSers.length).toEqual(1);
+        expect(typeof tunnel.outpost.seedSers[0]).toEqual('string');
 
         localServer1 = new CapServer();
         localServer2 = new CapServer();
@@ -51,7 +52,7 @@ describe('CapTunnels', function() {
       var result;
       var done = false;
       runs(function() {
-        var remoteSeedCap = localServer1.restore(tunnel.outpost.seedSer);
+        var remoteSeedCap = localServer1.restore(tunnel.outpost.seedSers[0]);
         remoteSeedCap.post('answer',
           function(data) { result = data; done = true; },
           function(err) { done = true; });
@@ -63,7 +64,7 @@ describe('CapTunnels', function() {
     it('should be able to invoke a local cap from the remote side', function() {
       var invokeWithThreeCap;
       runs(function() {
-        var remoteSeedCap = localServer1.restore(tunnel.outpost.seedSer);
+        var remoteSeedCap = localServer1.restore(tunnel.outpost.seedSers[0]);
         remoteSeedCap.post('invokeWithThree',
           function(data) { invokeWithThreeCap = data; },
           function(err) { });
@@ -109,7 +110,7 @@ describe('CapTunnels', function() {
 
       var remoteAsyncCap;
       runs(function() {
-        var remoteSeedCap = localServer1.restore(tunnel.outpost.seedSer);
+        var remoteSeedCap = localServer1.restore(tunnel.outpost.seedSers[0]);
         remoteSeedCap.post('remoteAsync',
           function(data) { remoteAsyncCap = data; },
           function(err) { });

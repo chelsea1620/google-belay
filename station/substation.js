@@ -3,14 +3,14 @@ var tunnel;
 var capServer = new os.CapServer();
 
 var resolver = function(instID) {
-  if(!instance || !instance.capServer) {
+  if (!instance || !instance.capServer) {
     return tunnel.sendInterface;
   }
-  if(instID === instance.capServer.instanceID) {
+  if (instID === instance.capServer.instanceID) {
     return instance.capServer.publicInterface;
   }
   return tunnel.sendInterface;
-}
+};
 
 capServer.setResolver(resolver);
 
@@ -32,7 +32,7 @@ var setupCapServer = function(inst) {
 var setupInstance = function(seedSers) {
   var seedCap = capServer.restore(seedSers[0]);
   var restoreCap = capServer.restore(seedSers[1]);
-  
+
   seedCap.get(function(instInfo) {
     var inst = {
       icap: seedCap,
@@ -41,9 +41,9 @@ var setupInstance = function(seedSers) {
     setupCapServer(inst);
     inst.id = inst.capServer.instanceID; // TODO(joe): transitive hack!
     instance = inst;
-    launchInstance(inst, restoreCap); 
+    launchInstance(inst, restoreCap);
   });
-}
+};
 
 tunnel.setOutpostHandler(function(message) {
   setupInstance(message.seedSers);
@@ -62,11 +62,11 @@ os.jQuery.ajax({
 
 var isDirty = false;
 var dirtyProcess = function() {
-  if(!instance) { return; }
+  if (!instance) { return; }
   instance.info.capSnapshot = instance.capServer.snapshot();
   instance.icap.post(instance.info);
   isDirty = false;
-}
+};
 var dirty = function() {
   if (isDirty) { return; }
   isDirty = true;
@@ -75,13 +75,13 @@ var dirty = function() {
 
 var launchInstance = function(inst, restoreCap) {
   var instInfo = inst.info;
-  var top = os.topDiv.find("#substation-container");
-  var header = os.topDiv.find(".belay-container-header");
+  var top = os.topDiv.find('#substation-container');
+  var header = os.topDiv.find('.belay-container-header');
 
   header.append('<div class="belay-control">↙</div>');
   var popInButton = header.find(':last-child');
-  
-  popInButton.click(function() { 
+
+  popInButton.click(function() {
     inst.info.capSnapshot = inst.capServer.snapshot();
     inst.icap.post(inst.info, function(_) {
       restoreCap.get(function() {
@@ -91,11 +91,11 @@ var launchInstance = function(inst, restoreCap) {
   });
   popInButton.hover(function() { popInButton.addClass('hover'); },
                     function() { popInButton.removeClass('hover'); });
-                    
+
   top.width(inst.info.window.width || '50em')
      .height(inst.info.window.height || '50em');
-                    
-  
+
+
   var extras = {
     storage: {
       get: function() { return instInfo.data; },
@@ -116,5 +116,5 @@ var launchInstance = function(inst, restoreCap) {
   };
 
   os.foop(instInfo.iurl, top, extras);
-}
+};
 

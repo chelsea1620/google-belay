@@ -57,8 +57,8 @@ var CAP_EXPORTS = (function() {
     jQuery.ajax({ data: data,
                   type: method,
                   url: url,
-                  success: function(data, status, xhr) { 
-                    success(data); 
+                  success: function(data, status, xhr) {
+                    success(data);
                   },
                   error: function(xhr, status, message) {
                     failure({status: Number(xhr.status) || 501,
@@ -447,17 +447,17 @@ var CAP_EXPORTS = (function() {
       var message = event.data;
       if (message.op == 'invoke') { me.handleInvoke(message); }
       else if (message.op == 'response') { me.handleResponse(message); }
-      else if (message.op == 'outpost') { 
+      else if (message.op == 'outpost') {
         me._outpostMessage = message;
         if (me.hasOwnProperty('_outpostHandler')) {
           me._outpostHandler(message);
         }
-      };
+      }
     };
   };
 
   CapTunnel.prototype.initializeAsOutpost = function(server, seedCaps) {
-    this.sendOutpost(server.instanceID, 
+    this.sendOutpost(server.instanceID,
       seedCaps.map(function(cap) { return cap.serialize(); }));
   };
 
@@ -468,7 +468,7 @@ var CAP_EXPORTS = (function() {
       seedSers: seedSers
     });
   };
-  
+
   CapTunnel.prototype.setOutpostHandler = function(callback) {
     this._outpostHandler = callback;
     if (this.hasOwnProperty('_outpostMessage')) {

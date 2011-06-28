@@ -24,8 +24,9 @@ describe('CapTunnels', function() {
   describe('with local capservers', function() {
     var localServer1, localServer2;
 
-    var outpostMessage = false;
+    var outpostMessage;
     beforeEach(function() {
+      outpostMessage = false;
       tunnel.setOutpostHandler(function(msg) { outpostMessage = msg; });
       waitsFor(function() { return outpostMessage; },
           'outpost read timeout', 1000);

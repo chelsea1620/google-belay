@@ -85,25 +85,25 @@ var dirty = function(inst) {
 };
 var saveK = function(inst, k) {
   var ix = dirtyInstances.indexOf(inst.id);
-  if(ix == -1) { k(); }
+  if (ix == -1) { k(); }
   else {
     inst.info.capSnapshot = inst.capServer.snapshot();
     dirtyInstances.splice(ix, 1);
     inst.icap.post(inst.info, k);
   }
-}
+};
 
 //
 // CapServers
 //
 var instanceResolver = function(id) {
-  if(instances[id] && !instances[id].info.remote) {
+  if (instances[id] && !instances[id].info.remote) {
     return instances[id].capServer.publicInterface;
   }
-  if(instances[id] && instances[id].info.remote) {
-    return instances[id].capTunnel.sendInterface; 
+  if (instances[id] && instances[id].info.remote) {
+    return instances[id].capTunnel.sendInterface;
   }
-  if(id === capServer.instanceID) {
+  if (id === capServer.instanceID) {
     return capServer.publicInterface;
   }
   return null;
@@ -123,18 +123,18 @@ var setupCapServer = function(inst) {
 };
 
 var setupCapTunnel = function(instID, port) {
-  var tunnel = new os.CapTunnel(port); 
+  var tunnel = new os.CapTunnel(port);
   var instance;
-  if(instances[instID]) {
+  if (instances[instID]) {
     instance = instances[instID];
   }
-  else { throw "Creating a tunnel for non-existent instanceID!"; }
+  else { throw 'Creating a tunnel for non-existent instanceID!'; }
 
   instance.info.remote = true;
   instance.capServer = undefined;
   instance.capTunnel = tunnel;
-  
-  var restoreCap = capServer.grant(function () {
+
+  var restoreCap = capServer.grant(function() {
     getAndLaunchInstance(instance.icap);
     return true;
   });
@@ -284,9 +284,9 @@ var launchInstance = function(inst) {
   maxBox.click(function() {
     saveK(inst, function() {
       container.hide(function() { container.remove(); });
-      os.window.open("http://localhost:9001/substation.js", inst.id,
+      os.window.open('http://localhost:9001/substation.js', inst.id,
           function(port) { setupCapTunnel(inst.id, port); },
-          function() { os.alert("Oh noes!  No port"); });
+          function() { os.alert('Oh noes!  No port'); });
     });
   });
   maxBox.hover(function() { maxBox.addClass('hover'); },
@@ -295,7 +295,7 @@ var launchInstance = function(inst) {
   dirty(inst);
 
   os.foop(instInfo.iurl, holder, extras);
-}
+};
 
 var getAndLaunchInstance = function(icap) {
   icap.get(function(instInfo) {
@@ -309,7 +309,7 @@ var getAndLaunchInstance = function(icap) {
     launchInstance(inst);
   },
   function(status) { os.alert('Failed to load instance: ' + status); });
-}
+};
 
 var initialize = function(instanceCaps) {
   var top = os.topDiv;

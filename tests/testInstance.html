@@ -1,0 +1,49 @@
+<html>
+  <head>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.5.2/jquery.js"></script>
+    <script src="../belay/caps.js"></script>
+    <script src="../belay/windowremote.js"></script>
+    <script type="text/javascript">
+      var log = function(text) {
+        $("<li></li>").text(text).appendTo('#transcript');
+      };
+      
+      $(function(){
+        var openerPort = establishWindowOpenerPort(); log("Constructed port");
+        var tunnel = new CapTunnel(openerPort);       log("Constructed tunnel");
+        var server = new CapServer();                 log("Constructed server");
+        tunnel.setLocalResolver(function(instID) {
+          return server.publicInterface;
+        });
+        server.setResolver(tunnel.remoteResolverProxy);
+        
+        var invokeWithThreeCap = server.grant(function(v) {
+          log("invokeWithThree invoking " + v);
+          v.post(3);
+          return 32;
+        });
+
+        var invokeMyAsync = 
+          server.grant(function(remoteReceiveCap, sk, fk) {
+          setTimeout(function() { 
+            remoteReceiveCap.post(999, sk, fk); }, 0);
+        });
+        
+        var seedCap = server.grant(function(v) { 
+          log("seedCap invoked with: " + v);
+          if (v == "answer") { return 42; }
+          if (v == "invokeWithThree") { return invokeWithThreeCap; }
+          if (v == "remoteAsync") { return invokeMyAsync; }
+          return undefined;
+        });
+        log("Constructed seedCap");
+        
+        tunnel.initializeAsOutpost(server, [ seedCap ]);
+      });
+    </script>
+  </head>
+  <body>
+    <h1>Transcript</h1>
+    <ol id="transcript"></ol>
+  </body>
+</html>

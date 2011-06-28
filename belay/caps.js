@@ -57,11 +57,13 @@ var CAP_EXPORTS = (function() {
     jQuery.ajax({ data: data,
                   type: method,
                   url: url,
-                  success: function(data, status, xhr) { success(data); },
+                  success: function(data, status, xhr) { 
+                    success(data); 
+                  },
                   error: function(xhr, status, message) {
-                           failure({status: Number(xhr.status) || 501,
-                                    message: message});
-                }});
+                    failure({status: Number(xhr.status) || 501,
+                             message: message});
+                  }});
   };
 
   // == IMPLEMENTATIONS ==
@@ -449,15 +451,16 @@ var CAP_EXPORTS = (function() {
     };
   };
 
-  CapTunnel.prototype.initializeAsOutpost = function(server, seedCap) {
-    this.sendOutpost(server.instanceID, seedCap.serialize());
+  CapTunnel.prototype.initializeAsOutpost = function(server, seedCaps) {
+    this.sendOutpost(server.instanceID, 
+      seedCaps.map(function(cap) { return cap.serialize(); }));
   };
 
-  CapTunnel.prototype.sendOutpost = function(instID, seedSer) {
+  CapTunnel.prototype.sendOutpost = function(instID, seedSers) {
     this.port.postMessage({
       op: 'outpost',
       instID: instID,
-      seedSer: seedSer
+      seedSers: seedSers
     });
   };
 

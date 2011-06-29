@@ -323,6 +323,10 @@ var CAP_EXPORTS = (function() {
       if (Object.getPrototypeOf(item) === Capability.prototype) {
         return new ImplWrap(this, item);
       }
+      if (typeof item.invoke === 'function' &&
+          item.invoke.length === 4) {
+        return item;
+      }
       switch (consistentHandler(item)) {
         case 'sync': return this.buildSyncHandler(item);
         case 'async': return this.buildAsyncHandler(item);

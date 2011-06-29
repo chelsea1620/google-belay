@@ -6,8 +6,6 @@ describe('SubStation protocol', function() {
     var remotePort = windowManager.open('testSubstation.html',
                                         'test_substation');
     tunnel = new CapTunnel(remotePort);
-    waitsFor(function() { return remotePort.ready(); },
-             'port readiness timeout', 500);
   });
 
   afterEach(function() {

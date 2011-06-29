@@ -280,9 +280,7 @@ describe('CapServer', function() {
 
   });
 
-
   describe('Build', function() {
-
     var buildAndExpect = function(item, method, value, expected) {
       var impl = capServer1.build(item);
       var called = false;
@@ -295,7 +293,7 @@ describe('CapServer', function() {
             expect(capServer1.dataPostProcess(r)).toBe(expected);
         });
       expect(called).toBe(true);
-    }
+    };
 
     var buildAndExpectError = function(item, expectedError) {
       var built = false;
@@ -307,7 +305,7 @@ describe('CapServer', function() {
         expect(e).toEqual(expectedError);
       }
       expect(built).toBe(false);
-    }
+    };
 
     var checkDead = function(impl) {
       var succeeded = false;
@@ -316,7 +314,7 @@ describe('CapServer', function() {
           function() { failed = true; });
       expect(succeeded).toBe(false);
       expect(failed).toBe(true);
-    }
+    };
 
     it('should build sync for zero or one argument', function() {
       var syncFunc1 = function(v) { return 'syncFunc:' + v; };
@@ -374,6 +372,13 @@ describe('CapServer', function() {
     it('should wrap caps', function() {
       var c1 = capServer1.grant(function() { return 22; });
       buildAndExpect(c1, 'GET', undefined, 22);
+    });
+
+    it('should be the identity on other handlers', function() {
+      var c1 = capServer1.grant(function() { return 22; });
+      var handler1 = capServer1.build(c1);
+      var handler2 = capServer2.build(handler1);
+      expect(handler1).toBe(handler2);
     });
 
     it('should error on inconsistent handlers', function() {

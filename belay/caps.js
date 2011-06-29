@@ -57,11 +57,13 @@ var CAP_EXPORTS = (function() {
     jQuery.ajax({ data: data,
                   type: method,
                   url: url,
-                  success: function(data, status, xhr) { success(data); },
+                  success: function(data, status, xhr) {
+                    success(data);
+                  },
                   error: function(xhr, status, message) {
-                           failure({status: Number(xhr.status) || 501,
-                                    message: message});
-                }});
+                    failure({status: Number(xhr.status) || 501,
+                             message: message});
+                  }});
   };
 
   // == IMPLEMENTATIONS ==
@@ -445,24 +447,33 @@ var CAP_EXPORTS = (function() {
       var message = event.data;
       if (message.op == 'invoke') { me.handleInvoke(message); }
       else if (message.op == 'response') { me.handleResponse(message); }
-      else if (message.op == 'outpost') { me.handleOutpost(message); }
+      else if (message.op == 'outpost') {
+        me._outpostMessage = message;
+        if (me.hasOwnProperty('_outpostHandler')) {
+          me._outpostHandler(message);
+        }
+      }
     };
   };
 
-  CapTunnel.prototype.initializeAsOutpost = function(server, seedCap) {
-    this.sendOutpost(server.instanceID, seedCap.serialize());
+  CapTunnel.prototype.initializeAsOutpost = function(server, seedCaps) {
+    this.sendOutpost(server.instanceID,
+      seedCaps.map(function(cap) { return cap.serialize(); }));
   };
 
-  CapTunnel.prototype.sendOutpost = function(instID, seedSer) {
+  CapTunnel.prototype.sendOutpost = function(instID, seedSers) {
     this.port.postMessage({
       op: 'outpost',
       instID: instID,
-      seedSer: seedSer
+      seedSers: seedSers
     });
   };
 
-  CapTunnel.prototype.handleOutpost = function(message) {
-    this.outpost = message;
+  CapTunnel.prototype.setOutpostHandler = function(callback) {
+    this._outpostHandler = callback;
+    if (this.hasOwnProperty('_outpostMessage')) {
+      this._outpostHandler(this._outpostMessage);
+    }
   };
 
   CapTunnel.prototype.sendInvoke = function(ser, method, data, success, failure)

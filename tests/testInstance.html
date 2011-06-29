@@ -35,9 +35,10 @@
           if (v == "invokeWithThree") { return invokeWithThreeCap; }
           if (v == "remoteAsync") { return invokeMyAsync; }
           return undefined;
-        });                                         log("Constructed seedCap");
+        });
+        log("Constructed seedCap");
         
-        tunnel.initializeAsOutpost(server, seedCap)
+        tunnel.initializeAsOutpost(server, [ seedCap ]);
       });
     </script>
   </head>

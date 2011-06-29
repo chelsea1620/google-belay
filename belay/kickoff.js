@@ -28,30 +28,32 @@ var foop = function(sourceURL, node, extras) {
         clearInterval: function(t) { clearInterval(t); },
 
         foop: foop,
+        poof: function() { window.close(); },
+
         CapServer: CapServer,
         CapTunnel: CapTunnel,
-        window: { 
+        window: {
           open: function(url, name, success, failure) {
             var port = windowManager.open('http://localhost:9000/subbelay?url=' +
                 encodeURI(url), name);
 
-            var onReady = function() { 
-              if(port.ready()) { 
+            var onReady = function() {
+              if (port.ready()) {
                 clearInterval(intervalID);
                 clearTimeout(timerID);
                 success(port);
               }
-            }; 
+            };
             var intervalID = setInterval(onReady, 100);
 
-            var timerID = setTimeout(function() { 
-              clearInterval(intervalID); 
+            var timerID = setTimeout(function() {
+              clearInterval(intervalID);
               failure();
             }, 3000);
           },
           opener: window.opener ? window.openerPort : undefined
         }
-        
+
       };
 
       if (extras) {

@@ -54,6 +54,10 @@
         </dd>
         <dt>alert(s)</dt>
         <dd>Put up an alert dialog. May be rate limited.</dd>
+        <dt>setInterval(f, t)</dt>
+        <dd>The standard <code>setInterval</code> function.</dd>
+        <dt>clearInterval(t)</dt>
+        <dd>The standard <code>clearInterval</code> function.</dd>
         <dt>setTimeout(f, t)</dt>
         <dd>The standard <code>setTimeout</code> function.</dd>
         <dt>clearTimeout(t)</dt>
@@ -64,7 +68,28 @@
           within the <code>container</code>, which must be a jQuery node. If
           <code>extras</code> is provided, its properties are added to the
           <code>os</code> object passed the code.</dd>
+
         
+
+        <dt>window</dt>
+        <dd>Provides attenuated access to the window object.  Not all 
+           containers provide this.
+          <dl>
+            <dt>.open(url, name, success, failure)</dt>
+            <dd>Opens a window with location <code>url</code> and named
+              <code>name</code>.  Creates a <code>port</code> object with a 
+              <code>postMessage(message, ports)</code> function, and a
+              <code>onmessage(messageHandler)</code> function.  The port is linked to
+              the new remote window for communication, and follow the protocol
+              of <a href="http://dev.w3.org/html5/postmsg/#message-ports">
+              <code>MessageChannels</code></a>.</dd>
+
+            <dt>.opener</dt>
+            <dd>If the current window was opened by another, this is a
+              <code>port</code> that is the dual of the port created by
+              <code>os.window.open</code> on the other side.</dd>
+          </dl>
+        </dd>
         <dt>storage<dt>
         <dd>Data storage interface. Not all containers provide this.
           <dl>
@@ -124,14 +149,36 @@
       <hr />
       <p>Properties of capabilities returned from <code>os.capServer.grant()</code>:</p>
       <dl class="belay-properties">
-        <dt>.invoke(opts)</dt>
+        <dt>.invoke(method, opts, [success, [failure]])</dt>
         <dd>Invoke the cap as an HTTP based resource. Uses same interface as
           <code>os.jQuery.ajax</code>, though no <code>url</code> should be
-          supplied. Sync and async versions are both supported.</dd>
-        <dt>.invokeSync(v)</dt>
-        <dd>Invoke the cap with one argument, and return the result, synchronously.
-          This is not guarunteed to work and may return <code>undefined</code>
-          even where the async. version (<code>invoke</code>) would succeed.</dd>
+          supplied.  <code>method</code> is one of <code>'GET', 'PUT', 'POST',
+          'DELETE'</code>.  The <code>success</code> parameter will be called with the result
+          of the invocation, and <code>failure</code> will be called if an exception
+          occurs.  Depending on <code>method</code> invocation will use the rules of
+          one of <code>.get, .put, .post, .remove</code> below.
+        <dt>.get([success, [failure]])</dt>
+        <dd>Invoke the cap with <code>GET</code> semantics. No 
+          arguments are provided, but a return value is expected.  The return
+          value is passed to <code>success</code> if provided, and discarded
+          otherwise.
+        </dd>
+        <dt>.put(value, [success, [failure]])</dt>
+        <dd>Invoke the cap with <code>PUT</code> semantics.  An argument is
+          provided, but no return value is expected.  A conforming implemenation
+          will not pass any values to the <code>success</code> function, but
+          will call <code>success</code> on completion of the invocation.
+        </dd>
+        <dt>.post(value, [success, [failure]])</dt>
+        <dd>Invoke the cap with <code>POST</code> semantics.  An argument is
+          provided, and a return value is allowed.  The return value will be
+          passed to <code>success</code> if provided, and discarded otherwise.
+        </dd>
+        <dt>.remove([success, [failure]])</dt>
+        <dd>Invoke the cap with <code>DELETE</code> semantics.  No arguments
+          are provided, and no return value is expected.  The <code>success</code>
+          function is called upon completion.
+        </dd>
         <dt>.revoke()</dt>
         <dd>Revoke the capability. All invocation functions will then return
           <code>undefined</code>.</dd>

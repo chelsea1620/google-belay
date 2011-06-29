@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>bfriendr - test scaffold</title>
+  <link rel="stylesheet" href="http://www.google.com/css/go-x.css">
+  <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.4.4/jquery.min.js"></script>
+  <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.9/jquery-ui.min.js"></script>
+</head>
+<body>
+  <h1><a href="/"><img src="http://www.google.com/intl/en/images/logo_sm.gif" alt="Google"></a>
+    bfriendr <small>test scaffold</small></h1>
+  <ul id="nav">
+    <li>Home</li>
+    <li>Something</li>
+    <li>Other Thing</li>
+  </ul>
+  <div id="aux">
+    <div>
+      <style scoped="scoped">@import url(http://localhost:9001/station.css);</style>
+      <div id="belay-station-outer">
+        <div id="belay-controls"></div>
+        <div id="belay-station-inner">
+          <div id="belay-toolbar">
+            <h2>Tools</h2>
+            <div class="belay-tool">
+              <img src="http://localhost:9001/tool.png" />
+              <p>Example</p>
+            </div>
+            <div class="belay-tool">
+              <img src="http://localhost:9001/tool.png" />
+              <p>Not Really Here</p>
+            </div>
+          </div>
+          <div id="belay-desk">
+            <h2>Your stuff</h2>
+            <div class="belay-container"
+                style="left: 100px; top: 60px; width: 16em; height: 20em">
+              <div class="belay-container-header"><div class="belay-control">×</div></div>
+              <div class="belay-container-holder">
+                <div id="scaffold-insert-here">
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="about">©2011 Google</div>
+  </div>
+  <script type="text/javascript">
+    $('#scaffold-insert-here').load('bfriendr.html');
+  </script>
+</body>  
+</html>

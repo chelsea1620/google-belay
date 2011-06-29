@@ -43,6 +43,9 @@ class BcapHandler(webapp.RequestHandler):
     resp = json.dumps({ 'value': jsonResp })
     xhr_content(resp, "text/plain;charset=UTF-8", self.response)
 
+  def bcapNullResponse(self):
+    xhr_response(self.response)
+    
   # allows cross-domain requests  
   def options(self):
     m = self.request.headers["Access-Control-Request-Method"]
@@ -73,7 +76,7 @@ class Grant(db.Model):
 
 
 # A WSGIApplication handler that invokes granted capabilities.
-class ProxyHandler(webapp.RequestHandler):
+class ProxyHandler(BcapHandler):
 
   default_prefix = '/caps/'
   prefix_strip_length = len(default_prefix)

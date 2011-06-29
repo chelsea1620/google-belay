@@ -5,14 +5,15 @@ To start up the demo do this:
 
 2) Start the GoogleAppEngineLauncher application
 
-3) Drag each of these five directories to the GoogleAppEngineLauncher window:
+3) Drag each of these six directories to the GoogleAppEngineLauncher window:
   belay (the directory named belay inside the top level belay directory)
   station
   hello
   stickies
   buzzer
+  emote
 
-4) Assign these five apps the ports as follows:
+4) Assign these six apps the ports as follows:
   belay    9000
   station  9001
   hello    9002
@@ -20,7 +21,7 @@ To start up the demo do this:
   buzzer   9004
   emote    9005
 
-5) Select all five of them in GoogleAppEngineLauncher and click the Run button.
+5) Select all six of them in GoogleAppEngineLauncher and click the Run button.
 
 6) Select the belay-belay application and click the Browse button.
 
@@ -47,8 +48,14 @@ The command to run to lint the code is:
   gjslint --nojsdoc */*.js
   (this avoids checking the .js files in libraries we use)
 
+
+
 UNIT TESTING
 ============
+
+We use unittest2 and webtest for the Python backend.  You will need to:
+
+  easy_install unittest2 webtest
 
 Unit testing Python server code:
 
@@ -59,3 +66,6 @@ On a Mac, PATH-TO-SDK is the full path to GoogleAppEngineLauncher.app.
 On Ubuntu, PATH-TO-SDK is the path to the directory you unzipped appengine to
   (e.g. the directory that contains dev_appserver.py).
 
+For JavaScript, we use Jasmine.  Run the tests by opening SpecRunner.html in
+a browser.  WebSpecRunner contains more tests, but can't be run from file:///
+urls, and must be accessed through a web server.

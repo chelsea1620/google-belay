@@ -301,7 +301,7 @@ var launchExternal = function(inst) {
         function(port) { setupCapTunnel(inst.id, port); },
         function() { os.alert('Oh noes!  No port'); });
   });
-}
+};
 
 var getAndLaunchInstance = function(icap) {
   icap.get(function(instInfo) {
@@ -312,8 +312,8 @@ var getAndLaunchInstance = function(icap) {
     setupCapServer(inst);
     inst.id = inst.capServer.instanceID; // TODO(mzero): hack!
     instances[inst.id] = inst;
-    if(instInfo.remote) launchExternal(inst);
-    else                launchInstance(inst);
+    if (instInfo.remote) launchExternal(inst);
+    else launchInstance(inst);
   },
   function(status) { os.alert('Failed to load instance: ' + status); });
 };

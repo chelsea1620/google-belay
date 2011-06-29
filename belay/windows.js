@@ -35,8 +35,8 @@ var windowManager = (function() {
   };
 
   WindowManager.Window.prototype.remoteReady = function(e) {
-    if(this.ready) {
-      throw "Ready was true in remoteReady!!!  Event was: " + String(e);
+    if (this.ready) {
+      throw 'Ready was true in remoteReady!!!  Event was: ' + String(e);
     }
 
     this.toRemotePort.setPort(e.ports[0]);

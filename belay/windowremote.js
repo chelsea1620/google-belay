@@ -1,5 +1,5 @@
 var openerPort = (function() {
-  if(!window.opener) { return undefined; }
+  if (!window.opener) { return undefined; }
   var channel = new MessageChannel();
   var wrappedPort = new PortQueue();
   wrappedPort.setPort(channel.port2);

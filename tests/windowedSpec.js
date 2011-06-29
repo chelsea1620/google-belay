@@ -7,7 +7,7 @@ describe('WindowManager', function() {
     remotePort = undefined;
     receivedMessages = [];
   });
-  
+
   afterEach(function() {
     windowManager.closeAll();
   });
@@ -17,10 +17,8 @@ describe('WindowManager', function() {
       remotePort = windowManager.open('testWindow.html?' + q, 'test_window');
       remotePort.onmessage = onmessage;
     });
-    waitsFor(function() { return remotePort.ready(); },
-        'ready timeout', 1000);
   };
-  
+
   var runsExpectReceive = function(r) {
     waitsFor(function() { return receivedMessages.length >= r.length; },
       'receive ' + r.length + ' messages', 250);
@@ -72,13 +70,13 @@ describe('WindowManager', function() {
 
         xit('should L->R, R->L (1 roundtrip)', function() {
           runsTestWindow(localVariant, remoteVariant);
-          runs(function() { remotePort.postMessage({a:42, b:3}); });
+          runs(function() { remotePort.postMessage({a: 42, b: 3}); });
           runsExpectReceive(['got [object Object]']);
         });
 
     });
   };
-  
+
   testExchange('localImmediate', 'remoteImmediate');
   testExchange('localImmediate', 'remoteDelayed');
 });

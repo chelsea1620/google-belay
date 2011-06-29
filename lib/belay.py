@@ -69,9 +69,10 @@ class ProxyHandler(webapp.RequestHandler):
   
   @classmethod
   def setUrlMap(klass, url_mapping):
-    assert klass.__url_mapping__ is None
-    klass.__url_mapping__ = { }
+    if klass.__url_mapping__ is not None: # do not reinit (FastCGI)
+      return
     
+    klass.__url_mapping__ = { }
     for (url, handler_class) in url_mapping:
       if hasattr(handler_class, 'default_internal_url'):
         pass
@@ -146,7 +147,8 @@ def grant(path_or_handler, entity):
   path = get_path(path_or_handler)
   item = Grant(internal_path=path, db_entity=entity.key())
   item.put()
-  return item
+  ser_cap = ProxyHandler.default_prefix + str(item.key())
+  return ser_cap
 
 def regrant(path_or_handler, entity):
   path = get_path(path_or_handler)

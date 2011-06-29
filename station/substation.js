@@ -30,7 +30,6 @@ var setupCapServer = function(inst) {
 };
 
 var setupInstance = function(seedSers) {
-  console.log('SeedSers: ', seedSers);
   var seedCap = capServer.restore(seedSers[0]);
   var restoreCap = capServer.restore(seedSers[1]);
 
@@ -50,10 +49,8 @@ os.jQuery.ajax({
   url: 'http://localhost:9001/substation.html',
   dataType: 'text',
   success: function(data, status, xhr) {
-    console.log('Tunnel: ', tunnel);
     os.topDiv.html(data);
     tunnel.setOutpostHandler(function(message) {
-      console.log('Outpost message: ', message);
       setupInstance(message.seedSers);
     });
   },

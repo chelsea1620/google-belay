@@ -2,7 +2,8 @@ import unittest
 from google.appengine.api import memcache
 from google.appengine.ext import db
 from google.appengine.ext import testbed
-from lib.belay import *
+import webtest
+from belay import *
 from google.appengine.ext.webapp import Request
 from google.appengine.ext.webapp import Response
 
@@ -24,6 +25,13 @@ def GetEntityViaMemcache(entity_key):
   if entity is not None:
     memcache.set(entity_key, entity)
   return entity
+  
+  
+class HelloHandler(webapp.RequestHandler):
+  
+  def get(self):
+    self.response.out.write('hello')
+
 
 class TestCapHandler(CapHandler):
   
@@ -31,7 +39,7 @@ class TestCapHandler(CapHandler):
     self.bcapResponse({ 'success': True })
   
 
-class DemoTestCase(unittest.TestCase):
+class DirectCapServerTestCase(unittest.TestCase):
 
   def setUp(self):
     
@@ -45,6 +53,7 @@ class DemoTestCase(unittest.TestCase):
 
   def tearDown(self):
     self.testbed.deactivate()
+    ProxyHandler.__url_mapping__ = None
       
   def testCreateGrant(self):
     entity = TestModel()
@@ -90,3 +99,24 @@ class DemoTestCase(unittest.TestCase):
     handler.get()
     self.assertEqual(handler.response.out.getvalue(), \
       json.dumps({"value": {"success": True}}))
+    
+  def testWSGI(self):
+    app = webapp.WSGIApplication(
+      [('/', HelloHandler),
+       (r'^/caps/.*', ProxyHandler),
+      ], debug=True)
+    set_handlers('/caps/', [ ('internal_url', TestCapHandler) ])
+
+    entity = TestModel()
+    entity.put()
+    
+    extern_url = str(grant(TestCapHandler, entity).key())
+    
+    wt = webtest.TestApp(app)
+    
+    self.assertEqual(wt.get('/').body, 'hello')
+    
+    resp = wt.get('/caps/' + extern_url)
+    self.assertEqual(resp.body, \
+      json.dumps({"value": {"success": True}}))
+    

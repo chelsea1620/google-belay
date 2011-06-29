@@ -1,11 +1,23 @@
 """Abstractions for writing Belay servers for AppEngine."""
 
+import logging
+import os
+
 from google.appengine.ext import db
 from google.appengine.ext import webapp
 from django.utils import simplejson as json
-import logging
 
 
+def this_server_url_prefix():
+  server_name = os.environ['SERVER_NAME']
+  server_port = int(os.environ['SERVER_PORT'])
+  prefix = 'http://' # TODO(mzero): need to detect if using https
+  prefix += server_name
+  if server_port != 80: # TODO(mzero): different port if using https
+    prefix += ":%d" % server_port
+  return prefix
+  
+  
 class BelayException(Exception):
   pass
   
@@ -64,6 +76,7 @@ class Grant(db.Model):
 class ProxyHandler(webapp.RequestHandler):
 
   default_prefix = '/caps/'
+  prefix_strip_length = len(default_prefix)
   
   __url_mapping__ = None
   
@@ -85,7 +98,7 @@ class ProxyHandler(webapp.RequestHandler):
 
   def init_cap_handler(self):
     # Strip the '/caps/' prefix off self.request.path
-    grant_key_str = self.request.path_info[len(self.__class__.default_prefix):]
+    grant_key_str = self.request.path_info[self.__class__.prefix_strip_length:]
 
     grant = Grant.get(db.Key(grant_key_str))
     if grant is None:
@@ -160,11 +173,17 @@ def regrant(path_or_handler, entity):
     raise BelayException('CapServer:regrant::ambiguous internal_path in regrant')
   
   if len(items) == 1:
-    return items[0]
+    return ProxyHandler.default_prefix + str(items[0].key())
   else:
     return grant(path_or_handler, entity)
 
 
 def set_handlers(cap_prefix, path_map):
-  ProxyHandler.default_prefix = cap_prefix
+  if not cap_prefix.startswith('/'):
+    cap_prefix = '/' + cap_prefix
+  if not cap_prefix.endswith('/'):
+    cap_prefix += '/'
+  
+  ProxyHandler.prefix_strip_length = len(cap_prefix)
+  ProxyHandler.default_prefix = this_server_url_prefix() + cap_prefix
   ProxyHandler.setUrlMap(path_map)

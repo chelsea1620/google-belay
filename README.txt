@@ -56,3 +56,6 @@ Unit testing Python server code:
   ./testrunner.py <PATH-TO-SDK> .
 
 On a Mac, PATH-TO-SDK is the full path to GoogleAppEngineLauncher.app.
+On Ubuntu, PATH-TO-SDK is the path to the directory you unzipped appengine to
+  (e.g. the directory that contains dev_appserver.py).
+

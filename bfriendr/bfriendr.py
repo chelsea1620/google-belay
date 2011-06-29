@@ -60,7 +60,7 @@ class MessageData(db.Model):
     return date.strftime(format)
 
 class AccountData(db.Model):
-  friend_view = db.ReferenceProperty(CardData, required=True)
+  my_card = db.ReferenceProperty(CardData, required=True)
 
 
 class GenerateHandler(object): pass
@@ -78,9 +78,10 @@ class InviteAcceptHandler(object): pass
 
 class GenerateHandler(webapp.RequestHandler):
   def get(self):
-    card = CardData(name="who are you?")
+    card = CardData(name="who are you?", email="where are you?",
+      notes="tell your friends about yourself")
     card.put()
-    account = AccountData(friend_view=card)
+    account = AccountData(my_card=card)
     account.put()
     CapServer.xhr_content(CapServer.grant(LaunchHandler, account), "text/plain", self.response)
 
@@ -92,6 +93,8 @@ class LaunchHandler(CapServer.CapHandler):
 	  'caps': {
       'friends':  CapServer.regrant(FriendsListHandler, account),
       'addInvite':  CapServer.regrant(AddInviteHandler, account),
+      'myCard':  CapServer.regrant(CardInfoHandler, account.my_card),
+
       # TODO(mzero): or should this be just the following?
       'account':  CapServer.regrant(AccountInfoHandler, account),
 	    }
@@ -130,10 +133,36 @@ class AccountInfoHandler(CapServer.CapHandler):
       'addInvite':  CapServer.regrant(AddInviteHandler, account)
     })
     
+    
+class CardInfoHandler(CapServer.CapHandler):
+  def get(self):
+    card = self.get_entity()
+    self.bcapResponse({
+      'name':       card.name,
+      'email':      card.email,
+      #'image':      CapServer.regrant(ImageHandler, card),
+      'notes':      card.notes,
+    })
+  
+  def put(self):
+    card = self.get_entity()
+    request = self.bcapRequest()
+    # TODO(mzero): never trust what they send you!
+    card.name = request['name']
+    card.email = request['email']
+    card.notes = request['notes']
+    card.put()
+    self.bcapNullResponse()
+  
+  def delete(self):
+    card = self.get_entity();
+    card.delete()
+    self.bcapNullResponse()
+
   
 class FriendsListHandler(CapServer.CapHandler):
   def get(self):
-    account = self.get_entity();
+    account = self.get_entity()
 
     q = FriendData.all(keys_only=True)
     q.ancestor(account)
@@ -147,7 +176,7 @@ class FriendsListHandler(CapServer.CapHandler):
 
 class FriendInfoHandler(CapServer.CapHandler):
   def get(self):
-    friend = self.get_entity();
+    friend = self.get_entity()
     self.bcapResponse({
       'name':       friend.card.name,
       'email':      friend.card.email,
@@ -242,13 +271,13 @@ class InviteInfoHandler(CapServer.CapHandler):
   def get(self):
     friend = self.get_entity()
     account = friend.parent # TODO(mzero): check if you can do this
-    fv_card = account.friend_view
+    my_card = account.my_card
     
     self.bcapResponse({
-      'name': fv_card.name,
-      'email': fv_card.email,
-      'image': CapServer.regrant(ImageHandler, fv_card),
-      'notes': fv_card.notes,
+      'name': my_card.name,
+      'email': my_card.email,
+      'image': CapServer.regrant(ImageHandler, my_card),
+      'notes': my_card.notes,
 
       'accept': CapServer.grant(InviteAcceptHandler, friend),
     })
@@ -291,6 +320,8 @@ CapServer.set_handlers(
   [('station/launch',LaunchHandler),
    ('friend/account',AccountInfoHandler),
   
+   ('friend/card',   CardInfoHandler),
+   
    ('friend/list',   FriendsListHandler),
    ('friend/friend', FriendInfoHandler),
    

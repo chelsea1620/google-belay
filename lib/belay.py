@@ -58,7 +58,7 @@ class CapHandler(BcapHandler):
 
 class Grant(db.Model):
   internal_path = db.StringProperty() # internal URL passed to the cap handler
-  db_key = db.ReferenceProperty() # reference to DB item passed to cap handler
+  db_entity = db.ReferenceProperty() # reference to DB item passed to cap handler
 
 
 # A WSGIApplication handler that invokes granted capabilities.
@@ -78,7 +78,7 @@ class ProxyHandler(webapp.RequestHandler):
         pass
       else:
         handler_class.default_internal_url = url
-      klass.__url_mapping__[handler_class.default_internal_url] = handler_class
+      klass.__url_mapping__[url] = handler_class
 
   def __init__(self):
     pass
@@ -95,7 +95,7 @@ class ProxyHandler(webapp.RequestHandler):
 
     handler_class = self.__url_mapping__[grant.internal_path]
     # instantiates appropriate subclass of db.Model
-    item = grant.db_key 
+    item = grant.db_entity 
 
     handler = handler_class()
     handler.set_entity(item)
@@ -136,20 +136,30 @@ class ProxyHandler(webapp.RequestHandler):
       handler.delete()
 
 
-
+def get_path(path_or_handler):
+  if isinstance(path_or_handler, str):
+    return path_or_handler
+  elif issubclass(path_or_handler, CapHandler):
+    return path_or_handler.default_internal_url
+  else:
+    raise BelayException('CapServer:get_path::expected string or CapHandler')
+     
 
 def grant(path_or_handler, entity):
-  if issubclass(path_or_handler, CapHandler):
-    path = path_or_handler.default_internal_url
-  elif instance(path_or_handler, str):
-    path = path
-  else:
-    raise BelayException('expected string or CapHandler')
-
-  item = Grant(internal_path=path, db_key=entity.key())
+  path = get_path(path_or_handler)
+  item = Grant(internal_path=path, db_entity=entity.key())
   item.put()
   return item
 
+def regrant(path_or_handler, entity):
+  path = get_path(path_or_handler)
+  item = Grant.all().filter("internal_path=", path) \
+                    .filter("db_entity=", entity).fetch(1)
+  if item is not None:
+    return item
+  else:
+    return grant(path_or_handler, entity)
+  
 
 def set_handlers(cap_prefix, path_map):
   ProxyHandler.default_prefix = cap_prefix

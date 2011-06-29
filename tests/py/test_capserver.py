@@ -62,11 +62,17 @@ class DirectCapServerTestCase(unittest.TestCase):
     cap = grant(TestCapHandler, entity)
     self.assertEqual(1, len(Grant.all().fetch(2)))
 
+  def testRegrant(self):
+    entity = TestModel()
+    entity.put()
+    TestCapHandler.default_internal_url = 'internal_url'
+    cap = grant(TestCapHandler, entity)
+    cap2 = regrant(TestCapHandler, entity)
+    self.assertEqual(cap, cap2)
+    self.assertEqual(1, len(Grant.all().fetch(2)))
+
 
   def testInternalCapRequest(self):
-    
-    # set_handlers('/caps/', [ ('internal_url', TestCapHandler) ])
-    
     entity = TestModel()
     entity.put()
     TestCapHandler.default_internal_url = 'internal_url'
@@ -81,7 +87,6 @@ class DirectCapServerTestCase(unittest.TestCase):
       json.dumps({"value": {"success": True}}))
 
   def testCapRequest(self):
-
     set_handlers('/caps/', [ ('internal_url', TestCapHandler) ])
 
     entity = TestModel()
@@ -110,13 +115,28 @@ class DirectCapServerTestCase(unittest.TestCase):
     entity = TestModel()
     entity.put()
     
-    extern_url = str(grant(TestCapHandler, entity).key())
+    extern_url1 = str(grant(TestCapHandler, entity).key())
     
     wt = webtest.TestApp(app)
     
     self.assertEqual(wt.get('/').body, 'hello')
     
-    resp = wt.get('/caps/' + extern_url)
-    self.assertEqual(resp.body, \
+    resp1 = wt.get('/caps/' + extern_url1)
+    self.assertEqual(resp1.body, \
       json.dumps({"value": {"success": True}}))
+   
+  def testGrantAsString(self): 
+    app = webapp.WSGIApplication(
+      [ (r'^/caps/.*', ProxyHandler) ], debug=True)
+    set_handlers('/caps/', [ ('another_url', TestCapHandler) ])
     
+    entity = TestModel()
+    entity.put()
+
+    extern_url2 = str(grant('another_url', entity).key())
+    
+    wt = webtest.TestApp(app)
+    resp2 = wt.get('/caps/' + extern_url2)
+    self.assertEqual(resp2.body, \
+      json.dumps({"value": {"success": True}}))
+

@@ -13,7 +13,6 @@ TEST_PATH   Path to package containing test modules"""
 
 def main(sdk_path, test_path):
     sys.path.insert(0, sdk_path)
-    sys.path.insert(0, '../../lib')
     import dev_appserver
     dev_appserver.fix_sys_path()
     suite = unittest2.loader.TestLoader().discover(test_path)

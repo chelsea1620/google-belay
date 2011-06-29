@@ -1,0 +1,13 @@
+application: test-capserver
+version: 1
+runtime: python
+api_version: 1
+
+handlers:
+
+- url: /
+  script: test_capserver.py
+  
+- url: /caps/*
+  script: test_capserver.py
+

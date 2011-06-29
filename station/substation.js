@@ -30,6 +30,7 @@ var setupCapServer = function(inst) {
 };
 
 var setupInstance = function(seedSers) {
+  console.log("SeedSers: ", seedSers);
   var seedCap = capServer.restore(seedSers[0]);
   var restoreCap = capServer.restore(seedSers[1]);
 
@@ -45,15 +46,16 @@ var setupInstance = function(seedSers) {
   });
 };
 
-tunnel.setOutpostHandler(function(message) {
-  setupInstance(message.seedSers);
-});
-
 os.jQuery.ajax({
   url: 'http://localhost:9001/substation.html',
   dataType: 'text',
   success: function(data, status, xhr) {
+    console.log("Tunnel: ", tunnel);
     os.topDiv.html(data);
+    tunnel.setOutpostHandler(function(message) {
+      console.log("Outpost message: ", message);
+      setupInstance(message.seedSers);
+    });
   },
   error: function(xhr, status, error) {
     os.alert('Failed to load station: ' + status);
@@ -83,6 +85,7 @@ var launchInstance = function(inst, restoreCap) {
 
   popInButton.click(function() {
     inst.info.capSnapshot = inst.capServer.snapshot();
+    inst.info.remote = false;
     inst.icap.post(inst.info, function(_) {
       restoreCap.get(function() {
         os.poof();

@@ -1,8 +1,10 @@
-var establishWindowOpenerPort = function() {
+var openerPort = (function() {
+  if(!window.opener) { return undefined; }
   var channel = new MessageChannel();
+  var wrappedPort = new PortQueue();
+  wrappedPort.setPort(channel.port2);
   window.opener.postMessage('remoteReady', [channel.port1], '*');
   // WARNING: postMessage argument order here is Chrome's not HTML5 spec's
-  channel.port2.start();
-  return channel.port2;
-};
-var openerPort = window.opener ? establishWindowOpenerPort() : undefined;
+  return wrappedPort;
+})();
+

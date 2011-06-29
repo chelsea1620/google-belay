@@ -12,21 +12,6 @@ class TestModel(db.Model):
   number = db.IntegerProperty(default=42)
   text = db.StringProperty()
 
-class TestEntityGroupRoot(db.Model):
-  """Entity group root"""
-  pass
-
-def GetEntityViaMemcache(entity_key):
-  """Get entity from memcache if available, from datastore if not."""
-  entity = memcache.get(entity_key)
-  if entity is not None:
-    return entity
-  entity = TestModel.get(entity_key)
-  if entity is not None:
-    memcache.set(entity_key, entity)
-  return entity
-  
-  
 class HelloHandler(webapp.RequestHandler):
   
   def get(self):

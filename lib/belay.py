@@ -161,7 +161,7 @@ def regrant(path_or_handler, entity):
     return items[0]
   else:
     return grant(path_or_handler, entity)
-  
+
 
 def set_handlers(cap_prefix, path_map):
   ProxyHandler.default_prefix = cap_prefix

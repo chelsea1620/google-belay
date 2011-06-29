@@ -6,15 +6,13 @@ var windowManager = (function() {
     // TODO(mzero): better be only one of these, should assert that
     window.addEventListener('message', function(e) {
       for (i in my.windows) {
-        if (e.source == my.windows[i].domWindow) {
+        if (e.source === my.windows[i].domWindow) {
           return my.windows[i].remoteReady(e);
         }
       }
       return false;
     });
   };
-
-  var windowManager = new WindowManager();
 
   WindowManager.prototype.open = function(url, name) {
     var w = new WindowManager.Window();
@@ -33,40 +31,21 @@ var windowManager = (function() {
   WindowManager.Window = function() {
     this.ready = false;
     this.domWindow = undefined;
-    this.rawToRemotePort = undefined;
-
-    var me = this;
-    this.toRemotePort = {
-      postMessage: function(data, ports) {
-        if (me.ready) {
-          me.rawToRemotePort.postMessage(data, ports);
-        }
-      },
-      onmessage: undefined,
-      ready: function() { return me.ready; }
-    };
-  };
-
-  WindowManager.Window.prototype.initialized = function() {
-    return this.ready;
+    this.toRemotePort = new PortQueue();
   };
 
   WindowManager.Window.prototype.remoteReady = function(e) {
-    this.rawToRemotePort = e.ports[0];
-    this.rawToRemotePort.start();
+    if(this.ready) {
+      throw "Ready was true in remoteReady!!!  Event was: " + String(e);
+    }
 
-    var toRemotePort = this.toRemotePort;
-    this.rawToRemotePort.onmessage = function(e) {
-      if (toRemotePort.onmessage) toRemotePort.onmessage(e);
-    };
-
+    this.toRemotePort.setPort(e.ports[0]);
     this.ready = true;
   };
 
   WindowManager.Window.prototype.close = function() {
     this.domWindow.close();
   };
-
 
   return new WindowManager();
 })();

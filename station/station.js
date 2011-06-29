@@ -68,6 +68,7 @@ var instances = {};
 
 var dirtyInstances = [];
 var dirtyProcess = function() {
+  if (dirtyInstances.length <= 0) { return; }
   var instID = dirtyInstances.shift();
   var inst = instances[instID];
   inst.info.capSnapshot = inst.capServer.snapshot();
@@ -130,7 +131,6 @@ var setupCapTunnel = function(instID, port) {
   }
   else { throw 'Creating a tunnel for non-existent instanceID!'; }
 
-  instance.info.remote = true;
   instance.capServer = undefined;
   instance.capTunnel = tunnel;
 
@@ -282,12 +282,8 @@ var launchInstance = function(inst) {
   header.append('<div class="belay-control">↑</div>');
   var maxBox = header.find(':last-child');
   maxBox.click(function() {
-    saveK(inst, function() {
-      container.hide(function() { container.remove(); });
-      os.window.open('http://localhost:9001/substation.js', inst.id,
-          function(port) { setupCapTunnel(inst.id, port); },
-          function() { os.alert('Oh noes!  No port'); });
-    });
+    container.hide(function() { container.remove(); });
+    launchExternal(inst);
   });
   maxBox.hover(function() { maxBox.addClass('hover'); },
                function() { maxBox.removeClass('hover'); });
@@ -296,6 +292,16 @@ var launchInstance = function(inst) {
 
   os.foop(instInfo.iurl, holder, extras);
 };
+
+var launchExternal = function(inst) {
+  inst.info.remote = true;
+  dirty(inst);
+  saveK(inst, function() {
+    os.window.open('http://localhost:9001/substation.js', inst.id,
+        function(port) { setupCapTunnel(inst.id, port); },
+        function() { os.alert('Oh noes!  No port'); });
+  });
+}
 
 var getAndLaunchInstance = function(icap) {
   icap.get(function(instInfo) {
@@ -306,7 +312,8 @@ var getAndLaunchInstance = function(icap) {
     setupCapServer(inst);
     inst.id = inst.capServer.instanceID; // TODO(mzero): hack!
     instances[inst.id] = inst;
-    launchInstance(inst);
+    if(instInfo.remote) launchExternal(inst);
+    else                launchInstance(inst);
   },
   function(status) { os.alert('Failed to load instance: ' + status); });
 };

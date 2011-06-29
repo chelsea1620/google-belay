@@ -4,8 +4,6 @@ describe('CapTunnels', function() {
   beforeEach(function() {
     var remotePort = windowManager.open('testInstance.html', 'test_window');
     tunnel = new CapTunnel(remotePort);
-    waitsFor(function() { return remotePort.ready(); },
-        'ready timeout', 1000);
   });
 
   afterEach(function() {

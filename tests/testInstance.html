@@ -2,6 +2,7 @@
   <head>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.5.2/jquery.js"></script>
     <script src="../belay/caps.js"></script>
+    <script src="../belay/portQueue.js"></script>
     <script src="../belay/windowremote.js"></script>
     <script type="text/javascript">
       var log = function(text) {
@@ -9,7 +10,6 @@
       };
       
       $(function(){
-        var openerPort = establishWindowOpenerPort(); log("Constructed port");
         var tunnel = new CapTunnel(openerPort);       log("Constructed tunnel");
         var server = new CapServer();                 log("Constructed server");
         tunnel.setLocalResolver(function(instID) {

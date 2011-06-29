@@ -122,7 +122,7 @@ class InstanceHandler(BaseHandler):
     instance = self.validate_instance()
     instance.data = db.Text(json.dumps(capValue), 'UTF-8')
     instance.put()
-    xhr_response(self.response)
+    self.bcapResponse(True)
   
   def delete(self):
     instance = self.validate_instance()

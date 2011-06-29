@@ -1,21 +1,29 @@
 import unittest
+import logging
 from google.appengine.api import memcache
 from google.appengine.ext import db
 from google.appengine.ext import testbed
-import webtest
-from belay import *
+from google.appengine.ext import webapp
+from lib.belay import *
+
 from google.appengine.ext.webapp import Request
 from google.appengine.ext.webapp import Response
+from google.appengine.ext.webapp.util import run_wsgi_app
+
+if not (__name__ == '__main__'):
+  import webtest
+else:
+  pass
 
 class TestModel(db.Model):
   """A model class used for testing."""
   number = db.IntegerProperty(default=42)
   text = db.StringProperty()
 
-class HelloHandler(webapp.RequestHandler):
+class PingHandler(webapp.RequestHandler):
   
   def get(self):
-    self.response.out.write('hello')
+    self.response.out.write('{ "value": "pong" }')
 
 
 class TestCapHandler(CapHandler):
@@ -90,13 +98,24 @@ class DirectCapServerTestCase(Defaults):
     handler.get()
     self.assertEqual(handler.response.out.getvalue(), \
       json.dumps({"value": {"success": True}}))
+      
+
+class GrantHandler(BcapHandler):
+  
+  def get(self):
+    test_entity = TestModel()
+    test_entity.put()
+    
+    ser_cap = grant(TestCapHandler, test_entity)
+    self.bcapResponse(ser_cap)
+    
     
 class WSGITestCases(Defaults):
 
   def setUp(self):
     super(WSGITestCases, self).setUp()
     self.app = webapp.WSGIApplication(
-      [('/', HelloHandler),
+      [('/ping', PingHandler),
        (r'^/caps/.*', ProxyHandler),
       ], debug=True)
 
@@ -121,3 +140,20 @@ class WSGITestCases(Defaults):
     self.assertEqual(resp2.body, \
       json.dumps({"value": {"success": True}}))
 
+
+
+def main():
+  logging.getLogger().setLevel(logging.DEBUG)
+  
+  application = webapp.WSGIApplication(
+    [('/ping', PingHandler),
+     ('/wellknowncaps/grant', GrantHandler),
+     (r'^/caps/.*', ProxyHandler),
+    ], debug=True)
+  
+  set_handlers('/caps/', [ ('internal_url', TestCapHandler) ])
+  
+  run_wsgi_app(application)
+
+if __name__ == "__main__":
+  main()

@@ -46,7 +46,7 @@ class BcapHandler(webapp.RequestHandler):
 
 
 # Base class for handlers that process capability invocations.
-class CapHandler(webapp.RequestHandler):
+class CapHandler(BcapHandler):
 
 
   def set_entity(self, entity):
@@ -55,64 +55,52 @@ class CapHandler(webapp.RequestHandler):
   def get_entity(self):
     return self.__entity__
 
-  def bcapRequest(self):
-      return json.loads(self.request.body)['value']
-
-  def bcapResponse(self, jsonResp):
-    resp = json.dumps({ 'value': jsonResp })
-    xhr_content(resp, "text/plain;charset=UTF-8", self.response)
-
-  # allows cross-domain requests  
-  def options(self):
-    m = self.request.headers["Access-Control-Request-Method"]
-    h = self.request.headers["Access-Control-Request-Headers"]
-
-    self.response.headers["Access-Control-Allow-Origin"] = "*"
-    self.response.headers["Access-Control-Max-Age"] = "2592000"
-    self.response.headers["Access-Control-Allow-Methods"] = m      
-    if h:
-      self.response.headers["Access-Control-Allow-Headers"] = h
-
-
 
 class Grant(db.Model):
   internal_path = db.StringProperty() # internal URL passed to the cap handler
   db_key = db.ReferenceProperty() # reference to DB item passed to cap handler
 
 
-
-
 # A WSGIApplication handler that invokes granted capabilities.
 class ProxyHandler(webapp.RequestHandler):
 
   default_prefix = '/caps/'
-
-  def __init__(self, url_mapping):
-    self.__url_mapping__ = url_mapping
-    for url, handler_class in url_mapping.items():
+  
+  __url_mapping__ = None
+  
+  @classmethod
+  def setUrlMap(klass, url_mapping):
+    assert klass.__url_mapping__ is None
+    klass.__url_mapping__ = { }
+    
+    for (url, handler_class) in url_mapping:
       if hasattr(handler_class, 'default_internal_url'):
         pass
       else:
         handler_class.default_internal_url = url
+      klass.__url_mapping__[handler_class.default_internal_url] = handler_class
 
+  def __init__(self):
+    pass
 
   def init_cap_handler(self):
-    # Strip the '/caps' prefix off self.request.path
-    grant_key_str = self.request.url[len(default_prefix):]
+    # Strip the '/caps/' prefix off self.request.path
+    grant_key_str = self.request.path_info[len(self.__class__.default_prefix):]
 
-    grant = Grants.get_by_key_name(self.request_key())
+    grant = Grant.get(db.Key(grant_key_str))
     if grant is None:
       # TODO(arjun): appropriate error in response
+      raise BelayException('%s, %s' % (self.request.path_info, grant_key_str))
       return None
 
-    handler_class = self.__url_mapping__[grant.url_path]
+    handler_class = self.__url_mapping__[grant.internal_path]
     # instantiates appropriate subclass of db.Model
-    item = db.get(grant.db_key) 
+    item = grant.db_key 
 
     handler = handler_class()
-    handler.set_item(item)
+    handler.set_entity(item)
 
-    self.request.url = grant.url_path # handler sees private path
+    self.request.path_info = grant.internal_path # handler sees private path
     handler.initialize(self.request, self.response)
     return handler
 
@@ -151,7 +139,7 @@ class ProxyHandler(webapp.RequestHandler):
 
 
 def grant(path_or_handler, entity):
-  if isinstance(path_or_handler, CapHandler):
+  if issubclass(path_or_handler, CapHandler):
     path = path_or_handler.default_internal_url
   elif instance(path_or_handler, str):
     path = path
@@ -163,6 +151,6 @@ def grant(path_or_handler, entity):
   return item
 
 
-def set_handlers(app, path_map):
-  logging.debug('here we are')
-  # TODO: FILL
+def set_handlers(cap_prefix, path_map):
+  ProxyHandler.default_prefix = cap_prefix
+  ProxyHandler.setUrlMap(path_map)

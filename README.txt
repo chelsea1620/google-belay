@@ -46,3 +46,13 @@ Installation instructions:
 The command to run to lint the code is:
   gjslint --nojsdoc */*.js
   (this avoids checking the .js files in libraries we use)
+
+UNIT TESTING
+============
+
+Unit testing Python server code:
+
+  cd ./tests/py
+  ./testrunner.py <PATH-TO-SDK> .
+
+On a Mac, PATH-TO-SDK is the full path to GoogleAppEngineLauncher.app.

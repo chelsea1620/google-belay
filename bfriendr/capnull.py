@@ -1,4 +1,4 @@
-from lib.belay import BcapHandler
+import lib.belay as Belay
 
 from google.appengine.ext import db
 from google.appengine.ext import webapp
@@ -6,12 +6,13 @@ from google.appengine.ext import webapp
 capPrefix = "error://broken/cap/"
 privateMap = []
 
-def setHandlers(app, map):
-  
+def setHandlers(prefix, map):
+  global capPrefix, privateMap
+  capPrefix = prefix
   privateMap = map
 
   
-class Handler(BcapHandler):
+class Handler(Belay.CapHandler):
   def __init__(self, path, entity):
     self.private = {
       'path': path,
@@ -19,9 +20,11 @@ class Handler(BcapHandler):
       }
   
 class ProxyHandler(webapp.RequestHandler):
-  
+  pass
 
-def grant(path, item):
+def grant(path_or_handler, item):
+  path = Belay.get_path(path_or_handler)
+  return "%s?path=%s&item=%s" % (capPrefix, path, str(item.key()))
 
 def regrant(path, item):
   return grant(path, item)

@@ -19,6 +19,10 @@ var defaultTools = [
     { name: 'Emote',
       icon: 'http://localhost:9005/tool-emote.png',
       url: 'http://localhost:9005/generate'
+    },
+    { name: 'bfriendr',
+      icon: 'http://localhost:9001/tool.png',
+      url: 'http://localhost:9009/generate'
     }
   ];
 

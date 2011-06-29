@@ -4,14 +4,15 @@ import datetime
 import logging
 import os
 
-from django.utils import simplejson as json
-from belay.belay import *
+import lib.belay as CapServer
 
+from django.utils import simplejson as json
+
+from google.appengine.ext import blobstore
 from google.appengine.ext import db
 from google.appengine.ext import webapp
 from google.appengine.ext.webapp.util import run_wsgi_app
 
-import capnull as CapServer
 
 
 server_url = "http://" + os.environ['HTTP_HOST']
@@ -19,9 +20,7 @@ server_url = "http://" + os.environ['HTTP_HOST']
 
 
 
-class AccountData(db.Model):
-  friend_view = db.ReferenceProprty(Card, required=True)
-  
+
 class CardData(db.Model):
   name = db.StringProperty(required=True)
   email = db.EmailProperty()
@@ -29,8 +28,8 @@ class CardData(db.Model):
   notes = db.StringProperty()
   # TODO(mzero): needs a refresh_cap property at some point
   
-class FriendData(dbModel):
-  card = db.ReferenceProperty(Card, required=True)
+class FriendData(db.Model):
+  card = db.ReferenceProperty(CardData, required=True)
   in_progress = db.BooleanProperty(default=False)
   new_messages = db.BooleanProperty(default=False)
   remote_box = db.TextProperty()  # cap
@@ -60,16 +59,35 @@ class MessageData(db.Model):
     format += ' - %I:%M %p'
     return date.strftime(format)
 
+class AccountData(db.Model):
+  friend_view = db.ReferenceProperty(CardData, required=True)
+
+
+class GenerateHandler(object): pass
+class LaunchHandler(object): pass
+class AccountInfoHandler(object): pass
+class FriendsListHandler(object): pass
+class FriendInfoHandler(object): pass
+class MessageListHandler(object): pass
+class MessageInfoHandler(object): pass
+class MessagePostHandler(object): pass
+class AddInviteHandler(object): pass
+class InviteInfoHandler(object): pass
+class InviteAcceptHandler(object): pass
+
+
 class GenerateHandler(webapp.RequestHandler):
   def get(self):
-    account = Account()
+    card = CardData(name="who are you?")
+    card.put()
+    account = AccountData(friend_view=card)
     account.put()
-    self.xhr_content(CapServer.grant(LaunchHandler, account), "text/plain")
+    CapServer.xhr_content(CapServer.grant(LaunchHandler, account), "text/plain", self.response)
 
 
-class LaunchHandler(CapServer.Handler):
+class LaunchHandler(CapServer.CapHandler):
   def get(self):
-    account = self.private.entity
+    account = self.get_entity()
     app = {
 	  'caps': {
       'friends':  CapServer.regrant(FriendsListHandler, account),
@@ -101,21 +119,21 @@ class LaunchHandler(CapServer.Handler):
       'server_url': server_url,
     }
   
-    self.xhr_content(content, "text/plain")
+    CapServer.xhr_content(content, "text/plain", self.response)
 
 
-class AccountInfoHandler(CapServer.Handler):
+class AccountInfoHandler(CapServer.CapHandler):
   def get(self):
-    account = self.private.entity;
+    account = self.get_entity();
     self.bcapResponse({
       'friends':  CapServer.regrant(FriendsListHandler, account),
       'addInvite':  CapServer.regrant(AddInviteHandler, account)
     })
     
   
-class FriendsListHandler(CapServer.Handler):
+class FriendsListHandler(CapServer.CapHandler):
   def get(self):
-    account = self.private.entity;
+    account = self.get_entity();
 
     q = FriendData.all(keys_only=True)
     q.ancestor(account)
@@ -127,9 +145,9 @@ class FriendsListHandler(CapServer.Handler):
     self.bcapResponse(friends)
 
 
-class FriendInfoHandler(CapSerer.Handler):
+class FriendInfoHandler(CapServer.CapHandler):
   def get(self):
-    friend = self.private.entity;
+    friend = self.get_entity();
     self.bcapResponse({
       'name':       friend.card.name,
       'email':      friend.card.email,
@@ -146,7 +164,7 @@ class FriendInfoHandler(CapSerer.Handler):
     pass
   
   def delete(self):
-    friend = self.private.entity
+    friend = self.get_entity()
     card = friend.card
     CapServer.revokeEntity(friend)
     CapServer.revokeEntity(card)
@@ -157,9 +175,9 @@ class FriendInfoHandler(CapSerer.Handler):
       # NOTE(mzero)
 
 
-class MessageListHandler(CapServer.Handler):
+class MessageListHandler(CapServer.CapHandler):
   def get(self):
-    friend = self.private.entity;
+    friend = self.get_entity();
 
     q = MessageData.all(keys_only=True)
     q.ancestor(friend)
@@ -169,9 +187,9 @@ class MessageListHandler(CapServer.Handler):
     self.bcapResponse({'messages': messages})
 
 
-class MessageInfoHandler(CapSerer.Handler):
+class MessageInfoHandler(CapServer.CapHandler):
   def get(self):
-    message = self.private.entity;
+    message = self.get_entity();
     self.bcapResponse({
       'when':       message.nicedate(),
       'message':    message.message,
@@ -180,15 +198,15 @@ class MessageInfoHandler(CapSerer.Handler):
     })
   
   def delete(self):
-    message = self.private.entity
+    message = self.get_entity()
     CapServer.revokeEntity(message)
     message.delete()
     self.bcapNullResponse()
 
 
-class MessagePostHandler(CapSerer.Handler):
+class MessagePostHandler(CapServer.CapHandler):
   def post(self):
-    friend = self.private.entity
+    friend = self.get_entity()
     request = self.bcapRequest()
     message = MessageData(parent=friend)
     message.message = db.Text(request.message)
@@ -199,18 +217,18 @@ class MessagePostHandler(CapSerer.Handler):
     self.bcapNullResponse()
   
 
-class AddInviteHandler(CapServer.Handler):
+class AddInviteHandler(CapServer.CapHandler):
   def post(self):
-    account = self.private.entity
+    account = self.get_entity()
     request = self.bcapRequest()
 
-    card = Card(parent=account)
+    card = CardData(parent=account)
     card.name = request.name
     card.email = request.email
     card.notes = request.notes
     card.put()
     
-    friend = Friend(parent=account)
+    friend = FriendData(parent=account)
     friend.in_progress = True
     friend.card = card
     friend.put()
@@ -220,9 +238,9 @@ class AddInviteHandler(CapServer.Handler):
     })
 
 
-class InviteHandler(CapServer.Handler):
+class InviteInfoHandler(CapServer.CapHandler):
   def get(self):
-    friend = self.private.entity
+    friend = self.get_entity()
     account = friend.parent # TODO(mzero): check if you can do this
     fv_card = account.friend_view
     
@@ -235,9 +253,9 @@ class InviteHandler(CapServer.Handler):
       'accept': CapServer.grant(InviteAcceptHandler, friend),
     })
 
-class InviteAcceptHandler(CapServer.Handler):
+class InviteAcceptHandler(CapServer.CapHandler):
   def post(self):
-    friend = self.private.entity
+    friend = self.get_entity()
     request = self.bcapRequest()
     
     CapServer.revoke(InviteAcceptHandler, friend);
@@ -262,13 +280,13 @@ class InviteAcceptHandler(CapServer.Handler):
 
 # Externally Visible URL Paths
 application = webapp.WSGIApplication(
-  [('/cap', CapServer.ProxyHandler),
+  [(r'/cap/.*', CapServer.ProxyHandler),
    ('/generate', GenerateHandler),
   ],
   debug=True)
 
 # Internal Cap Paths
-CapServer.setHandlers(
+CapServer.set_handlers(
   '/cap',
   [('station/launch',LaunchHandler),
    ('friend/account',AccountInfoHandler),

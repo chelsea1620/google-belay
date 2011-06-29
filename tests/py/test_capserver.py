@@ -35,10 +35,10 @@ def GetEntityViaMemcache(entity_key):
   return entity
   
   
-class HelloHandler(webapp.RequestHandler):
+class PingHandler(webapp.RequestHandler):
   
   def get(self):
-    self.response.out.write('hello')
+    self.response.out.write('{ "value": "pong" }')
 
 
 class TestCapHandler(CapHandler):
@@ -113,13 +113,24 @@ class DirectCapServerTestCase(Defaults):
     handler.get()
     self.assertEqual(handler.response.out.getvalue(), \
       json.dumps({"value": {"success": True}}))
+      
+
+class GrantHandler(BcapHandler):
+  
+  def get(self):
+    test_entity = TestModel()
+    test_entity.put()
+    
+    ser_cap = grant(TestCapHandler, test_entity)
+    self.bcapResponse(ser_cap)
+    
     
 class WSGITestCases(Defaults):
 
   def setUp(self):
     super(WSGITestCases, self).setUp()
     self.app = webapp.WSGIApplication(
-      [('/', HelloHandler),
+      [('/ping', PingHandler),
        (r'^/caps/.*', ProxyHandler),
       ], debug=True)
 
@@ -147,12 +158,16 @@ class WSGITestCases(Defaults):
 
 
 def main():
-  global application
   logging.getLogger().setLevel(logging.DEBUG)
+  
   application = webapp.WSGIApplication(
-    [('/', HelloHandler),
+    [('/ping', PingHandler),
+     ('/wellknowncaps/grant', GrantHandler),
      (r'^/caps/.*', ProxyHandler),
     ], debug=True)
+  
+  set_handlers('/caps/', [ ('internal_url', TestCapHandler) ])
+  
   run_wsgi_app(application)
 
 if __name__ == "__main__":

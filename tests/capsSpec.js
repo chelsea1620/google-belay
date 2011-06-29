@@ -287,8 +287,8 @@ describe('CapServer', function() {
       impl.invoke(method, capServer1.dataPreProcess(value),
         function(r) {
           called = true;
-          if (typeof r === 'undefined')
-            expect(expected).not.toBeDefined();
+          if (typeof expected === 'undefined')
+            expect(r).not.toBeDefined();
           else
             expect(capServer1.dataPostProcess(r)).toBe(expected);
         });

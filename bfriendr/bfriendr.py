@@ -11,6 +11,8 @@ from google.appengine.ext import db
 from google.appengine.ext import webapp
 from google.appengine.ext.webapp.util import run_wsgi_app
 
+import capnull as CapServer
+
 
 server_url = "http://" + os.environ['HTTP_HOST']
   # TODO(mzero): this should be safer
@@ -267,7 +269,7 @@ application = webapp.WSGIApplication(
 
 # Internal Cap Paths
 CapServer.setHandlers(
-  application,
+  '/cap',
   [('station/launch',LaunchHandler),
    ('friend/account',AccountInfoHandler),
   

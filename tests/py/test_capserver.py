@@ -1,11 +1,19 @@
 import unittest
+import logging
 from google.appengine.api import memcache
 from google.appengine.ext import db
 from google.appengine.ext import testbed
-import webtest
-from belay import *
+from google.appengine.ext import webapp
+from lib.belay import *
+
 from google.appengine.ext.webapp import Request
 from google.appengine.ext.webapp import Response
+from google.appengine.ext.webapp.util import run_wsgi_app
+
+if not (__name__ == '__main__'):
+  import webtest
+else:
+  pass
 
 class TestModel(db.Model):
   """A model class used for testing."""
@@ -136,3 +144,16 @@ class WSGITestCases(Defaults):
     self.assertEqual(resp2.body, \
       json.dumps({"value": {"success": True}}))
 
+
+
+def main():
+  global application
+  logging.getLogger().setLevel(logging.DEBUG)
+  application = webapp.WSGIApplication(
+    [('/', HelloHandler),
+     (r'^/caps/.*', ProxyHandler),
+    ], debug=True)
+  run_wsgi_app(application)
+
+if __name__ == "__main__":
+  main()

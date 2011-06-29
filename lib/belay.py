@@ -48,7 +48,6 @@ class BcapHandler(webapp.RequestHandler):
 # Base class for handlers that process capability invocations.
 class CapHandler(BcapHandler):
 
-
   def set_entity(self, entity):
     self.__entity__ = entity
 
@@ -104,14 +103,12 @@ class ProxyHandler(webapp.RequestHandler):
     handler.initialize(self.request, self.response)
     return handler
 
-
   def get(self):
     handler = self.init_cap_handler()
     if handler is None:
       pass
     else:
       handler.get()
-
 
   def post(self):
     handler = self.init_cap_handler()
@@ -127,13 +124,13 @@ class ProxyHandler(webapp.RequestHandler):
     else:
       handler.put()
 
-
   def delete(self):
     handler = self.init_cap_handler()
     if handler is None:
       pass
     else:
       handler.delete()
+
 
 
 def get_path(path_or_handler):
@@ -153,10 +150,15 @@ def grant(path_or_handler, entity):
 
 def regrant(path_or_handler, entity):
   path = get_path(path_or_handler)
-  item = Grant.all().filter("internal_path=", path) \
-                    .filter("db_entity=", entity).fetch(1)
-  if item is not None:
-    return item
+  q = Grant.all()
+  q.filter("internal_path = ", path)
+  q.filter("db_entity = ", entity)
+  items = q.fetch(1)
+  if(len(items) > 1):
+    raise BelayException('CapServer:regrant::ambiguous internal_path in regrant')
+  
+  if len(items) == 1:
+    return items[0]
   else:
     return grant(path_or_handler, entity)
   

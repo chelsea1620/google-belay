@@ -2,7 +2,8 @@ import unittest
 from google.appengine.api import memcache
 from google.appengine.ext import db
 from google.appengine.ext import testbed
-from lib.belay import *
+import webtest
+from belay import *
 from google.appengine.ext.webapp import Request
 from google.appengine.ext.webapp import Response
 
@@ -24,6 +25,13 @@ def GetEntityViaMemcache(entity_key):
   if entity is not None:
     memcache.set(entity_key, entity)
   return entity
+  
+  
+class HelloHandler(webapp.RequestHandler):
+  
+  def get(self):
+    self.response.out.write('hello')
+
 
 class TestCapHandler(CapHandler):
   
@@ -31,54 +39,61 @@ class TestCapHandler(CapHandler):
     self.bcapResponse({ 'success': True })
   
 
-class DemoTestCase(unittest.TestCase):
+class Defaults(unittest.TestCase):
 
   def setUp(self):
-    
-    # First, create an instance of the Testbed class.
     self.testbed = testbed.Testbed()
-    # Then activate the testbed, which prepares the service stubs for use.
     self.testbed.activate()
-    # Next, declare which service stubs you want to use.
     self.testbed.init_datastore_v3_stub()
-    self.testbed.init_memcache_stub()
+    self.entity = TestModel()
+    self.entity.put()
 
   def tearDown(self):
     self.testbed.deactivate()
-      
+    ProxyHandler.__url_mapping__ = None
+
+
+class DirectCapServerTestCase(Defaults):
+
+  def setUp(self):
+    super(DirectCapServerTestCase, self).setUp()
+    self.entity = TestModel()
+    self.entity.put()
+
   def testCreateGrant(self):
-    entity = TestModel()
-    entity.put()
     TestCapHandler.default_internal_url = 'internal_url'
-    cap = grant(TestCapHandler, entity)
+    cap = grant(TestCapHandler, self.entity)
     self.assertEqual(1, len(Grant.all().fetch(2)))
 
+  def testRegrant(self):
+    TestCapHandler.default_internal_url = 'internal_url'
+    cap = grant(TestCapHandler, self.entity)
+    cap2 = regrant(TestCapHandler, self.entity)
+    self.assertEqual(cap.key(), cap2.key())
+    self.assertEqual(1, len(Grant.all().fetch(2)))
+
+  def testRegrantStr(self):
+    cap = grant('internal', self.entity)
+    cap2 = regrant('internal', self.entity)
+    self.assertEqual(str(cap.key()), str(cap2.key()))
+    self.assertEqual(1, len(Grant.all().fetch(2)))
 
   def testInternalCapRequest(self):
-    
-    # set_handlers('/caps/', [ ('internal_url', TestCapHandler) ])
-    
-    entity = TestModel()
-    entity.put()
     TestCapHandler.default_internal_url = 'internal_url'
     
     req = Request.blank('/internal_url')
     resp = Response()
     handler = TestCapHandler()
-    handler.set_entity(entity)
+    handler.set_entity(self.entity)
     handler.initialize(req, resp)
     handler.get()
     self.assertEqual(handler.response.out.getvalue(), \
       json.dumps({"value": {"success": True}}))
 
   def testCapRequest(self):
-
     set_handlers('/caps/', [ ('internal_url', TestCapHandler) ])
 
-    entity = TestModel()
-    entity.put()
-    
-    extern_url = str(grant(TestCapHandler, entity).key())
+    extern_url = str(grant(TestCapHandler, self.entity).key())
     
     self.assertEqual(extern_url, str(Grant.all().fetch(1)[0].key()))
 
@@ -90,3 +105,34 @@ class DemoTestCase(unittest.TestCase):
     handler.get()
     self.assertEqual(handler.response.out.getvalue(), \
       json.dumps({"value": {"success": True}}))
+    
+class WSGITestCases(Defaults):
+
+  def setUp(self):
+    super(WSGITestCases, self).setUp()
+    self.app = webapp.WSGIApplication(
+      [('/', HelloHandler),
+       (r'^/caps/.*', ProxyHandler),
+      ], debug=True)
+
+  def testWSGI(self):
+    set_handlers('/caps/', [ ('internal_url', TestCapHandler) ])
+
+    extern_url1 = str(grant(TestCapHandler, self.entity).key())
+    
+    wt = webtest.TestApp(self.app)
+    self.assertEqual(wt.get('/').body, 'hello')
+    resp1 = wt.get('/caps/' + extern_url1)
+    self.assertEqual(resp1.body, \
+      json.dumps({"value": {"success": True}}))
+   
+  def testWSGIWithString(self): 
+    set_handlers('/caps/', [ ('another_url', TestCapHandler) ])
+    
+    extern_url2 = str(grant('another_url', self.entity).key())
+    
+    wt = webtest.TestApp(self.app)
+    resp2 = wt.get('/caps/' + extern_url2)
+    self.assertEqual(resp2.body, \
+      json.dumps({"value": {"success": True}}))
+

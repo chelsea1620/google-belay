@@ -53,6 +53,10 @@ var CAP_EXPORTS = (function() {
   var nullSer = encodeSerialization(nullInstID, nullCapID);
 
 
+  var isURL = function(str) {
+     return /^https?:/.test(str);
+  }
+
   var makeAsyncAJAX = function(url, method, data, success, failure) {
     jQuery.ajax({ data: data,
                   type: method,
@@ -204,7 +208,7 @@ var CAP_EXPORTS = (function() {
     this.privateInterface = (function(me) {
       return Object.freeze({
         invoke: function(ser, method, data, success, failure) {
-          if (/^https?:/.test(ser)) {
+          if (isURL(ser)) {
             return makeAsyncAJAX(ser, method, data, success, failure);
           }
 
@@ -311,7 +315,7 @@ var CAP_EXPORTS = (function() {
     }
 
     if (item === null) return deadImpl;
-    else if (t === 'string') return this.buildURL(item);
+    else if (t === 'string' && isURL(item)) return this.buildURL(item);
     else if (t === 'function') {
       switch (checkFnArgs(item, 2)) {
         case 'sync': return this.buildSyncFunction(item);

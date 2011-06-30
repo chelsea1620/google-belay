@@ -35,15 +35,16 @@ MockAjax.prototype.makeAjax = function() {
     }
     var f = me.urlMap[url];
     var t = opts.type || 'GET';
-    var request = me.server.dataPostProcess(opts.data);
+    var pre = me.server.dataPreProcess.bind(me.server);
+    var post = me.server.dataPostProcess.bind(me.server);
     var response;
 
-    if (t == 'GET') response = f();
-    else if (t == 'POST') response = f(request);
-    else if (t == 'PUT') f(request);
+    if (t == 'GET') response = pre(f());
+    else if (t == 'POST') response = pre(f(post(opts.data)));
+    else if (t == 'PUT') f(post(opts.data));
     else return reportError(opts);
 
-    return reportResult(opts, me.server.dataPreProcess(response));
+    return reportResult(opts, response);
   };
 };
 var mockAjax = new MockAjax();
@@ -52,7 +53,8 @@ var mockAjax = new MockAjax();
 var InvokeRunner = function(cap) {
   this.cap = cap;
   this.failureStatus = undefined;
-  this.failureCalled = this.successCalled = false;
+  this.failureCalled = this.successCalled = this.errorRaised = false;
+  this.error = undefined;
   this.result = 'something funky';
 };
 InvokeRunner.prototype.runsInvoke = function(method, data) {
@@ -71,10 +73,17 @@ InvokeRunner.prototype.runsInvoke = function(method, data) {
     var success = function(data) {
       me.result = data; me.successCalled = true;
     };
-    me.cap.invoke(method, data, success, failure);
+    try {
+      me.cap.invoke(method, data, success, failure);
+    }
+    catch(e) {
+      me.errorRaised = true;
+      me.error = e;
+    }
   });
-  waitsFor(function() { return me.failureCalled || me.successCalled; },
-      'invoke timeout', 250);
+  waitsFor(function() { 
+        return me.failureCalled || me.successCalled || me.errorRaised;
+      }, 'invoke timeout', 250);
 };
 InvokeRunner.prototype.runsGet = function() {
     this.runsInvoke('GET', undefined);
@@ -94,6 +103,7 @@ InvokeRunner.prototype.runsExpectSuccess = function(resultChecker) {
   runs(function() {
     expect(me.failureCalled).toBe(false);
     expect(me.successCalled).toBe(true);
+    expect(me.errorRaised).toBe(false);
     resultChecker(me.result);
   });
 };
@@ -102,7 +112,18 @@ InvokeRunner.prototype.runsExpectFailure = function() {
   runs(function() {
     expect(me.failureCalled).toBe(true);
     expect(me.successCalled).toBe(false);
+    expect(me.errorRaised).toBe(false);
     expect(typeof me.failureStatus).toEqual('number');
+  });
+};
+InvokeRunner.prototype.runsExpectException = function(expectedError) {
+  var me = this;
+  runs(function() {
+    expect(me.failureCalled).toBe(false);
+    expect(me.successCalled).toBe(false);
+    expect(me.errorRaised).toBe(true);
+    if (expectedError)
+      expect(me.error).toEqual(expectedError);
   });
 };
 
@@ -269,10 +290,10 @@ describe('CapServer', function() {
       r.runsExpectFailure();
     });
 
-    it('should ignore the argument to get', function() {
+    it('should throw execption on argument to get', function() {
       var r = mkRunner(c1);
       r.runsInvoke('GET', 42);
-      r.runsExpectFailure();
+      r.runsExpectException();
       runs(function() { expect(fnCalledWith).toEqual('not-yet-called'); });
     });
 
@@ -801,7 +822,6 @@ describe('CapServer', function() {
         expect(roundTrip(v)).toEqual(v);
       };
       it('should round trip simple values', function() {
-        expectRT(undefined);
         expectRT(null);
         expectRT(false);
         expectRT(true);

@@ -90,13 +90,14 @@ var CAP_EXPORTS = (function() {
       this.handler = handler;
   };
   ImplHandler.prototype.invoke = function(method, data, sk, fk) {
-    data = this.server.dataPostProcess(data);
-
     if (method == 'GET' || method == 'DELETE') {
       if (data !== undefined) {
         fk(badRequest);
         return;
       }
+    }
+    else {
+      data = this.server.dataPostProcess(data);
     }
 
     var skk;
@@ -154,14 +155,27 @@ var CAP_EXPORTS = (function() {
   };
   Capability.prototype.invoke = function(method, data, success, failure) {
     var me = this;
-    var wrappedData = this.server.dataPreProcess(data);
+    if (method == 'PUT' || method == 'POST') {
+      data = this.server.dataPreProcess(data);
+    }
+    else {
+      if (data !== undefined) {
+        throw ("Capability.invoke " + method + " called with request data" + data);
+      }
+    }
     var wrappedSuccess = function(result) {
       if (success) {
-        return success(me.server.dataPostProcess(result));
+        if (method == 'GET' || method == 'POST') {
+          result = me.server.dataPostProcess(result);
+        }
+        else {
+          result = undefined;
+        }
+        return success(result);
       }
       return undefined;
     };
-    this.server.privateInterface.invoke(this.ser, method, wrappedData,
+    this.server.privateInterface.invoke(this.ser, method, data,
                                         wrappedSuccess, failure);
   };
   Capability.prototype.get = function(success, failure) {
@@ -407,6 +421,7 @@ var CAP_EXPORTS = (function() {
   };
 
   CapServer.prototype.dataPreProcess = function(v) {
+    if (v === undefined) return v;
     return JSON.stringify({ value: v }, function(k, v) {
       if (typeof(v) == 'function') {
         throw new TypeError('Passing a function');
@@ -421,6 +436,7 @@ var CAP_EXPORTS = (function() {
   };
 
   CapServer.prototype.dataPostProcess = function(w) {
+    if (w === undefined) return w;
     var me = this;
     return JSON.parse(w, function(k, v) {
       try {

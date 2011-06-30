@@ -110,8 +110,10 @@ class ProxyHandler(BcapHandler):
     grants = Grant.all().filter('cap_id =', cap_id).fetch(2)
 
     if len(grants) == 0:
-      self.response.code = 404
       self.bcapNullResponse()
+      self.response.set_status(404)
+      self.response.out.write("ProxyHandler.init_cap_handler: " + \
+                              "Cap not found: %s\n" % cap_id)
       return
     if len(grants) > 1:
       # TODO(arjun): appropriate error in response

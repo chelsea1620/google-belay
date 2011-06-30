@@ -1,5 +1,6 @@
 function get(url) {
   var resp = false;
+  var err = false;
   $.ajax({
     url: url,
     async: false,
@@ -9,12 +10,13 @@ function get(url) {
         resp = resp.value;
       }
       else {
-        fail('expected BCAP response, got ' + data);
+        throw 'expected BCAP response, got ' + data;
       }
     },
-    failure: function() { fail('error on GET ' + url); }
+    error: function(xhr, status) { err = xhr.status; } 
   });
-  return resp;
+  if(err) throw err;
+  else return resp;
 }
 
 describe('try to reach the capserver', function() {
@@ -39,6 +41,11 @@ describe('basic cap invocation', function() {
   it('should invoke caps granted as strings', function() {
     var cap_response = get('/test_entry/grantWithString');
     expect(get(cap_response)).toEqual({'success': true});
+  });
+
+  it('should get "404 Cap not found" on bad cap invokes', function() {
+    var bogus_cap = '/caps/not-a-cap-at-all';
+    expect(function() { get(bogus_cap); }).toThrow(404);
   });
 });
 

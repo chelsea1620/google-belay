@@ -8,6 +8,9 @@ handlers:
 - url: /generate
   script: bfriendr.py
 
+- url: /generate-account
+  script: bfriendr.py
+
 - url: /cap/.*
   script: bfriendr.py
 

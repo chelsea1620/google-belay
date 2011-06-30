@@ -10,10 +10,6 @@ from google.appengine.ext.webapp import Request
 from google.appengine.ext.webapp import Response
 from google.appengine.ext.webapp.util import run_wsgi_app
 
-if not (__name__ == '__main__'):
-  import webtest
-else:
-  pass
 
 class TestModel(db.Model):
   """A model class used for testing."""
@@ -62,13 +58,13 @@ class DirectCapServerTestCase(Defaults):
     TestCapHandler.default_internal_url = 'internal_url'
     cap = grant(TestCapHandler, self.entity)
     cap2 = regrant(TestCapHandler, self.entity)
-    self.assertEqual(cap.key(), cap2.key())
+    self.assertEqual(cap, cap2)
     self.assertEqual(1, len(Grant.all().fetch(2)))
 
   def testRegrantStr(self):
     cap = grant('internal', self.entity)
     cap2 = regrant('internal', self.entity)
-    self.assertEqual(str(cap.key()), str(cap2.key()))
+    self.assertEqual(cap, cap2)
     self.assertEqual(1, len(Grant.all().fetch(2)))
 
   def testInternalCapRequest(self):
@@ -86,11 +82,9 @@ class DirectCapServerTestCase(Defaults):
   def testCapRequest(self):
     set_handlers('/caps/', [ ('internal_url', TestCapHandler) ])
 
-    extern_url = str(grant(TestCapHandler, self.entity).key())
-    
-    self.assertEqual(extern_url, str(Grant.all().fetch(1)[0].key()))
-
-    req = Request.blank('/caps/' + extern_url)
+    extern_url = grant(TestCapHandler, self.entity)
+     
+    req = Request.blank(extern_url)
     resp = Response()
     
     handler = ProxyHandler()
@@ -108,38 +102,15 @@ class GrantHandler(BcapHandler):
     
     ser_cap = grant(TestCapHandler, test_entity)
     self.bcapResponse(ser_cap)
-    
-    
-class WSGITestCases(Defaults):
 
-  def setUp(self):
-    super(WSGITestCases, self).setUp()
-    self.app = webapp.WSGIApplication(
-      [('/ping', PingHandler),
-       (r'^/caps/.*', ProxyHandler),
-      ], debug=True)
+class GrantStringHandler(BcapHandler):
 
-  def testWSGI(self):
-    set_handlers('/caps/', [ ('internal_url', TestCapHandler) ])
+  def get(self):
+    test_entity = TestModel()
+    test_entity.put()
 
-    extern_url1 = str(grant(TestCapHandler, self.entity).key())
-    
-    wt = webtest.TestApp(self.app)
-    self.assertEqual(wt.get('/').body, 'hello')
-    resp1 = wt.get('/caps/' + extern_url1)
-    self.assertEqual(resp1.body, \
-      json.dumps({"value": {"success": True}}))
-   
-  def testWSGIWithString(self): 
-    set_handlers('/caps/', [ ('another_url', TestCapHandler) ])
-    
-    extern_url2 = str(grant('another_url', self.entity).key())
-    
-    wt = webtest.TestApp(self.app)
-    resp2 = wt.get('/caps/' + extern_url2)
-    self.assertEqual(resp2.body, \
-      json.dumps({"value": {"success": True}}))
-
+    ser_cap = grant('internal_url', test_entity)
+    self.bcapResponse(ser_cap)
 
 
 def main():
@@ -147,12 +118,13 @@ def main():
   
   application = webapp.WSGIApplication(
     [('/ping', PingHandler),
-     ('/wellknowncaps/grant', GrantHandler),
+     ('/test_entry/grant', GrantHandler),
+     ('/test_entry/grantWithString', GrantStringHandler),
      (r'^/caps/.*', ProxyHandler),
     ], debug=True)
   
   set_handlers('/caps/', [ ('internal_url', TestCapHandler) ])
-  
+
   run_wsgi_app(application)
 
 if __name__ == "__main__":

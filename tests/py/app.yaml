@@ -14,6 +14,10 @@ handlers:
 - url: /wellknowncaps/.*
   script: test_capserver.py
 
+- url: /
+  static_files: www/index.html 
+  upload: www/index.html
+
 - url: /(.*\.(html|js|css))
   static_files: www/\1
   upload: www/(.*\.(html|js|css))

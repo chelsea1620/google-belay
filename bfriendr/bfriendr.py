@@ -76,14 +76,14 @@ class InviteInfoHandler(object): pass
 class InviteAcceptHandler(object): pass
 
 
-class GenerateHandler(webapp.RequestHandler):
+class GenerateHandler(CapServer.BcapHandler):
   def get(self):
     card = CardData(name="who are you?", email="where are you?",
       notes="tell your friends about yourself")
     card.put()
     account = AccountData(my_card=card)
     account.put()
-    CapServer.xhr_content(CapServer.grant(LaunchHandler, account), "text/plain", self.response)
+    self.xhr_content(CapServer.grant(LaunchHandler, account), "text/plain")
 
 
 class LaunchHandler(CapServer.CapHandler):
@@ -122,7 +122,7 @@ class LaunchHandler(CapServer.CapHandler):
       'server_url': server_url,
     }
   
-    CapServer.xhr_content(content, "text/plain", self.response)
+    self.xhr_content(content, "text/plain")
 
 
 class AccountInfoHandler(CapServer.CapHandler):

@@ -8,10 +8,10 @@ handlers:
 - url: /ping
   script: test_capserver.py
   
-- url: /caps/*
+- url: /caps/.*
   script: test_capserver.py
 
-- url: /wellknowncaps/.*
+- url: /test_entry/.*
   script: test_capserver.py
 
 - url: /

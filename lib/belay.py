@@ -2,6 +2,7 @@
 
 import logging
 import os
+import uuid
 
 from google.appengine.ext import db
 from google.appengine.ext import webapp
@@ -71,8 +72,11 @@ class CapHandler(BcapHandler):
 
 
 class Grant(db.Model):
-  internal_path = db.StringProperty() # internal URL passed to the cap handler
-  db_entity = db.ReferenceProperty() # reference to DB item passed to cap handler
+  cap_id = db.StringProperty(required=True, indexed=True)
+  # internal URL passed to the cap handler
+  internal_path = db.StringProperty(required=True)
+  # reference to DB item passed to cap handler
+  db_entity = db.ReferenceProperty(required=True)
 
 
 # A WSGIApplication handler that invokes granted capabilities.
@@ -101,14 +105,19 @@ class ProxyHandler(BcapHandler):
 
   def init_cap_handler(self):
     # Strip the '/caps/' prefix off self.request.path
-    grant_key_str = self.request.path_info[self.__class__.prefix_strip_length:]
+    cap_id = self.request.path_info[self.__class__.prefix_strip_length:]
 
-    grant = Grant.get(db.Key(grant_key_str))
-    if grant is None:
+    grants = Grant.all().filter('cap_id =', cap_id).fetch(2)
+
+    if len(grants) == 0:
+      self.response.code = 404
+      self.bcapNullResponse()
+      return
+    if len(grants) > 1:
       # TODO(arjun): appropriate error in response
-      raise BelayException('%s, %s' % (self.request.path_info, grant_key_str))
-      return None
+      raise BelayException('%s, %s' % (self.request.path_info, cap_id))
 
+    grant = grants[0]
     handler_class = self.__url_mapping__[grant.internal_path]
     # instantiates appropriate subclass of db.Model
     item = grant.db_entity 
@@ -161,22 +170,21 @@ def get_path(path_or_handler):
 
 def grant(path_or_handler, entity):
   path = get_path(path_or_handler)
-  item = Grant(internal_path=path, db_entity=entity.key())
+  cap_id = str(uuid.uuid4())
+  item = Grant(cap_id=cap_id, internal_path=path, db_entity=entity.key())
   item.put()
-  ser_cap = ProxyHandler.default_prefix + str(item.key())
-  return ser_cap
+  return ProxyHandler.default_prefix + cap_id
 
 def regrant(path_or_handler, entity):
   path = get_path(path_or_handler)
-  q = Grant.all()
-  q.filter("internal_path = ", path)
-  q.filter("db_entity = ", entity)
-  items = q.fetch(1)
+  items = Grant.all().filter("internal_path = ", path) \
+                     .filter("db_entity = ", entity) \
+                     .fetch(2)
   if(len(items) > 1):
     raise BelayException('CapServer:regrant::ambiguous internal_path in regrant')
   
   if len(items) == 1:
-    return ProxyHandler.default_prefix + str(items[0].key())
+    return ProxyHandler.default_prefix + items[0].cap_id 
   else:
     return grant(path_or_handler, entity)
 

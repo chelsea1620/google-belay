@@ -20,7 +20,6 @@ function get(url) {
 describe('try to reach the capserver', function() {
 
   it('request /ping for pong', function() {
-    
     expect(get('/ping')).toEqual('pong');
   });
 
@@ -29,8 +28,17 @@ describe('try to reach the capserver', function() {
 describe('basic cap invocation', function() {
 
   it('request server to grant a cap', function() {
-    
-    expect(get('/wellknowncaps/grant')).toMatch('.*/caps/.*');
+    expect(get('/test_entry/grant')).toMatch('.*/caps/.*');
   });
 
+  it('should be able to invoke a granted cap', function() {
+    var cap_response = get('/test_entry/grant');
+    expect(get(cap_response)).toEqual({'success': true});
+  }); 
+
+  it('should invoke caps granted as strings', function() {
+    var cap_response = get('/test_entry/grantWithString');
+    expect(get(cap_response)).toEqual({'success': true});
+  });
 });
+

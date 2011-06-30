@@ -62,6 +62,13 @@ class MessageData(db.Model):
 class AccountData(db.Model):
   my_card = db.ReferenceProperty(CardData, required=True)
 
+def new_account():
+  card = CardData(name="who are you?", email="where are you?",
+    notes="tell your friends about yourself")
+  card.put()
+  account = AccountData(my_card=card)
+  account.put()
+  return account
 
 class GenerateHandler(object): pass
 class LaunchHandler(object): pass
@@ -75,16 +82,14 @@ class AddInviteHandler(object): pass
 class InviteInfoHandler(object): pass
 class InviteAcceptHandler(object): pass
 
-
 class GenerateHandler(CapServer.BcapHandler):
   def get(self):
-    card = CardData(name="who are you?", email="where are you?",
-      notes="tell your friends about yourself")
-    card.put()
-    account = AccountData(my_card=card)
-    account.put()
-    self.xhr_content(CapServer.grant(LaunchHandler, account), "text/plain")
-
+    self.xhr_content(CapServer.grant(LaunchHandler, new_account()), 
+        "text/plain")
+        
+class GenerateAccountHandler(CapServer.BcapHandler):
+  def get(self):
+    self.bcapResponse(CapServer.grant(AccountInfoHandler, new_account()))
 
 class LaunchHandler(CapServer.CapHandler):
   def get(self):
@@ -130,7 +135,8 @@ class AccountInfoHandler(CapServer.CapHandler):
     account = self.get_entity();
     self.bcapResponse({
       'friends':  CapServer.regrant(FriendsListHandler, account),
-      'addInvite':  CapServer.regrant(AddInviteHandler, account)
+      'addInvite':  CapServer.regrant(AddInviteHandler, account),
+      'myCard':  CapServer.regrant(CardInfoHandler, account.my_card),
     })
     
     
@@ -311,6 +317,7 @@ class InviteAcceptHandler(CapServer.CapHandler):
 application = webapp.WSGIApplication(
   [(r'/cap/.*', CapServer.ProxyHandler),
    ('/generate', GenerateHandler),
+   ('/generate-account', GenerateAccountHandler),
   ],
   debug=True)
 

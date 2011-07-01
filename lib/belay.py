@@ -3,7 +3,9 @@
 import logging
 import os
 import uuid
+import urlparse
 
+from google.appengine.api import urlfetch
 from google.appengine.ext import db
 from google.appengine.ext import webapp
 from django.utils import simplejson as json
@@ -159,6 +161,38 @@ class ProxyHandler(BcapHandler):
       handler.delete()
 
 
+def invokeLocalCap(capURL, method, data=""):
+  """Invoke a locally defined cap using ProxyHandler"""
+  handler = ProxyHandler()
+  req = webapp.Request.blank(capURL)
+  req.body = data
+  handler.initialize(req, webapp.Response())
+
+  if method == 'GET':
+    handler.get()
+  elif method == 'PUT':
+    handler.put()
+  elif method == 'POST':
+    handler.post()
+  elif method == 'DELETE':
+    handler.delete()
+  else:
+    raise BcapException("invokeLocalCap: Bad method: " + method)
+
+  return handler.response
+  
+def invokeCapURL(capURL, meth, data=""):
+  parsed = urlparse.urlparse(capURL)
+  prefix = this_server_url_prefix()
+
+  parsed_prefix = parsed.scheme + "://" + parsed.netloc
+
+  if parsed_prefix == prefix:
+    return invokeLocalCap(parsed.path, meth, json.dumps({'value': data}))
+  else:
+    return urlfetch.fetch(capURL, 
+                          payload=json.dumps({'value': data}),
+                          method=meth)
 
 def get_path(path_or_handler):
   if isinstance(path_or_handler, str):

@@ -8,7 +8,6 @@ import lib.belay as CapServer
 
 from django.utils import simplejson as json
 
-from google.appengine.api import urlfetch
 from google.appengine.ext import blobstore
 from google.appengine.ext import db
 from google.appengine.ext import webapp
@@ -290,13 +289,11 @@ class IntroduceMeToHandler(CapServer.CapHandler):
 
     cap = request['introductionCap']
 
-    response = urlfetch.fetch(cap, 
-                              payload=json.dumps({'value': 
-                                                  {'card': card.toJSON(),
-                                                   'stream': stream}}),
-                              method='POST')
+    response = CapServer.invokeCapURL(cap, 'POST',
+                                      {'card': card.toJSON(),
+                                       'stream': stream})
 
-    capResponse = json.loads(response.content)['value']
+    capResponse = json.loads(response.out.getvalue())['value']
 
     self.bcapResponse({
       'card': capResponse['card'] 

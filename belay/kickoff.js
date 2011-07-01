@@ -7,7 +7,8 @@ var foop = function(sourceURL, node, extras) {
     success: function(data, status, xhr) {
       var jq = {
         // A sanitized jQuery object
-        ajax: jQuery.ajax
+        ajax: jQuery.ajax,
+        parseQuery: jQuery.parseQuery
       };
       var js = {
         // A sanitized JSON object

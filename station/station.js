@@ -114,6 +114,8 @@ var instanceResolver = function(id) {
   return null;
 };
 
+capServer.setResolver(instanceResolver);
+
 var setupCapServer = function(inst) {
   var capServer;
   if ('capSnapshot' in inst.info) {
@@ -252,6 +254,31 @@ var launchInstance = function(inst) {
             var result = acceptor(info.generator(info.resourceClass));
           }
         });
+
+        // Note:  Without preventDf on dragenter and dragover, the 
+        // browser will not send the drop event
+        var preventDf = function(e) {        
+          e.originalEvent.preventDefault();
+          return false;
+        };
+        node.bind('dragenter', preventDf);
+        node.bind('dragover', preventDf);
+        node.bind('drop', function(e) {
+          var data = e.originalEvent.dataTransfer.getData("text/plain");
+          if(!data)
+            data = e.originalEvent.dataTransfer.getData("text/uri-list");
+          if(!data) return;
+          var qLoc = data.indexOf("?");
+          data = qLoc == -1 ? data : data.slice(qLoc);
+          var params = os.jQuery.parseQuery(data);
+          var scope = params.scope;
+          var cap = params.cap;
+
+          if (scope == rc) {
+            acceptor(capServer.restore(cap));
+          }         
+        }); 
+
         node.addClass('belay-cap-target');
         node.hover(
           function() { startDropHover(node, rc); },

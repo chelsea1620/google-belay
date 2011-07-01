@@ -8,6 +8,7 @@ import lib.belay as CapServer
 
 from django.utils import simplejson as json
 
+from google.appengine.api import urlfetch
 from google.appengine.ext import blobstore
 from google.appengine.ext import db
 from google.appengine.ext import webapp
@@ -287,19 +288,18 @@ class IntroduceMeToHandler(CapServer.CapHandler):
     stream = "A stream!"
     card = account.my_card
 
-    cap = request.introductionCap
+    cap = request['introductionCap']
 
-    response = {}
-    response.content = json.dumps({'card': card.toJSON()})
-    # some fetch nonsense
-    # response = fetch(cap, payload=json.dumps({card: card.toJSON(),
-    #                                           stream: stream}),
-    #                  method='POST')
+    response = urlfetch.fetch(cap, 
+                              payload=json.dumps({'value': 
+                                                  {'card': card.toJSON(),
+                                                   'stream': stream}}),
+                              method='POST')
 
-    capResponse = json.loads(response.content)
+    capResponse = json.loads(response.content)['value']
 
     self.bcapResponse({
-      'card': my_card.toJSON() 
+      'card': capResponse['card'] 
     })
 
 class AddInviteHandler(CapServer.CapHandler):

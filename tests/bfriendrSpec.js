@@ -3,8 +3,11 @@ describe('bfriendr back end', function() {
   var generateAccountRunner;
   
   var asCap = function(c) {
-    if (c.length == 0) fail('asCap passed an empty string');
-    if (! (/^https?:\/\//).test(c)) fail('asCap not a URL: ' + c);
+    if (c.length == 0) throw('asCap passed an empty string');
+    if (! (/^https?:\/\//).test(c)) {
+      console.log(c); // keep
+      throw('asCap not a URL: ' + c);
+    }
     return capServer.restore(c);
   };
   
@@ -33,8 +36,10 @@ describe('bfriendr back end', function() {
       });
 
       accountRunner.runsGet();
+            runs(function() { console.log("WHERWERWER"); })
       accountRunner.runsExpectSuccess();
-      runs(function() {
+
+      runs(function() { console.log('rerer');
         myCardRunner.cap = asCap(accountRunner.result.myCard);
         expect(myCardRunner.cap).toBeDefined();
       })
@@ -64,5 +69,92 @@ describe('bfriendr back end', function() {
       });
     });
   });
+
+  describe('account introduction', function() {
+    var account1CapRunner;
+    var account2CapRunner;
+    var account1CardRunner;
+    var account2CardRunner;
+    var account1Card;
+    var account2Card;
+    var account2IntroduceRunner;
+    
+    beforeEach(function() {
+      account1CapRunner = new InvokeRunner();
+      account2CapRunner = new InvokeRunner();
+      account1CardRunner = new InvokeRunner();
+      account2CardRunner = new InvokeRunner();
+      account1Card, account2Card;
+      account2IntroduceRunner = new InvokeRunner();
+    
+      generateAccountRunner.runsGet();
+      generateAccountRunner.runsExpectSuccess();
+      runs(function() { 
+        account1CapRunner.cap = asCap(generateAccountRunner.result);
+        expect(account1CapRunner.cap).toBeDefined();
+      });
+
+      generateAccountRunner.runsGet();
+      generateAccountRunner.runsExpectSuccess();
+      runs(function() { 
+        account2CapRunner.cap = asCap(generateAccountRunner.result); 
+        expect(account2CapRunner.cap).toBeDefined();
+      });
+    
+      account1CapRunner.runsGet();
+      account1CapRunner.runsExpectSuccess();
+      runs(function() {
+        account1CardRunner.cap = asCap(account1CapRunner.result.myCard);
+        expect(account1CardRunner.cap).toBeDefined();
+      });
+    
+      account2CapRunner.runsGet();
+      account2CapRunner.runsExpectSuccess();
+      runs(function() {
+        account2CardRunner.cap = asCap(account2CapRunner.result.myCard);
+        expect(account2CardRunner.cap).toBeDefined();
+      });
+      
+      account1CardRunner.runsPut({ name: 'One', email: 'one@example.com',
+        notes: 'nan' });
+      account1CardRunner.runsExpectSuccess();
+        
+      account2CardRunner.runsPut({ name: 'Two', email: 'two@example.com',
+        notes: 'nan' });
+      account2CardRunner.runsExpectSuccess();
+      
+      account1CardRunner.runsGet();
+      account1CardRunner.runsExpectSuccess();
+      runs(function() {
+        account1Card = account1CardRunner.result;
+        expect(account1Card.name == 'One');
+      });
+
+      account2CardRunner.runsGet();
+      account2CardRunner.runsExpectSuccess();
+      runs(function() {
+        account2Card = account2CardRunner.result;
+        expect(account1Card.name == 'Two');
+      });
+    });
+    
+
+    it('should get the card from an introduction cap', function() {
+      var account2IntroduceRunner = new InvokeRunner();
+      
+      account2IntroduceRunner.cap = 
+        asCap(account2CapRunner.result.introduceYourself);
+      expect(account2IntroduceRunner.cap).toBeDefined();
+      // Account 1 is doing this call to determine who account 2
+      account2IntroduceRunner.runsGet();
+      account2IntroduceRunner.runsExpectSuccess();
+      runs(function() {
+        expect(account2IntroduceRunner.result.name).toEqual(account2Card.name);
+      });
+    });
+
+  });
+
+
 });
 

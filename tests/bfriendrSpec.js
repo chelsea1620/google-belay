@@ -15,8 +15,6 @@ describe('bfriendr back end', function() {
     capServer = new CapServer();
     generateAccountRunner =
       mkRunner(capServer.restore("http://localhost:9009/generate-account"));
-    generateAccountRunnerRemote =
-      mkRunner(capServer.restore("http://localhost:9010/generate-account"));
   });
   
   describe('basic account operations', function() {
@@ -95,10 +93,10 @@ describe('bfriendr back end', function() {
         expect(account1CapRunner.cap).toBeDefined();
       });
 
-      generateAccountRunnerRemote.runsGet();
-      generateAccountRunnerRemote.runsExpectSuccess();
+      generateAccountRunner.runsGet();
+      generateAccountRunner.runsExpectSuccess();
       runs(function() { 
-        account2CapRunner.cap = asCap(generateAccountRunnerRemote.result); 
+        account2CapRunner.cap = asCap(generateAccountRunner.result); 
         expect(account2CapRunner.cap).toBeDefined();
       });
     

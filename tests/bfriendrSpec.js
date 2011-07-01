@@ -15,6 +15,8 @@ describe('bfriendr back end', function() {
     capServer = new CapServer();
     generateAccountRunner =
       mkRunner(capServer.restore("http://localhost:9009/generate-account"));
+    generateAccountRunnerRemote =
+      mkRunner(capServer.restore("http://localhost:9010/generate-account"));
   });
   
   describe('basic account operations', function() {
@@ -36,10 +38,9 @@ describe('bfriendr back end', function() {
       });
 
       accountRunner.runsGet();
-            runs(function() { console.log("WHERWERWER"); })
       accountRunner.runsExpectSuccess();
 
-      runs(function() { console.log('rerer');
+      runs(function() {
         myCardRunner.cap = asCap(accountRunner.result.myCard);
         expect(myCardRunner.cap).toBeDefined();
       })
@@ -94,10 +95,10 @@ describe('bfriendr back end', function() {
         expect(account1CapRunner.cap).toBeDefined();
       });
 
-      generateAccountRunner.runsGet();
-      generateAccountRunner.runsExpectSuccess();
+      generateAccountRunnerRemote.runsGet();
+      generateAccountRunnerRemote.runsExpectSuccess();
       runs(function() { 
-        account2CapRunner.cap = asCap(generateAccountRunner.result); 
+        account2CapRunner.cap = asCap(generateAccountRunnerRemote.result); 
         expect(account2CapRunner.cap).toBeDefined();
       });
     
@@ -165,10 +166,25 @@ describe('bfriendr back end', function() {
       account2IntroduceRunner.runsExpectSuccess();
       runs(function() {
         var bCard = account2IntroduceRunner.result.card;
-        expect(bCard.name).toEqual("Two");
+        expect(bCard.name).toEqual(account2Card.name);
       });
 
     }); 
+
+    it('should introduce 1 to 2 via introduceMeTo', function() {
+      // TODO(jpolitz): backend currently expects a URL, should expect cap
+      var account2Introduce = account2CapRunner.result.introduceYourself;
+
+      var intro1to2Runner = new InvokeRunner();
+      intro1to2Runner.cap = asCap(account1CapRunner.result.introduceMeTo);
+      intro1to2Runner.runsPost({introductionCap: account2Introduce});
+      runs(function() {
+        var bCard = intro1to2Runner.result.card;
+        expect(bCard.name).toEqual(account2Card.name);
+        // TODO(jpolitz): test that account 2 has a new friend
+      });
+
+    })
 
   });
 

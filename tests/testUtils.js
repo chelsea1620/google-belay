@@ -31,7 +31,7 @@ InvokeRunner.prototype.runsInvoke = function(method, data) {
   });
   waitsFor(function() { 
         return me.failureCalled || me.successCalled || me.errorRaised;
-      }, 'invoke timeout', 250);
+      }, 'invoke timeout', 500);
 };
 InvokeRunner.prototype.runsGet = function() {
     this.runsInvoke('GET', undefined);

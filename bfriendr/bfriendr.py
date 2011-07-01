@@ -28,6 +28,14 @@ class CardData(db.Model):
   notes = db.StringProperty()
   # TODO(mzero): needs a refresh_cap property at some point
   
+  def toJSON(self):
+    return {
+      'name':       self.name,
+      'email':      self.email,
+      #'image':      CapServer.regrant(ImageHandler, card),
+      'notes':      self.notes,
+    }
+  
 class FriendData(db.Model):
   card = db.ReferenceProperty(CardData, required=True)
   in_progress = db.BooleanProperty(default=False)
@@ -78,6 +86,7 @@ class FriendInfoHandler(object): pass
 class MessageListHandler(object): pass
 class MessageInfoHandler(object): pass
 class MessagePostHandler(object): pass
+class IntroduceYourselfHandler(object): pass
 class AddInviteHandler(object): pass
 class InviteInfoHandler(object): pass
 class InviteAcceptHandler(object): pass
@@ -133,9 +142,11 @@ class LaunchHandler(CapServer.CapHandler):
 class AccountInfoHandler(CapServer.CapHandler):
   def get(self):
     account = self.get_entity();
+    introduceYS = CapServer.regrant(IntroduceYourselfHandler, account)
     self.bcapResponse({
       'friends':  CapServer.regrant(FriendsListHandler, account),
       'addInvite':  CapServer.regrant(AddInviteHandler, account),
+      'introduceYourself': introduceYS,
       'myCard':  CapServer.regrant(CardInfoHandler, account.my_card),
     })
     
@@ -143,12 +154,7 @@ class AccountInfoHandler(CapServer.CapHandler):
 class CardInfoHandler(CapServer.CapHandler):
   def get(self):
     card = self.get_entity()
-    self.bcapResponse({
-      'name':       card.name,
-      'email':      card.email,
-      #'image':      CapServer.regrant(ImageHandler, card),
-      'notes':      card.notes,
-    })
+    self.bcapResponse(card.toJSON())
   
   def put(self):
     card = self.get_entity()
@@ -250,7 +256,11 @@ class MessagePostHandler(CapServer.CapHandler):
       message.resource_class = request.resourceClass
     message.put()
     self.bcapNullResponse()
-  
+    
+class IntroduceYourselfHandler(CapServer.CapHandler):
+  def get(self):
+    account = self.get_entity()
+    self.bcapResponse(account.my_card.toJSON())
 
 class AddInviteHandler(CapServer.CapHandler):
   def post(self):
@@ -336,6 +346,7 @@ CapServer.set_handlers(
    ('friend/message',MessageInfoHandler),
    ('friend/post',   MessagePostHandler),
    
+   ('friend/introduce', IntroduceYourselfHandler),
    ('friend/addInvite', AddInviteHandler),
    ('friend/invite', InviteInfoHandler),
    ('friend/accept', InviteAcceptHandler),

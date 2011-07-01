@@ -35,95 +35,19 @@ MockAjax.prototype.makeAjax = function() {
     }
     var f = me.urlMap[url];
     var t = opts.type || 'GET';
-    var request = me.server.dataPostProcess(opts.data);
+    var pre = me.server.dataPreProcess.bind(me.server);
+    var post = me.server.dataPostProcess.bind(me.server);
     var response;
 
-    if (t == 'GET') response = f();
-    else if (t == 'POST') response = f(request);
-    else if (t == 'PUT') f(request);
+    if (t == 'GET') response = pre(f());
+    else if (t == 'POST') response = pre(f(post(opts.data)));
+    else if (t == 'PUT') f(post(opts.data));
     else return reportError(opts);
 
-    return reportResult(opts, me.server.dataPreProcess(response));
+    return reportResult(opts, response);
   };
 };
 var mockAjax = new MockAjax();
-
-
-var InvokeRunner = function(cap) {
-  this.cap = cap;
-  this.failureStatus = undefined;
-  this.failureCalled = this.successCalled = false;
-  this.result = 'something funky';
-};
-InvokeRunner.prototype.runsInvoke = function(method, data) {
-  var me = this;
-  runs(function() {
-    me.failureStatus = undefined;
-    me.failureCalled = me.successCalled = false;
-    me.result = 'something funky';
-    var failure = function(err) {
-      me.failureCalled = true;
-      me.failureStatus = 999;
-      if (err.status && typeof err.status == 'number') {
-        me.failureStatus = err.status;
-      }
-    };
-    var success = function(data) {
-      me.result = data; me.successCalled = true;
-    };
-    me.cap.invoke(method, data, success, failure);
-  });
-  waitsFor(function() { return me.failureCalled || me.successCalled; },
-      'invoke timeout', 250);
-};
-InvokeRunner.prototype.runsGet = function() {
-    this.runsInvoke('GET', undefined);
-};
-InvokeRunner.prototype.runsPut = function(data) {
-    this.runsInvoke('PUT', data);
-};
-InvokeRunner.prototype.runsPost = function(data) {
-    this.runsInvoke('POST', data);
-};
-InvokeRunner.prototype.runsDelete = function() {
-    this.runsInvoke('DELETE', undefined);
-};
-
-InvokeRunner.prototype.runsExpectSuccess = function(resultChecker) {
-  var me = this;
-  runs(function() {
-    expect(me.failureCalled).toBe(false);
-    expect(me.successCalled).toBe(true);
-    resultChecker(me.result);
-  });
-};
-InvokeRunner.prototype.runsExpectFailure = function() {
-  var me = this;
-  runs(function() {
-    expect(me.failureCalled).toBe(true);
-    expect(me.successCalled).toBe(false);
-    expect(typeof me.failureStatus).toEqual('number');
-  });
-};
-
-InvokeRunner.prototype.runsGetAndExpect = function(expectedResult) {
-  this.runsGet();
-  this.runsExpectSuccess(function(result) {
-      expect(result).toEqual(expectedResult);
-  });
-};
-InvokeRunner.prototype.runsGetAndExpectFailure = function() {
-  this.runsGet();
-  this.runsExpectFailure();
-};
-InvokeRunner.prototype.runsPostAndExpect = function(data, expectedResult) {
-  this.runsPost(data);
-  this.runsExpectSuccess(function(result) {
-      expect(result).toEqual(expectedResult);
-  });
-};
-
-var mkRunner = function(c) { return new InvokeRunner(c); };
 
 
 jQuery = {};
@@ -269,10 +193,10 @@ describe('CapServer', function() {
       r.runsExpectFailure();
     });
 
-    it('should ignore the argument to get', function() {
+    it('should throw execption on argument to get', function() {
       var r = mkRunner(c1);
       r.runsInvoke('GET', 42);
-      r.runsExpectFailure();
+      r.runsExpectException();
       runs(function() { expect(fnCalledWith).toEqual('not-yet-called'); });
     });
 
@@ -801,7 +725,6 @@ describe('CapServer', function() {
         expect(roundTrip(v)).toEqual(v);
       };
       it('should round trip simple values', function() {
-        expectRT(undefined);
         expectRT(null);
         expectRT(false);
         expectRT(true);

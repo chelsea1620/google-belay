@@ -3,7 +3,6 @@
 import logging
 import os
 import uuid
-import url
 
 from google.appengine.ext import db
 from google.appengine.ext import webapp
@@ -23,6 +22,7 @@ def this_server_url_prefix():
 class BelayException(Exception):
   pass
   
+
 
 class BcapHandler(webapp.RequestHandler):  
   

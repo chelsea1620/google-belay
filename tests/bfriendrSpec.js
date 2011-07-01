@@ -145,13 +145,30 @@ describe('bfriendr back end', function() {
       account2IntroduceRunner.cap = 
         asCap(account2CapRunner.result.introduceYourself);
       expect(account2IntroduceRunner.cap).toBeDefined();
-      // Account 1 is doing this call to determine who account 2
+      // Account 1 is doing this call to determine who account 2 is
       account2IntroduceRunner.runsGet();
       account2IntroduceRunner.runsExpectSuccess();
       runs(function() {
         expect(account2IntroduceRunner.result.name).toEqual(account2Card.name);
       });
     });
+
+    it('should let 1 introduce itself to 2', function() {
+      var account2IntroduceRunner = new InvokeRunner();
+      
+      account2IntroduceRunner.cap = 
+        asCap(account2CapRunner.result.introduceYourself);
+      expect(account2IntroduceRunner.cap).toBeDefined();
+
+      account2IntroduceRunner.runsPost({card: account1Card,
+                                        stream: "Account 1 stream"});
+      account2IntroduceRunner.runsExpectSuccess();
+      runs(function() {
+        var bCard = account2IntroduceRunner.result.card;
+        expect(bCard.name).toEqual("Two");
+      });
+
+    }); 
 
   });
 

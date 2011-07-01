@@ -143,10 +143,12 @@ class AccountInfoHandler(CapServer.CapHandler):
   def get(self):
     account = self.get_entity();
     introduceYS = CapServer.regrant(IntroduceYourselfHandler, account)
+    introduceMT = CapServer.regrant(IntroduceMeToHandler, account)
     self.bcapResponse({
       'friends':  CapServer.regrant(FriendsListHandler, account),
       'addInvite':  CapServer.regrant(AddInviteHandler, account),
       'introduceYourself': introduceYS,
+      'introduceMeTo': introduceMT,
       'myCard':  CapServer.regrant(CardInfoHandler, account.my_card),
     })
     
@@ -262,6 +264,44 @@ class IntroduceYourselfHandler(CapServer.CapHandler):
     account = self.get_entity()
     self.bcapResponse(account.my_card.toJSON())
 
+  def post(self):
+    account = self.get_entity()
+    request = self.bcapRequest()
+    card_data = request['card']
+    
+    their_card = CardData(name=card_data['name'],
+                          email=card_data['email'],
+                          notes=card_data['notes'],
+                          parent=account)
+    their_card.put()
+
+    them = FriendData(card=their_card, parent=account) # TODO(jpolitz): just this for now
+    them.put()
+
+    self.bcapResponse({'card': account.my_card.toJSON()})
+
+class IntroduceMeToHandler(CapServer.CapHandler):
+  def post(self):
+    account = self.get_entity()
+    request = self.bcapRequest()
+    stream = "A stream!"
+    card = account.my_card
+
+    cap = request.introductionCap
+
+    response = {}
+    response.content = json.dumps({'card': card.toJSON()})
+    # some fetch nonsense
+    # response = fetch(cap, payload=json.dumps({card: card.toJSON(),
+    #                                           stream: stream}),
+    #                  method='POST')
+
+    capResponse = json.loads(response.content)
+
+    self.bcapResponse({
+      'card': my_card.toJSON() 
+    })
+
 class AddInviteHandler(CapServer.CapHandler):
   def post(self):
     account = self.get_entity()
@@ -346,6 +386,7 @@ CapServer.set_handlers(
    ('friend/message',MessageInfoHandler),
    ('friend/post',   MessagePostHandler),
    
+   ('friend/introduceMeTo', IntroduceMeToHandler),
    ('friend/introduce', IntroduceYourselfHandler),
    ('friend/addInvite', AddInviteHandler),
    ('friend/invite', InviteInfoHandler),

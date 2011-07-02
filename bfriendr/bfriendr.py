@@ -38,10 +38,8 @@ class CardData(db.Model):
   
 class FriendData(db.Model):
   card = db.ReferenceProperty(CardData, required=True)
-  in_progress = db.BooleanProperty(default=False)
-  new_messages = db.BooleanProperty(default=False)
-  remote_box = db.TextProperty()  # cap
-  
+  read_their_stream = db.StringProperty()
+
 class MessageData(db.Model):
   when = db.DateTimeProperty(auto_now_add=True)
   message = db.TextProperty()
@@ -78,18 +76,20 @@ def new_account():
   account.put()
   return account
 
-class GenerateHandler(object): pass
-class LaunchHandler(object): pass
-class AccountInfoHandler(object): pass
-class FriendsListHandler(object): pass
-class FriendInfoHandler(object): pass
-class MessageListHandler(object): pass
-class MessageInfoHandler(object): pass
-class MessagePostHandler(object): pass
-class IntroduceYourselfHandler(object): pass
-class AddInviteHandler(object): pass
-class InviteInfoHandler(object): pass
-class InviteAcceptHandler(object): pass
+class GenerateHandler(CapServer.CapHandler): pass
+class LaunchHandler(CapServer.CapHandler): pass
+class AccountInfoHandler(CapServer.CapHandler): pass
+class FriendsListHandler(CapServer.CapHandler): pass
+class FriendInfoHandler(CapServer.CapHandler): pass
+class StreamReadHandler(CapServer.CapHandler): pass
+class StreamPostHandler(CapServer.CapHandler): pass
+class MessageListHandler(CapServer.CapHandler): pass
+class MessageInfoHandler(CapServer.CapHandler): pass
+class MessagePostHandler(CapServer.CapHandler): pass
+class IntroduceYourselfHandler(CapServer.CapHandler): pass
+class AddInviteHandler(CapServer.CapHandler): pass
+class InviteInfoHandler(CapServer.CapHandler): pass
+class InviteAcceptHandler(CapServer.CapHandler): pass
 
 class GenerateHandler(CapServer.BcapHandler):
   def get(self):
@@ -191,15 +191,15 @@ class FriendsListHandler(CapServer.CapHandler):
 class FriendInfoHandler(CapServer.CapHandler):
   def get(self):
     friend = self.get_entity()
+
+    read_my_stream = CapServer.regrant(StreamReadHandler, friend)
+    write_my_stream = CapServer.regrant(StreamPostHandler, friend)
+
     self.bcapResponse({
-      'name':       friend.card.name,
-      'email':      friend.card.email,
-      'image':      CapServer.regrant(ImageHandler, friend.card),
-      'notes':      friend.card.notes,
-      'inProgress': friend.in_progress,
-      'newMessages': friend.new_mssages, # TODO(mzero): logic doesn't work
-      'remoteBox':  friend.remote_box,
-      'messageList':  CapServer.regrant(MessageListHandler, friend)
+      'card': friend.card.toJSON(),
+      'readTheirStream': friend.read_their_stream,
+      'readMyStream': read_my_stream,
+      'postToMyStream': write_my_stream
     })
   
   def put(self):
@@ -217,11 +217,11 @@ class FriendInfoHandler(CapServer.CapHandler):
     self.bcapNullResponse()
       # NOTE(mzero)
 
-
 class MessageListHandler(CapServer.CapHandler):
   def get(self):
-    friend = self.get_entity();
+    friend = self.get_entity()
 
+    # TODO(jpolitz): why does this handler have all this authority!
     q = MessageData.all(keys_only=True)
     q.ancestor(friend)
     messages = []
@@ -293,10 +293,20 @@ class IntroduceMeToHandler(CapServer.CapHandler):
                                       {'card': card.toJSON(),
                                        'stream': stream})
 
-    capResponse = json.loads(response.out.getvalue())['value']
+    cap_response = json.loads(response.out.getvalue())['value']
+    card_data = cap_response['card']
+    friend_card = CardData(name=card_data['name'],
+                           email=card_data['email'],
+                           notes=card_data['notes'])
+    friend_card.put()
 
+    new_friend = FriendData(parent=account, card=friend_card)
+    if('streamForYou' in cap_response):
+      new_friend.read_their_stream = cap_response['streamForYou']
+
+    new_friend.put()
     self.bcapResponse({
-      'card': capResponse['card'] 
+        'friend': CapServer.regrant(FriendInfoHandler, new_friend)
     })
 
 class AddInviteHandler(CapServer.CapHandler):
@@ -381,7 +391,8 @@ CapServer.set_handlers(
    
    ('friend/messages', MessageListHandler),
    ('friend/message',MessageInfoHandler),
-   ('friend/post',   MessagePostHandler),
+   ('friend/read', StreamReadHandler),
+   ('friend/post', StreamPostHandler),
    
    ('friend/introduceMeTo', IntroduceMeToHandler),
    ('friend/introduce', IntroduceYourselfHandler),

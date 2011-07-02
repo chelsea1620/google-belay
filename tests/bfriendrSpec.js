@@ -172,20 +172,38 @@ describe('bfriendr back end', function() {
     it('should introduce 1 to 2 via introduceMeTo', function() {
       // TODO(jpolitz): backend currently expects a URL, should expect cap
       var account2Introduce = account2CapRunner.result.introduceYourself;
-
+      var friendRunner = new InvokeRunner();
       var intro1to2Runner = new InvokeRunner();
+
       intro1to2Runner.cap = asCap(account1CapRunner.result.introduceMeTo);
       intro1to2Runner.runsPost({introductionCap: account2Introduce});
       runs(function() {
-        var bCard = intro1to2Runner.result.card;
-        expect(bCard.name).toEqual(account2Card.name);
-        // TODO(jpolitz): test that account 2 has a new friend
+        friendRunner.cap = asCap(intro1to2Runner.result.friend);
       });
 
-    })
+      friendRunner.runsGet();
+      runs(function() {
+        var friend = friendRunner.result;
+        expect(friend.card.name).toEqual(account2Card.name);
+      });
+    });
 
+    xit('should allow 1 to post to a stream that 1 & 2 can read', function() {
+      var account2Introduce = account2CapRunner.result.introduceYourself;
+      var friendRunner = new InvokeRunner();
+      var intro1to2Runner = new InvokeRunner();
+
+      intro1to2Runner.cap = asCap(account1CapRunner.result.introduceMeTo);
+      intro1to2Runner.runsPost({introductionCap: account2Introduce});
+      runs(function() {
+        friendRunner.cap = asCap(intro1to2Runner.result.friend);
+      });
+
+      friendRunner.runsGet();
+      runs(function() {
+        var friend = friendRunner.result;
+      });
+    }); 
   });
-
-
 });
 

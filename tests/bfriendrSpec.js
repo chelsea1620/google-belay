@@ -18,23 +18,32 @@ describe('bfriendr back end', function() {
   });
   
   describe('basic account operations', function() {
-    it('should generate a new account', function() {
-      generateAccountRunner.runsGet();
-      generateAccountRunner.runsExpectSuccess();
-    });
+    var accountRunner;
+    
+    beforeEach(function() {
+      accountRunner = new InvokeRunner();
 
-    it('should save and restore my card info', function() {
-      var accountRunner = new InvokeRunner();
-      var myCardRunner = new InvokeRunner();
-      var initialCard, updatedCard;
-      
       generateAccountRunner.runsGet();
       generateAccountRunner.runsExpectSuccess();
       runs(function() {
         accountRunner.cap = asCap(generateAccountRunner.result);
         expect(accountRunner.cap).toBeDefined();
       });
+    });
 
+    afterEach(function() {
+      accountRunner.runsDelete();
+      accountRunner.runsExpectSuccess();
+    });
+    
+    it('should generate & delete a new account', function() {
+      // the beforeEach and afterEach do this test
+    });
+
+    it('should save and restore my card info', function() {
+      var myCardRunner = new InvokeRunner();
+      var initialCard, updatedCard;
+      
       accountRunner.runsGet();
       accountRunner.runsExpectSuccess();
 
@@ -136,7 +145,13 @@ describe('bfriendr back end', function() {
         expect(account1Card.name == 'Two');
       });
     });
-    
+
+    afterEach(function() {
+      account1CapRunner.runsDelete();
+      account1CapRunner.runsExpectSuccess();
+      account2CapRunner.runsDelete();
+      account2CapRunner.runsExpectSuccess();
+    })
 
     it('should get the card from an introduction cap', function() {
       var account2IntroduceRunner = new InvokeRunner();

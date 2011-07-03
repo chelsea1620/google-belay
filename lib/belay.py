@@ -223,7 +223,10 @@ def regrant(path_or_handler, entity):
   else:
     return grant(path_or_handler, entity)
 
-
+def revokeEntity(entity):
+  q = Grant.all(keys_only=True).filter("db_entity = ", entity)
+  db.delete(q)
+  
 def set_handlers(cap_prefix, path_map):
   if not cap_prefix.startswith('/'):
     cap_prefix = '/' + cap_prefix

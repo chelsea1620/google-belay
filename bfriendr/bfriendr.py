@@ -20,7 +20,10 @@ server_url = "http://" + os.environ['HTTP_HOST']
 
 
 
-
+def delete_entity(entity):
+  CapServer.revokeEntity(entity)
+  entity.delete()
+  
 class CardData(db.Model):
   name = db.StringProperty(required=True)
   email = db.EmailProperty()
@@ -36,11 +39,22 @@ class CardData(db.Model):
       'notes':      self.notes,
     }
   
+  def deleteAll(self):
+    delete_entity(self)
+    
 class FriendData(db.Model):
   card = db.ReferenceProperty(CardData, required=True)
   in_progress = db.BooleanProperty(default=False)
   new_messages = db.BooleanProperty(default=False)
   remote_box = db.TextProperty()  # cap
+
+  def deleteAll(self):
+    self.card.deleteAll()
+    q = MessageData.all()
+    q.ancestor(self)
+    for message in q:
+      message.deleteAll()
+    delete_entity(self)
   
 class MessageData(db.Model):
   when = db.DateTimeProperty(auto_now_add=True)
@@ -67,8 +81,20 @@ class MessageData(db.Model):
     format += ' - %I:%M %p'
     return date.strftime(format)
 
+  def deleteAll(self):
+    delete_entity(self)
+
 class AccountData(db.Model):
   my_card = db.ReferenceProperty(CardData, required=True)
+
+  def deleteAll(self):
+    self.my_card.deleteAll()
+    q = FriendData.all()
+    q.ancestor(self)
+    for friend in q:
+      friend.deleteAll()
+    delete_entity(self)
+
 
 def new_account():
   card = CardData(name="who are you?", email="where are you?",
@@ -77,6 +103,7 @@ def new_account():
   account = AccountData(my_card=card)
   account.put()
   return account
+
 
 class GenerateHandler(object): pass
 class LaunchHandler(object): pass
@@ -141,7 +168,7 @@ class LaunchHandler(CapServer.CapHandler):
 
 class AccountInfoHandler(CapServer.CapHandler):
   def get(self):
-    account = self.get_entity();
+    account = self.get_entity()
     introduceYS = CapServer.regrant(IntroduceYourselfHandler, account)
     introduceMT = CapServer.regrant(IntroduceMeToHandler, account)
     self.bcapResponse({
@@ -151,6 +178,11 @@ class AccountInfoHandler(CapServer.CapHandler):
       'introduceMeTo': introduceMT,
       'myCard':  CapServer.regrant(CardInfoHandler, account.my_card),
     })
+  
+  def delete(self):
+    account = self.get_entity()
+    account.deleteAll()
+    self.bcapNullResponse()
     
     
 class CardInfoHandler(CapServer.CapHandler):
@@ -169,8 +201,8 @@ class CardInfoHandler(CapServer.CapHandler):
     self.bcapNullResponse()
   
   def delete(self):
-    card = self.get_entity();
-    card.delete()
+    card = self.get_entity()
+    card.deleteAll()
     self.bcapNullResponse()
 
   
@@ -208,12 +240,7 @@ class FriendInfoHandler(CapServer.CapHandler):
   
   def delete(self):
     friend = self.get_entity()
-    card = friend.card
-    CapServer.revokeEntity(friend)
-    CapServer.revokeEntity(card)
-      # NOTE(mzero): revocation by entity (or key)
-    friend.delete()
-    card.delete()
+    friend.deleteAll()
     self.bcapNullResponse()
       # NOTE(mzero)
 
@@ -242,8 +269,7 @@ class MessageInfoHandler(CapServer.CapHandler):
   
   def delete(self):
     message = self.get_entity()
-    CapServer.revokeEntity(message)
-    message.delete()
+    message.deleteAll()
     self.bcapNullResponse()
 
 

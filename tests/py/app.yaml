@@ -1,0 +1,24 @@
+application: test-capserver
+version: 1
+runtime: python
+api_version: 1
+
+handlers:
+
+- url: /ping
+  script: test_capserver.py
+  
+- url: /caps/.*
+  script: test_capserver.py
+
+- url: /test_entry/.*
+  script: test_capserver.py
+
+- url: /
+  static_files: www/index.html 
+  upload: www/index.html
+
+- url: /(.*\.(html|js|css))
+  static_files: www/\1
+  upload: www/(.*\.(html|js|css))
+

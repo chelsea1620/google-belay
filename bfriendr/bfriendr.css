@@ -1,0 +1,109 @@
+/* @override http://localhost:9009/bfriendr.css */
+.bfriendr {
+  width: 100%;
+  height: 100%;
+  background-color: #fff;
+  position: absolute;
+  font-size: 11px;
+  overflow: auto;
+}
+
+.bfriendr * {
+  margin: 0;
+  padding: 0;
+}
+
+.bfriendr > div + div {
+  border-top: 18px solid #658c14;
+}
+
+.bfriendr h1 {
+  background-color: #fcf8c2;
+  padding: 0.25em;
+  border-bottom: 1px solid #c0c0c0;
+  font-size: 12pt;
+  font-weight: bold;
+}
+.bfriendr textarea {
+  width: 99%;
+}
+.bfriendr button {
+  width: 100%;
+  -webkit-appearance: square-button;
+  text-align: center;
+  padding: 0.25em 0.5em;
+  font-size: 10pt;
+}
+.bfriendr button b {
+  font-weight: normal;
+  font-style: normal;
+}
+.bfriendr .bfriendr-logo {
+  font: bold 12pt "Helvetica Neue", Arial, Helvetica, Geneva, sans-serif;
+}
+.bfriendr .bfriendr-red {
+  color: #de4612;
+}
+
+.bfriendr a.bfriendr-nav {
+  text-decoration: none;
+  color: #2537fb;
+  font-size: 18pt;
+  font-weight: bold;
+}
+
+.bfriendr a.bfriendr-nav:hover {
+  color: #000;
+}
+.bfriendr li {
+  margin: 0 0.5em;
+  padding: 1em 0;
+  display: block;
+  position: relative;
+}
+
+.bfriendr li + li {
+  border-top: 1px solid #c0c0c0;
+}
+.bfriendr li h3 {
+  font-size: 9pt;
+  font-weight: bold;
+  color: #84550c;
+}
+.bfriendr li p + * {
+  margin-top: 1em;
+}
+.bfriendr .bfriendr-instructions {
+  color: #797979;
+  font-weight: bold;
+}
+.bfriendr p.bfriendr-date {
+  font-size: 0.75em;
+  color: #919191;
+  position: absolute;
+  top: 1px;
+  right: 0;
+}
+.bfriendr li.bfriendr-card img {
+  width: 24px;
+  height: 24px;
+  float: left;
+  padding-right: 4px;
+  padding-bottom: 4px;
+}
+
+.bfriendr li.bfriendr-card a.bfriendr-nav {
+  float: right;
+  position: relative;
+  top: -0.225em;
+}
+
+.bfriendr li.bfriendr-message img {
+  width: 24px;
+  height: 24px;
+  float: right;
+  padding-left: 4px;
+  padding-bottom: 4px;
+  margin: 0;
+}
+

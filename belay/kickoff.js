@@ -27,7 +27,8 @@ var foop = function(sourceURL, node, extras) {
         setInterval: function(f, s) { return setInterval(f, s); },
         clearTimeout: function(t) { clearTimeout(t); },
         clearInterval: function(t) { clearInterval(t); },
-
+        FormData: FormData,
+        
         foop: foop,
         poof: function() { window.close(); },
 

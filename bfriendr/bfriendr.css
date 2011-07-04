@@ -124,6 +124,14 @@
   background-repeat: no-repeat;
 }
 
+.bfriendr div.bfriendr-card div.bfriendr-cardimg img {
+  width: 100%;
+  height: 100%;
+}
+
+.bfriendr div.bfriendr-card textarea {
+  margin-top: 1em;
+}
 .bfriendr div.bfriendr-card input {
   width: 10em;
 }

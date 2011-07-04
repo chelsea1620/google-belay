@@ -8,7 +8,6 @@ import lib.belay as CapServer
 
 from django.utils import simplejson as json
 
-from google.appengine.ext import blobstore
 from google.appengine.ext import db
 from google.appengine.ext import webapp
 from google.appengine.ext.webapp.util import run_wsgi_app
@@ -27,17 +26,21 @@ def delete_entity(entity):
 class CardData(db.Model):
   name = db.StringProperty(required=True)
   email = db.EmailProperty()
-  image = blobstore.BlobReferenceProperty()
+  image = db.BlobProperty(default=None)
+  imageType = db.StringProperty(default='')
   notes = db.StringProperty()
   # TODO(mzero): needs a refresh_cap property at some point
   
   def toJSON(self):
-    return {
+    cardJSON = {
       'name':       self.name,
       'email':      self.email,
-      #'image':      CapServer.regrant(ImageHandler, card),
       'notes':      self.notes,
     }
+    if self.imageType:
+      cardJSON['image'] = CapServer.regrant(ImageHandler, self)
+    return cardJSON
+
   
   def deleteAll(self):
     delete_entity(self)
@@ -188,7 +191,9 @@ class AccountInfoHandler(CapServer.CapHandler):
 class CardInfoHandler(CapServer.CapHandler):
   def get(self):
     card = self.get_entity()
-    self.bcapResponse(card.toJSON())
+    cardJSON = card.toJSON()
+    cardJSON['uploadImage'] = CapServer.regrant(ImageUploadHandler, card)
+    self.bcapResponse(cardJSON)
   
   def put(self):
     card = self.get_entity()
@@ -205,7 +210,27 @@ class CardInfoHandler(CapServer.CapHandler):
     card.deleteAll()
     self.bcapNullResponse()
 
-  
+class ImageHandler(CapServer.CapHandler):
+  def get(self):
+    card = self.get_entity()
+    self.xhr_response()
+    if card.imageType:
+      self.response.headers['Content-Type'] = card.imageType
+      self.response.out.write(card.image)
+    else:
+      self.response.set_status(404)
+
+class ImageUploadHandler(CapServer.CapHandler):
+  def post(self):
+    card = self.get_entity()
+    image = self.request.POST['imageFile']
+    card.image = image.value
+    card.imageType = image.type
+    card.put()
+    self.xhr_response()
+
+    
+      
 class FriendsListHandler(CapServer.CapHandler):
   def get(self):
     account = self.get_entity()
@@ -401,6 +426,8 @@ CapServer.set_handlers(
    ('friend/account',AccountInfoHandler),
   
    ('friend/card',   CardInfoHandler),
+   ('friend/image',  ImageHandler),
+   ('friend/imageUpload', ImageUploadHandler),
    
    ('friend/list',   FriendsListHandler),
    ('friend/friend', FriendInfoHandler),

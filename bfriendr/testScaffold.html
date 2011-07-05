@@ -49,7 +49,48 @@
     <div id="about">©2011 Google</div>
   </div>
   <script type="text/javascript">
-    $('#scaffold-insert-here').load('bfriendr.html');
+    $('#scaffold-insert-here').load('bfriendr.html', function() {
+      var myCardDiv = $('div.bfriendr-mycard');
+      var myCardToggle = $('.bfriendr-header .bfriendr-nav');
+      var myCardShown = false;
+      var myCardImageDiv = myCardDiv.find('div.bfriendr-cardimg');
+
+      var cardListDiv = $('div.bfriendr-cards');
+      var messagesDiv = $('div.bfriendr-messages');
+    
+      console.log("objects", myCardDiv, myCardToggle, cardListDiv, messagesDiv);
+      
+      var showHideMyCard = function(show) {
+        if (show) {
+          myCardDiv.slideDown('fast', function() {
+            myCardToggle.css('background-position', '0 -34px');
+          });
+        } else {
+          myCardDiv.slideUp('fast', function() {
+            myCardToggle.css('background-position', '0 -4px');
+          });
+        }
+        myCardShown = show;
+      };
+      myCardToggle.click(function() {
+        showHideMyCard(!myCardShown);
+        return false;
+      });
+    
+      var showHideMessages = function(show) {
+        if (show) {
+          cardListDiv.animate({left: '-100%'}, 'fast');
+          messagesDiv.animate({left: '0%'}, 'fast');
+        } else {
+          cardListDiv.animate({left: '0%'}, 'fast');
+          messagesDiv.animate({left: '100%'}, 'fast');
+        }
+      };
+      cardListDiv.find('.bfriendr-nav').click(
+          function() { showHideMessages(true); return false; });
+      messagesDiv.find('.bfriendr-nav').click(
+          function() { showHideMessages(false); return false; });
+    });
   </script>
 </body>  
 </html>

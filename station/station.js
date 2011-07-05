@@ -166,11 +166,11 @@ var stopDrag = function(info) {
 };
 var startDropHover = function(node, rc) {
   node.addClass('belay-selected');
-  top.find('.belay-cap-source').addClass('belay-possible');
+  os.topDiv.find('.belay-cap-source').addClass('belay-possible');
 };
 var stopDropHover = function(node, rc) {
   node.removeClass('belay-selected');
-  top.find('.belay-cap-source').removeClass('belay-possible');
+  os.topDiv.find('.belay-cap-source').removeClass('belay-possible');
 };
 
 var desk = undefined;
@@ -255,6 +255,7 @@ var launchInstance = function(inst) {
           }
         });
 
+if (false) {
         // Note:  Without preventDf on dragenter and dragover, the 
         // browser will not send the drop event
         var preventDf = function(e) {        
@@ -278,7 +279,7 @@ var launchInstance = function(inst) {
             acceptor(capServer.restore(cap));
           }         
         }); 
-
+}
         node.addClass('belay-cap-target');
         node.hover(
           function() { startDropHover(node, rc); },

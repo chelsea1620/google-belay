@@ -3,13 +3,46 @@ var $ = os.jQuery;
 var initialize = function() {
   os.ui.resize('18em', '24em', true);
 
-  var myCardDiv = os.topDiv.find('div.bfriendr-card');
+  var myCardDiv = os.topDiv.find('div.bfriendr-mycard');
+  var myCardToggle = os.topDiv.find('.bfriendr-header .bfriendr-nav');
+  var myCardShown = false;
   var myCardImageDiv = myCardDiv.find('div.bfriendr-cardimg');
-  
+  var cardListDiv = os.topDiv.find('div.bfriendr-cards');
+  var messagesDiv = os.topDiv.find('div.bfriendr-messages');
+
   for (var k in app.caps) {
     app.caps[k] = os.capServer.restore(app.caps[k]);
   }
   
+  var showHideMyCard = function(show) {
+    if (show) {
+      myCardDiv.slideDown('fast', function() {
+        myCardToggle.css('background-position', '0 -34px');
+      });
+    } else {
+      myCardDiv.slideUp('fast', function() {
+        myCardToggle.css('background-position', '0 -4px');
+      });
+    }
+    myCardShown = show;
+  };
+  myCardToggle.click(
+    function() { showHideMyCard(!myCardShown); return false; });
+  
+  var showHideMessages = function(show) {
+    if (show) {
+      cardListDiv.animate({left: '-100%'}, 'fast');
+      messagesDiv.animate({left: '0%'}, 'fast');
+    } else {
+      cardListDiv.animate({left: '0%'}, 'fast');
+      messagesDiv.animate({left: '100%'}, 'fast');
+    }
+  };
+  cardListDiv.find('.bfriendr-nav').click(
+      function() { showHideMessages(true); return false; });
+  messagesDiv.find('.bfriendr-nav').click(
+      function() { showHideMessages(false); return false; });
+
   app.caps.myCard.get(function(cardInfo) {
     myCardDiv.find('input[name=name]').val(cardInfo.name);
     myCardDiv.find('input[name=email]').val(cardInfo.email);

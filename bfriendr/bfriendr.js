@@ -5,13 +5,16 @@ var rcIntroduceYourself = "friend/introduce-yourself";
 var initMessagesUI = function(container, showHideMessages) {
   if (container.attr('class') !== 'bfriendr-messages') { debugger; }
 
+  // handles to UI elements; wackiness with classNames
   var msgs = container.find('ul:first');
-
   var friendNameElt = container.find('.bfriendr-message-friendname');
   var textMsgTemplate = msgs.find('.bfriendr-message:first');
   var capMsgTemplate = msgs.find('.bfriendr-message:eq(1)');
   var sendButton = msgs.find('button:eq(0)');
   var composeTextArea = msgs.find('textarea:eq(0)');
+  var showFriendPane = container.find('.bfriendr-nav');
+
+  showFriendPane.click(function() { showHideMessages(false); return false; });
 
   var showMsg = function(msg) {
 
@@ -149,8 +152,6 @@ var initialize = function() {
       messagesDiv.animate({left: '100%'}, 'fast');
     }
   };
-  messagesDiv.find('.bfriendr-nav').click(
-      function() { showHideMessages(false); return false; });
 
   var uploadMyImageUrl = undefined;
   

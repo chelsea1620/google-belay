@@ -14,7 +14,17 @@ var initMessagesUI = function(container, showHideMessages) {
   var composeTextArea = msgs.find('textarea:eq(0)');
   var showFriendPane = container.find('.bfriendr-nav');
 
-  showFriendPane.click(function() { showHideMessages(false); return false; });
+  var pollIntervalID = false;
+
+  showFriendPane.click(function() { 
+    if (pollIntervalID !== false) {
+      os.clearInterval(pollIntervalID);
+      pollIntervalID = false;
+    }
+
+    showHideMessages(false); 
+    return false; 
+  });
 
   var showMsg = function(msg) {
 
@@ -26,19 +36,28 @@ var initMessagesUI = function(container, showHideMessages) {
 
   };
 
-  var refresh = function(friendName, conversationCap, postCap) {
+  var mkRefreshConvHandler = function(conversationCap) {
+    return function() {
+      conversationCap.get(function(conv) {
+      msgs.find('.bfriendr-message').detach();
+      conv.items.forEach(showMsg);
+      });
+    };
+  };
 
-    // Clear old messages and event handlers.
-    msgs.find('.bfriendr-message').detach();
+  var refresh = function(friendName, conversationCap, postCap) {  
+    var handler = mkRefreshConvHandler(conversationCap);
+    handler();
+
+    pollIntervalID = os.setInterval(handler, 2000);
     sendButton.unbind('click');
 
     showHideMessages(true);
-
     friendNameElt.text(friendName);
-    conversationCap.get(function (msgs) { msgs.items.forEach(showMsg); });
 
     sendButton.click(function() {
-      postCap.post({ 'message' : composeTextArea.val() });
+      postCap.post({ 'message' : composeTextArea.val() }, 
+                   function() { handler(); });
     });
     
   };

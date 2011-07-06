@@ -2,7 +2,53 @@ var $ = os.jQuery;
 
 var rcIntroduceYourself = "friend/introduce-yourself";
 
-var initCardUI = function(container, showHideMessages) {
+var initMessagesUI = function(container, showHideMessages) {
+  if (container.attr('class') !== 'bfriendr-messages') { debugger; }
+
+  var msgs = container.find('ul:first');
+
+  var friendNameElt = container.find('.bfriendr-message-friendname');
+  var textMsgTemplate = msgs.find('.bfriendr-message:first');
+  var capMsgTemplate = msgs.find('.bfriendr-message:eq(1)');
+  var sendButton = msgs.find('button:eq(0)');
+  var composeTextArea = msgs.find('textarea:eq(0)');
+
+  var showMsg = function(msg) {
+
+    // TODO(arjun): account for a capability
+    var msgElt = textMsgTemplate.clone();
+    msgElt.find('p:eq(1)').text(msg.message || 'Received blank message.');
+    msgElt.find('.bfriendr-date:first').text(msg.when);
+    msgs.append(msgElt);
+
+  };
+
+  var refresh = function(friendName, conversationCap, postCap) {
+
+    // Clear old messages and event handlers.
+    msgs.find('.bfriendr-message').detach();
+    sendButton.unbind('click');
+
+    showHideMessages(true);
+
+    friendNameElt.text(friendName);
+    conversationCap.get(function (msgs) {  os.alert(msgs.items.length);  msgs.items.forEach(showMsg); });
+
+    sendButton.click(function() {
+      postCap.post({ 'message' : composeTextArea.val() });
+    });
+    
+  };
+
+  return {
+    refresh: refresh,
+    shm: showHideMessages
+  }; 
+    
+};
+
+
+var initCardUI = function(container, messageUI) {
   var template = container.find('.bfriendr-card:first');
   container.find('.bfriendr-card').detach(); // removes extra templates too
 
@@ -16,8 +62,17 @@ var initCardUI = function(container, showHideMessages) {
       nameElt.text(friendInfo.card.name || 'No Name');
       infoElt.text(friendInfo.card.notes || 'No Notes');
       messagesElt.click(function() {
-        showHideMessages(true);
-        return false; 
+        try {
+          messageUI.refresh(friendInfo.card.name || 'No Name',
+                          // HACK(arjun): should already be a cap
+			  os.capServer.restore(friendInfo.readConversation),
+                          // HACK(arjun): should already be a cap
+			  os.capServer.restore(friendInfo.postToMyStream));
+        } 
+        catch(e) {
+	   console.log('exception', e);
+	}
+        return false;
       });
       
       if (friendInfo.card.image) {
@@ -167,7 +222,8 @@ var initialize = function() {
   os.ui.capDroppable(addFriendArea, rcIntroduceYourself,
     function(cap) { app.caps.introduceMeTo.post({introductionCap: cap.serialize() }); });
 
-  showCards(app.caps.friends, initCardUI(cardListDiv, showHideMessages));
+  var messageUI = initMessagesUI(messagesDiv, showHideMessages);
+  showCards(app.caps.friends, initCardUI(cardListDiv, messageUI));
 };
 
 // TODO(arjun): Retreiving vanilla HTML. Not a Belay cap?

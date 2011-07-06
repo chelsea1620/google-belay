@@ -5,13 +5,27 @@ var rcIntroduceYourself = "friend/introduce-yourself";
 var initMessagesUI = function(container, showHideMessages) {
   if (container.attr('class') !== 'bfriendr-messages') { debugger; }
 
+  // handles to UI elements; wackiness with classNames
   var msgs = container.find('ul:first');
-
   var friendNameElt = container.find('.bfriendr-message-friendname');
   var textMsgTemplate = msgs.find('.bfriendr-message:first');
   var capMsgTemplate = msgs.find('.bfriendr-message:eq(1)');
   var sendButton = msgs.find('button:eq(0)');
   var composeTextArea = msgs.find('textarea:eq(0)');
+  var showFriendPane = container.find('.bfriendr-nav');
+
+  var pollIntervalID = false;
+
+  // i.e., hide this pane, detaching all timers, handlers, etc.
+  showFriendPane.click(function() { 
+    if (pollIntervalID !== false) {
+      os.clearInterval(pollIntervalID);
+      pollIntervalID = false;
+    }
+    sendButton.unbind('click');
+    showHideMessages(false); 
+    return false; 
+  });
 
   var showMsg = function(msg) {
 
@@ -23,34 +37,39 @@ var initMessagesUI = function(container, showHideMessages) {
 
   };
 
-  var refresh = function(friendName, conversationCap, postCap) {
+  var mkRefreshConvHandler = function(conversationCap) {
+    return function() {
+      conversationCap.get(function(conv) {
+      msgs.find('.bfriendr-message').detach();
+      conv.items.forEach(showMsg);
+      });
+    };
+  };
 
-    // Clear old messages and event handlers.
-    msgs.find('.bfriendr-message').detach();
-    sendButton.unbind('click');
-
-    showHideMessages(true);
-
+  var refresh = function(friendName, conversationCap, postCap) {  
+    var handler = mkRefreshConvHandler(conversationCap);
+    pollIntervalID = os.setInterval(handler, 2000);
     friendNameElt.text(friendName);
-    conversationCap.get(function (msgs) {  os.alert(msgs.items.length);  msgs.items.forEach(showMsg); });
-
+    composeTextArea.val('').focus();
     sendButton.click(function() {
-      postCap.post({ 'message' : composeTextArea.val() });
+      postCap.post({ 'message' : composeTextArea.val() }, 
+                   function() { handler(); });
     });
-    
+    handler();
+    showHideMessages(true);
   };
 
   return {
-    refresh: refresh,
-    shm: showHideMessages
+    refresh: refresh
   }; 
     
 };
 
-
-var initCardUI = function(container, messageUI) {
+var initCardUI = function(friendsCap,container, messageUI) {
   var template = container.find('.bfriendr-card:first');
   container.find('.bfriendr-card').detach(); // removes extra templates too
+
+  var cardMap = Object.create(null);
 
   var updateCard = function(ui) {
     var nameElt = ui.find('h3');
@@ -88,25 +107,35 @@ var initCardUI = function(container, messageUI) {
   };
 
   var newCard = function(friendCap) {
-    var cardElt = template.clone();
-    friendCap.get(updateCard(cardElt));
-    container.prepend(cardElt);
+    if (friendCap.serialize() in cardMap) {
+      return;
+    }
+    else {
+      cardMap[friendCap.serialize()] = true;      
+      var cardElt = template.clone();
+      friendCap.get(updateCard(cardElt));
+      container.prepend(cardElt);
+    }
   };
 
+  var refreshCards = function() {
+    friendsCap.get(function(friendCapURLs) {
+      // HACK(arjun): server should grant { '@': url }; argument should be
+      // friendCaps.
+      var friendCaps = 
+        friendCapURLs.map(function(url) { return os.capServer.restore(url); });
+
+      friendCaps.forEach(newCard);  
+    });
+  };
+
+  refreshCards();
+  os.setInterval(refreshCards, 2000);
+
   return {
-    newCard: newCard
+    newCard: newCard,
+    refreshCards: refreshCards
   };  
-};
-
-var showCards = function(friendsCap, cardUI) {
-  friendsCap.get(function(friendCapURLs) {
-    // HACK(arjun): server should grant { '@': url }; argument should be
-    // friendCaps.
-    var friendCaps = 
-      friendCapURLs.map(function(url) { return os.capServer.restore(url); });
-
-    friendCaps.forEach(cardUI.newCard);  
-  });
 };
 
 var initialize = function() {
@@ -149,8 +178,6 @@ var initialize = function() {
       messagesDiv.animate({left: '100%'}, 'fast');
     }
   };
-  messagesDiv.find('.bfriendr-nav').click(
-      function() { showHideMessages(false); return false; });
 
   var uploadMyImageUrl = undefined;
   
@@ -223,7 +250,7 @@ var initialize = function() {
     function(cap) { app.caps.introduceMeTo.post({introductionCap: cap.serialize() }); });
 
   var messageUI = initMessagesUI(messagesDiv, showHideMessages);
-  showCards(app.caps.friends, initCardUI(cardListDiv, messageUI));
+  initCardUI(app.caps.friends, cardListDiv, messageUI);
 };
 
 // TODO(arjun): Retreiving vanilla HTML. Not a Belay cap?

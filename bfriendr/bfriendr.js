@@ -16,12 +16,13 @@ var initMessagesUI = function(container, showHideMessages) {
 
   var pollIntervalID = false;
 
+  // i.e., hide this pane, detaching all timers, handlers, etc.
   showFriendPane.click(function() { 
     if (pollIntervalID !== false) {
       os.clearInterval(pollIntervalID);
       pollIntervalID = false;
     }
-
+    sendButton.unbind('click');
     showHideMessages(false); 
     return false; 
   });
@@ -47,24 +48,19 @@ var initMessagesUI = function(container, showHideMessages) {
 
   var refresh = function(friendName, conversationCap, postCap) {  
     var handler = mkRefreshConvHandler(conversationCap);
-    handler();
-
     pollIntervalID = os.setInterval(handler, 2000);
-    sendButton.unbind('click');
-
-    showHideMessages(true);
     friendNameElt.text(friendName);
-
+    composeTextArea.val('').focus();
     sendButton.click(function() {
       postCap.post({ 'message' : composeTextArea.val() }, 
                    function() { handler(); });
     });
-    
+    handler();
+    showHideMessages(true);
   };
 
   return {
-    refresh: refresh,
-    shm: showHideMessages
+    refresh: refresh
   }; 
     
 };

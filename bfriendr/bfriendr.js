@@ -5,28 +5,39 @@ var rcIntroduceYourself = "friend/introduce-yourself";
 var initMessagesUI = function(container, showHideMessages) {
   if (container.attr('class') !== 'bfriendr-messages') { debugger; }
 
-  var msgs = container.find('ul:eq(0)');
+  var msgs = container.find('ul:first');
 
-  var textMsgTemplate = msgs.find('.bfriendr-message:eq(0)');
+  var friendNameElt = container.find('.bfriendr-message-friendname');
+  var textMsgTemplate = msgs.find('.bfriendr-message:first');
   var capMsgTemplate = msgs.find('.bfriendr-message:eq(1)');
+  var sendButton = msgs.find('button:eq(0)');
+  var composeTextArea = msgs.find('textarea:eq(0)');
 
   var showMsg = function(msg) {
+
     // TODO(arjun): account for a capability
     var msgElt = textMsgTemplate.clone();
+    msgElt.find('p:eq(1)').text(msg.message || 'Received blank message.');
+    msgElt.find('.bfriendr-date:first').text(msg.when);
+    msgs.append(msgElt);
 
-    // TODO: FILL
   };
 
-  var refresh = function(friendName, messagesCap) {
+  var refresh = function(friendName, conversationCap, postCap) {
+
+    // Clear old messages and event handlers.
+    msgs.find('.bfriendr-message').detach();
+    sendButton.unbind('click');
+
     showHideMessages(true);
-    container.find('.bfriendr-message-friendname').text(friendName);
-    msgs.detach('.bfriendr-message'); 
-    /*
-    messagesCap.get(function (msgCap) {
-       // HACK(arjun): should already be a cap
-       os.capServer.restore(msgCap).get(showMsg);
-    }); 
-    */
+
+    friendNameElt.text(friendName);
+    conversationCap.get(function (msgs) {  os.alert(msgs.items.length);  msgs.items.forEach(showMsg); });
+
+    sendButton.click(function() {
+      postCap.post({ 'message' : composeTextArea.val() });
+    });
+    
   };
 
   return {
@@ -50,7 +61,16 @@ var initCardUI = function(container, messageUI) {
       nameElt.text(friendInfo.card.name || 'No Name');
       infoElt.text(friendInfo.card.notes || 'No Notes');
       messagesElt.click(function() {
-        messageUI.refresh(friendInfo.card.name || 'No Name');
+        try {
+          messageUI.refresh(friendInfo.card.name || 'No Name',
+                          // HACK(arjun): should already be a cap
+			  os.capServer.restore(friendInfo.readConversation),
+                          // HACK(arjun): should already be a cap
+			  os.capServer.restore(friendInfo.postToMyStream));
+        } 
+        catch(e) {
+	   console.log('exception', e);
+	}
         return false;
       });
     };

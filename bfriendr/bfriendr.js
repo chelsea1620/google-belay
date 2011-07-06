@@ -81,6 +81,10 @@ var initialize = function() {
         });       
       }
     });
+    
+    if (cardInfo.name.trim().length == 0) {
+      showHideMyCard(true);
+    }
   });
   
   myCardDiv.find('button').click(function() {

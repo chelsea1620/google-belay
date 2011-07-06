@@ -132,9 +132,8 @@
   background-image: url(person-add.png);
   background-repeat: no-repeat;
 }
-
-.bfriendr .bfriendr-mycard textarea {
-  margin-top: 1em;
+.bfriendr .bfriendr-mycard p + textarea {
+  margin-top: 0;
 }
 .bfriendr .bfriendr-mycard input {
   width: 10em;

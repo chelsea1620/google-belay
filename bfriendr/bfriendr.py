@@ -8,7 +8,6 @@ import lib.belay as CapServer
 
 from django.utils import simplejson as json
 
-from google.appengine.ext import blobstore
 from google.appengine.ext import db
 from google.appengine.ext import webapp
 from google.appengine.ext.webapp.util import run_wsgi_app
@@ -24,8 +23,8 @@ def delete_entity(entity):
 
 
 class CardData(db.Model):
-  name = db.StringProperty(required=True)
-  email = db.EmailProperty()
+  name = db.StringProperty(default='')
+  email = db.StringProperty(default='')
   image = db.BlobProperty(default=None)
   imageType = db.StringProperty(default='')
   notes = db.StringProperty()
@@ -103,8 +102,7 @@ class AccountData(db.Model):
     delete_entity(self)
 
 def new_account():
-  card = CardData(name="who are you?", email="where are you?",
-    notes="tell your friends about yourself")
+  card = CardData()
   card.put()
   account = AccountData(my_card=card)
   account.put()

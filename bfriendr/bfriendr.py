@@ -24,8 +24,8 @@ def delete_entity(entity):
   entity.delete()
   
 class CardData(db.Model):
-  name = db.StringProperty(required=True)
-  email = db.EmailProperty()
+  name = db.StringProperty(default='')
+  email = db.StringProperty(default='')
   image = db.BlobProperty(default=None)
   imageType = db.StringProperty(default='')
   notes = db.StringProperty()
@@ -100,8 +100,7 @@ class AccountData(db.Model):
 
 
 def new_account():
-  card = CardData(name="who are you?", email="where are you?",
-    notes="tell your friends about yourself")
+  card = CardData()
   card.put()
   account = AccountData(my_card=card)
   account.put()

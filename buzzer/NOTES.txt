@@ -1,0 +1,35 @@
+Buzzer is a simple social feed like application
+
+
+
+URL space:
+
+/generate
+    - creates a new buzzer feed
+    - returns the URL of the feed
+    
+
+/?{id}
+    - iurl of the feed
+    - returns java script that, when run in a belay container, shows the feed
+    - to the owner -- this is the full fledged cap
+    
+/view/editor?{id}
+    - returns HTML fragment for an editor for the feed
+    - if the user has never logged in, generates a form for filling name
+    - if the user has logged in, generates a header, entry box, and feed
+    - has affordance to viewer
+
+/view/reader?{id}
+    - returns HTML fragment for viewing the feed by another user
+
+/data/profile?{id}
+    - { name: string, location: string }
+    
+/data/post?{id}
+    - POST only
+    - { when: date, body: string, via: string }
+
+
+/cap?{cid}
+    - 

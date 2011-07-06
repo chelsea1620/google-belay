@@ -1,0 +1,25 @@
+application: belay-station
+version: 1
+runtime: python
+api_version: 1
+
+handlers:
+
+- url: /
+  script: station.py
+
+- url: /generate
+  script: station.py
+  
+- url: /instance
+  script: station.py
+
+- url: /instances
+  script: station.py
+
+- url: /(.*\.(html|css|js|png))
+  script: lib/CORSstatic.py
+
+- url: /test
+  script: lib/test.py
+

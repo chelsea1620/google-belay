@@ -1,0 +1,27 @@
+<html>
+  <head>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.5.2/jquery.js"></script>
+    <script src="../belay/portQueue.js"></script>
+    <script src="../belay/windowremote.js"></script>
+    <script type="text/javascript">
+      $(function(){
+
+        var sendDelayed = window.location.search.indexOf('remoteDelayed');        
+        var sendMessage = function(m) { openerPort.postMessage('got ' + m); };
+
+        openerPort.onmessage = function(e) {
+          if (sendDelayed)  setTimeout(function() { sendMessage(e.data); }, 0);
+          else              sendMessage(e.data);
+        };
+        
+        if (window.location.search.indexOf("sendFirst") >= 0) {
+          openerPort.postMessage('hello');
+        }
+      });
+    </script>
+  </head>
+  <body>
+    <h1>Transcript</h1>
+    <ol id="transcript"></ol>
+  </body>
+</html>

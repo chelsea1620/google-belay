@@ -57,11 +57,11 @@ describe('bfriendr back end', function() {
       runs(function() {
         initialCard = myCardRunner.result;
         expect(typeof initialCard.name).toEqual('string');
-        expect(initialCard.name).not.toEqual('');
+        expect(initialCard.name).toEqual('');
         expect(typeof initialCard.email).toEqual('string');
-        expect(initialCard.email).not.toEqual('');
-        expect(typeof initialCard.notes).toEqual('string');
-        expect(initialCard.notes).not.toEqual('');
+        expect(initialCard.email).toEqual('');
+        expect(typeof initialCard.notes).toEqual('object');
+        expect(initialCard.notes).toEqual(null);
       });
       
       myCardRunner.runsPut(

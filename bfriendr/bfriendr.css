@@ -3,10 +3,10 @@
   width: 100%;
   height: 100%;
   background-color: #fff;
-  position: absolute;
+  position: relative;
   font-size: 11px;
-  overflow: auto;
   z-index: 0;
+  padding-top: 3em;
 }
 
 .bfriendr * {
@@ -100,7 +100,11 @@
   right: 0;
 }
 .bfriendr .bfriendr-header {
-  position: relative;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 3em;
 }
 .bfriendr .bfriendr-header .bfriendr-nav {
   width: 50px;
@@ -113,9 +117,23 @@
 }
 
 .bfriendr .bfriendr-content {
+  width: 100%;
+  height: 100%;
+}
+
+.bfriendr .bfriendr-content-inner {
   position: relative;
   width: 100%;
+  height: 100%;
   overflow: hidden;
+}
+.bfriendr .bfriendr-content-inner > div {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
 }
 
 .bfriendr .bfriendr-mycard {
@@ -139,10 +157,6 @@
   width: 10em;
 }
 .bfriendr .bfriendr-cards {
-  position: relative;
-  top: 0;
-  width: 100%;
-  left: 0;
 }
 .bfriendr .bfriendr-card .bfriendr-cardimg {
   background-image: url(person.png);
@@ -167,10 +181,7 @@
   margin: 0;
 }
 
-.bfriendr .bfriendr-messages {
-  position: absolute;
-  top: 0;
-  width: 100%;
+.bfriendr  .bfriendr-content .bfriendr-messages {
   left: 100%;
 }
 .bfriendr .bfriendr-messages a.bfriendr-nav {  float: left;

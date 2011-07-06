@@ -189,6 +189,15 @@ describe('bfriendr back end', function() {
       var account2Introduce = account2CapRunner.result.introduceYourself;
       var friendRunner = new InvokeRunner();
       var intro1to2Runner = new InvokeRunner();
+      var friendListRunner = new InvokeRunner();
+      var friendCapRunner = new InvokeRunner();
+
+      friendListRunner.cap = asCap(account1CapRunner.result.friends);
+      friendListRunner.runsGet();
+      runs(function() {
+        expect(friendListRunner.result.length).toEqual(0);
+      });
+
 
       intro1to2Runner.cap = asCap(account1CapRunner.result.introduceMeTo);
       intro1to2Runner.runsPost({introductionCap: account2Introduce});
@@ -200,6 +209,17 @@ describe('bfriendr back end', function() {
       runs(function() {
         var friend = friendRunner.result;
         expect(friend.card.name).toEqual(account2Card.name);
+      });
+
+      friendListRunner.runsGet();
+      runs(function() {
+        expect(friendListRunner.result.length).toEqual(1);
+        friendCapRunner.cap = asCap(friendListRunner.result[0]);
+      });
+
+      friendCapRunner.runsGet();
+      runs(function() {
+        expect(friendCapRunner.result.card.name).toEqual('Two');
       });
     });
 

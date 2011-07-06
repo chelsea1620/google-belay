@@ -1,16 +1,23 @@
 var $ = os.jQuery;
 
-var initCardUI = function(container) {
+var initCardUI = function(container, showHideMessages) {
   var template = container.find('.bfriendr-card:first');
   container.find('.bfriendr-card').detach(); // removes extra templates too
 
   var updateCard = function(ui) {
     var nameElt = ui.find('h3');
     var infoElt = ui.find('p:eq(0)');
+    var messagesElt = ui.find('.bfriendr-nav');
+
     return function(friendInfo) {
       nameElt.text(friendInfo.card.name);
       infoElt.text(friendInfo.card.notes);
+      messagesElt.click(function() {
+        showHideMessages(true);
+        return false; 
+      });
     };
+
   };
 
   var newCard = function(friendCap) {
@@ -82,8 +89,6 @@ var initialize = function() {
       messagesDiv.animate({left: '100%'}, 'fast');
     }
   };
-  cardListDiv.find('.bfriendr-nav').click(
-      function() { showHideMessages(true); return false; });
   messagesDiv.find('.bfriendr-nav').click(
       function() { showHideMessages(false); return false; });
 
@@ -140,7 +145,7 @@ var initialize = function() {
     app.caps.myCard.put(cardInfo);
   });
 
-  showCards(app.caps.friends, initCardUI(cardListDiv));
+  showCards(app.caps.friends, initCardUI(cardListDiv, showHideMessages));
 };
 
 // TODO(arjun): Retreiving vanilla HTML. Not a Belay cap?

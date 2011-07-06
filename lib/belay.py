@@ -206,7 +206,7 @@ def get_path(path_or_handler):
 def grant(path_or_handler, entity):
   path = get_path(path_or_handler)
   cap_id = str(uuid.uuid4())
-  item = Grant(cap_id=cap_id, internal_path=path, db_entity=entity.key())
+  item = Grant(cap_id=cap_id, internal_path=path, db_entity=entity)
   item.put()
   return ProxyHandler.default_prefix + cap_id
 

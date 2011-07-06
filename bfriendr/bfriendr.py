@@ -286,9 +286,8 @@ class StreamReadHandler(CapServer.CapHandler):
     friend_info = self.get_entity()
     q = MessageData.all().ancestor(friend_info)
     # TODO(jpolitz): more than 10 messages
-    messages = q.fetch(10)
     json_messages = []
-    for m in messages:
+    for m in q:
       json_messages.append(m.toJSON())
 
     self.bcapResponse({'items': json_messages})
@@ -354,9 +353,9 @@ class IntroduceYourselfHandler(CapServer.CapHandler):
     their_card.put()
 
     them = FriendData(card=their_card, parent=account) # TODO(jpolitz): just this for now
+    if stream: 
+      them.read_their_stream = stream
     them.put()
-
-    if stream: them.read_their_stream = stream
 
     self.bcapResponse({'card': account.my_card.toJSON()})
 
@@ -370,6 +369,7 @@ class IntroduceMeToHandler(CapServer.CapHandler):
     blank_card.put()
     new_friend = FriendData(parent=account, card=blank_card)
     new_friend.put()
+    q = FriendData.all().ancestor(account)
 
     stream = CapServer.regrant(StreamReadHandler, new_friend)
 

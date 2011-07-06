@@ -139,8 +139,9 @@ var initCardUI = function(friendsCap,container, messageUI) {
 };
 
 var initialize = function() {
-  os.ui.resize('300', '480', true);
-
+  // os.ui.resize('300', '480', true);
+  os.ui.resize('80', '80', true);
+  
   var header = os.topDiv.find('.bfriendr-header');
   var myCardDiv = os.topDiv.find('div.bfriendr-mycard');
   var myCardToggle = os.topDiv.find('.bfriendr-header .bfriendr-nav');

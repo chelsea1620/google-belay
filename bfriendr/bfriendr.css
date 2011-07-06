@@ -6,7 +6,7 @@
   position: relative;
   font-size: 11px;
   z-index: 0;
-  padding-top: 3em;
+  overflow: hidden;
 }
 
 .bfriendr * {
@@ -100,9 +100,6 @@
   right: 0;
 }
 .bfriendr .bfriendr-header {
-  position: absolute;
-  top: 0;
-  left: 0;
   width: 100%;
   height: 3em;
 }
@@ -119,6 +116,8 @@
 .bfriendr .bfriendr-content {
   width: 100%;
   height: 100%;
+  position: relative;
+  overflow: hidden;
 }
 
 .bfriendr .bfriendr-content-inner {

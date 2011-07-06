@@ -1,16 +1,60 @@
 var $ = os.jQuery;
 
-var initCardUI = function(container) {
+var rcIntroduceYourself = "friend/introduce-yourself";
+
+var initMessagesUI = function(container, showHideMessages) {
+  if (container.attr('class') !== 'bfriendr-messages') { debugger; }
+
+  var msgs = container.find('ul:eq(0)');
+
+  var textMsgTemplate = msgs.find('.bfriendr-message:eq(0)');
+  var capMsgTemplate = msgs.find('.bfriendr-message:eq(1)');
+
+  var showMsg = function(msg) {
+    // TODO(arjun): account for a capability
+    var msgElt = textMsgTemplate.clone();
+
+    // TODO: FILL
+  };
+
+  var refresh = function(friendName, messagesCap) {
+    showHideMessages(true);
+    container.find('.bfriendr-message-friendname').text(friendName);
+    msgs.detach('.bfriendr-message'); 
+    /*
+    messagesCap.get(function (msgCap) {
+       // HACK(arjun): should already be a cap
+       os.capServer.restore(msgCap).get(showMsg);
+    }); 
+    */
+  };
+
+  return {
+    refresh: refresh,
+    shm: showHideMessages
+  }; 
+    
+};
+
+
+var initCardUI = function(container, messageUI) {
   var template = container.find('.bfriendr-card:first');
   container.find('.bfriendr-card').detach(); // removes extra templates too
 
   var updateCard = function(ui) {
     var nameElt = ui.find('h3');
     var infoElt = ui.find('p:eq(0)');
+    var messagesElt = ui.find('.bfriendr-nav');
+
     return function(friendInfo) {
-      nameElt.text(friendInfo.card.name);
-      infoElt.text(friendInfo.card.notes);
+      nameElt.text(friendInfo.card.name || 'No Name');
+      infoElt.text(friendInfo.card.notes || 'No Notes');
+      messagesElt.click(function() {
+        messageUI.refresh(friendInfo.card.name || 'No Name');
+        return false;
+      });
     };
+
   };
 
   var newCard = function(friendCap) {
@@ -29,30 +73,23 @@ var showCards = function(friendsCap, cardUI) {
     // HACK(arjun): server should grant { '@': url }; argument should be
     // friendCaps.
     var friendCaps = 
-      friendCapURLs.map(function(url) { os.capServer.restore(url); });
+      friendCapURLs.map(function(url) { return os.capServer.restore(url); });
 
-    friendCaps.forEach(cardUI.newCard);
-    cardUI.newCard(os.capServer.grant(function() {
-      return { card: { name: 'khan', notes: 'i am not real' } };
-    }));
-    cardUI.newCard(os.capServer.grant(function() {
-      return { card: { name: 'joe', notes: 'woof' } };
-    }));
-  
+    friendCaps.forEach(cardUI.newCard);  
   });
-
-
 };
 
 var initialize = function() {
   os.ui.resize('18em', '24em', true);
 
+  var header = os.topDiv.find('.bfriendr-header');
   var myCardDiv = os.topDiv.find('div.bfriendr-mycard');
   var myCardToggle = os.topDiv.find('.bfriendr-header .bfriendr-nav');
   var myCardShown = false;
   var myCardImageDiv = myCardDiv.find('div.bfriendr-cardimg');
   var cardListDiv = os.topDiv.find('div.bfriendr-cards');
   var messagesDiv = os.topDiv.find('div.bfriendr-messages');
+  var addFriendArea = os.topDiv.find('.bfriendr-add');
 
   for (var k in app.caps) {
     app.caps[k] = os.capServer.restore(app.caps[k]);
@@ -82,8 +119,6 @@ var initialize = function() {
       messagesDiv.animate({left: '100%'}, 'fast');
     }
   };
-  cardListDiv.find('.bfriendr-nav').click(
-      function() { showHideMessages(true); return false; });
   messagesDiv.find('.bfriendr-nav').click(
       function() { showHideMessages(false); return false; });
 
@@ -138,9 +173,15 @@ var initialize = function() {
       notes: myCardDiv.find('textarea').val(),
     };
     app.caps.myCard.put(cardInfo);
-  });
+  })
+  
+  os.ui.capDraggable(myCardToggle, rcIntroduceYourself,
+    function(selectedRC) { return app.caps.introduceYourself; });
+  os.ui.capDroppable(addFriendArea, rcIntroduceYourself,
+    function(cap) { app.caps.introduceMeTo.post({introductionCap: cap.serialize() }); });
 
-  showCards(app.caps.friends, initCardUI(cardListDiv));
+  var messageUI = initMessagesUI(messagesDiv, showHideMessages);
+  showCards(app.caps.friends, initCardUI(cardListDiv, messageUI));
 };
 
 // TODO(arjun): Retreiving vanilla HTML. Not a Belay cap?

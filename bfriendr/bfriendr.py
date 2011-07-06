@@ -140,7 +140,8 @@ class LaunchHandler(CapServer.CapHandler):
       'friends':  CapServer.regrant(FriendsListHandler, account),
       'addInvite':  CapServer.regrant(AddInviteHandler, account),
       'myCard':  CapServer.regrant(CardInfoHandler, account.my_card),
-
+      'introduceYourself': CapServer.regrant(IntroduceYourselfHandler, account),
+      'introduceMeTo': CapServer.regrant(IntroduceMeToHandler, account),
       # TODO(mzero): or should this be just the following?
       'account':  CapServer.regrant(AccountInfoHandler, account),
 	    }

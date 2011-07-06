@@ -203,10 +203,12 @@ describe('bfriendr back end', function() {
       });
     });
 
-    xit('should allow 1 to post to a stream that 1 & 2 can read', function() {
+    it('should allow 1 to post to a stream that 1 can read', function() {
       var account2Introduce = account2CapRunner.result.introduceYourself;
       var friendRunner = new InvokeRunner();
       var intro1to2Runner = new InvokeRunner();
+      var postRunner = new InvokeRunner();
+      var read1Runner = new InvokeRunner();
 
       intro1to2Runner.cap = asCap(account1CapRunner.result.introduceMeTo);
       intro1to2Runner.runsPost({introductionCap: account2Introduce});
@@ -217,6 +219,22 @@ describe('bfriendr back end', function() {
       friendRunner.runsGet();
       runs(function() {
         var friend = friendRunner.result;
+        postRunner.cap = asCap(friend.postToMyStream);
+        expect(postRunner.cap).toBeDefined();
+        read1Runner.cap = asCap(friend.readMyStream); 
+        expect(read1Runner.cap).toBeDefined();
+      });
+
+      postRunner.runsPost({ message: 'Hello, friend!' });
+      postRunner.runsExpectSuccess();
+
+      read1Runner.runsGet();
+      read1Runner.runsExpectSuccess();
+      runs(function() {
+        var items = read1Runner.result.items;
+        expect(items).toBeDefined();
+        expect(items.length).toBe(1);
+        expect(items[0].message).toEqual('Hello, friend!');
       });
     }); 
   });

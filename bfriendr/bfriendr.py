@@ -85,6 +85,12 @@ class MessageData(db.Model):
   def deleteAll(self):
     delete_entity(self)
 
+  def toJSON(self):
+    return {'message': self.message,
+            'when': str(self.when),
+            'capability': str(self.capability),
+            'resource_class': str(self.resource_class)}
+
 class AccountData(db.Model):
   my_card = db.ReferenceProperty(CardData, required=True)
 
@@ -267,6 +273,28 @@ class FriendInfoHandler(CapServer.CapHandler):
     self.bcapNullResponse()
       # NOTE(mzero)
 
+class StreamPostHandler(CapServer.CapHandler):
+  def post(self):
+    friend_info = self.get_entity()
+    request = self.bcapRequest()
+    msg = request['message'] 
+    message_data = MessageData(message = msg, parent = friend_info)
+    message_data.put()
+    # TODO(jpolitz): handle capabilities in messages
+    self.bcapResponse({'success': True})
+
+class StreamReadHandler(CapServer.CapHandler):
+  def get(self):
+    friend_info = self.get_entity()
+    q = MessageData.all().ancestor(friend_info)
+    # TODO(jpolitz): more than 10 messages
+    messages = q.fetch(10)
+    json_messages = []
+    for m in messages:
+      json_messages.append(m.toJSON())
+
+    self.bcapResponse({'items': json_messages})
+
 class MessageListHandler(CapServer.CapHandler):
   def get(self):
     friend = self.get_entity()
@@ -317,6 +345,9 @@ class IntroduceYourselfHandler(CapServer.CapHandler):
     account = self.get_entity()
     request = self.bcapRequest()
     card_data = request['card']
+    stream = None
+    if 'streamForYou' in request:
+      stream = request['streamForYou']
     
     their_card = CardData(name=card_data['name'],
                           email=card_data['email'],
@@ -327,20 +358,28 @@ class IntroduceYourselfHandler(CapServer.CapHandler):
     them = FriendData(card=their_card, parent=account) # TODO(jpolitz): just this for now
     them.put()
 
+    if stream: them.read_their_stream = stream
+
     self.bcapResponse({'card': account.my_card.toJSON()})
 
 class IntroduceMeToHandler(CapServer.CapHandler):
   def post(self):
     account = self.get_entity()
     request = self.bcapRequest()
-    stream = "A stream!"
     card = account.my_card
+
+    blank_card = CardData(name="Pending", email="Pending", notes="Pending")
+    blank_card.put()
+    new_friend = FriendData(parent=account, card=blank_card)
+    new_friend.put()
+
+    stream = CapServer.regrant(StreamReadHandler, new_friend)
 
     cap = request['introductionCap']
 
     response = CapServer.invokeCapURL(cap, 'POST',
                                       {'card': card.toJSON(),
-                                       'stream': stream})
+                                       'streamForYou': stream})
 
     cap_response = json.loads(response.out.getvalue())['value']
     card_data = cap_response['card']
@@ -349,7 +388,9 @@ class IntroduceMeToHandler(CapServer.CapHandler):
                            notes=card_data['notes'])
     friend_card.put()
 
-    new_friend = FriendData(parent=account, card=friend_card)
+    new_friend.card=friend_card
+    blank_card.delete()
+
     if('streamForYou' in cap_response):
       new_friend.read_their_stream = cap_response['streamForYou']
 
@@ -357,6 +398,7 @@ class IntroduceMeToHandler(CapServer.CapHandler):
     self.bcapResponse({
         'friend': CapServer.regrant(FriendInfoHandler, new_friend)
     })
+
 
 class AddInviteHandler(CapServer.CapHandler):
   def post(self):

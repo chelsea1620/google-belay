@@ -223,17 +223,21 @@ describe('bfriendr back end', function() {
       });
     });
 
-    it('should allow 1 to post to a stream that 1 can read', function() {
+    it('should allow 1 to post to a stream that 1 & 2 can read', function() {
       var account2Introduce = account2CapRunner.result.introduceYourself;
       var friendRunner = new InvokeRunner();
       var intro1to2Runner = new InvokeRunner();
       var postRunner = new InvokeRunner();
       var read1Runner = new InvokeRunner();
+      var friendListRunner = new InvokeRunner();
+      var friendCapRunner = new InvokeRunner();
+      var friendStreamRunner = new InvokeRunner();
 
       intro1to2Runner.cap = asCap(account1CapRunner.result.introduceMeTo);
       intro1to2Runner.runsPost({introductionCap: account2Introduce});
       runs(function() {
         friendRunner.cap = asCap(intro1to2Runner.result.friend);
+        friendListRunner.cap = asCap(account2CapRunner.result.friends);
       });
 
       friendRunner.runsGet();
@@ -256,6 +260,31 @@ describe('bfriendr back end', function() {
         expect(items.length).toBe(1);
         expect(items[0].message).toEqual('Hello, friend!');
       });
+
+      friendListRunner.runsGet();
+      friendListRunner.runsExpectSuccess();
+      runs(function() {
+        var friends = friendListRunner.result;
+        expect(friends.length).toBe(1);
+        friendCapRunner.cap = asCap(friends[0]);
+      });
+
+      friendCapRunner.runsGet();
+      friendCapRunner.runsExpectSuccess();
+      runs(function() {
+        var friend = friendCapRunner.result;
+        expect(typeof friend.readTheirStream).toBe('string');
+        friendStreamRunner.cap = asCap(friend.readTheirStream);
+      });
+
+      friendStreamRunner.runsGet();
+      friendStreamRunner.runsExpectSuccess();
+      runs(function() {
+        var items = friendStreamRunner.result.items;
+        expect(items.length).toBe(1);
+        expect(items[0].message).toBe('Hello, friend!');
+      });
+      
     }); 
   });
 });

@@ -10,6 +10,7 @@ var initCardUI = function(container, showHideMessages) {
     var nameElt = ui.find('h3');
     var infoElt = ui.find('p:eq(0)');
     var messagesElt = ui.find('.bfriendr-nav');
+    var imgContainerElt = ui.find('.bfriendr-cardimg');
 
     return function(friendInfo) {
       nameElt.text(friendInfo.card.name || 'No Name');
@@ -18,8 +19,17 @@ var initCardUI = function(container, showHideMessages) {
         showHideMessages(true);
         return false; 
       });
+      
+      if (friendInfo.card.image) {
+        var imgElt = imgContainerElt.find('img');
+        if (imgElt.length == 0) {
+          imgElt = imgContainerElt.append('<img>').find('img');
+        }
+        imgElt.attr('src', friendInfo.card.image);
+      } else {
+        imgContainerElt.find('img').remove();
+      }
     };
-
   };
 
   var newCard = function(friendCap) {
@@ -45,7 +55,7 @@ var showCards = function(friendsCap, cardUI) {
 };
 
 var initialize = function() {
-  os.ui.resize('18em', '24em', true);
+  os.ui.resize('300', '480', true);
 
   var header = os.topDiv.find('.bfriendr-header');
   var myCardDiv = os.topDiv.find('div.bfriendr-mycard');
@@ -87,47 +97,59 @@ var initialize = function() {
   messagesDiv.find('.bfriendr-nav').click(
       function() { showHideMessages(false); return false; });
 
-  app.caps.myCard.get(function(cardInfo) {
-    myCardDiv.find('input[name=name]').val(cardInfo.name);
-    myCardDiv.find('input[name=email]').val(cardInfo.email);
-    myCardDiv.find('textarea').val(cardInfo.notes);
-    if (cardInfo.image) {
-      myCardImageDiv.append('<img>');
-      myCardImageDiv.find('img').attr('src', cardInfo.image);
-    }
-    
-    var imageTypeRE = /image\/.*/;
-    var preventDf = function(e) {
-        e.originalEvent.preventDefault();
-        return false;   
-    };
-    myCardImageDiv.bind('dragenter', preventDf);
-    myCardImageDiv.bind('dragover', preventDf);
-    myCardImageDiv.bind('drop', function(e) {
-      var draggedFile;
-      var dt = e.originalEvent.dataTransfer;
-      for (var i = 0; i < dt.files.length; ++i) {
-        var file = dt.files[i];
-        if (!file.type.match(imageTypeRE)) continue;
-        draggedFile = file;
-        break;
+  var uploadMyImageUrl = undefined;
+  
+  var fetchMyCard = function() {
+    app.caps.myCard.get(function(cardInfo) {
+      myCardDiv.find('input[name=name]').val(cardInfo.name);
+      myCardDiv.find('input[name=email]').val(cardInfo.email);
+      myCardDiv.find('textarea').val(cardInfo.notes);
+      if (cardInfo.image) {
+        var imgElt = myCardImageDiv.find('img');
+        if (imgElt.length == 0) {
+          imgElt = myCardImageDiv.append('<img>').find('img');
+        }
+        imgElt.attr('src', cardInfo.image);
+      } else {
+        myCardImageDiv.find('img').remove();
       }
-      if (draggedFile) {
-        var fd = new os.FormData();
-        fd.append('imageFile', draggedFile);
-        $.ajax({
-          url: cardInfo.uploadImage,
-          cache: false,
-          type: 'POST',
-          contentType: false,
-          processData: false,
-          data: fd,
-        });       
+      uploadMyImageUrl = cardInfo.uploadImage;
+      if (cardInfo.name.trim().length == 0) {
+        showHideMyCard(true);
       }
     });
+  };
+  
+  fetchMyCard();
     
-    if (cardInfo.name.trim().length == 0) {
-      showHideMyCard(true);
+  var imageTypeRE = /image\/.*/;
+  var preventDf = function(e) {
+      e.originalEvent.preventDefault();
+      return false;   
+  };
+  myCardImageDiv.bind('dragenter', preventDf);
+  myCardImageDiv.bind('dragover', preventDf);
+  myCardImageDiv.bind('drop', function(e) {
+    var draggedFile;
+    var dt = e.originalEvent.dataTransfer;
+    for (var i = 0; i < dt.files.length; ++i) {
+      var file = dt.files[i];
+      if (!file.type.match(imageTypeRE)) continue;
+      draggedFile = file;
+      break;
+    }
+    if (draggedFile && uploadMyImageUrl) {
+      var fd = new os.FormData();
+      fd.append('imageFile', draggedFile);
+      $.ajax({
+        url: uploadMyImageUrl,
+        cache: false,
+        type: 'POST',
+        contentType: false,
+        processData: false,
+        data: fd,
+        success: fetchMyCard,
+      });       
     }
   });
   

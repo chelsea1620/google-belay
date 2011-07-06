@@ -225,6 +225,9 @@ class ImageUploadHandler(CapServer.CapHandler):
     card.image = image.value
     card.imageType = image.type
     card.put()
+    # TODO(mzero): Revoking the cap is a hack, and will break some clients for
+    # no good reason. Really ImageHandler should do ETags on the image data.
+    CapServer.revoke(ImageHandler, card)
     self.xhr_response()
 
 
@@ -346,6 +349,10 @@ class IntroduceYourselfHandler(CapServer.CapHandler):
                           email=card_data['email'],
                           notes=card_data['notes'],
                           parent=account)
+    if 'image' in card_data:
+      response = CapServer.invokeCapURL(card_data['image'], 'GET')
+      their_card.image = db.Blob(response.out.getvalue())
+      their_card.imageType = response.headers['Content-Type']
     their_card.put()
 
     them = FriendData(card=their_card, parent=account) # TODO(jpolitz): just this for now
@@ -380,6 +387,10 @@ class IntroduceMeToHandler(CapServer.CapHandler):
     friend_card = CardData(name=card_data['name'],
                            email=card_data['email'],
                            notes=card_data['notes'])
+    if 'image' in card_data:
+      response = CapServer.invokeCapURL(card_data['image'], 'GET')
+      friend_card.image = db.Blob(response.out.getvalue())
+      friend_card.imageType = response.headers['Content-Type']
     friend_card.put()
 
     new_friend.card=friend_card

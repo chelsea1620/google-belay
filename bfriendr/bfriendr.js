@@ -1,5 +1,49 @@
 var $ = os.jQuery;
 
+var initCardUI = function(container) {
+  var template = container.find('.bfriendr-card:first');
+  container.find('.bfriendr-card').detach(); // removes extra templates too
+
+  var updateCard = function(ui) {
+    var nameElt = ui.find('h3');
+    var infoElt = ui.find('p:eq(0)');
+    return function(friendInfo) {
+      nameElt.text(friendInfo.card.name);
+      infoElt.text(friendInfo.card.notes);
+    };
+  };
+
+  var newCard = function(friendCap) {
+    var cardElt = template.clone();
+    friendCap.get(updateCard(cardElt));
+    container.prepend(cardElt);
+  };
+
+  return {
+    newCard: newCard
+  };  
+};
+
+var showCards = function(friendsCap, cardUI) {
+  friendsCap.get(function(friendCapURLs) {
+    // HACK(arjun): server should grant { '@': url }; argument should be
+    // friendCaps.
+    var friendCaps = 
+      friendCapURLs.map(function(url) { os.capServer.restore(url); });
+
+    friendCaps.forEach(cardUI.newCard);
+    cardUI.newCard(os.capServer.grant(function() {
+      return { card: { name: 'khan', notes: 'i am not real' } };
+    }));
+    cardUI.newCard(os.capServer.grant(function() {
+      return { card: { name: 'joe', notes: 'woof' } };
+    }));
+  
+  });
+
+
+};
+
 var initialize = function() {
   os.ui.resize('18em', '24em', true);
 
@@ -94,7 +138,9 @@ var initialize = function() {
       notes: myCardDiv.find('textarea').val(),
     };
     app.caps.myCard.put(cardInfo);
-  })
+  });
+
+  showCards(app.caps.friends, initCardUI(cardListDiv));
 };
 
 // TODO(arjun): Retreiving vanilla HTML. Not a Belay cap?

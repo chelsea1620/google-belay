@@ -65,10 +65,11 @@ var initMessagesUI = function(container, showHideMessages) {
     
 };
 
-
-var initCardUI = function(container, messageUI) {
+var initCardUI = function(friendsCap,container, messageUI) {
   var template = container.find('.bfriendr-card:first');
   container.find('.bfriendr-card').detach(); // removes extra templates too
+
+  var cardMap = Object.create(null);
 
   var updateCard = function(ui) {
     var nameElt = ui.find('h3');
@@ -106,25 +107,35 @@ var initCardUI = function(container, messageUI) {
   };
 
   var newCard = function(friendCap) {
-    var cardElt = template.clone();
-    friendCap.get(updateCard(cardElt));
-    container.prepend(cardElt);
+    if (friendCap.serialize() in cardMap) {
+      return;
+    }
+    else {
+      cardMap[friendCap.serialize()] = true;      
+      var cardElt = template.clone();
+      friendCap.get(updateCard(cardElt));
+      container.prepend(cardElt);
+    }
   };
 
+  var refreshCards = function() {
+    friendsCap.get(function(friendCapURLs) {
+      // HACK(arjun): server should grant { '@': url }; argument should be
+      // friendCaps.
+      var friendCaps = 
+        friendCapURLs.map(function(url) { return os.capServer.restore(url); });
+
+      friendCaps.forEach(newCard);  
+    });
+  };
+
+  refreshCards();
+  os.setInterval(refreshCards, 2000);
+
   return {
-    newCard: newCard
+    newCard: newCard,
+    refreshCards: refreshCards
   };  
-};
-
-var showCards = function(friendsCap, cardUI) {
-  friendsCap.get(function(friendCapURLs) {
-    // HACK(arjun): server should grant { '@': url }; argument should be
-    // friendCaps.
-    var friendCaps = 
-      friendCapURLs.map(function(url) { return os.capServer.restore(url); });
-
-    friendCaps.forEach(cardUI.newCard);  
-  });
 };
 
 var initialize = function() {
@@ -239,7 +250,7 @@ var initialize = function() {
     function(cap) { app.caps.introduceMeTo.post({introductionCap: cap.serialize() }); });
 
   var messageUI = initMessagesUI(messagesDiv, showHideMessages);
-  showCards(app.caps.friends, initCardUI(cardListDiv, messageUI));
+  initCardUI(app.caps.friends, cardListDiv, messageUI);
 };
 
 // TODO(arjun): Retreiving vanilla HTML. Not a Belay cap?

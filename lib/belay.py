@@ -223,6 +223,12 @@ def regrant(path_or_handler, entity):
   else:
     return grant(path_or_handler, entity)
 
+def revoke(path_or_handler, entity):
+  path = get_path(path_or_handler)
+  items = Grant.all().filter("internal_path = ", path) \
+                     .filter("db_entity = ", entity)
+  db.delete(items)
+
 def revokeEntity(entity):
   q = Grant.all(keys_only=True).filter("db_entity = ", entity)
   db.delete(q)

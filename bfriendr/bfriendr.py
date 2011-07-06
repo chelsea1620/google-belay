@@ -119,9 +119,6 @@ class MessageListHandler(CapServer.CapHandler): pass
 class MessageInfoHandler(CapServer.CapHandler): pass
 class MessagePostHandler(CapServer.CapHandler): pass
 class IntroduceYourselfHandler(CapServer.CapHandler): pass
-class AddInviteHandler(CapServer.CapHandler): pass
-class InviteInfoHandler(CapServer.CapHandler): pass
-class InviteAcceptHandler(CapServer.CapHandler): pass
 
 class GenerateHandler(CapServer.BcapHandler):
   def get(self):
@@ -138,7 +135,6 @@ class LaunchHandler(CapServer.CapHandler):
     app = {
 	  'caps': {
       'friends':  CapServer.regrant(FriendsListHandler, account),
-      'addInvite':  CapServer.regrant(AddInviteHandler, account),
       'myCard':  CapServer.regrant(CardInfoHandler, account.my_card),
       'introduceYourself': CapServer.regrant(IntroduceYourselfHandler, account),
       'introduceMeTo': CapServer.regrant(IntroduceMeToHandler, account),
@@ -179,7 +175,6 @@ class AccountInfoHandler(CapServer.CapHandler):
     introduceMT = CapServer.regrant(IntroduceMeToHandler, account)
     self.bcapResponse({
       'friends':  CapServer.regrant(FriendsListHandler, account),
-      'addInvite':  CapServer.regrant(AddInviteHandler, account),
       'introduceYourself': introduceYS,
       'introduceMeTo': introduceMT,
       'myCard':  CapServer.regrant(CardInfoHandler, account.my_card),
@@ -230,6 +225,9 @@ class ImageUploadHandler(CapServer.CapHandler):
     card.image = image.value
     card.imageType = image.type
     card.put()
+    # TODO(mzero): Revoking the cap is a hack, and will break some clients for
+    # no good reason. Really ImageHandler should do ETags on the image data.
+    CapServer.revoke(ImageHandler, card)
     self.xhr_response()
 
 
@@ -374,6 +372,10 @@ class IntroduceYourselfHandler(CapServer.CapHandler):
                           email=card_data['email'],
                           notes=card_data['notes'],
                           parent=account)
+    if 'image' in card_data:
+      response = CapServer.invokeCapURL(card_data['image'], 'GET')
+      their_card.image = db.Blob(response.out.getvalue())
+      their_card.imageType = response.headers['Content-Type']
     their_card.put()
 
     them = FriendData(card=their_card, parent=account) # TODO(jpolitz): just this for now
@@ -411,6 +413,10 @@ class IntroduceMeToHandler(CapServer.CapHandler):
     friend_card = CardData(name=card_data['name'],
                            email=card_data['email'],
                            notes=card_data['notes'])
+    if 'image' in card_data:
+      response = CapServer.invokeCapURL(card_data['image'], 'GET')
+      friend_card.image = db.Blob(response.out.getvalue())
+      friend_card.imageType = response.headers['Content-Type']
     friend_card.put()
 
     new_friend.card=friend_card
@@ -422,67 +428,6 @@ class IntroduceMeToHandler(CapServer.CapHandler):
     new_friend.put()
     self.bcapResponse({
         'friend': CapServer.regrant(FriendInfoHandler, new_friend)
-    })
-
-
-class AddInviteHandler(CapServer.CapHandler):
-  def post(self):
-    account = self.get_entity()
-    request = self.bcapRequest()
-
-    card = CardData(parent=account)
-    card.name = request.name
-    card.email = request.email
-    card.notes = request.notes
-    card.put()
-    
-    friend = FriendData(parent=account)
-    friend.in_progress = True
-    friend.card = card
-    friend.put()
-
-    self.bcapResponse({
-      'invite': CapServer.grant(InviteInfoHandler, friend)
-    })
-
-
-class InviteInfoHandler(CapServer.CapHandler):
-  def get(self):
-    friend = self.get_entity()
-    account = friend.parent # TODO(mzero): check if you can do this
-    my_card = account.my_card
-    
-    self.bcapResponse({
-      'name': my_card.name,
-      'email': my_card.email,
-      'image': CapServer.regrant(ImageHandler, my_card),
-      'notes': my_card.notes,
-
-      'accept': CapServer.grant(InviteAcceptHandler, friend),
-    })
-
-class InviteAcceptHandler(CapServer.CapHandler):
-  def post(self):
-    friend = self.get_entity()
-    request = self.bcapRequest()
-    
-    CapServer.revoke(InviteAcceptHandler, friend);
-    CapServer.revokeCurrent(this)
-      # NOTE(mzero): revocation ideas
-    
-    # TODO(mzero): these operations should merge info, not over-write it
-    friend.card.name = request.name
-    friend.card.email = request.email
-    # TODO(mzero): should handle image here
-    friend.card.notes = request.notes
-    friend.card.put()
-    
-    friend.remote_box = request.postbox
-    friend.in_progress = False
-    friend.put()
-
-    self.bcapResponse({
-      'postbox': CapServer.grant(MessagePostHandler, friend)
     })
 
 
@@ -514,10 +459,7 @@ CapServer.set_handlers(
    ('friend/convo', ConversationReadHandler),
    
    ('friend/introduceMeTo', IntroduceMeToHandler),
-   ('friend/introduce', IntroduceYourselfHandler),
-   ('friend/addInvite', AddInviteHandler),
-   ('friend/invite', InviteInfoHandler),
-   ('friend/accept', InviteAcceptHandler),
+   ('friend/introduceYourself', IntroduceYourselfHandler),
   ])
 
 

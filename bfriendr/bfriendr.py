@@ -253,12 +253,14 @@ class FriendInfoHandler(CapServer.CapHandler):
 
     read_my_stream = CapServer.regrant(StreamReadHandler, friend)
     write_my_stream = CapServer.regrant(StreamPostHandler, friend)
+    read_conversation = CapServer.regrant(ConversationReadHandler, friend)
 
     self.bcapResponse({
       'card': friend.card.toJSON(),
       'readTheirStream': friend.read_their_stream,
       'readMyStream': read_my_stream,
-      'postToMyStream': write_my_stream
+      'postToMyStream': write_my_stream,
+      'readConversation': read_conversation
     })
   
   def put(self):
@@ -280,6 +282,26 @@ class StreamPostHandler(CapServer.CapHandler):
     message_data.put()
     # TODO(jpolitz): handle capabilities in messages
     self.bcapResponse({'success': True})
+
+class ConversationReadHandler(CapServer.CapHandler):
+  def get(self):
+    friend_info = self.get_entity()
+
+    readMine = CapServer.regrant(StreamReadHandler, friend_info)
+    readTheirs = friend_info.read_their_stream
+
+    mine = CapServer.invokeCapURL(readMine, 'GET')
+    mine = json.loads(mine.out.getvalue())['value']['items']
+    theirs = CapServer.invokeCapURL(readTheirs, 'GET')
+    theirs = json.loads(theirs.out.getvalue())['value']['items']
+
+    combined = mine
+    combined.extend(theirs)
+    sorted_combined = sorted(combined, key = lambda(m): m['when'], reverse = True)
+
+    self.bcapResponse({'items': sorted_combined})
+        
+        
 
 class StreamReadHandler(CapServer.CapHandler):
   def get(self):
@@ -342,6 +364,7 @@ class IntroduceYourselfHandler(CapServer.CapHandler):
     account = self.get_entity()
     request = self.bcapRequest()
     card_data = request['card']
+
     stream = None
     if 'streamForYou' in request:
       stream = request['streamForYou']
@@ -357,7 +380,10 @@ class IntroduceYourselfHandler(CapServer.CapHandler):
       them.read_their_stream = stream
     them.put()
 
-    self.bcapResponse({'card': account.my_card.toJSON()})
+    stream_for_them = CapServer.regrant(StreamReadHandler, them)
+
+    self.bcapResponse({'card': account.my_card.toJSON(),
+                       'streamForYou': stream_for_them })
 
 class IntroduceMeToHandler(CapServer.CapHandler):
   def post(self):
@@ -484,6 +510,7 @@ CapServer.set_handlers(
    ('friend/message', MessageInfoHandler),
    ('friend/read', StreamReadHandler),
    ('friend/post', StreamPostHandler),
+   ('friend/convo', ConversationReadHandler),
    
    ('friend/introduceMeTo', IntroduceMeToHandler),
    ('friend/introduce', IntroduceYourselfHandler),

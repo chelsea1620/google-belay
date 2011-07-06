@@ -1,14 +1,18 @@
 var $ = os.jQuery;
 
+var rcIntroduceYourself = "friend/introduce-yourself";
+
 var initialize = function() {
   os.ui.resize('18em', '24em', true);
 
+  var header = os.topDiv.find('.bfriendr-header');
   var myCardDiv = os.topDiv.find('div.bfriendr-mycard');
   var myCardToggle = os.topDiv.find('.bfriendr-header .bfriendr-nav');
   var myCardShown = false;
   var myCardImageDiv = myCardDiv.find('div.bfriendr-cardimg');
   var cardListDiv = os.topDiv.find('div.bfriendr-cards');
   var messagesDiv = os.topDiv.find('div.bfriendr-messages');
+  var addFriendArea = os.topDiv.find('.bfriendr-add');
 
   for (var k in app.caps) {
     app.caps[k] = os.capServer.restore(app.caps[k]);
@@ -95,6 +99,14 @@ var initialize = function() {
     };
     app.caps.myCard.put(cardInfo);
   })
+  
+  if (true) {
+    // TODO(mzero): not quite working yet
+    os.ui.capDraggable(myCardToggle, rcIntroduceYourself,
+      function(selectedRC) { return app.caps.introduceYourself; });
+    os.ui.capDroppable(addFriendArea, rcIntroduceYourself,
+      function(cap) { app.caps.introduceMeTo.post({introductionCap: cap.serialize() }); })    
+  }
 };
 
 // TODO(arjun): Retreiving vanilla HTML. Not a Belay cap?

@@ -1,0 +1,82 @@
+<div class="bfriendr">
+  <style scoped="scoped">@import url(http://localhost:9009/bfriendr.css);</style>
+  <div class="bfriendr-header">
+    <h1><span class="bfriendr-logo"
+      ><span class="bfriendr-red">b</span>friend<span class="bfriendr-red">r</span></span>
+      <a class="bfriendr-nav" href=""
+         style="width:50px;height:30px;background:url(http://localhost:9009/nav.png) no-repeat 0 -4px;"
+         /></h1>
+  </div>
+  <div class="bfriendr-mycard" style="display: none;">
+    <div class="bfriendr-card">
+      <h1><a href="">&lt;&lt;</a> Your card</h1>
+      <ul>
+        <li>
+          <p class="bfriendr-instructions">This information is visible to your friends and those you've invited.</p>
+          <div class="bfriendr-cardform">
+            <div class="bfriendr-cardimg" />
+            <p>Name: <input type="string" name="name" title="Who are you?" /></p>
+            <p>E-mail: <input type="string" name="email" title="(optional)"/></p>
+            <div class="bfriendr-clear" />
+          </div>
+          <p>Something about yourself:</p>
+          <textarea title="Something about yourself"></textarea>
+          <button><b>✎</b> Save</button>
+          <div class="bfriendr-clear" />
+        </li>
+      </ul>
+    </div>
+  </div>
+  <div class="bfriendr-content">
+    <div class="bfriendr-cards">
+      <ul>
+        <li class="bfriendr-card">
+          <a class="bfriendr-nav" href="" />
+          <div class="bfriendr-cardimg" />
+          <h3>Arjun Guha</h3>
+          <p>blah blah woof woof</p>
+          <div class="bfriendr-clear" />
+        </li>
+        <li class="bfriendr-card">
+          <a class="bfriendr-nav" href="" />
+          <div class="bfriendr-cardimg" />
+          <h3>Joe Politz</h3>
+          <p>blah blah woof woof</p>
+          <div class="bfriendr-clear" />
+        </li>
+        <li class="bfriendr-card">
+          <a class="bfriendr-nav" href="" />
+          <div class="bfriendr-cardimg" />
+          <h3>Mark Lentczner</h3>
+          <p>blah blah woof woof</p>
+          <div class="bfriendr-clear" />
+        </li>
+        <li class="bfriendr-add">
+          <p class="bfriendr-instructions">Invite a new friend:</p>
+          <p>Name: <input type="string" name="name" /></p>
+          <p>E-mail: <input type="string" name="email" /></p>
+          <button><b>✚</b> Invite</button>
+        </li>
+      </ul>
+    </div>
+    <div class="bfriendr-messages">
+      <h1><a class="bfriendr-nav" href="" /> Arjun Guha</h1>
+      <ul>
+        <li class="bfriendr-message">
+          <p class="bfriendr-date">3 min ago</p>
+          <p>What's for lunch, dude?</p>
+        </li>
+        <li class="bfriendr-message">
+          <p class="bfriendr-date">3 min ago</p>
+          <img src="chit.png" />
+          <p>Here's my blog</p>
+        </li>
+        <li class="bfriendr-add">
+          <p class="bfriendr-instructions">Send a message:</p>
+          <textarea></textarea>
+          <button><b>✈</b> Send</button>
+        </li>
+      </ul>
+    </div>
+  </div>
+</div>

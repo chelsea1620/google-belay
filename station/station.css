@@ -1,0 +1,157 @@
+/* @override http://localhost:9001/station.css */
+/**
+ * Copyright 2011 Google Inc.  All Rights Reserved.
+ *
+ * Belay Station styling.
+ *
+ * Author: mzero@google.com (Mark Lentczner)
+ */
+
+#belay-station-outer {
+  position: relative;
+}
+#belay-controls {
+  text-align: right;
+  font-size: 0.8em;
+  position: absolute;
+  top: -2em;
+  right: 0;
+}
+#belay-controls a {
+  text-decoration: none;
+  color: #999;
+}
+
+#belay-controls a:hover {
+  color: #000;
+}
+
+#belay-station-inner {
+  width: 100%;
+  overflow: auto;
+}
+
+#belay-toolbar {
+  background-color: #eaf2f6;
+  border-top: 1px solid #4e8acb;
+  border-bottom: 1px solid #4e8acb;
+  padding: 0.5em;
+}
+
+#belay-toolbar h2,
+#belay-desk h2 {
+  display: inline;
+  vertical-align: top;
+  color: #999;
+  font-size: 2em;
+}
+
+#belay-toolbar .belay-tool {
+  display: inline-block;
+  padding-right: 1em;
+  padding-left: 1em;
+}
+
+.belay-tool p {
+  margin: 0;
+  text-align: center;
+}
+
+#belay-desk {
+  background-color: #eee;
+  height: 350px;
+  position: relative;
+  padding: 1em;
+}
+
+/* Two properties here must all be set to the same value, or the layout breaks:
+	.belay-container's        padding-bottom
+	.belay-container-header's height
+*/
+
+.belay-container {
+  background-color: #fff;
+  position: absolute;
+  border: 1px solid #777;
+  padding-bottom: 12px;
+  -moz-box-shadow: 0 2px 6px #666;
+  -webkit-box-shadow: 0 2px 6px #666;
+  box-shadow: 0 2px 6px #666;
+}
+
+.belay-container-header {
+  height: 12px;
+  width: 100%;
+  background-color: #777;
+}
+
+.belay-container-header .belay-control {
+  color: #fff;
+  float: right;
+  width: 12px;
+  height: 11px;
+  text-align: center;
+  vertical-align: middle;
+  line-height: 1;
+  cursor:pointer;
+}
+
+.belay-container-header .belay-control.hover {
+  color: #000;
+  background-color: #e5877a;
+}
+
+.belay-container-holder {
+  position: relative;
+  height: 100%;
+}
+
+.belay-container-holder > div {
+  height: 100%;
+}
+
+.belay-cap-source,
+.belay-cap-target {
+  transition: all 0.125s ease-in-out;
+  -webkit-transition: all 0.125s ease-in-out;
+  -moz-transition: all 0.125s ease-in-out;
+}
+.belay-cap-source.belay-possible {
+  box-shadow: 0 0 4px 4px #f99;
+  -webkit-box-shadow: 0 0 4px 4px #f99;
+  -moz-box-shadow: 0 0 4px 4px #f99;
+}
+.belay-cap-source.belay-selected {
+  box-shadow: 0 0 4px 4px #f63;
+  -webkit-box-shadow: 0 0 4px 4px #f63;
+  -moz-box-shadow: 0 0 4px 4px #f63;
+}
+.belay-cap-target.belay-possible {
+  box-shadow: 0 0 5px rgba(0, 0, 255, 0.5);
+  -webkit-box-shadow: 0 0 4px 4px #6cf;
+  -moz-box-shadow: 0 0 5px rgba(0, 0, 255, 0.5);
+}
+.belay-cap-target.belay-selected {
+  box-shadow: 0 0 4px 4px #39f;
+  -webkit-box-shadow: 0 0 4px 4px #39f;
+  -moz-box-shadow: 0 0 4px 4px #39f;
+}
+
+.belay-example-thing {
+  width: 100%;
+  height: 100%;
+  text-align: center;
+  background-color: #fefdcb;
+  margin: 0;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+
+#belay-example-001 {
+  width: 14em;
+  height: 18em;
+  top: 50px;
+  left: 70px;
+}

@@ -18,7 +18,9 @@ from google.appengine.ext.webapp.util import run_wsgi_app
 server_url = "http://" + os.environ['HTTP_HOST']
   # TODO(mzero): this should be safer
 
-
+def delete_entity(entity):
+  CapServer.revokeEntity(entity)
+  entity.delete()
 
 
 class CardData(db.Model):
@@ -47,6 +49,14 @@ class FriendData(db.Model):
   card = db.ReferenceProperty(CardData, required=True)
   read_their_stream = db.StringProperty()
 
+  def deleteAll(self):
+    self.card.deleteAll()
+    q = MessageData.all()
+    q.ancestor(self)
+    for message in q:
+      message.deleteAll()
+    delete_entity(self)
+
 class MessageData(db.Model):
   when = db.DateTimeProperty(auto_now_add=True)
   message = db.TextProperty()
@@ -72,8 +82,19 @@ class MessageData(db.Model):
     format += ' - %I:%M %p'
     return date.strftime(format)
 
+  def deleteAll(self):
+    delete_entity(self)
+
 class AccountData(db.Model):
   my_card = db.ReferenceProperty(CardData, required=True)
+
+  def deleteAll(self):
+    self.my_card.deleteAll()
+    q = FriendData.all()
+    q.ancestor(self)
+    for friend in q:
+      friend.deleteAll()
+    delete_entity(self)
 
 def new_account():
   card = CardData(name="who are you?", email="where are you?",
@@ -158,6 +179,11 @@ class AccountInfoHandler(CapServer.CapHandler):
       'introduceMeTo': introduceMT,
       'myCard':  CapServer.regrant(CardInfoHandler, account.my_card),
     })
+
+  def delete(self):
+    account = self.get_entity()
+    account.deleteAll()
+    self.bcapNullResponse()
     
     
 class CardInfoHandler(CapServer.CapHandler):

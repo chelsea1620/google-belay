@@ -149,6 +149,7 @@ var initialize = function() {
   var cardListDiv = os.topDiv.find('div.bfriendr-cards');
   var messagesDiv = os.topDiv.find('div.bfriendr-messages');
   var addFriendArea = os.topDiv.find('.bfriendr-cards .bfriendr-add');
+  var inviteButton = addFriendArea.find('button');
 
   for (var k in app.caps) {
     app.caps[k] = os.capServer.restore(app.caps[k]);
@@ -244,6 +245,21 @@ var initialize = function() {
     app.caps.myCard.put(cardInfo);
   })
   
+  inviteButton.click(function(evt) {
+    var serverLink = "http://" + os.window.serverBase;
+    var to = addFriendArea.find('input[name=email]').val();
+    var name = addFriendArea.find('input[name=name]').val();
+    var message = "Hello " + name + "!\n\n" +
+                  "Come join us on bfriendr!\n\n" +  
+                  "Visit this link: " + serverLink + 
+                  "\n\nThen highlight and drop the link " +
+                  "below into your bfriendr window to accept the invite.\n\n";
+    var url = 'http://' + os.window.serverBase + "nav.png?";
+    url += "scope=" + rcIntroduceYourself + "&";
+    url += "cap=" + app.caps.introduceYourself.serialize();
+    os.window.gmail(to, name + ", come join bfriendr!", message + url);
+  });
+
   os.ui.capDraggable(myCardToggle, rcIntroduceYourself,
     function(selectedRC) { return app.caps.introduceYourself; });
   os.ui.capDroppable(addFriendArea, rcIntroduceYourself,

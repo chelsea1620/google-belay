@@ -260,7 +260,6 @@ var launchInstance = function(inst) {
           }
         });
 
-if (false) {
         // Note:  Without preventDf on dragenter and dragover, the 
         // browser will not send the drop event
         var preventDf = function(e) {        
@@ -270,6 +269,7 @@ if (false) {
         node.bind('dragenter', preventDf);
         node.bind('dragover', preventDf);
         node.bind('drop', function(e) {
+          if(!e.originalEvent.dataTransfer) return;
           var data = e.originalEvent.dataTransfer.getData("text/plain");
           if(!data)
             data = e.originalEvent.dataTransfer.getData("text/uri-list");
@@ -282,9 +282,9 @@ if (false) {
 
           if (scope == rc) {
             acceptor(capServer.restore(cap));
-          }         
+          }
         }); 
-}
+
         node.addClass('belay-cap-target');
         node.hover(
           function() { startDropHover(node, rc); },

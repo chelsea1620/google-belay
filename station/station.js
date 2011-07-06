@@ -166,7 +166,11 @@ var stopDrag = function(info) {
 };
 var startDropHover = function(node, rc) {
   node.addClass('belay-selected');
-  os.topDiv.find('.belay-cap-source').addClass('belay-possible');
+  var sources = os.topDiv.find('.belay-cap-source');
+  for (var i = 0; i < sources.length; ++i) {
+    var s = sources.eq(i);
+    if (s.data('rc') == rc) s.addClass('belay-possible');
+  }
 };
 var stopDropHover = function(node, rc) {
   node.removeClass('belay-selected');
@@ -234,6 +238,7 @@ var launchInstance = function(inst) {
             return cap;
           }
         };
+        node.data('rc', rc);
         node.draggable({
           appendTo: desk,
           helper: function() { return helper; },

@@ -1,5 +1,7 @@
 var $ = os.jQuery;
 
+var rcIntroduceYourself = "friend/introduce-yourself";
+
 var initCardUI = function(container, showHideMessages) {
   var template = container.find('.bfriendr-card:first');
   container.find('.bfriendr-card').detach(); // removes extra templates too
@@ -10,8 +12,8 @@ var initCardUI = function(container, showHideMessages) {
     var messagesElt = ui.find('.bfriendr-nav');
 
     return function(friendInfo) {
-      nameElt.text(friendInfo.card.name);
-      infoElt.text(friendInfo.card.notes);
+      nameElt.text(friendInfo.card.name || 'No Name');
+      infoElt.text(friendInfo.card.notes || 'No Notes');
       messagesElt.click(function() {
         showHideMessages(true);
         return false; 
@@ -36,30 +38,23 @@ var showCards = function(friendsCap, cardUI) {
     // HACK(arjun): server should grant { '@': url }; argument should be
     // friendCaps.
     var friendCaps = 
-      friendCapURLs.map(function(url) { os.capServer.restore(url); });
+      friendCapURLs.map(function(url) { return os.capServer.restore(url); });
 
-    friendCaps.forEach(cardUI.newCard);
-    cardUI.newCard(os.capServer.grant(function() {
-      return { card: { name: 'khan', notes: 'i am not real' } };
-    }));
-    cardUI.newCard(os.capServer.grant(function() {
-      return { card: { name: 'joe', notes: 'woof' } };
-    }));
-  
+    friendCaps.forEach(cardUI.newCard);  
   });
-
-
 };
 
 var initialize = function() {
   os.ui.resize('18em', '24em', true);
 
+  var header = os.topDiv.find('.bfriendr-header');
   var myCardDiv = os.topDiv.find('div.bfriendr-mycard');
   var myCardToggle = os.topDiv.find('.bfriendr-header .bfriendr-nav');
   var myCardShown = false;
   var myCardImageDiv = myCardDiv.find('div.bfriendr-cardimg');
   var cardListDiv = os.topDiv.find('div.bfriendr-cards');
   var messagesDiv = os.topDiv.find('div.bfriendr-messages');
+  var addFriendArea = os.topDiv.find('.bfriendr-add');
 
   for (var k in app.caps) {
     app.caps[k] = os.capServer.restore(app.caps[k]);
@@ -143,7 +138,12 @@ var initialize = function() {
       notes: myCardDiv.find('textarea').val(),
     };
     app.caps.myCard.put(cardInfo);
-  });
+  })
+  
+  os.ui.capDraggable(myCardToggle, rcIntroduceYourself,
+    function(selectedRC) { return app.caps.introduceYourself; });
+  os.ui.capDroppable(addFriendArea, rcIntroduceYourself,
+    function(cap) { app.caps.introduceMeTo.post({introductionCap: cap.serialize() }); });
 
   showCards(app.caps.friends, initCardUI(cardListDiv, showHideMessages));
 };

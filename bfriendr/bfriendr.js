@@ -148,7 +148,7 @@ var initialize = function() {
   var myCardImageDiv = myCardDiv.find('div.bfriendr-cardimg');
   var cardListDiv = os.topDiv.find('div.bfriendr-cards');
   var messagesDiv = os.topDiv.find('div.bfriendr-messages');
-  var addFriendArea = os.topDiv.find('.bfriendr-add');
+  var addFriendArea = os.topDiv.find('.bfriendr-cards .bfriendr-add');
 
   for (var k in app.caps) {
     app.caps[k] = os.capServer.restore(app.caps[k]);

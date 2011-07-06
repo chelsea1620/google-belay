@@ -32,7 +32,7 @@ var initMessagesUI = function(container, showHideMessages) {
     showHideMessages(true);
 
     friendNameElt.text(friendName);
-    conversationCap.get(function (msgs) {  os.alert(msgs.items.length);  msgs.items.forEach(showMsg); });
+    conversationCap.get(function (msgs) { msgs.items.forEach(showMsg); });
 
     sendButton.click(function() {
       postCap.post({ 'message' : composeTextArea.val() });

@@ -119,9 +119,6 @@ class MessageListHandler(CapServer.CapHandler): pass
 class MessageInfoHandler(CapServer.CapHandler): pass
 class MessagePostHandler(CapServer.CapHandler): pass
 class IntroduceYourselfHandler(CapServer.CapHandler): pass
-class AddInviteHandler(CapServer.CapHandler): pass
-class InviteInfoHandler(CapServer.CapHandler): pass
-class InviteAcceptHandler(CapServer.CapHandler): pass
 
 class GenerateHandler(CapServer.BcapHandler):
   def get(self):
@@ -138,7 +135,6 @@ class LaunchHandler(CapServer.CapHandler):
     app = {
 	  'caps': {
       'friends':  CapServer.regrant(FriendsListHandler, account),
-      'addInvite':  CapServer.regrant(AddInviteHandler, account),
       'myCard':  CapServer.regrant(CardInfoHandler, account.my_card),
       'introduceYourself': CapServer.regrant(IntroduceYourselfHandler, account),
       'introduceMeTo': CapServer.regrant(IntroduceMeToHandler, account),
@@ -179,7 +175,6 @@ class AccountInfoHandler(CapServer.CapHandler):
     introduceMT = CapServer.regrant(IntroduceMeToHandler, account)
     self.bcapResponse({
       'friends':  CapServer.regrant(FriendsListHandler, account),
-      'addInvite':  CapServer.regrant(AddInviteHandler, account),
       'introduceYourself': introduceYS,
       'introduceMeTo': introduceMT,
       'myCard':  CapServer.regrant(CardInfoHandler, account.my_card),
@@ -399,67 +394,6 @@ class IntroduceMeToHandler(CapServer.CapHandler):
     })
 
 
-class AddInviteHandler(CapServer.CapHandler):
-  def post(self):
-    account = self.get_entity()
-    request = self.bcapRequest()
-
-    card = CardData(parent=account)
-    card.name = request.name
-    card.email = request.email
-    card.notes = request.notes
-    card.put()
-    
-    friend = FriendData(parent=account)
-    friend.in_progress = True
-    friend.card = card
-    friend.put()
-
-    self.bcapResponse({
-      'invite': CapServer.grant(InviteInfoHandler, friend)
-    })
-
-
-class InviteInfoHandler(CapServer.CapHandler):
-  def get(self):
-    friend = self.get_entity()
-    account = friend.parent # TODO(mzero): check if you can do this
-    my_card = account.my_card
-    
-    self.bcapResponse({
-      'name': my_card.name,
-      'email': my_card.email,
-      'image': CapServer.regrant(ImageHandler, my_card),
-      'notes': my_card.notes,
-
-      'accept': CapServer.grant(InviteAcceptHandler, friend),
-    })
-
-class InviteAcceptHandler(CapServer.CapHandler):
-  def post(self):
-    friend = self.get_entity()
-    request = self.bcapRequest()
-    
-    CapServer.revoke(InviteAcceptHandler, friend);
-    CapServer.revokeCurrent(this)
-      # NOTE(mzero): revocation ideas
-    
-    # TODO(mzero): these operations should merge info, not over-write it
-    friend.card.name = request.name
-    friend.card.email = request.email
-    # TODO(mzero): should handle image here
-    friend.card.notes = request.notes
-    friend.card.put()
-    
-    friend.remote_box = request.postbox
-    friend.in_progress = False
-    friend.put()
-
-    self.bcapResponse({
-      'postbox': CapServer.grant(MessagePostHandler, friend)
-    })
-
-
 # Externally Visible URL Paths
 application = webapp.WSGIApplication(
   [(r'/cap/.*', CapServer.ProxyHandler),
@@ -487,10 +421,7 @@ CapServer.set_handlers(
    ('friend/post', StreamPostHandler),
    
    ('friend/introduceMeTo', IntroduceMeToHandler),
-   ('friend/introduce', IntroduceYourselfHandler),
-   ('friend/addInvite', AddInviteHandler),
-   ('friend/invite', InviteInfoHandler),
-   ('friend/accept', InviteAcceptHandler),
+   ('friend/introduceYourself', IntroduceYourselfHandler),
   ])
 
 

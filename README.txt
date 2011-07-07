@@ -12,6 +12,7 @@ To start up the demo do this:
   stickies
   buzzer
   emote
+  bfriendr
 
 4) Assign these six apps the ports as follows:
   belay    9000
@@ -20,6 +21,7 @@ To start up the demo do this:
   stickies 9003
   buzzer   9004
   emote    9005
+  bfriendr 9009
 
 5) Select all six of them in GoogleAppEngineLauncher and click the Run button.
 

@@ -88,7 +88,7 @@ var dirty = function(inst) {
   if (dirtyInstances.length > 1) return;
   os.setTimeout(dirtyProcess, 1000);
 };
-var saveK = function(inst, k) {
+var ensureSync = function(inst, k) {
   var ix = dirtyInstances.indexOf(inst.id);
   if (ix == -1) { k(); }
   else {
@@ -333,7 +333,7 @@ var launchInstance = function(inst) {
 var launchExternal = function(inst) {
   inst.info.remote = true;
   dirty(inst);
-  saveK(inst, function() {
+  ensureSync(inst, function() {
     os.window.open('http://localhost:9001/substation.js', inst.id,
         function(port) { setupCapTunnel(inst.id, port); },
         function() { os.alert('Oh noes!  No port'); });

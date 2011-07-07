@@ -304,30 +304,27 @@ describe('bfriendr back end', function() {
 
     it('should allow reading from combined posts', function() {
       var account2Introduce = account2CapRunner.result.introduceYourself;
-      var friendRunner = new InvokeRunner();
+      var friend1Runner = new InvokeRunner();
+      var friend2Runner = new InvokeRunner();
       var intro1to2Runner = new InvokeRunner();
-      var postRunner = new InvokeRunner();
-      var convo1Runner = new InvokeRunner();
-      var convo2Runner = new InvokeRunner();
+      var post1Runner = new InvokeRunner();
+      var post2Runner = new InvokeRunner();
       var read1Runner = new InvokeRunner();
       var read2Runner = new InvokeRunner();
       var friendListRunner = new InvokeRunner();
-      var friendCapRunner = new InvokeRunner();
-      var friendStreamRunner = new InvokeRunner();
-      var friendStreamWriter = new InvokeRunner();
 
       intro1to2Runner.cap = asCap(account1CapRunner.result.introduceMeTo);
       intro1to2Runner.runsPost({introductionCap: account2Introduce});
       runs(function() {
-        friendRunner.cap = asCap(intro1to2Runner.result.friend);
+        friend1Runner.cap = asCap(intro1to2Runner.result.friend);
         friendListRunner.cap = asCap(account2CapRunner.result.friends);
       });
 
-      friendRunner.runsGet();
+      friend1Runner.runsGet();
       runs(function() {
-        var friend = friendRunner.result;
-        postRunner.cap = asCap(friend.postToMyStream);
-        expect(postRunner.cap).toBeDefined();
+        var friend = friend1Runner.result;
+        post1Runner.cap = asCap(friend.postToMyStream);
+        expect(post1Runner.cap).toBeDefined();
         expect(typeof friend.readConversation).toBe('string');
         read1Runner.cap = asCap(friend.readConversation);
       });
@@ -337,27 +334,27 @@ describe('bfriendr back end', function() {
       runs(function() {
         var friends = friendListRunner.result;
         expect(friends.length).toBe(1);
-        friendCapRunner.cap = asCap(friends[0]);
+        friend2Runner.cap = asCap(friends[0]);
       });
 
-      friendCapRunner.runsGet();
-      friendCapRunner.runsExpectSuccess();
+      friend2Runner.runsGet();
+      friend2Runner.runsExpectSuccess();
       runs(function() {
-        var friend = friendCapRunner.result;
+        var friend = friend2Runner.result;
         expect(typeof friend.postToMyStream).toBe('string');
-        friendStreamWriter.cap = asCap(friend.postToMyStream);
+        post2Runner.cap = asCap(friend.postToMyStream);
         expect(typeof friend.readConversation).toBe('string');
         read2Runner.cap = asCap(friend.readConversation);
       });
 
-      postRunner.runsPost({ message: 'Hello, friend!' });
-      postRunner.runsExpectSuccess();
-      friendStreamWriter.runsPost({ message: 'Hello to you, too!' });
-      friendStreamWriter.runsExpectSuccess();
-      friendStreamWriter.runsPost({ message: 'How are you?' });
-      friendStreamWriter.runsExpectSuccess();
-      postRunner.runsPost({ message: 'Well, thanks.' });
-      postRunner.runsExpectSuccess();
+      post1Runner.runsPost({ message: 'Hello, friend!' });
+      post1Runner.runsExpectSuccess();
+      post2Runner.runsPost({ message: 'Hello to you, too!' });
+      post2Runner.runsExpectSuccess();
+      post2Runner.runsPost({ message: 'How are you?' });
+      post2Runner.runsExpectSuccess();
+      post1Runner.runsPost({ message: 'Well, thanks.' });
+      post1Runner.runsExpectSuccess();
 
       read1Runner.runsGet();
       read2Runner.runsGet();

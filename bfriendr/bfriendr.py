@@ -353,7 +353,7 @@ class MessagePostHandler(CapServer.CapHandler):
       message.resource_class = request.resourceClass
     message.put()
     self.bcapNullResponse()
-    
+
 class IntroduceYourselfHandler(CapServer.CapHandler):
   def get(self):
     account = self.get_entity()
@@ -378,7 +378,7 @@ class IntroduceYourselfHandler(CapServer.CapHandler):
       their_card.imageType = response.headers['Content-Type']
     their_card.put()
 
-    them = FriendData(card=their_card, parent=account) # TODO(jpolitz): just this for now
+    them = FriendData(card=their_card, parent=account)
     if stream: 
       them.read_their_stream = stream
     them.put()
@@ -398,7 +398,6 @@ class IntroduceMeToHandler(CapServer.CapHandler):
     blank_card.put()
     new_friend = FriendData(parent=account, card=blank_card)
     new_friend.put()
-    q = FriendData.all().ancestor(account)
 
     stream = CapServer.regrant(StreamReadHandler, new_friend)
 

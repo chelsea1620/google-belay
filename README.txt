@@ -66,6 +66,8 @@ On a Mac, PATH-TO-SDK is the full path to GoogleAppEngineLauncher.app.
 On Ubuntu, PATH-TO-SDK is the path to the directory you unzipped appengine to
   (e.g. the directory that contains dev_appserver.py).
 
-For JavaScript, we use Jasmine.  Run the tests by opening SpecRunner.html in
-a browser.  WebSpecRunner contains more tests, but can't be run from file:///
-urls, and must be accessed through a web server.
+For JavaScript, we use Jasmine.  Run the tests by opening SpecRunner files in a
+browser.  SpecRunner contains unit tests for the JavaScript CapServer.
+WebSpecRunner contains more tests, but can't be run from file:/// urls, and
+must be accessed through a web server.  AppSpecRunner requires that the
+bfriendr app be running on localhost:9009.

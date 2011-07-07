@@ -37,7 +37,7 @@ class CardData(db.Model):
       'notes':      self.notes,
     }
     if self.imageType:
-      cardJSON['image'] = CapServer.regrant(ImageHandler, self)
+      cardJSON['image'] = CapServer.regrant(ImageHandler, self).serialize()
     return cardJSON
 
   
@@ -120,7 +120,7 @@ class IntroduceYourselfHandler(CapServer.CapHandler): pass
 
 class GenerateHandler(CapServer.BcapHandler):
   def get(self):
-    self.xhr_content(CapServer.grant(LaunchHandler, new_account()), 
+    self.xhr_content(CapServer.grant(LaunchHandler, new_account()).serialize(), 
         "text/plain")
         
 class GenerateAccountHandler(CapServer.BcapHandler):
@@ -132,12 +132,12 @@ class LaunchHandler(CapServer.CapHandler):
     account = self.get_entity()
     app = {
 	  'caps': {
-      'friends':  CapServer.regrant(FriendsListHandler, account),
-      'myCard':  CapServer.regrant(CardInfoHandler, account.my_card),
-      'introduceYourself': CapServer.regrant(IntroduceYourselfHandler, account),
-      'introduceMeTo': CapServer.regrant(IntroduceMeToHandler, account),
+      'friends':  CapServer.regrant(FriendsListHandler, account).serialize(),
+      'myCard':  CapServer.regrant(CardInfoHandler, account.my_card).serialize(),
+      'introduceYourself': CapServer.regrant(IntroduceYourselfHandler, account).serialize(),
+      'introduceMeTo': CapServer.regrant(IntroduceMeToHandler, account).serialize(),
       # TODO(mzero): or should this be just the following?
-      'account':  CapServer.regrant(AccountInfoHandler, account),
+      'account':  CapServer.regrant(AccountInfoHandler, account).serialize(),
 	    }
 	  }
     
@@ -188,7 +188,7 @@ class CardInfoHandler(CapServer.CapHandler):
   def get(self):
     card = self.get_entity()
     cardJSON = card.toJSON()
-    cardJSON['uploadImage'] = CapServer.regrant(ImageUploadHandler, card)
+    cardJSON['uploadImage'] = CapServer.regrant(ImageUploadHandler, card).serialize()
     self.bcapResponse(cardJSON)
   
   def put(self):
@@ -254,7 +254,7 @@ class FriendInfoHandler(CapServer.CapHandler):
 
     self.bcapResponse({
       'card': friend.card.toJSON(),
-      'readTheirStream': friend.read_their_stream,
+      'readTheirStream': CapServer.Capability(friend.read_their_stream),
       'readMyStream': read_my_stream,
       'postToMyStream': write_my_stream,
       'readConversation': read_conversation
@@ -285,12 +285,12 @@ class ConversationReadHandler(CapServer.CapHandler):
     friend_info = self.get_entity()
 
     readMine = CapServer.regrant(StreamReadHandler, friend_info)
-    readTheirs = friend_info.read_their_stream
+    readTheirs = CapServer.Capability(friend_info.read_their_stream)
 
-    mine = CapServer.invokeCapURL(readMine, 'GET')
-    mine = json.loads(mine.out.getvalue())['value']['items']
-    theirs = CapServer.invokeCapURL(readTheirs, 'GET')
-    theirs = json.loads(theirs.out.getvalue())['value']['items']
+    mine = readMine.invoke('GET')
+    mine = CapServer.dataPostProcess(mine.out.getvalue())['items']
+    theirs = readTheirs.invoke('GET')
+    theirs = CapServer.dataPostProcess(theirs.out.getvalue())['items']
 
     combined = mine
     combined.extend(theirs)
@@ -346,15 +346,16 @@ class IntroduceYourselfHandler(CapServer.CapHandler):
                           email=card_data['email'],
                           notes=card_data['notes'],
                           parent=account)
+    # TODO(jpolitz): should images be modeled as caps or no?
     if 'image' in card_data:
-      response = CapServer.invokeCapURL(card_data['image'], 'GET')
+      response = CapServer.Capability(card_data['image']).invoke('GET')
       their_card.image = db.Blob(response.out.getvalue())
       their_card.imageType = response.headers['Content-Type']
     their_card.put()
 
     them = FriendData(card=their_card, parent=account)
     if stream: 
-      them.read_their_stream = stream
+      them.read_their_stream = stream.serialize()
     them.put()
 
     stream_for_them = CapServer.regrant(StreamReadHandler, them)
@@ -377,17 +378,19 @@ class IntroduceMeToHandler(CapServer.CapHandler):
 
     cap = request['introductionCap']
 
-    response = CapServer.invokeCapURL(cap, 'POST',
-                                      {'card': card.toJSON(),
-                                       'streamForYou': stream})
+    # TODO(jpolitz): useful abstraction so card.toJSON is unnecessary
+    response = cap.invoke('POST',
+                          {'card': card.toJSON(),
+                           'streamForYou': stream})
 
-    cap_response = json.loads(response.out.getvalue())['value']
+    cap_response = CapServer.dataPostProcess(response.out.getvalue())
     card_data = cap_response['card']
     friend_card = CardData(name=card_data['name'],
                            email=card_data['email'],
                            notes=card_data['notes'])
+    # TODO(jpolitz): should images be modeled as caps or no?
     if 'image' in card_data:
-      response = CapServer.invokeCapURL(card_data['image'], 'GET')
+      response = CapServer.Capability(card_data['image']).invoke('GET')
       friend_card.image = db.Blob(response.out.getvalue())
       friend_card.imageType = response.headers['Content-Type']
     friend_card.put()
@@ -396,7 +399,7 @@ class IntroduceMeToHandler(CapServer.CapHandler):
     blank_card.delete()
 
     if('streamForYou' in cap_response):
-      new_friend.read_their_stream = cap_response['streamForYou']
+      new_friend.read_their_stream = cap_response['streamForYou'].serialize()
 
     new_friend.put()
     self.bcapResponse({

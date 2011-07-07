@@ -2,15 +2,6 @@ describe('bfriendr back end', function() {
   var capServer;
   var generateAccountRunner;
 
-  var asCap = function(c) {
-    if (c.length == 0) throw ('asCap passed an empty string');
-    if (! (/^https?:\/\//).test(c)) {
-      console.log(c); // keep
-      throw ('asCap not a URL: ' + c);
-    }
-    return capServer.restore(c);
-  };
-
   beforeEach(function() {
     capServer = new CapServer();
     generateAccountRunner =
@@ -26,7 +17,7 @@ describe('bfriendr back end', function() {
       generateAccountRunner.runsGet();
       generateAccountRunner.runsExpectSuccess();
       runs(function() {
-        accountRunner.cap = asCap(generateAccountRunner.result);
+        accountRunner.cap = generateAccountRunner.result;
         expect(accountRunner.cap).toBeDefined();
       });
     });
@@ -48,7 +39,7 @@ describe('bfriendr back end', function() {
       accountRunner.runsExpectSuccess();
 
       runs(function() {
-        myCardRunner.cap = asCap(accountRunner.result.myCard);
+        myCardRunner.cap = accountRunner.result.myCard;
         expect(myCardRunner.cap).toBeDefined();
       });
 
@@ -98,28 +89,28 @@ describe('bfriendr back end', function() {
       generateAccountRunner.runsGet();
       generateAccountRunner.runsExpectSuccess();
       runs(function() {
-        account1CapRunner.cap = asCap(generateAccountRunner.result);
+        account1CapRunner.cap = generateAccountRunner.result;
         expect(account1CapRunner.cap).toBeDefined();
       });
 
       generateAccountRunner.runsGet();
       generateAccountRunner.runsExpectSuccess();
       runs(function() {
-        account2CapRunner.cap = asCap(generateAccountRunner.result);
+        account2CapRunner.cap = generateAccountRunner.result;
         expect(account2CapRunner.cap).toBeDefined();
       });
 
       account1CapRunner.runsGet();
       account1CapRunner.runsExpectSuccess();
       runs(function() {
-        account1CardRunner.cap = asCap(account1CapRunner.result.myCard);
+        account1CardRunner.cap = account1CapRunner.result.myCard;
         expect(account1CardRunner.cap).toBeDefined();
       });
 
       account2CapRunner.runsGet();
       account2CapRunner.runsExpectSuccess();
       runs(function() {
-        account2CardRunner.cap = asCap(account2CapRunner.result.myCard);
+        account2CardRunner.cap = account2CapRunner.result.myCard;
         expect(account2CardRunner.cap).toBeDefined();
       });
 
@@ -157,7 +148,7 @@ describe('bfriendr back end', function() {
       var account2IntroduceRunner = new InvokeRunner();
 
       account2IntroduceRunner.cap =
-        asCap(account2CapRunner.result.introduceYourself);
+        account2CapRunner.result.introduceYourself;
       expect(account2IntroduceRunner.cap).toBeDefined();
       // Account 1 is doing this call to determine who account 2 is
       account2IntroduceRunner.runsGet();
@@ -171,7 +162,7 @@ describe('bfriendr back end', function() {
       var account2IntroduceRunner = new InvokeRunner();
 
       account2IntroduceRunner.cap =
-        asCap(account2CapRunner.result.introduceYourself);
+        account2CapRunner.result.introduceYourself;
       expect(account2IntroduceRunner.cap).toBeDefined();
 
       account2IntroduceRunner.runsPost({card: account1Card,
@@ -192,17 +183,17 @@ describe('bfriendr back end', function() {
       var friendListRunner = new InvokeRunner();
       var friendCapRunner = new InvokeRunner();
 
-      friendListRunner.cap = asCap(account1CapRunner.result.friends);
+      friendListRunner.cap = account1CapRunner.result.friends;
       friendListRunner.runsGet();
       runs(function() {
         expect(friendListRunner.result.length).toEqual(0);
       });
 
 
-      intro1to2Runner.cap = asCap(account1CapRunner.result.introduceMeTo);
+      intro1to2Runner.cap = account1CapRunner.result.introduceMeTo;
       intro1to2Runner.runsPost({introductionCap: account2Introduce});
       runs(function() {
-        friendRunner.cap = asCap(intro1to2Runner.result.friend);
+        friendRunner.cap = intro1to2Runner.result.friend;
       });
 
       friendRunner.runsGet();
@@ -214,7 +205,7 @@ describe('bfriendr back end', function() {
       friendListRunner.runsGet();
       runs(function() {
         expect(friendListRunner.result.length).toEqual(1);
-        friendCapRunner.cap = asCap(friendListRunner.result[0]);
+        friendCapRunner.cap = friendListRunner.result[0];
       });
 
       friendCapRunner.runsGet();
@@ -235,21 +226,21 @@ describe('bfriendr back end', function() {
       var friendStreamRunner = new InvokeRunner();
       var friendStreamWriter = new InvokeRunner();
 
-      intro1to2Runner.cap = asCap(account1CapRunner.result.introduceMeTo);
+      intro1to2Runner.cap = account1CapRunner.result.introduceMeTo;
       intro1to2Runner.runsPost({introductionCap: account2Introduce});
       runs(function() {
-        friendRunner.cap = asCap(intro1to2Runner.result.friend);
-        friendListRunner.cap = asCap(account2CapRunner.result.friends);
+        friendRunner.cap = intro1to2Runner.result.friend;
+        friendListRunner.cap = account2CapRunner.result.friends;
       });
 
       friendRunner.runsGet();
       runs(function() {
         var friend = friendRunner.result;
-        postRunner.cap = asCap(friend.postToMyStream);
+        postRunner.cap = friend.postToMyStream;
         expect(postRunner.cap).toBeDefined();
-        read1Runner.cap = asCap(friend.readMyStream);
+        read1Runner.cap = friend.readMyStream;
         expect(read1Runner.cap).toBeDefined();
-        read2Runner.cap = asCap(friend.readTheirStream);
+        read2Runner.cap = friend.readTheirStream;
       });
 
       postRunner.runsPost({ message: 'Hello, friend!' });
@@ -269,17 +260,17 @@ describe('bfriendr back end', function() {
       runs(function() {
         var friends = friendListRunner.result;
         expect(friends.length).toBe(1);
-        friendCapRunner.cap = asCap(friends[0]);
+        friendCapRunner.cap = friends[0];
       });
 
       friendCapRunner.runsGet();
       friendCapRunner.runsExpectSuccess();
       runs(function() {
         var friend = friendCapRunner.result;
-        expect(typeof friend.readTheirStream).toBe('string');
-        friendStreamRunner.cap = asCap(friend.readTheirStream);
-        expect(typeof friend.postToMyStream).toBe('string');
-        friendStreamWriter.cap = asCap(friend.postToMyStream);
+        expect(typeof friend.readTheirStream).toBe('object');
+        friendStreamRunner.cap = friend.readTheirStream;
+        expect(typeof friend.postToMyStream).toBe('object');
+        friendStreamWriter.cap = friend.postToMyStream;
       });
 
       friendStreamRunner.runsGet();
@@ -313,20 +304,20 @@ describe('bfriendr back end', function() {
       var read2Runner = new InvokeRunner();
       var friendListRunner = new InvokeRunner();
 
-      intro1to2Runner.cap = asCap(account1CapRunner.result.introduceMeTo);
+      intro1to2Runner.cap = account1CapRunner.result.introduceMeTo;
       intro1to2Runner.runsPost({introductionCap: account2Introduce});
       runs(function() {
-        friend1Runner.cap = asCap(intro1to2Runner.result.friend);
-        friendListRunner.cap = asCap(account2CapRunner.result.friends);
+        friend1Runner.cap = intro1to2Runner.result.friend;
+        friendListRunner.cap = account2CapRunner.result.friends;
       });
 
       friend1Runner.runsGet();
       runs(function() {
         var friend = friend1Runner.result;
-        post1Runner.cap = asCap(friend.postToMyStream);
+        post1Runner.cap = friend.postToMyStream;
         expect(post1Runner.cap).toBeDefined();
-        expect(typeof friend.readConversation).toBe('string');
-        read1Runner.cap = asCap(friend.readConversation);
+        expect(typeof friend.readConversation).toBe('object');
+        read1Runner.cap = friend.readConversation;
       });
 
       friendListRunner.runsGet();
@@ -334,17 +325,17 @@ describe('bfriendr back end', function() {
       runs(function() {
         var friends = friendListRunner.result;
         expect(friends.length).toBe(1);
-        friend2Runner.cap = asCap(friends[0]);
+        friend2Runner.cap = friends[0];
       });
 
       friend2Runner.runsGet();
       friend2Runner.runsExpectSuccess();
       runs(function() {
         var friend = friend2Runner.result;
-        expect(typeof friend.postToMyStream).toBe('string');
-        post2Runner.cap = asCap(friend.postToMyStream);
-        expect(typeof friend.readConversation).toBe('string');
-        read2Runner.cap = asCap(friend.readConversation);
+        expect(typeof friend.postToMyStream).toBe('object');
+        post2Runner.cap = friend.postToMyStream;
+        expect(typeof friend.readConversation).toBe('object');
+        read2Runner.cap = friend.readConversation;
       });
 
       post1Runner.runsPost({ message: 'Hello, friend!' });

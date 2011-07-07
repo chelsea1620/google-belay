@@ -58,13 +58,13 @@ class DirectCapServerTestCase(Defaults):
     TestCapHandler.default_internal_url = 'internal_url'
     cap = grant(TestCapHandler, self.entity)
     cap2 = regrant(TestCapHandler, self.entity)
-    self.assertEqual(cap, cap2)
+    self.assertEqual(cap.serialize(), cap2.serialize())
     self.assertEqual(1, len(Grant.all().fetch(2)))
 
   def testRegrantStr(self):
     cap = grant('internal', self.entity)
     cap2 = regrant('internal', self.entity)
-    self.assertEqual(cap, cap2)
+    self.assertEqual(cap.serialize(), cap2.serialize())
     self.assertEqual(1, len(Grant.all().fetch(2)))
 
   def testInternalCapRequest(self):
@@ -82,7 +82,7 @@ class DirectCapServerTestCase(Defaults):
   def testCapRequest(self):
     set_handlers('/caps/', [ ('internal_url', TestCapHandler) ])
 
-    extern_url = grant(TestCapHandler, self.entity)
+    extern_url = grant(TestCapHandler, self.entity).serialize()
      
     req = Request.blank(extern_url)
     resp = Response()
@@ -93,6 +93,15 @@ class DirectCapServerTestCase(Defaults):
     self.assertEqual(handler.response.out.getvalue(), \
       json.dumps({"value": {"success": True}}))
       
+  def testInvokeCapURLLocal(self):
+    set_handlers('/caps/', [ ('internal_url', TestCapHandler) ])
+    extern_url = grant(TestCapHandler, self.entity).serialize()
+
+    result = invokeCapURL(extern_url, 'GET')
+
+    self.assertEqual(result.out.getvalue(), \
+      json.dumps({"value": {"success": True}}))
+ 
 
 class GrantHandler(BcapHandler):
   

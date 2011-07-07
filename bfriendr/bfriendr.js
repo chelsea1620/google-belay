@@ -83,10 +83,8 @@ var initCardUI = function(friendsCap,container, messageUI) {
       messagesElt.click(function() {
         try {
           messageUI.refresh(friendInfo.card.name || 'No Name',
-                          // HACK(arjun): should already be a cap
-			  os.capServer.restore(friendInfo.readConversation),
-                          // HACK(arjun): should already be a cap
-			  os.capServer.restore(friendInfo.postToMyStream));
+                            friendInfo.readConversation,
+                            friendInfo.postToMyStream);
         }
         catch (e) {
 	   console.log('exception', e);
@@ -119,12 +117,7 @@ var initCardUI = function(friendsCap,container, messageUI) {
   };
 
   var refreshCards = function() {
-    friendsCap.get(function(friendCapURLs) {
-      // HACK(arjun): server should grant { '@': url }; argument should be
-      // friendCaps.
-      var friendCaps =
-        friendCapURLs.map(function(url) { return os.capServer.restore(url); });
-
+    friendsCap.get(function(friendCaps) {
       friendCaps.forEach(newCard);
     });
   };
@@ -264,7 +257,9 @@ var initialize = function() {
   os.ui.capDraggable(myCardToggle, rcIntroduceYourself,
     function(selectedRC) { return app.caps.introduceYourself; });
   os.ui.capDroppable(addFriendArea, rcIntroduceYourself,
-    function(cap) { app.caps.introduceMeTo.post({introductionCap: cap }); });
+    function(c) { 
+      app.caps.introduceMeTo.post({introductionCap: os.capServer.restore(c) });
+    });
 
   var messageUI = initMessagesUI(messagesDiv, showHideMessages);
   initCardUI(app.caps.friends, cardListDiv, messageUI);

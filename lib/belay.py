@@ -4,11 +4,11 @@ import logging
 import os
 import uuid
 import urlparse
+import json
 
 from google.appengine.api import urlfetch
 from google.appengine.ext import db
 from google.appengine.ext import webapp
-from django.utils import simplejson as json
 
 
 def this_server_url_prefix():
@@ -26,6 +26,82 @@ class BelayException(Exception):
   
 
 
+#
+# Capabilities
+#
+def invokeLocalCap(capURL, method, data=""):
+  """Invoke a locally defined cap using ProxyHandler"""
+  handler = ProxyHandler()
+  req = webapp.Request.blank(capURL)
+  req.body = data
+  handler.initialize(req, webapp.Response())
+
+  if method == 'GET':
+    handler.get()
+  elif method == 'PUT':
+    handler.put()
+  elif method == 'POST':
+    handler.post()
+  elif method == 'DELETE':
+    handler.delete()
+  else:
+    raise BcapException("invokeLocalCap: Bad method: " + method)
+
+  return handler.response
+  
+def invokeCapURL(capURL, meth, data=""):
+  parsed = urlparse.urlparse(capURL)
+  prefix = this_server_url_prefix()
+
+  parsed_prefix = parsed.scheme + "://" + parsed.netloc
+
+  if parsed_prefix == prefix:
+    return invokeLocalCap(parsed.path, meth, data) 
+  else:
+    return urlfetch.fetch(capURL, method=meth, payload=data)
+
+class Capability(object):
+  def __init__(self, ser):
+    self.ser = ser
+
+  def invoke(self, method, data = None):
+    #TODO(jpolitz): separate impls in python---all are essentially implURLSync
+    if data != None:
+      response = invokeCapURL(self.ser, method, data=dataPreProcess(data))
+    else:
+      response = invokeCapURL(self.ser, method)
+
+    return response
+     
+  def serialize(self):
+    return self.ser
+
+def dataPreProcess(data):
+  class Decapitator(json.JSONEncoder):
+    def default(self, obj):
+      if isinstance(obj, Capability):
+        return {'@': obj.serialize()}
+      else:
+        return obj
+
+  try:
+    return json.dumps({'value': data}, cls=Decapitator)
+  except TypeError as exn:
+    logging.debug(str(exn))
+    logging.debug("Unserializable: " + str(data))
+
+def dataPostProcess(serialized):
+  def capitate(obj):
+    if '@' in obj:
+      return Capability(obj['@'])
+    else:
+      return obj
+  try:
+    return json.loads(serialized, object_hook=capitate)['value']
+  except ValueError as exn:
+    logging.debug(str(exn))
+    logging.debug("Unloadable: " + str(serialized))
+      
 class BcapHandler(webapp.RequestHandler):  
   
   def xhr_response(self):
@@ -39,10 +115,10 @@ class BcapHandler(webapp.RequestHandler):
     self.response.headers.add_header("Expires", "Fri, 01 Jan 1990 00:00:00 GMT")
 
   def bcapRequest(self):
-      return json.loads(self.request.body)['value']
+    return dataPostProcess(self.request.body)
       
   def bcapResponse(self, jsonResp):
-    resp = json.dumps({ 'value': jsonResp })
+    resp = dataPreProcess(jsonResp)
     self.xhr_content(resp, "text/plain;charset=UTF-8")
 
   def bcapNullResponse(self):
@@ -161,38 +237,6 @@ class ProxyHandler(BcapHandler):
       handler.delete()
 
 
-def invokeLocalCap(capURL, method, data=""):
-  """Invoke a locally defined cap using ProxyHandler"""
-  handler = ProxyHandler()
-  req = webapp.Request.blank(capURL)
-  req.body = data
-  handler.initialize(req, webapp.Response())
-
-  if method == 'GET':
-    handler.get()
-  elif method == 'PUT':
-    handler.put()
-  elif method == 'POST':
-    handler.post()
-  elif method == 'DELETE':
-    handler.delete()
-  else:
-    raise BcapException("invokeLocalCap: Bad method: " + method)
-
-  return handler.response
-  
-def invokeCapURL(capURL, meth, data=""):
-  parsed = urlparse.urlparse(capURL)
-  prefix = this_server_url_prefix()
-
-  parsed_prefix = parsed.scheme + "://" + parsed.netloc
-
-  if parsed_prefix == prefix:
-    return invokeLocalCap(parsed.path, meth, json.dumps({'value': data}))
-  else:
-    return urlfetch.fetch(capURL, 
-                          payload=json.dumps({'value': data}),
-                          method=meth)
 
 def get_path(path_or_handler):
   if isinstance(path_or_handler, str):
@@ -208,7 +252,7 @@ def grant(path_or_handler, entity):
   cap_id = str(uuid.uuid4())
   item = Grant(cap_id=cap_id, internal_path=path, db_entity=entity)
   item.put()
-  return ProxyHandler.default_prefix + cap_id
+  return Capability(ProxyHandler.default_prefix + cap_id)
 
 def regrant(path_or_handler, entity):
   path = get_path(path_or_handler)
@@ -219,7 +263,7 @@ def regrant(path_or_handler, entity):
     raise BelayException('CapServer:regrant::ambiguous internal_path in regrant')
   
   if len(items) == 1:
-    return ProxyHandler.default_prefix + items[0].cap_id 
+    return Capability(ProxyHandler.default_prefix + items[0].cap_id)
   else:
     return grant(path_or_handler, entity)
 
@@ -233,6 +277,7 @@ def revokeEntity(entity):
   q = Grant.all(keys_only=True).filter("db_entity = ", entity)
   db.delete(q)
   
+
 def set_handlers(cap_prefix, path_map):
   if not cap_prefix.startswith('/'):
     cap_prefix = '/' + cap_prefix

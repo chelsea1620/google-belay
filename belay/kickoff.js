@@ -28,7 +28,7 @@ var foop = function(sourceURL, node, extras) {
         clearTimeout: function(t) { clearTimeout(t); },
         clearInterval: function(t) { clearInterval(t); },
         FormData: FormData,
-        
+
         foop: foop,
         poof: function() { window.close(); },
 
@@ -43,8 +43,9 @@ var foop = function(sourceURL, node, extras) {
           opener: window.opener ? window.openerPort : undefined,
           gmail: function(to, subject, body) {
             var makeGmailLink = function(to, subject, body) {
-              return 'https://mail.google.com/mail/?view=cm&fs=1&tf=1&to=' + to + 
-                     '&su=' + subject + '&body=' + encodeURIComponent(body) + 
+              return 'https://mail.google.com/mail/?view=cm&fs=1&tf=1&to=' +
+                     to +
+                     '&su=' + subject + '&body=' + encodeURIComponent(body) +
                      '&zx=RANDOMCRAP&shva=1&disablechatbrowsercheck=1&ui=1';
             };
             windowManager.open(makeGmailLink(to, subject, body));

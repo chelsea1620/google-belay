@@ -1,6 +1,6 @@
 var $ = os.jQuery;
 
-var rcIntroduceYourself = "friend/introduce-yourself";
+var rcIntroduceYourself = 'friend/introduce-yourself';
 
 var initMessagesUI = function(container, showHideMessages) {
   if (container.attr('class') !== 'bfriendr-messages') { debugger; }
@@ -17,14 +17,14 @@ var initMessagesUI = function(container, showHideMessages) {
   var pollIntervalID = false;
 
   // i.e., hide this pane, detaching all timers, handlers, etc.
-  showFriendPane.click(function() { 
+  showFriendPane.click(function() {
     if (pollIntervalID !== false) {
       os.clearInterval(pollIntervalID);
       pollIntervalID = false;
     }
     sendButton.unbind('click');
-    showHideMessages(false); 
-    return false; 
+    showHideMessages(false);
+    return false;
   });
 
   var showMsg = function(msg) {
@@ -46,13 +46,13 @@ var initMessagesUI = function(container, showHideMessages) {
     };
   };
 
-  var refresh = function(friendName, conversationCap, postCap) {  
+  var refresh = function(friendName, conversationCap, postCap) {
     var handler = mkRefreshConvHandler(conversationCap);
     pollIntervalID = os.setInterval(handler, 2000);
     friendNameElt.text(friendName);
     composeTextArea.val('').focus();
     sendButton.click(function() {
-      postCap.post({ 'message' : composeTextArea.val() }, 
+      postCap.post({ 'message' : composeTextArea.val() },
                    function() { handler(); });
     });
     handler();
@@ -61,8 +61,8 @@ var initMessagesUI = function(container, showHideMessages) {
 
   return {
     refresh: refresh
-  }; 
-    
+  };
+
 };
 
 var initCardUI = function(friendsCap,container, messageUI) {
@@ -87,13 +87,13 @@ var initCardUI = function(friendsCap,container, messageUI) {
 			  os.capServer.restore(friendInfo.readConversation),
                           // HACK(arjun): should already be a cap
 			  os.capServer.restore(friendInfo.postToMyStream));
-        } 
-        catch(e) {
+        }
+        catch (e) {
 	   console.log('exception', e);
 	}
         return false;
       });
-      
+
       if (friendInfo.card.image) {
         var imgElt = imgContainerElt.find('img');
         if (imgElt.length == 0) {
@@ -111,7 +111,7 @@ var initCardUI = function(friendsCap,container, messageUI) {
       return;
     }
     else {
-      cardMap[friendCap.serialize()] = true;      
+      cardMap[friendCap.serialize()] = true;
       var cardElt = template.clone();
       friendCap.get(updateCard(cardElt));
       container.prepend(cardElt);
@@ -122,10 +122,10 @@ var initCardUI = function(friendsCap,container, messageUI) {
     friendsCap.get(function(friendCapURLs) {
       // HACK(arjun): server should grant { '@': url }; argument should be
       // friendCaps.
-      var friendCaps = 
+      var friendCaps =
         friendCapURLs.map(function(url) { return os.capServer.restore(url); });
 
-      friendCaps.forEach(newCard);  
+      friendCaps.forEach(newCard);
     });
   };
 
@@ -135,13 +135,13 @@ var initCardUI = function(friendsCap,container, messageUI) {
   return {
     newCard: newCard,
     refreshCards: refreshCards
-  };  
+  };
 };
 
 var initialize = function() {
   // os.ui.resize('300', '480', true);
   os.ui.resize('80', '80', true);
-  
+
   var header = os.topDiv.find('.bfriendr-header');
   var myCardDiv = os.topDiv.find('div.bfriendr-mycard');
   var myCardToggle = os.topDiv.find('.bfriendr-header .bfriendr-nav');
@@ -155,7 +155,7 @@ var initialize = function() {
   for (var k in app.caps) {
     app.caps[k] = os.capServer.restore(app.caps[k]);
   }
-  
+
   var showHideMyCard = function(show) {
     if (show) {
       myCardDiv.slideDown('fast', function() {
@@ -170,7 +170,7 @@ var initialize = function() {
   };
   myCardToggle.click(
     function() { showHideMyCard(!myCardShown); return false; });
-  
+
   var showHideMessages = function(show) {
     if (show) {
       cardListDiv.animate({left: '-100%'}, 'fast');
@@ -182,7 +182,7 @@ var initialize = function() {
   };
 
   var uploadMyImageUrl = undefined;
-  
+
   var fetchMyCard = function() {
     app.caps.myCard.get(function(cardInfo) {
       myCardDiv.find('input[name=name]').val(cardInfo.name);
@@ -203,13 +203,13 @@ var initialize = function() {
       }
     });
   };
-  
+
   fetchMyCard();
-    
+
   var imageTypeRE = /image\/.*/;
   var preventDf = function(e) {
       e.originalEvent.preventDefault();
-      return false;   
+      return false;
   };
   myCardImageDiv.bind('dragenter', preventDf);
   myCardImageDiv.bind('dragover', preventDf);
@@ -232,33 +232,33 @@ var initialize = function() {
         contentType: false,
         processData: false,
         data: fd,
-        success: fetchMyCard,
-      });       
+        success: fetchMyCard
+      });
     }
   });
-  
+
   myCardDiv.find('button').click(function() {
     var cardInfo = {
       name: myCardDiv.find('input[name=name]').val(),
       email: myCardDiv.find('input[name=email]').val(),
-      notes: myCardDiv.find('textarea').val(),
+      notes: myCardDiv.find('textarea').val()
     };
     app.caps.myCard.put(cardInfo);
-  })
-  
+  });
+
   inviteButton.click(function(evt) {
-    var serverLink = "http://" + os.window.serverBase;
+    var serverLink = 'http://' + os.window.serverBase;
     var to = addFriendArea.find('input[name=email]').val();
     var name = addFriendArea.find('input[name=name]').val();
-    var message = "Hello " + name + "!\n\n" +
-                  "Come join us on bfriendr!\n\n" +  
-                  "Visit this link: " + serverLink + 
-                  "\n\nThen highlight and drop the link " +
-                  "below into your bfriendr window to accept the invite.\n\n";
-    var url = 'http://' + os.window.serverBase + "nav.png?";
-    url += "scope=" + rcIntroduceYourself + "&";
-    url += "cap=" + app.caps.introduceYourself.serialize();
-    os.window.gmail(to, name + ", come join bfriendr!", message + url);
+    var message = 'Hello ' + name + '!\n\n' +
+                  'Come join us on bfriendr!\n\n' +
+                  'Visit this link: ' + serverLink +
+                  '\n\nThen highlight and drop the link ' +
+                  'below into your bfriendr window to accept the invite.\n\n';
+    var url = 'http://' + os.window.serverBase + 'nav.png?';
+    url += 'scope=' + rcIntroduceYourself + '&';
+    url += 'cap=' + app.caps.introduceYourself.serialize();
+    os.window.gmail(to, name + ', come join bfriendr!', message + url);
   });
 
   os.ui.capDraggable(myCardToggle, rcIntroduceYourself,

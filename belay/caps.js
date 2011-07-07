@@ -160,7 +160,8 @@ var CAP_EXPORTS = (function() {
     }
     else {
       if (data !== undefined) {
-        throw ("Capability.invoke " + method + " called with request data" + data);
+        throw ('Capability.invoke ' + method +
+               ' called with request data' + data);
       }
     }
     var wrappedSuccess = function(result) {

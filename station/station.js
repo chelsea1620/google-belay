@@ -260,21 +260,21 @@ var launchInstance = function(inst) {
           }
         });
 
-        // Note:  Without preventDf on dragenter and dragover, the 
+        // Note:  Without preventDf on dragenter and dragover, the
         // browser will not send the drop event
-        var preventDf = function(e) {        
+        var preventDf = function(e) {
           e.originalEvent.preventDefault();
           return false;
         };
         node.bind('dragenter', preventDf);
         node.bind('dragover', preventDf);
         node.bind('drop', function(e) {
-          if(!e.originalEvent.dataTransfer) return;
-          var data = e.originalEvent.dataTransfer.getData("text/plain");
-          if(!data)
-            data = e.originalEvent.dataTransfer.getData("text/uri-list");
-          if(!data) return;
-          var qLoc = data.indexOf("?");
+          if (!e.originalEvent.dataTransfer) return;
+          var data = e.originalEvent.dataTransfer.getData('text/plain');
+          if (!data)
+            data = e.originalEvent.dataTransfer.getData('text/uri-list');
+          if (!data) return;
+          var qLoc = data.indexOf('?');
           data = qLoc == -1 ? data : data.slice(qLoc);
           var params = os.jQuery.parseQuery(data);
           var scope = params.scope;
@@ -283,7 +283,7 @@ var launchInstance = function(inst) {
           if (scope == rc) {
             acceptor(capServer.restore(cap));
           }
-        }); 
+        });
 
         node.addClass('belay-cap-target');
         node.hover(

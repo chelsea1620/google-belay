@@ -235,7 +235,7 @@ var launchInstance = function(inst) {
           generator: function(rc) {
             var cap = generator(rc);
             dirty(inst);
-            return cap;
+            return cap.serialize();
           }
         };
         node.data('rc', rc);

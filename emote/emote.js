@@ -34,10 +34,10 @@ me.load('http://localhost:9005/emote.html', function() {
   else {
     var invite = me.find('.emote-invite');
     invite.show();
-    os.ui.capDroppable(invite, rcPost, function(cap) {
+    os.ui.capDroppable(invite, rcPost, function(ser) {
       invite.hide();
-      showPanel(cap);
-      os.storage.put(cap.serialize());
+      showPanel(os.capServer.restore(ser));
+      os.storage.put(ser);
     });
   }
 });

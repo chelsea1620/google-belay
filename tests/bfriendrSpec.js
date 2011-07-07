@@ -1,25 +1,25 @@
 describe('bfriendr back end', function() {
   var capServer;
   var generateAccountRunner;
-  
+
   var asCap = function(c) {
-    if (c.length == 0) throw('asCap passed an empty string');
+    if (c.length == 0) throw ('asCap passed an empty string');
     if (! (/^https?:\/\//).test(c)) {
       console.log(c); // keep
-      throw('asCap not a URL: ' + c);
+      throw ('asCap not a URL: ' + c);
     }
     return capServer.restore(c);
   };
-  
+
   beforeEach(function() {
     capServer = new CapServer();
     generateAccountRunner =
-      mkRunner(capServer.restore("http://localhost:9009/generate-account"));
+      mkRunner(capServer.restore('http://localhost:9009/generate-account'));
   });
-  
+
   describe('basic account operations', function() {
     var accountRunner;
-    
+
     beforeEach(function() {
       accountRunner = new InvokeRunner();
 
@@ -35,7 +35,7 @@ describe('bfriendr back end', function() {
       accountRunner.runsDelete();
       accountRunner.runsExpectSuccess();
     });
-    
+
     it('should generate & delete a new account', function() {
       // the beforeEach and afterEach do this test
     });
@@ -43,15 +43,15 @@ describe('bfriendr back end', function() {
     it('should save and restore my card info', function() {
       var myCardRunner = new InvokeRunner();
       var initialCard, updatedCard;
-      
+
       accountRunner.runsGet();
       accountRunner.runsExpectSuccess();
 
       runs(function() {
         myCardRunner.cap = asCap(accountRunner.result.myCard);
         expect(myCardRunner.cap).toBeDefined();
-      })
-      
+      });
+
       myCardRunner.runsGet();
       myCardRunner.runsExpectSuccess();
       runs(function() {
@@ -63,7 +63,7 @@ describe('bfriendr back end', function() {
         expect(typeof initialCard.notes).toEqual('object');
         expect(initialCard.notes).toEqual(null);
       });
-      
+
       myCardRunner.runsPut(
         { name: 'fido', email: 'fido@example.com', notes: 'not a dog'});
       myCardRunner.runsExpectSuccess();
@@ -86,7 +86,7 @@ describe('bfriendr back end', function() {
     var account1Card;
     var account2Card;
     var account2IntroduceRunner;
-    
+
     beforeEach(function() {
       account1CapRunner = new InvokeRunner();
       account2CapRunner = new InvokeRunner();
@@ -94,43 +94,43 @@ describe('bfriendr back end', function() {
       account2CardRunner = new InvokeRunner();
       account1Card, account2Card;
       account2IntroduceRunner = new InvokeRunner();
-    
+
       generateAccountRunner.runsGet();
       generateAccountRunner.runsExpectSuccess();
-      runs(function() { 
+      runs(function() {
         account1CapRunner.cap = asCap(generateAccountRunner.result);
         expect(account1CapRunner.cap).toBeDefined();
       });
 
       generateAccountRunner.runsGet();
       generateAccountRunner.runsExpectSuccess();
-      runs(function() { 
-        account2CapRunner.cap = asCap(generateAccountRunner.result); 
+      runs(function() {
+        account2CapRunner.cap = asCap(generateAccountRunner.result);
         expect(account2CapRunner.cap).toBeDefined();
       });
-    
+
       account1CapRunner.runsGet();
       account1CapRunner.runsExpectSuccess();
       runs(function() {
         account1CardRunner.cap = asCap(account1CapRunner.result.myCard);
         expect(account1CardRunner.cap).toBeDefined();
       });
-    
+
       account2CapRunner.runsGet();
       account2CapRunner.runsExpectSuccess();
       runs(function() {
         account2CardRunner.cap = asCap(account2CapRunner.result.myCard);
         expect(account2CardRunner.cap).toBeDefined();
       });
-      
+
       account1CardRunner.runsPut({ name: 'One', email: 'one@example.com',
         notes: 'nan' });
       account1CardRunner.runsExpectSuccess();
-        
+
       account2CardRunner.runsPut({ name: 'Two', email: 'two@example.com',
         notes: 'nan' });
       account2CardRunner.runsExpectSuccess();
-      
+
       account1CardRunner.runsGet();
       account1CardRunner.runsExpectSuccess();
       runs(function() {
@@ -151,12 +151,12 @@ describe('bfriendr back end', function() {
       account1CapRunner.runsExpectSuccess();
       account2CapRunner.runsDelete();
       account2CapRunner.runsExpectSuccess();
-    })
+    });
 
     it('should get the card from an introduction cap', function() {
       var account2IntroduceRunner = new InvokeRunner();
-      
-      account2IntroduceRunner.cap = 
+
+      account2IntroduceRunner.cap =
         asCap(account2CapRunner.result.introduceYourself);
       expect(account2IntroduceRunner.cap).toBeDefined();
       // Account 1 is doing this call to determine who account 2 is
@@ -169,20 +169,20 @@ describe('bfriendr back end', function() {
 
     it('should let 1 introduce itself to 2', function() {
       var account2IntroduceRunner = new InvokeRunner();
-      
-      account2IntroduceRunner.cap = 
+
+      account2IntroduceRunner.cap =
         asCap(account2CapRunner.result.introduceYourself);
       expect(account2IntroduceRunner.cap).toBeDefined();
 
       account2IntroduceRunner.runsPost({card: account1Card,
-                                        stream: "Account 1 stream"});
+                                        stream: 'Account 1 stream'});
       account2IntroduceRunner.runsExpectSuccess();
       runs(function() {
         var bCard = account2IntroduceRunner.result.card;
         expect(bCard.name).toEqual(account2Card.name);
       });
 
-    }); 
+    });
 
     it('should introduce 1 to 2 via introduceMeTo', function() {
       // TODO(jpolitz): backend currently expects a URL, should expect cap
@@ -247,7 +247,7 @@ describe('bfriendr back end', function() {
         var friend = friendRunner.result;
         postRunner.cap = asCap(friend.postToMyStream);
         expect(postRunner.cap).toBeDefined();
-        read1Runner.cap = asCap(friend.readMyStream); 
+        read1Runner.cap = asCap(friend.readMyStream);
         expect(read1Runner.cap).toBeDefined();
         read2Runner.cap = asCap(friend.readTheirStream);
       });
@@ -292,15 +292,15 @@ describe('bfriendr back end', function() {
 
       friendStreamWriter.runsPost({ message: 'Hello to you, too!' });
       friendStreamWriter.runsExpectSuccess();
-     
+
       read2Runner.runsGet();
       read2Runner.runsExpectSuccess();
       runs(function() {
         var items = read2Runner.result.items;
         expect(items.length).toBe(1);
         expect(items[0].message).toBe('Hello to you, too!');
-      }); 
-    }); 
+      });
+    });
 
     it('should allow reading from combined posts', function() {
       var account2Introduce = account2CapRunner.result.introduceYourself;
@@ -328,7 +328,7 @@ describe('bfriendr back end', function() {
         var friend = friendRunner.result;
         postRunner.cap = asCap(friend.postToMyStream);
         expect(postRunner.cap).toBeDefined();
-        expect(typeof friend.readConversation).toBe('string')
+        expect(typeof friend.readConversation).toBe('string');
         read1Runner.cap = asCap(friend.readConversation);
       });
 
@@ -346,7 +346,7 @@ describe('bfriendr back end', function() {
         var friend = friendCapRunner.result;
         expect(typeof friend.postToMyStream).toBe('string');
         friendStreamWriter.cap = asCap(friend.postToMyStream);
-        expect(typeof friend.readConversation).toBe('string')
+        expect(typeof friend.readConversation).toBe('string');
         read2Runner.cap = asCap(friend.readConversation);
       });
 
@@ -373,7 +373,7 @@ describe('bfriendr back end', function() {
         expect(items1[1].message).toEqual('How are you?');
         expect(items1[0].message).toEqual('Well, thanks.');
       });
-      
+
     });
   });
 });

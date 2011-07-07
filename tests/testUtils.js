@@ -24,12 +24,12 @@ InvokeRunner.prototype.runsInvoke = function(method, data) {
     try {
       me.cap.invoke(method, data, success, failure);
     }
-    catch(e) {
+    catch (e) {
       me.errorRaised = true;
       me.error = e;
     }
   });
-  waitsFor(function() { 
+  waitsFor(function() {
         return me.failureCalled || me.successCalled || me.errorRaised;
       }, 'invoke timeout', 5000);
 };

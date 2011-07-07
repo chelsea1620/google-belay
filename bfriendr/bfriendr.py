@@ -115,9 +115,7 @@ class FriendsListHandler(CapServer.CapHandler): pass
 class FriendInfoHandler(CapServer.CapHandler): pass
 class StreamReadHandler(CapServer.CapHandler): pass
 class StreamPostHandler(CapServer.CapHandler): pass
-class MessageListHandler(CapServer.CapHandler): pass
 class MessageInfoHandler(CapServer.CapHandler): pass
-class MessagePostHandler(CapServer.CapHandler): pass
 class IntroduceYourselfHandler(CapServer.CapHandler): pass
 
 class GenerateHandler(CapServer.BcapHandler):
@@ -313,18 +311,6 @@ class StreamReadHandler(CapServer.CapHandler):
 
     self.bcapResponse({'items': json_messages})
 
-class MessageListHandler(CapServer.CapHandler):
-  def get(self):
-    friend = self.get_entity()
-
-    # TODO(jpolitz): why does this handler have all this authority!
-    q = MessageData.all(keys_only=True)
-    q.ancestor(friend)
-    messages = []
-    for messageKey in q:
-      messages.append(CapServer.regrant(MessageInfoHandler, messageKey))
-    self.bcapResponse({'messages': messages})
-
 
 class MessageInfoHandler(CapServer.CapHandler):
   def get(self):
@@ -341,18 +327,6 @@ class MessageInfoHandler(CapServer.CapHandler):
     message.deleteAll()
     self.bcapNullResponse()
 
-
-class MessagePostHandler(CapServer.CapHandler):
-  def post(self):
-    friend = self.get_entity()
-    request = self.bcapRequest()
-    message = MessageData(parent=friend)
-    message.message = db.Text(request.message)
-    if 'capability' in request:
-      message.capability = request.capability
-      message.resource_class = request.resourceClass
-    message.put()
-    self.bcapNullResponse()
 
 class IntroduceYourselfHandler(CapServer.CapHandler):
   def get(self):
@@ -441,23 +415,22 @@ application = webapp.WSGIApplication(
 # Internal Cap Paths
 CapServer.set_handlers(
   '/cap',
-  [('station/launch',LaunchHandler),
-   ('friend/account',AccountInfoHandler),
+  [('station/launch',           LaunchHandler),
+   ('friend/account',           AccountInfoHandler),
   
-   ('friend/card',   CardInfoHandler),
-   ('friend/image',  ImageHandler),
-   ('friend/imageUpload', ImageUploadHandler),
+   ('friend/card',              CardInfoHandler),
+   ('friend/image',             ImageHandler),
+   ('friend/imageUpload',       ImageUploadHandler),
    
-   ('friend/list',   FriendsListHandler),
-   ('friend/friend', FriendInfoHandler),
+   ('friend/list',              FriendsListHandler),
+   ('friend/friend',            FriendInfoHandler),
    
-   ('friend/messages', MessageListHandler),
-   ('friend/message', MessageInfoHandler),
-   ('friend/read', StreamReadHandler),
-   ('friend/post', StreamPostHandler),
-   ('friend/convo', ConversationReadHandler),
+   ('friend/message',           MessageInfoHandler),
+   ('friend/read',              StreamReadHandler),
+   ('friend/post',              StreamPostHandler),
+   ('friend/convo',             ConversationReadHandler),
    
-   ('friend/introduceMeTo', IntroduceMeToHandler),
+   ('friend/introduceMeTo',     IntroduceMeToHandler),
    ('friend/introduceYourself', IntroduceYourselfHandler),
   ])
 

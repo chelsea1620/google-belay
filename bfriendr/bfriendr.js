@@ -65,7 +65,7 @@ var initMessagesUI = function(container, showHideMessages) {
 
 };
 
-var initCardUI = function(friendsCap,container, messageUI) {
+var initCardUI = function(friendsCap, container, messageUI) {
   var template = container.find('.bfriendr-card:first');
   container.find('.bfriendr-card').detach(); // removes extra templates too
 
@@ -87,8 +87,8 @@ var initCardUI = function(friendsCap,container, messageUI) {
                             friendInfo.postToMyStream);
         }
         catch (e) {
-	   console.log('exception', e);
-	}
+          console.log('exception', e);
+        }
         return false;
       });
 
@@ -257,7 +257,7 @@ var initialize = function() {
   os.ui.capDraggable(myCardToggle, rcIntroduceYourself,
     function(selectedRC) { return app.caps.introduceYourself; });
   os.ui.capDroppable(addFriendArea, rcIntroduceYourself,
-    function(c) { 
+    function(c) {
       app.caps.introduceMeTo.post({introductionCap: os.capServer.restore(c) });
     });
 

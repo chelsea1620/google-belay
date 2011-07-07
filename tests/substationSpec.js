@@ -16,7 +16,9 @@ describe('SubStation protocol', function() {
   {
     runs(function() {
       var server = new CapServer();
-      tunnel.setLocalResolver(function(instID) { return server.publicInterface; });
+      tunnel.setLocalResolver(function(instID) {
+        return server.publicInterface;
+      });
       var otherSideGotResponse = false;
       var cap = server.grant(function(v) {
         if (v === 'Got response') {

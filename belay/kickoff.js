@@ -36,12 +36,13 @@ var foop = function(sourceURL, node, extras) {
         CapTunnel: CapTunnel,
         window: {
           open: function(url, name, success, failure) {
-            var port = windowManager.open('http://localhost:9000/subbelay?url=' +
+            var port = windowManager.
+              open('http://localhost:9000/subbelay?url=' +
                 encodeURI(url), name);
             success(port);
           },
           opener: window.opener ? window.openerPort : undefined,
-          // TODO(jpolitz): This function is a little ridiculous, but helps demos
+          // TODO(jpolitz): This function is ridiculous, but good for demos
           gmail: function(to, subject, body) {
             var gmailLink =
               'https://mail.google.com/mail/?view=cm&fs=1&tf=1&to=' +

@@ -264,7 +264,7 @@ var initialize = function() {
   os.ui.capDraggable(myCardToggle, rcIntroduceYourself,
     function(selectedRC) { return app.caps.introduceYourself; });
   os.ui.capDroppable(addFriendArea, rcIntroduceYourself,
-    function(cap) { app.caps.introduceMeTo.post({introductionCap: cap.serialize() }); });
+    function(cap) { app.caps.introduceMeTo.post({introductionCap: cap }); });
 
   var messageUI = initMessagesUI(messagesDiv, showHideMessages);
   initCardUI(app.caps.friends, cardListDiv, messageUI);

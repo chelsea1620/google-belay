@@ -99,10 +99,14 @@ class MessageData(db.Model):
     delete_entity(self)
 
   def toJSON(self):
-    return {'message': self.message,
-            'when': str(self.when),
-            'capability': str(self.capability),
-            'resource_class': str(self.resource_class)}
+    if self.capability is None or self.resource_class is None:
+      return {'message': self.message,
+              'when': str(self.when) }
+    else:
+      return {'message': self.message,
+              'when': str(self.when),
+              'capability': str(self.capability),
+              'resource_class': str(self.resource_class)}
 
 class AccountData(db.Model):
   my_card = db.ReferenceProperty(CardData, required=True)
@@ -289,7 +293,12 @@ class StreamPostHandler(CapServer.CapHandler):
     friend_info = self.get_entity()
     request = self.bcapRequest()
     msg = request['message'] 
-    message_data = MessageData(message = msg, parent = friend_info)
+    if 'capability' in request and 'resource_class' in request:
+      message_data = MessageData(message = msg, parent = friend_info,
+                                 capability = request['capability'],
+                                 resource_class = request['resource_class'])
+    else:
+      message_data = MessageData(message = msg, parent = friend_info)
     message_data.put()
     # TODO(jpolitz): handle capabilities in messages
     self.bcapResponse({'success': True})

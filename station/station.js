@@ -181,9 +181,13 @@ var stopDrag = function(info) {
 var startDropHover = function(node, rc) {
   node.addClass('belay-selected');
   var sources = os.topDiv.find('.belay-cap-source');
-  for (var i = 0; i < sources.length; ++i) {
-    var s = sources.eq(i);
-    if (s.data('rc') == rc) s.addClass('belay-possible');
+  if (rc == '*') {
+    sources.addClass('belay-possible');
+  } else {
+    for (var i = 0; i < sources.length; ++i) {
+      var s = sources.eq(i);
+      if (s.data('rc') == rc) s.addClass('belay-possible');
+    }    
   }
 };
 var stopDropHover = function(node, rc) {
@@ -258,19 +262,22 @@ var launchInstance = function(inst) {
           helper: function() { return helper; },
           start: function() { startDrag(info); },
           stop: function() { stopDrag(info); },
-          scope: rc,
+          scope: 'default',
           zIndex: 9999
         });
         node.addClass('belay-cap-source');
       },
       capDroppable: function(node, rc, acceptor) {
         node.droppable({
-          scope: rc,
+          scope: 'default',
           activeClass: 'belay-possible',
           hoverClass: 'belay-selected',
           drop: function(evt, ui) {
             var info = capDraggingInfo;
-            var result = acceptor(info.generator(info.resourceClass));
+            acceptor(info.generator(info.resourceClass), info.resourceClass);
+          },
+          accept: function(elt) {
+            return (rc === '*') || (elt.data('rc') === rc);
           }
         });
 

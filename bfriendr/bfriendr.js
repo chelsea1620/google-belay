@@ -40,22 +40,38 @@ var initMessagesUI = function(container, showHideMessages) {
     showHideMessages(false);
     return false;
   });
+  
+  var serCapRC = false;
+  var serCapToSend = false;
+
+  os.ui.capDroppable(composeTextArea, '*', function(serCap, capRC) {
+    serCapToSend = serCap;
+    serCapRC = capRC;
+  });
 
   var showMsg = function(msg) {
-
-    // TODO(arjun): account for a capability
-    var msgElt = textMsgTemplate.clone();
+    var msgElt;
+    if (typeof msg.capability === 'undefined') {
+      msgElt = textMsgTemplate.clone();
+    }
+    else {
+      msgElt = capMsgTemplate.clone();
+      var chitImg = msgElt.find('img:eq(0)');
+      os.ui.capDraggable(chitImg, msg.resource_class, 
+        function(selectedRC) {
+          return os.capServer.restore(msg.capability);
+        });
+    }
     msgElt.find('p:eq(1)').text(msg.message || 'Received blank message.');
     msgElt.find('.bfriendr-date:first').text(msg.when);
     msgs.append(msgElt);
-
   };
 
   var mkRefreshConvHandler = function(conversationCap) {
     return function() {
       conversationCap.get(function(conv) {
-      msgs.find('.bfriendr-message').detach();
-      conv.items.forEach(showMsg);
+        msgs.find('.bfriendr-message').detach();
+        conv.items.forEach(showMsg);
       });
     };
   };
@@ -66,8 +82,18 @@ var initMessagesUI = function(container, showHideMessages) {
     friendNameElt.text(friendName);
     composeTextArea.val('').focus();
     sendButton.click(function() {
-      postCap.post({ 'message' : composeTextArea.val() },
-                   function() { handler(); });
+      var msg;
+      if (serCapRC === false) {
+        msg = { 'message' : composeTextArea.val() };
+      }
+      else {
+        msg = { 'message' : composeTextArea.val(),
+                'resource_class': serCapRC,
+                'capability': serCapToSend };
+        serCapToSend = false;
+        serCapRC = false;
+      }
+      postCap.post(msg, handler);
     });
     handler();
     showHideMessages(true);

@@ -49,10 +49,10 @@ var foop = function(sourceURL, node, extras) {
         CapServer: CapServer,
         CapTunnel: CapTunnel,
         window: {
-          open: function(url, name, success, failure) {
+          open: function(url, name, options, success, failure) {
             var port = windowManager.
               open('http://localhost:9000/subbelay?url=' +
-                encodeURI(url), name);
+                encodeURI(url), name, options);
             success(port);
           },
           opener: window.opener ? window.openerPort : undefined,
@@ -63,7 +63,7 @@ var foop = function(sourceURL, node, extras) {
               to +
               '&su=' + subject + '&body=' + encodeURIComponent(body) +
               '&zx=_&shva=1&disablechatbrowsercheck=1&ui=1';
-            windowManager.open(makeGmailLink(to, subject, body));
+            windowManager.open(gmailLink);
           },
           serverBase: window.location.host
         }

@@ -351,11 +351,19 @@ var launchInstance = function(inst) {
   os.foop(instInfo.iurl, holder, extras);
 };
 
+var windowOptions = function(inst) {
+  var width = inst.info.window.width;
+  // NOTE(jpolitz): offset below is to deal with the window's frame
+  var height = inst.info.window.height + 12;
+  return "width=" + width + ",height=" + height;
+};
+
 var launchExternal = function(inst) {
   inst.info.remote = true;
   dirty(inst);
   ensureSync(inst, function() {
     os.window.open('http://localhost:9001/substation.js', inst.id,
+        windowOptions(inst),
         function(port) { setupCapTunnel(inst.id, port); },
         function() { os.alert('Oh noes!  No port'); });
   });

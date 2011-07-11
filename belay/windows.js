@@ -28,10 +28,10 @@ var windowManager = (function() {
     });
   };
 
-  WindowManager.prototype.open = function(url, name) {
+  WindowManager.prototype.open = function(url, name, options) {
     var w = new WindowManager.Window();
     this.windows.push(w);
-    w.domWindow = window.open(url, name);
+    w.domWindow = window.open(url, name, options);
     return w.toRemotePort;
   };
 

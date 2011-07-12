@@ -20,7 +20,8 @@ describe('The extension', function() {
 
   it('should round trip to the background page', function() {
     var success = false;
-    window.belay.offer('ping', {}, function(v) { success = v === 'pong'; });
+    window.belay.offer('ping', {}, function(v) { console.log('v: ', v);
+        success = v === 'pong'; });
     waitsFor(function() { return success; }, 100);
     runs(function() { expect(success).toBe(true); });
   });

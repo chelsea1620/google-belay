@@ -23,16 +23,17 @@ var innerText = 'window.belay = (function() {' +
 '  var callbackCount = 0;' +
 '  function setupCallback(name, f, args) {' +
 '       var evt = document.createEvent("Event");' +
-'       evt.initEvent(name, true, true);' +
+'       evt.initEvent("forBGPage", true, true);' +
 '       var fName = name + callbackCount++;' +
 '       divChannel.addEventListener(fName, function(evt) {' +
 '         var ser = f.apply(null, JSON.parse(divChannel.innerText));' +
 '         if(ser) divChannel.innerText = JSON.stringify(ser);' +
 '         else    divChannel.innerText = "";' +
 '       });' +
-'       args.unshift(fName);' +
-'       args.unshift(name);' +
-'       divChannel.innerText = JSON.stringify(args);' +
+'       var msg = { method: name,' +
+'                   callbackName: fName,' +
+'                   args: args};' +
+'       divChannel.innerText = JSON.stringify(msg);' +
 '       divChannel.dispatchEvent(evt);' +
 '  }' +
 '  return {' +
@@ -53,7 +54,6 @@ chrome.extension.onRequest.addListener(
   function(request, sender, sendResponse) {
     var callbackName = request.callbackName;
     var args = request.args;
-    console.log('request: ', request);
     divChannel.innerText = JSON.stringify(args);
     var evt = document.createEvent('Event');
     evt.initEvent(callbackName, true, true);
@@ -63,14 +63,6 @@ chrome.extension.onRequest.addListener(
     else         sendResponse();
   });
 
-divChannel.addEventListener('offer', function(evt) {
-  var args = parseArgs();
-  chrome.extension.sendRequest(args, function() { });
-  // inform the background page of rcList and info
-  // add args[3] (which is the event for the offer func) to a map
-  
-});
-
-divChannel.addEventListener('accept', function(evt) {
-
+divChannel.addEventListener('forBGPage', function(evt) {
+  chrome.extension.sendRequest(JSON.parse(divChannel.innerText));
 });

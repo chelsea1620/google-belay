@@ -1,0 +1,84 @@
+<!--
+Copyright 2011 Google Inc. All Rights Reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Belay Station</title>
+  <link rel="stylesheet" href="belay/base.css">
+  <link rel="stylesheet" href="station.css">
+  <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.js"></script>
+  <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.14/jquery-ui.js"></script>
+  <script type="text/javascript" src="belay/jquery.parsequery.js"></script>
+  <script type="text/javascript" src="belay/ses/whitelist.js"></script>
+  <script type="text/javascript" src="belay/ses/atLeastFreeVarNames.js"></script>
+  <script type="text/javascript" src="belay/ses/WeakMap.js"></script>
+  <script type="text/javascript" src="belay/ses/startSES.js"></script>
+  <script type="text/javascript" src="belay/caps.js"></script>
+  <script type="text/javascript" src="belay/portQueue.js"></script>
+  <script type="text/javascript" src="belay/windows.js"></script>
+  <script type="text/javascript" src="belay/kickoff.js"></script>
+  <script type="text/javascript" src="your-stuff.js"></script>
+</head>
+<body>
+  <h1><a href="/"><img src="http://www.google.com/intl/en/images/logo_sm.gif" alt="Google"></a> Belay Station <small>for {{ user_nickname }}</small></h1>
+  <ul id="nav">
+    <li>Home</li>
+    <li><a href="help.html">Help</a></li>
+    <li><a href="api.html">API</a></li>
+  </ul>
+  <div id="aux">
+    <div>
+      <div id="belay-station-outer">
+        <div id="belay-controls"></div>
+        <div id="belay-station-inner">
+          <div id="belay-toolbar">
+            <h2>Tools</h2>
+            <div class="belay-tool">
+              <img src="http://localhost:9001/tool.png" />
+              <p>Hello World</p>
+            </div>
+            <div class="belay-tool">
+              <img src="http://localhost:9001/tool.png" />
+              <p>Counter</p>
+            </div>
+          </div>
+          <div id="belay-desk">
+            <h2>Your stuff</h2>
+            <div class="belay-container">
+              <div class="belay-container-header"></div>
+              <div class="belay-container-holder">
+                <div class="belay-example-thing">
+                  <p>Yo, dawg…</p>
+                </div>
+              </div>
+            </div>
+            <div class="belay-container" id="belay-example-001">
+              <div class="belay-container-header"></div>
+              <div class="belay-container-holder">
+                <div class="belay-example-thing">
+                  <p>Yo, dawg…</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="about">©2011 Google</div>
+  </div>
+</body>

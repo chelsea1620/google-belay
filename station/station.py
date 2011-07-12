@@ -20,7 +20,7 @@ import os
 import sys
 import uuid
 from django.utils import simplejson as json
-from belay.belay import *
+from pylib.belay import *
 
 from google.appengine.ext import db
 from google.appengine.ext import webapp
@@ -44,6 +44,13 @@ class GenerateHandler(webapp.RequestHandler):
     feed_uuid = uuid.uuid4()
     feed_id = str(feed_uuid)
     content = server_url + "/?s=" + feed_id
+    xhr_content(content, "text/plain", self.response)
+
+class BelayGenerateHandler(webapp.RequestHandler):
+  def get(self):
+    feed_uuid = uuid.uuid4()
+    feed_id = str(feed_uuid)
+    content = server_url + "/belay/launch?s=" + feed_id
     xhr_content(content, "text/plain", self.response)
 
 
@@ -126,6 +133,23 @@ class LaunchHandler(BaseHandler):
     xhr_content(content, "text/plain", self.response)
 
 
+class BelayLaunchHandler(BaseHandler):
+  def get(self):
+    station = self.validate_station()
+    if not station.is_saved():
+      station.put()
+
+    reply = {
+      'page': "%s/your-stuff.html" % server_url,
+  	  'info': {
+  	    'instances': "%s/instances?s=%s" % (server_url, station.key().name()),
+  	    'instanceBase': '%s/instance?s=%s&i=' % (server_url, station.key().name())
+  	  }
+	  }
+
+    xhr_content(json.dumps(reply), "text/plain;charset=UTF-8", self.response)
+
+
 class InstanceHandler(BaseHandler):
   def get(self):
     instance = self.validate_instance()
@@ -167,6 +191,8 @@ application = webapp.WSGIApplication(
   [('/',        LaunchHandler),
   ('/generate', GenerateHandler),
   ('/instance', InstanceHandler),
+  ('/belay/generate', BelayGenerateHandler),
+  ('/belay/launch',   BelayLaunchHandler),
   ('/instances',InstancesHandler),
   ],
   debug=True)

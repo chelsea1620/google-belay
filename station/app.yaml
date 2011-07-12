@@ -28,6 +28,12 @@ handlers:
 - url: /instance
   script: station.py
 
+- url: /belay/generate
+  script: station.py
+
+- url: /belay/launch
+  script: station.py
+
 - url: /instances
   script: station.py
 

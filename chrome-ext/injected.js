@@ -53,16 +53,19 @@ chrome.extension.onRequest.addListener(
   function(request, sender, sendResponse) {
     var callbackName = request.callbackName;
     var args = request.args;
+    console.log('request: ', request);
     divChannel.innerText = JSON.stringify(args);
-    divChannel.dispatchEvent(callbackName);
-    sendResponse(JSON.parse(divChannel.innerText));
+    var evt = document.createEvent('Event');
+    evt.initEvent(callbackName, true, true);
+    divChannel.dispatchEvent(evt);
+    var response = divChannel.innerText;
+    if(response) sendResponse(JSON.parse(divChannel.innerText));
+    else         sendResponse();
   });
 
 divChannel.addEventListener('offer', function(evt) {
   var args = parseArgs();
-  chrome.extension.sendRequest(args, function(response) {
-    console.log('got a response'); 
-  });
+  chrome.extension.sendRequest(args, function() { });
   // inform the background page of rcList and info
   // add args[3] (which is the event for the offer func) to a map
   

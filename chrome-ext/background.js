@@ -15,5 +15,8 @@ chrome.extension.onRequest.addListener(
   function(request, sender, sendResponse) {
     console.log("request: ", request);
     console.log("sender: ", sender);
-    if(request[2] === 'ping') { sendResponse('pong'); }
+    if(request[2] === 'ping') { 
+      chrome.tabs.sendRequest(sender.tab.id, { args: ['pong'], callbackName: request[1] },
+                              function() { });
+    }
   });

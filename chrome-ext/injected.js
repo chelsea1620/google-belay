@@ -51,18 +51,25 @@ function parseArgs() {
 
 
 chrome.extension.onRequest.addListener(
+  // { args : [ rcList, info, cap? ], callbackName : Str },
+  // backgroundPageInfo,
+  // (Cap -> Undef) + (Undef -> Undef)
+  // -> Undef
   function(request, sender, sendResponse) {
+    divChannel.innerText = JSON.stringify(request.args);
+
     var callbackName = request.callbackName;
-    var args = request.args;
-    divChannel.innerText = JSON.stringify(args);
     var evt = document.createEvent('Event');
     evt.initEvent(callbackName, true, true);
     divChannel.dispatchEvent(evt);
+
     var response = divChannel.innerText;
-    if(response) sendResponse(JSON.parse(divChannel.innerText));
+    if(response) sendResponse(JSON.parse(response));
     else         sendResponse();
   });
 
 divChannel.addEventListener('forBGPage', function(evt) {
   chrome.extension.sendRequest(JSON.parse(divChannel.innerText));
 });
+
+chrome.extension.sendRequest({ method: 'refresh', args: [] });

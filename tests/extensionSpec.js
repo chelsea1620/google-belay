@@ -25,4 +25,64 @@ describe('The extension', function() {
     waitsFor(function() { return success; }, 100);
     runs(function() { expect(success).toBe(true); });
   });
+
+  it('should connect offers and accepts', function() {
+    var offerInvoked = acceptInvoked = false;
+    var offerInfo = acceptInfo = false;
+    var offeredCap = false;
+
+    window.belay.offer(['test'], { info: 22 }, 
+      function(rcList, info) { 
+        offerInvoked = true;
+        offerInfo = info.info;
+        return 'offering'; 
+      });
+    window.belay.accept(['test'], { info: 44 },
+      function(rcList, info, cap) {
+        acceptInvoked = true;
+        acceptInfo = info.info;
+        offeredCap = cap;
+      });
+
+    waitsFor(function() { return offerInvoked && acceptInvoked; }, 1000);
+    runs(function() {
+      expect(offerInvoked).toBe(true);
+      expect(acceptInvoked).toBe(true);
+
+      expect(offeredCap).toBe('offering');
+
+      expect(offerInfo).toBe(44);
+      expect(acceptInfo).toBe(22);
+    });
+  });
+
+  it('should connect accepts and offers', function() {
+    var offerInvoked = acceptInvoked = false;
+    var offerInfo = acceptInfo = false;
+    var offeredCap = false;
+
+    window.belay.accept(['test'], { info: 44 },
+      function(rcList, info, cap) {
+        acceptInvoked = true;
+        acceptInfo = info.info;
+        offeredCap = cap;
+      });
+    window.belay.offer(['test'], { info: 22 }, 
+      function(rcList, info) { 
+        offerInvoked = true;
+        offerInfo = info.info;
+        return 'offering'; 
+      });
+
+    waitsFor(function() { return offerInvoked && acceptInvoked; }, 1000);
+    runs(function() {
+      expect(offerInvoked).toBe(true);
+      expect(acceptInvoked).toBe(true);
+
+      expect(offeredCap).toBe('offering');
+
+      expect(offerInfo).toBe(44);
+      expect(acceptInfo).toBe(22);
+    });
+  });
 });

@@ -11,12 +11,16 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+var tabMap = Object.create(null);
+
 chrome.extension.onRequest.addListener(
   function(request, sender, sendResponse) {
-    console.log("request: ", request);
-    console.log("sender: ", sender);
-    if(request[2] === 'ping') { 
-      chrome.tabs.sendRequest(sender.tab.id, { args: ['pong'], callbackName: request[1] },
+
+    if(request.args[0] === 'ping') { 
+      chrome.tabs.sendRequest(sender.tab.id, { args: ['pong'], callbackName: request.callbackName },
                               function() { });
     }
+
+        
   });
+

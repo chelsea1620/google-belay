@@ -49,11 +49,12 @@ var foop = function(sourceURL, node, extras) {
         CapServer: CapServer,
         CapTunnel: CapTunnel,
         window: {
-          open: function(url, name, options, success, failure) {
-            var port = windowManager.
-              open('http://localhost:9000/subbelay?url=' +
+          open: function(url, name, options) {
+            return windowManager.open('http://localhost:9000/subbelay?url=' +
                 encodeURI(url), name, options);
-            success(port);
+          },
+          openDirectly: function(url, name, options) {
+            return windowManager.open(url, name, options);
           },
           opener: window.opener ? window.openerPort : undefined,
           // TODO(jpolitz): This function is ridiculous, but good for demos

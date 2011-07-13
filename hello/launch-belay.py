@@ -16,4 +16,9 @@
 
 from utils import *
 
-xhr_response(server_url("/hello.js"), "text/plain")
+response = {
+    'page': server_url("/hello-belay.html"),
+    'info': { }
+  }
+
+bcap_response(response)

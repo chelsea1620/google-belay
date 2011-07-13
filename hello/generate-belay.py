@@ -16,4 +16,4 @@
 
 from utils import *
 
-xhr_response(server_url("/hello.js"), "text/plain")
+bcap_response({ '@': server_url("/belay/launch") })

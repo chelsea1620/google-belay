@@ -1,0 +1,105 @@
+<!--
+Copyright 2011 Google Inc. All Rights Reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Hello Belay</title>
+  <style type="text/css">>
+
+body {
+  background: #ccc;
+}
+
+#hello-thing {
+  width: 300px;
+  height: 200px;
+  text-align: center;
+  margin: 0 auto;
+  background: #fff url(earth.png) no-repeat scroll center 40px;
+}
+
+#hello-thing a {
+  text-decoration: none;
+}
+
+  </style>
+  <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.js"></script>
+  <script type="text/javascript" src="belay/portQueue.js"></script>
+  <script type="text/javascript" src="belay/windowremote.js"></script>
+  <script type="text/javascript" src="belay/caps.js"></script>
+</head>
+<body>
+  <div id="hello-thing">
+    <p>Hello World!</p>
+    <a href="#">✪</a>
+  </div>
+  <script>
+
+var languageMap = {
+  ar: 'مرحبا العالم!',
+  cy: 'Helo byd!',
+  el: 'Γεια σας κόσμο!',
+  en: 'Hello World!',
+  es: '¡Hola, mundo!',
+  fi: 'Moikka maailma!',
+  is: 'Halló heimur!',
+  it: 'Ciao mondo!',
+  iw: 'שלום עולם!',
+  ja: 'こんにちは、世界！',
+  ko: '안녕하세요!',
+  hi: 'नमस्ते विश्व!',
+  nl: 'Hallo wereld!',
+  ru: 'Привет мир!',
+  sr: 'Здраво свете!',
+  sv: 'Hej världen!',
+  sw: 'Hello ulimwengu!',
+  th: 'สวัสดีชาวโลก',
+  vi: 'Xin chào thế giới!',
+  yi: 'העלא וועלט!',
+  zh: '世界您好！'
+};
+
+var languages = [];
+for (var l in languageMap) { languages.push(l); }
+
+var setLang = function(l) {
+  $('p').text(languageMap[l]);
+  // if (os.storage.get() != l) {
+  //   os.storage.put(l);
+  // }
+}
+
+var l = 'en'; // os.storage.get() || 'en';
+setLang(l);
+
+$('a').click(function() {
+  var l = languages[Math.floor(Math.random() * languages.length)];
+  setLang(l);
+  return false;
+});
+
+var server = new CapServer();
+var tunnel = new CapTunnel(openerPort);
+var resolver = function(instID) { return tunnel.sendInterface; };
+tunnel.setLocalResolver(resolver);
+
+tunnel.setOutpostHandler(function(message) {
+  initialize(message.seedSers.launch);
+});
+
+  </script>
+</body>

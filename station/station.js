@@ -20,7 +20,7 @@ var instancesCap = capServer.restore(app.caps.instances);
 var defaultTools = [
     { name: 'Hello',
       icon: 'http://localhost:9002/tool-hello.png',
-      url: 'http://localhost:9002/generate'
+      generate: 'http://localhost:9002/belay/generate'
     },
     { name: 'Sticky',
       icon: 'http://localhost:9003/tool-stickies.png',
@@ -154,13 +154,7 @@ var setupCapTunnel = function(instID, port) {
   instance.capServer = undefined;
   instance.capTunnel = tunnel;
 
-  var restoreCap = capServer.grant(function() {
-    getAndLaunchInstance(instance.icap);
-    return true;
-  });
-
   tunnel.setLocalResolver(instanceResolver);
-  tunnel.initializeAsOutpost(capServer, [instance.icap, restoreCap]);
 };
 
 
@@ -198,7 +192,7 @@ var stopDropHover = function(node, rc) {
 var desk = undefined;
 var protoContainer = undefined;
 
-var launchInstance = function(inst) {
+var launchEmbeddedInstance = function(inst) {
   // TODO(jpolitz) check if inst.info claims to be remote, and pop out
   var instInfo = inst.info;
   var container = protoContainer.clone();
@@ -351,6 +345,26 @@ var launchInstance = function(inst) {
   os.foop(instInfo.iurl, holder, extras);
 };
 
+var launchWindowedInstance = function(inst) {
+  // TODO(jpolitz) check if inst.info claims to be remote, and pop out
+  var instInfo = inst.info;
+  
+  // TODO(mzero) create cap for storage to station
+  // gets/puts from instInfo.data, and dirty(inst) on put
+  
+  dirty(inst);
+  instInfo.belayInstance.get(function(launch) {
+    var port = os.window.openDirectly(launch.page);
+    setupCapTunnel(inst.id, port);
+    inst.capTunnel.sendOutpost(undefined, { launch: launch });    
+  });
+};
+
+var launchInstance = function(inst) {
+    if ('belayInstance' in inst.info) return launchWindowedInstance(inst);
+    if ('iurl' in inst.info)          return launchEmbeddedInstance(inst);
+};
+
 var windowOptions = function(inst) {
   var width = inst.info.window.width;
   // NOTE(jpolitz): offset below is to deal with the window's frame
@@ -362,10 +376,14 @@ var launchExternal = function(inst) {
   inst.info.remote = true;
   dirty(inst);
   ensureSync(inst, function() {
-    os.window.open('http://localhost:9001/substation.js', inst.id,
-        windowOptions(inst),
-        function(port) { setupCapTunnel(inst.id, port); },
-        function() { os.alert('Oh noes!  No port'); });
+    var port = os.window.open('http://localhost:9001/substation.js', inst.id,
+        windowOptions(inst));
+    setupCapTunnel(inst.id, port);
+    var restoreCap = capServer.grant(function() {
+        getAndLaunchInstance(inst.icap);
+        return true;
+      });
+    inst.capTunnel.initializeAsOutpost(capServer, [inst.icap, restoreCap]);
   });
 };
 
@@ -402,7 +420,7 @@ var initialize = function(instanceCaps) {
   var nextTop = 50;
 
 
-  var showTool = function(info) {
+  var createEmbeddedInstanceFromTool = function(info) {
     $.ajax({
       url: info.url,
       dataType: 'text',
@@ -423,17 +441,45 @@ var initialize = function(instanceCaps) {
         dirty(inst);
       },
       error: function(xhr, status, error) {
-        os.alert('Failed to showTool ' + info.name + ', status = ' + status);
+        os.alert('Failed to createEmbededInstanceFromTool ' + info.name + ', status = ' + status);
       }
     });
-  }
+  };
 
+  var createWindowedInstanceFromTool = function(info) {
+    capServer.restore(info.generate).get(
+      function(data) {
+        var inst = {
+          info: {
+            belayInstance: data,
+            info: undefined,
+          }
+        };
+        setupCapServer(inst);
+        // TODO(arjun) still a hack. Should we be concatenaing URLs here?
+        inst.icap = capServer.grant(app.caps.instanceBase + inst.id);
+        instances[inst.id] = inst;
+        launchInstance(inst);
+        dirty(inst);
+      },
+      function(error) {
+        os.alert('Failed to createInstanceFromTool ' + info.name +
+          ', error = ' + error);
+      }
+    );
+  };
+
+  var createInstanceFromTool = function(info) {
+    if ('generate' in info) return createWindowedInstanceFromTool(info);
+    else                    return createEmbeddedInstanceFromTool(info);
+  };
+  
   defaultTools.forEach(function(toolInfo) {
     var tool = protoTool.clone();
     tool.find('p').text(toolInfo.name);
     tool.find('img').attr('src', toolInfo.icon);
     tool.appendTo(toolbar);
-    tool.click(capture1(showTool, toolInfo));
+    tool.click(capture1(createInstanceFromTool, toolInfo));
   });
 
   instanceCaps.forEach(getAndLaunchInstance);

@@ -73,7 +73,6 @@ var CAP_EXPORTS = (function() {
 
   var makeAsyncAJAX = function(url, method, data, success, failure) {
     jQuery.ajax({ data: data,
-                  dataType: 'text',
                   type: method,
                   url: url,
                   success: function(data, status, xhr) {

@@ -443,7 +443,7 @@ var initialize = function(instanceCaps) {
 $(function() {
   topDiv = $('#aux div').eq(0);
   
-  var tunnel = new CapTunnel(window.opener);
+  var tunnel = new CapTunnel(window.belayPort);
   tunnel.setOutpostHandler(function(outpost){
     instanceInfo = outpost.info;
     var instancesCap = capServer.restore(instanceInfo.instances);

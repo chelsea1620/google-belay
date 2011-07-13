@@ -21,10 +21,46 @@ limitations under the License.
 <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.js"></script>
 <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.14/jquery-ui.js"></script>
 <script>
+var bgPage = chrome.extension.getBackgroundPage();
+var stations = bgPage.stations;
+
+
 $(document).ready(function() {
   var bgPage = chrome.extension.getBackgroundPage();
   var stations = bgPage.stations;
 
+  var getAndLaunch = function(url) {
+    $.ajax({
+      url: url,
+      dataType: 'json',
+      success: function(data, status, xhr) {
+        bgPage.launchStation(data);
+        window.close();
+      },
+      failure: function(_) {
+        console.log('Failed to launch station.');
+      }
+    });
+  }
+
+  if(stations.names().length === 0) {
+    $.ajax({
+      url: bgPage.MAKESTATION,
+      dataType: "text",
+      success: function(data, status, xhr) {
+        stations.set('defaultStation', data);
+        getAndLaunch(stations.get(stations.names()[0]));
+      },
+      failure: function(_) {
+        console.log('Failed to gen station');
+      }
+    });
+  }
+  else {
+    getAndLaunch(stations.get(stations.names()[0]));
+  }
+
+if(false) {
   $('#generate').click(function(evt) {
     var name = $('#newStationName').val();
     $.ajax({
@@ -58,11 +94,13 @@ $(document).ready(function() {
       }
     });
   });
+}
 });
 </script>
 </head>
 <body>
 
+<div id='_blank' style='display: none'>
 <h1>Belay</h1>
 <div class='createAccount'>
   <h2>Create an account</h2>
@@ -78,6 +116,7 @@ $(document).ready(function() {
   <select id='accountList'>
   </select>
   <button id='launch'>Launch</button>
+</div>
 </div>
 </body>
 </html>

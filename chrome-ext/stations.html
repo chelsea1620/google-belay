@@ -1,0 +1,83 @@
+<!--
+Copyright 2011 Google Inc. All Rights Reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+  "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.js"></script>
+<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.14/jquery-ui.js"></script>
+<script>
+$(document).ready(function() {
+  var bgPage = chrome.extension.getBackgroundPage();
+  var stations = bgPage.stations;
+
+  $('#generate').click(function(evt) {
+    var name = $('#newStationName').val();
+    $.ajax({
+      url: bgPage.MAKESTATION,
+      dataType: "text",
+      success: function(data, status, xhr) {
+        stations.set(name, data);
+      },
+      failure: function(_) {
+        console.log('Failed to gen station');
+      }
+    });
+  });
+
+  var accounts = $('#accountList');
+  stations.names().forEach(function(name) {
+    var opt = $('<option></option>').text(name).val(stations.get(name));
+    accounts.append(opt);
+  });
+
+  $('#launch').click(function(evt) {
+    var stationURL = $("#accountList option:selected").val();
+    $.ajax({
+      url: stationURL,
+      dataType: 'json',
+      success: function(data, status, xhr) {
+        bgPage.launchStation(data);
+      },
+      failure: function(_) {
+        console.log('Failed to launch station.');
+      }
+    });
+  });
+});
+</script>
+</head>
+<body>
+
+<h1>Belay</h1>
+<div class='createAccount'>
+  <h2>Create an account</h2>
+  <ul>
+    <li>Name for the account:
+      <input id='newStationName' type='text'></input>
+    </li>
+  </ul>
+  <button id='generate'>Generate</button>
+</div>
+
+<div class='accounts'>
+  <select id='accountList'>
+  </select>
+  <button id='launch'>Launch</button>
+</div>
+</body>
+</html>

@@ -49,10 +49,10 @@ describe('The extension', function() {
       expect(offerInvoked).toBe(true);
       expect(acceptInvoked).toBe(true);
 
-      expect(offeredCap).toBe('offering');
-
       expect(offerInfo).toBe(44);
       expect(acceptInfo).toBe(22);
+
+      expect(offeredCap).toBe('offering');
     });
   });
 

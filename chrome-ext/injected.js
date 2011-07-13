@@ -12,64 +12,26 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-var divChannel = document.createElement('div');
-divChannel.style.display = 'none';
-divChannel.id = '__belayDivChannel';
-document.body.appendChild(divChannel);
 
-var script = document.createElement('script');
-var innerText = 'window.belay = (function() {' + 
-'  var divChannel = document.getElementById("__belayDivChannel");' +
-'  var callbackCount = 0;' +
-'  function setupCallback(name, f, args) {' +
-'       var evt = document.createEvent("Event");' +
-'       evt.initEvent("forBGPage", true, true);' +
-'       var fName = name + callbackCount++;' +
-'       divChannel.addEventListener(fName, function(evt) {' +
-'         var ser = f.apply(null, JSON.parse(divChannel.innerText));' +
-'         if(ser) divChannel.innerText = JSON.stringify(ser);' +
-'         else    divChannel.innerText = "";' +
-'       });' +
-'       var msg = { method: name,' +
-'                   callbackName: fName,' +
-'                   args: args};' +
-'       divChannel.innerText = JSON.stringify(msg);' +
-'       divChannel.dispatchEvent(evt);' +
-'  }' +
-'  return {' +
-'     offer: function(rcList, info, f) { setupCallback("offer", f, [rcList, info]); },' +
-'     accept: function(rcList, info, f) { setupCallback("accept", f, [rcList, info]); }' +
-'  };' +
-'})()';
+var divChannel = document.getElementById('__belayDivChannel');
 
-script.innerText = innerText;
-document.head.appendChild(script);
+chrome.extension.sendRequest({ type: 'init' });
 
-function parseArgs() {
-  return JSON.parse(divChannel.innerText);
-}
-
-
+// TODO(jpolitz): Queue messages from the extension if the div doesn't
+// yet exist on the page
 chrome.extension.onRequest.addListener(
-  // { args : [ rcList, info, cap? ], callbackName : Str },
-  // backgroundPageInfo,
-  // (Cap -> Undef) + (Undef -> Undef)
-  // -> Undef
-  function(request, sender, sendResponse) {
-    divChannel.innerText = JSON.stringify(request.args);
+  function(message, sender, sendResponse) {
+    divChannel.innerText = JSON.stringify({data: message});
 
-    var callbackName = request.callbackName;
     var evt = document.createEvent('Event');
-    evt.initEvent(callbackName, true, true);
+    evt.initEvent('onmessage', true, true);
     divChannel.dispatchEvent(evt);
-
-    var response = divChannel.innerText;
-    if(response) sendResponse(JSON.parse(response));
-    else         sendResponse();
   });
 
-divChannel.addEventListener('forBGPage', function(evt) {
-  chrome.extension.sendRequest(JSON.parse(divChannel.innerText));
+divChannel.addEventListener('postMessage', function(evt) {
+  var message = JSON.parse(divChannel.innerText);
+  chrome.extension.sendRequest(message);
+  evt.preventDefault();
+  return false;
 });
 
-chrome.extension.sendRequest({ method: 'refresh', args: [] });

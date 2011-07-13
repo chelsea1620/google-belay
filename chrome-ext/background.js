@@ -16,64 +16,77 @@
 var offerMap = Object.create(null);
 var acceptMap = Object.create(null);
 
-chrome.extension.onRequest.addListener(
-  function(request, sender, sendResponse) {
-    var tabID = sender.tab.id;
+//
+// Station setup
+//
+var MAKESTATION = 'http://localhost:9001/belay/generate';
+var stationIndex = 'stationIndex';
 
-    // Just for testing
-    if(request.args[0] === 'ping') { 
-      chrome.tabs.sendRequest(sender.tab.id, { args: ['pong'], callbackName: request.callbackName },
-                              function() { });
-      return;
-    }
+var stations = (function() {
+  var stations = localStorage.stations ? 
+    JSON.parse(localStorage.stations) : {}; 
 
-    if (request.method === 'refresh') {
-      offerMap[tabID] = Object.create(null);
-      acceptMap[tabID] = Object.create(null);
-    }
-    else if (request.method === 'offer') {
-      if (typeof request.callbackName === 'string') {
-        offerMap[tabID][request.callbackName] = request.args;
-      }
-    }
-    else if (request.method === 'accept') {
-      if (typeof request.callbackName === 'string') {
-        acceptMap[tabID][request.callbackName] = request.args;
-      }
-    }
-    else {
-      console.log('unexpected message ', request);
-    }
-
-  });
-
-
-function __autoTest() {
-setInterval(function() {
-  for(var i in offerMap) {
-    for(var callback in offerMap[i]) {
-
-      var args = offerMap[i][callback];
-
-      if(! args[0][0].match(/test/)) continue;
-
-      for(var j in acceptMap) {
-        for(var callback2 in acceptMap[j]) {
-          var args2 = acceptMap[j][callback2]; 
-
-          if(! args[0][0].match(/test/)) continue;
-          
-          chrome.tabs.sendRequest(Number(i), { args: args2, callbackName: callback },
-            function(v) { 
-              var argsWithCap = args.concat([v]);
-              chrome.tabs.sendRequest(Number(j), { args: argsWithCap,
-                                                   callbackName: callback2 });
-            });
-        }
-      }
-    }
+  function setStation(name, stationURL) {
+    stations[name] = stationURL; 
+    localStorage.stations = JSON.stringify(stations);
   }
-}, 200);
+
+  function getStation(name) {
+    return stations[name];
+  }
+
+  function stationNames() {
+    return Object.keys(stations);
+  }
+
+  return { set: setStation, get: getStation, names: stationNames };
+})();
+
+// { info: instanceInfo, page: url } -> undef
+// opens a page, and sends info over
+var launchStation = function(data) {
+  var page = data.page;
+  var info = data.info;
+  chrome.tabs.create({ url: page }, 
+    function(tab) {
+      var tunnel = new CapTunnel(getTabPort(tab.id));
+      // TODO(jpolitz): make ext be the CapServer's id if we make one 
+      tunnel.sendOutpost('ext', [], { info: info });
+    });
 }
 
-__autoTest();
+//
+// Ports to pages
+//
+
+var getTabPort = (function() {
+  var ports = Object.create(null);
+
+  var getTabPort = function(tabID) {
+    if(!(tabID in ports)) ports[tabID] = new PortQueue();
+    return ports[tabID];
+  } 
+
+  var makeRelayPort = function(tabID) {
+    var extPort = {
+      postMessage: function(message, ports) {
+        if(ports && ports.length > 0) { throw 'Cannot send ports on ExtPorts'; }
+        // TODO(jpolitz): make sure tabID still exists
+        chrome.tabs.sendRequest(tabID, message);
+      },
+      onmessage: function() { throw 'ExtPort: onmessage not set.'; }
+    };
+    return extPort;
+  };
+
+  chrome.extension.onRequest.addListener(
+    function(message, sender, sendResponse) {
+      var tabID = sender.tab.id;
+      var port = getTabPort(tabID);
+      if (message.type === 'init') port.setPort(makeRelayPort(tabID))
+      else port.onmessage(message);
+    });
+
+  return Object.freeze(getTabPort);
+})();
+

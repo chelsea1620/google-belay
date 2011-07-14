@@ -61,6 +61,10 @@ var setupDeskSizes = function(top) {
   }
 };
 
+var nextLeft = 100;
+var nextTop = 50;
+
+
 //
 // Testing
 //
@@ -212,12 +216,14 @@ var launchOldInstance = function(inst) {
   var header = container.find('.belay-container-header');
   var holder = container.find('.belay-container-holder');
   holder.empty();
+  var topDiv = $('<div></div>').prependTo(holder);
   container.appendTo(desk);
   container.css('left', instState.window.left)
            .css('top', instState.window.top)
            .width(instState.window.width || '10em')
            .height(instState.window.height || '6em');
   var extras = {
+    topDiv: topDiv,
     storage: {
       get: function() { return instState.data; },
       put: function(d) { instState.data = d; dirty(inst); }
@@ -355,7 +361,7 @@ var launchOldInstance = function(inst) {
 
   dirty(inst);
 
-  foop(instState.iurl, holder, extras);
+  foop(instState.iurl, extras);
 };
 
 var windowOptions = function(inst) {
@@ -384,6 +390,167 @@ var launchExternal = function(inst) {
   });
 };
 
+var launchGadgetInstance = function(inst) {
+  var instState = inst.state;
+
+  if (!('window' in instState)) {
+    instState.window = { top: nextTop += 10, left: nextLeft += 20}
+  }
+  
+  var container = protoContainer.clone();
+  var header = container.find('.belay-container-header');
+  var holder = container.find('.belay-container-holder');
+  holder.empty();
+  var topDiv = $('<div></div>').prependTo(holder);
+  container.appendTo(desk);
+  container.css('left', instState.window.left)
+           .css('top', instState.window.top)
+           .width(instState.window.width || '10em')
+           .height(instState.window.height || '6em');
+  
+  var extras = {
+    topDiv: topDiv,
+    storage: {
+      get: function() { return instState.data; },
+      put: function(d) { instState.data = d; dirty(inst); }
+    },
+    capServer: inst.capServer,
+    ui: {
+      resize: function(minWidth, minHeight, resizable) {
+        if (resizable) {
+          container.resizable({
+            containment: desk,
+            handles: 'se',
+            minWidth: minWidth,
+            minHeight: minHeight,
+            stop: function(ev, ui) {
+              instState.window.width = container.width();
+              instState.window.height = container.height();
+              dirty(inst);
+            }
+          });
+          if (container.width() < minWidth) container.width(minWidth);
+          if (container.height() < minHeight) container.height(minHeight);
+        }
+        else {
+          container.resizable('destroy');
+          if (container.width() != minWidth ||
+              container.height() != minHeight) {
+            container.width(minWidth);
+            container.height(minHeight);
+            instState.window.width = container.width();
+            instState.window.height = container.height();
+            dirty(inst);
+          }
+        }
+      },
+      capDraggable: function(node, rc, generator) {
+        var helper = node.clone();
+        var info = {
+          node: node,
+          resourceClass: rc,
+          generator: function(rc) {
+            var cap = generator(rc);
+            dirty(inst);
+            return cap.serialize();
+          }
+        };
+        node.data('rc', rc);
+        node.draggable({
+          appendTo: desk,
+          helper: function() { return helper; },
+          start: function() { startDrag(info); },
+          stop: function() { stopDrag(info); },
+          scope: 'default',
+          zIndex: 9999
+        });
+        node.addClass('belay-cap-source');
+      },
+      capDroppable: function(node, rc, acceptor) {
+        node.droppable({
+          scope: 'default',
+          activeClass: 'belay-possible',
+          hoverClass: 'belay-selected',
+          drop: function(evt, ui) {
+            var info = capDraggingInfo;
+            acceptor(info.generator(info.resourceClass), info.resourceClass);
+          },
+          accept: function(elt) {
+            return (rc === '*') || (elt.data('rc') === rc);
+          }
+        });
+
+        // Note:  Without preventDf on dragenter and dragover, the
+        // browser will not send the drop event
+        var preventDf = function(e) {
+          e.originalEvent.preventDefault();
+          return false;
+        };
+        node.bind('dragenter', preventDf);
+        node.bind('dragover', preventDf);
+        node.bind('drop', function(e) {
+          if (!e.originalEvent.dataTransfer) return;
+          var data = e.originalEvent.dataTransfer.getData('text/plain');
+          if (!data)
+            data = e.originalEvent.dataTransfer.getData('text/uri-list');
+          if (!data) return;
+          var qLoc = data.indexOf('?');
+          data = qLoc == -1 ? data : data.slice(qLoc);
+          var params = jQuery.parseQuery(data);
+          var scope = params.scope;
+          var cap = params.cap;
+
+          if (scope == rc) {
+            acceptor(capServer.restore(cap));
+          }
+        });
+
+        node.addClass('belay-cap-target');
+        node.hover(
+          function() { startDropHover(node, rc); },
+          function() { stopDropHover(node, rc); });
+      }
+    }
+  };
+
+  container.draggable({
+    containment: desk,
+    cursor: 'crosshair',
+    // handle: container.find('.belay-container-header'),
+    stack: '.belay-container',
+    stop: function(ev, ui) {
+      instState.window.left = container.css('left');
+      instState.window.top = container.css('top');
+      dirty(inst);
+    }
+  });
+
+  header.append('<div class="belay-control">×</div>');
+  var closeBox = header.find(':last-child');
+  closeBox.click(function() {
+    inst.capServer.revokeAll();
+    delete instances[inst.id];
+    container.hide(function() { container.remove(); });
+    inst.storageCap.remove(function() {}, function() {});
+  });
+  closeBox.hover(function() { closeBox.addClass('hover'); },
+                 function() { closeBox.removeClass('hover'); });
+
+  header.append('<div class="belay-control">↑</div>');
+  var maxBox = header.find(':last-child');
+  maxBox.click(function() {
+    container.hide(function() { container.remove(); });
+    launchExternal(inst);
+  });
+  maxBox.hover(function() { maxBox.addClass('hover'); },
+               function() { maxBox.removeClass('hover'); });
+
+  dirty(inst);
+
+  topDiv.load(inst.launchInfo.gadget.html, function() {
+    foop(inst.launchInfo.gadget.scripts, extras);
+  });
+};
 
 var launchNewInstance = function(inst) {
   var instState = inst.state;
@@ -408,10 +575,7 @@ var launchNewInstance = function(inst) {
       inst.capTunnel.sendOutpost(undefined, { info: launchInfo.info });
     }
     else if (launchInfo.gadget) {
-      alert("launchNewInstance: can't launch gadgets for now");
-      // get launchInfo.gadget.html & .scripts
-      // insert html into div
-      // cajaVM.compileModule(concat of scripts)
+      launchGadgetInstance(inst);
     }
     else {
       alert('launchNewInstance: no known way to launch this instance');
@@ -454,9 +618,6 @@ var initialize = function(instanceCaps) {
 
   setupDeskSizes(top);
   setupTestButton(top, function() { alert('test!'); });
-
-  var nextLeft = 100;
-  var nextTop = 50;
 
   function createInstanceFromTool(toolInfo) {
 

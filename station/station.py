@@ -20,7 +20,7 @@ import os
 import sys
 import uuid
 from django.utils import simplejson as json
-from pylib.belay import *
+from lib.py.belay import *
 
 from google.appengine.ext import db
 from google.appengine.ext import webapp
@@ -80,12 +80,12 @@ class BaseHandler(BcapHandler):
       super(BaseHandler, self).handle_exception(exc, debug_mode)
     
 
-class BelayGenerateHandler(webapp.RequestHandler):
+class BelayGenerateHandler(BaseHandler):
   def get(self):
     feed_uuid = uuid.uuid4()
     feed_id = str(feed_uuid)
     content = server_url + "/belay/launch?s=" + feed_id
-    xhr_content(content, "text/plain", self.response)
+    self.xhr_content(content, "text/plain")
 
 
 class BelayLaunchHandler(BaseHandler):
@@ -102,7 +102,7 @@ class BelayLaunchHandler(BaseHandler):
   	  }
 	  }
 
-    xhr_content(json.dumps(reply), "text/plain;charset=UTF-8", self.response)
+    self.xhr_content(json.dumps(reply), "text/plain;charset=UTF-8")
 
 
 class InstanceHandler(BaseHandler):
@@ -120,7 +120,7 @@ class InstanceHandler(BaseHandler):
   def delete(self):
     instance = self.validate_instance()
     instance.delete()
-    xhr_response(self.response)
+    self.bcapNullResponse()
 
 
 class InstancesHandler(BaseHandler):

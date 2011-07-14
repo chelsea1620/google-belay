@@ -32,8 +32,8 @@ handlers:
   script: station.py
 
 - url: /(.*\.(html|css|js|png))
-  script: lib/CORSstatic.py
+  script: lib/py/CORSstatic.py
 
 - url: /test
-  script: lib/test.py
+  script: lib/py/test.py
 

@@ -27,4 +27,3 @@ ek = os.environ.keys()
 ek.sort()
 for k in ek:
 	print "  ",k,"=",repr(os.environ[k])
-	

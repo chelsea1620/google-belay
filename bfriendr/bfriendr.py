@@ -18,7 +18,7 @@ import datetime
 import logging
 import os
 
-import lib.belay as CapServer
+import lib.py.belay as CapServer
 
 from django.utils import simplejson as json
 

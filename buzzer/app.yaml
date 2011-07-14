@@ -32,4 +32,4 @@ handlers:
   script: buzzer.py
 
 - url: /(.*\.(html|css|js|png))
-  script: lib/CORSstatic.py
+  script: lib/py/CORSstatic.py

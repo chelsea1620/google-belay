@@ -18,88 +18,36 @@ limitations under the License.
 <head>
   <meta charset="utf-8">
   <title>Hello Belay</title>
-  <style type="text/css">
-
-body {
-  background: #ccc;
-}
-
-#hello-thing {
-  width: 300px;
-  height: 200px;
-  text-align: center;
-  margin: 0 auto;
-  background: #fff url(earth.png) no-repeat scroll center 40px;
-}
-
-#hello-thing a {
-  text-decoration: none;
-}
-
-  </style>
+  <link rel="stylesheet" href="hello.css">
   <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.js"></script>
   <script type="text/javascript" src="lib/js/portQueue.js"></script>
   <script type="text/javascript" src="lib/js/windowremote.js"></script>
   <script type="text/javascript" src="lib/js/caps.js"></script>
 </head>
-<body>
-  <div id="hello-thing">
+<body id="hello-page">
+  <div class="hello-thing">
     <p>Hello World!</p>
     <a href="#">✪</a>
   </div>
   <script>
 
-var languageMap = {
-  ar: 'مرحبا العالم!',
-  cy: 'Helo byd!',
-  el: 'Γεια σας κόσμο!',
-  en: 'Hello World!',
-  es: '¡Hola, mundo!',
-  fi: 'Moikka maailma!',
-  is: 'Halló heimur!',
-  it: 'Ciao mondo!',
-  iw: 'שלום עולם!',
-  ja: 'こんにちは、世界！',
-  ko: '안녕하세요!',
-  hi: 'नमस्ते विश्व!',
-  nl: 'Hallo wereld!',
-  ru: 'Привет мир!',
-  sr: 'Здраво свете!',
-  sv: 'Hej världen!',
-  sw: 'Hello ulimwengu!',
-  th: 'สวัสดีชาวโลก',
-  vi: 'Xin chào thế giới!',
-  yi: 'העלא וועלט!',
-  zh: '世界您好！'
-};
-
-var languages = [];
-for (var l in languageMap) { languages.push(l); }
-
-var setLang = function(l) {
-  $('p').text(languageMap[l]);
-  // if (os.storage.get() != l) {
-  //   os.storage.put(l);
-  // }
-}
-
-var l = 'en'; // os.storage.get() || 'en';
-setLang(l);
-
-$('a').click(function() {
-  var l = languages[Math.floor(Math.random() * languages.length)];
-  setLang(l);
-  return false;
-});
+function initialize(launchInfo) { }
 
 var server = new CapServer();
 var tunnel = new CapTunnel(openerPort);
 var resolver = function(instID) { return tunnel.sendInterface; };
 tunnel.setLocalResolver(resolver);
-
 tunnel.setOutpostHandler(function(message) {
   initialize(message.seedSers.launch);
 });
 
+var topDiv = $('.hello-thing');
+var fakeDataStore;
+var storage = {
+  'get': function() { return fakeDataStore; },
+  'put': function(l) { fakeDataStore = l; }
+};
+
   </script>
+  <script type="text/javascript" src="hello.js"></script>
 </body>

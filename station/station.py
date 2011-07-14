@@ -15,11 +15,11 @@
 #!/usr/bin/env python
 
 import datetime
+import json
 import logging
 import os
 import sys
 import uuid
-from django.utils import simplejson as json
 from lib.py.belay import *
 
 from google.appengine.ext import db
@@ -96,6 +96,7 @@ class BelayLaunchHandler(BaseHandler):
 
     reply = {
       'page': "%s/your-stuff.html" % server_url,
+      # 'page': { 'html': "%s/your-stuff.html" % server_url },
   	  'info': {
   	    'instances': "%s/instances?s=%s" % (server_url, station.key().name()),
   	    'instanceBase': '%s/instance?s=%s&i=' % (server_url, station.key().name())
@@ -103,17 +104,18 @@ class BelayLaunchHandler(BaseHandler):
 	  }
 
     self.xhr_content(json.dumps(reply), "text/plain;charset=UTF-8")
+    # self.xhr_content(dataPreProcess(reply), "text/plain;charset=UTF-8")
 
 
 class InstanceHandler(BaseHandler):
   def get(self):
     instance = self.validate_instance()
-    self.bcapResponse(json.loads(instance.data))
+    self.bcapResponse(dataPostProcess(instance.data))
       
   def post(self):
     capValue = self.bcapRequest()
     instance = self.validate_instance()
-    instance.data = db.Text(json.dumps(capValue), 'UTF-8')
+    instance.data = db.Text(dataPreProcess(capValue), 'UTF-8')
     instance.put()
     self.bcapResponse(True)
   

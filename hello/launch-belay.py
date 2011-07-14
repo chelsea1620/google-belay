@@ -17,7 +17,10 @@
 from utils import *
 
 response = {
-    'page': server_url("/hello-belay.html"),
+    'page': {
+      'html': server_url("/hello-belay.html"),
+      'window': { 'width': 200, 'height': 120 }
+    }, 
     'info': { }
   }
 

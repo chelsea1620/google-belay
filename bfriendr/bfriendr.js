@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-var $ = os.jQuery;
+var $ = jQuery;
 
 var rcIntroduceYourself = 'friend/introduce-yourself';
 
@@ -33,7 +33,7 @@ var initMessagesUI = function(container, showHideMessages) {
   // i.e., hide this pane, detaching all timers, handlers, etc.
   showFriendPane.click(function() {
     if (pollIntervalID !== false) {
-      os.clearInterval(pollIntervalID);
+      clearInterval(pollIntervalID);
       pollIntervalID = false;
     }
     sendButton.unbind('click');
@@ -44,7 +44,7 @@ var initMessagesUI = function(container, showHideMessages) {
   var serCapRC = false;
   var serCapToSend = false;
 
-  os.ui.capDroppable(composeTextArea, '*', function(serCap, capRC) {
+  ui.capDroppable(composeTextArea, '*', function(serCap, capRC) {
     serCapToSend = serCap;
     serCapRC = capRC;
   });
@@ -57,9 +57,9 @@ var initMessagesUI = function(container, showHideMessages) {
     else {
       msgElt = capMsgTemplate.clone();
       var chitImg = msgElt.find('img:eq(0)');
-      os.ui.capDraggable(chitImg, msg.resource_class,
+      ui.capDraggable(chitImg, msg.resource_class,
         function(selectedRC) {
-          return os.capServer.restore(msg.capability);
+          return capServer.restore(msg.capability);
         });
     }
     msgElt.find('p:eq(1)').text(msg.message || 'Received blank message.');
@@ -78,7 +78,7 @@ var initMessagesUI = function(container, showHideMessages) {
 
   var refresh = function(friendName, conversationCap, postCap) {
     var handler = mkRefreshConvHandler(conversationCap);
-    pollIntervalID = os.setInterval(handler, 2000);
+    pollIntervalID = setInterval(handler, 2000);
     friendNameElt.text(friendName);
     composeTextArea.val('').focus();
     sendButton.click(function() {
@@ -163,7 +163,7 @@ var initCardUI = function(friendsCap, container, messageUI) {
   };
 
   refreshCards();
-  os.setInterval(refreshCards, 2000);
+  setInterval(refreshCards, 2000);
 
   return {
     newCard: newCard,
@@ -172,21 +172,21 @@ var initCardUI = function(friendsCap, container, messageUI) {
 };
 
 var initialize = function() {
-  // os.ui.resize('300', '480', true);
-  os.ui.resize('80', '80', true);
+  // ui.resize('300', '480', true);
+  ui.resize('80', '80', true);
 
-  var header = os.topDiv.find('.bfriendr-header');
-  var myCardDiv = os.topDiv.find('div.bfriendr-mycard');
-  var myCardToggle = os.topDiv.find('.bfriendr-header .bfriendr-nav');
+  var header = topDiv.find('.bfriendr-header');
+  var myCardDiv = topDiv.find('div.bfriendr-mycard');
+  var myCardToggle = topDiv.find('.bfriendr-header .bfriendr-nav');
   var myCardShown = false;
   var myCardImageDiv = myCardDiv.find('div.bfriendr-cardimg');
-  var cardListDiv = os.topDiv.find('div.bfriendr-cards');
-  var messagesDiv = os.topDiv.find('div.bfriendr-messages');
-  var addFriendArea = os.topDiv.find('.bfriendr-cards .bfriendr-add');
+  var cardListDiv = topDiv.find('div.bfriendr-cards');
+  var messagesDiv = topDiv.find('div.bfriendr-messages');
+  var addFriendArea = topDiv.find('.bfriendr-cards .bfriendr-add');
   var inviteButton = addFriendArea.find('button');
 
   for (var k in app.caps) {
-    app.caps[k] = os.capServer.restore(app.caps[k]);
+    app.caps[k] = capServer.restore(app.caps[k]);
   }
 
   var showHideMyCard = function(show) {
@@ -256,7 +256,7 @@ var initialize = function() {
       break;
     }
     if (draggedFile && uploadMyImageUrl) {
-      var fd = new os.FormData();
+      var fd = new FormData();
       fd.append('imageFile', draggedFile);
       $.ajax({
         url: uploadMyImageUrl,
@@ -280,7 +280,7 @@ var initialize = function() {
   });
 
   inviteButton.click(function(evt) {
-    var serverLink = 'http://' + os.window.serverBase;
+    var serverLink = 'http://' + window.serverBase;
     var to = addFriendArea.find('input[name=email]').val();
     var name = addFriendArea.find('input[name=name]').val();
     var message = 'Hello ' + name + '!\n\n' +
@@ -288,17 +288,17 @@ var initialize = function() {
                   'Visit this link: ' + serverLink +
                   '\n\nThen highlight and drop the link ' +
                   'below into your bfriendr window to accept the invite.\n\n';
-    var url = 'http://' + os.window.serverBase + 'nav.png?';
+    var url = 'http://' + window.serverBase + 'nav.png?';
     url += 'scope=' + rcIntroduceYourself + '&';
     url += 'cap=' + app.caps.introduceYourself.serialize();
-    os.window.gmail(to, name + ', come join bfriendr!', message + url);
+    window.gmail(to, name + ', come join bfriendr!', message + url);
   });
 
-  os.ui.capDraggable(myCardToggle, rcIntroduceYourself,
+  ui.capDraggable(myCardToggle, rcIntroduceYourself,
     function(selectedRC) { return app.caps.introduceYourself; });
-  os.ui.capDroppable(addFriendArea, rcIntroduceYourself,
+  ui.capDroppable(addFriendArea, rcIntroduceYourself,
     function(c) {
-      app.caps.introduceMeTo.post({introductionCap: os.capServer.restore(c) });
+      app.caps.introduceMeTo.post({introductionCap: capServer.restore(c) });
     });
 
   var messageUI = initMessagesUI(messagesDiv, showHideMessages);
@@ -310,10 +310,10 @@ $.ajax({
   url: 'http://localhost:9009/bfriendr.html',
   dataType: 'text',
   success: function(data, status, xhr) {
-    os.topDiv.html(data);
+    topDiv.html(data);
     initialize();
   },
   error: function(xhr, status, error) {
-    os.alert('Failed to load bfriendr html: ' + status);
+    alert('Failed to load bfriendr html: ' + status);
   }
 });

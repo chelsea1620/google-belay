@@ -163,12 +163,17 @@ class LaunchHandler(CapServer.CapHandler):
     var $ = os.jQuery;
 
     var app = %(app)s;
+    
+    var exports = Object.create(null);
+    exports["os"] = os;
+    exports["app"] = app;
+    Object.keys(os).forEach(function(name) { exports[name] = os[name];  });
 
     $.ajax({
       url: "%(server_url)s/bfriendr.js",
       dataType: "text",
       success: function(data, status, xhr) {
-        cajaVM.compileModule(data)({os: os, app: app});
+        cajaVM.compileModule(data)(exports);
       },
       error: function(xhr, status, error) {
         alert("Failed to load bfriendr: " + status);

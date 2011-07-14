@@ -38,7 +38,6 @@ def xhr_response(content, content_type):
   print ""
 
   sys.stdout.write(content)
-
+  
 def bcap_response(response):
   xhr_response(json.dumps({ 'value': response }), "application/json")
-

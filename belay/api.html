@@ -206,6 +206,33 @@ limitations under the License.
           <code>os.capServer.restore</code>.</dd>
         
       </dl>
+      <hr />
+      <h2>Capability Resource Classes</h2>
+      <dl class="belay-properties">
+        <dt>belay/generate</dt>
+        <dd>
+<pre>%% belay/generate
+&lt;&lt; cap(belay/instance)
+</pre>
+         Generates a new instance, and returns a capability to it.
+        </dd>
+        <dt>belay/instance</dt>
+        <dd>
+<pre>%% belay/instance
+&lt;&lt; {
+  page: { html: url, window: { width: int, height: int }},
+  gadget: { html: url, scripts: [ url ] },
+  info: any
+}
+</pre>
+         Provide information on the instance to enable launching it. The
+         optional <code>page</code> parameters are for launching into a
+         window. The optional <code>gadget</code> parameters are for launching
+         into an isolated part of another page. The <code>info</code> parameter
+         is passed into the environment of the launched code (via the tunnel).
+        </dd>
+        
+      </dl>
     <div id="about">©2011 Google</div>
   </div>
 </body>

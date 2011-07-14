@@ -20,7 +20,7 @@ var capServer = new CapServer();
 var defaultTools = [
     { name: 'Hello',
       icon: 'http://localhost:9002/tool-hello.png',
-      generate: 'http://localhost:9002/belay/generate'
+      generate: capServer.restore('http://localhost:9002/belay/generate')
     },
     { name: 'Sticky',
       icon: 'http://localhost:9003/tool-stickies.png',
@@ -40,8 +40,6 @@ var defaultTools = [
     }
   ];
 
-var capture1 = function(f, a) { return function() { return f(a); } };
-
 //
 // Desk top area
 //
@@ -59,7 +57,7 @@ var setupDeskSizes = function(top) {
   for (var p in deskSizes) {
     var s = deskSizes[p];
     controls.append('<a href="#">' + p + '</a> ');
-    controls.find(':last-child').click(capture1(resizeDesk, s));
+    controls.find(':last-child').click(function() { return resizeDesk(s); });
   }
 };
 
@@ -76,39 +74,54 @@ var setupTestButton = function(top, f) {
 // Instance Data
 //
 var instances = {};
-  // a map from instanceIDs to
-  //  { id: uuid,       -- the id of this instance
-  //    icap: url,      -- the URL of where to store/fetch the info
-  //    info: { },      -- the stored state of this instance
-  //    capServer: caps -- the cap server for this instance (if !info.remote)
-  //    capTunnel: capt -- the cap tunnel for this instance (if info.remote)
-  //  }
+/*
+  a map from instanceIDs to
+   { id: uuid,       -- the id of this instance
+     storageCap: cap,-- where station stores instance state (see next member)
+     state: {
+       iurl: url,    -- url to JS to load into a gadget (deprecated)
+       remote: bool, -- is old style is popped out
+
+       belayInstance: cap(belay/instance),
+       launchInfo: {
+          page: { html: url, window: { width: int, height: int } },
+          gadget: { html: url, scripts: [url] },
+          info: any
+       },
+
+       capSnapshot: string,
+       window: {     -- info on gadget location
+         top: int, left: int, width: int, height: int,
+       },
+       data: string  -- stored data for the instance
+     },
+     capServer: caps -- the cap server for this instance (if !state.remote)
+     capTunnel: capt -- the cap tunnel for this instance (if state.remote)
+   }
+*/
 
 var dirtyInstances = [];
 var dirtyProcess = function() {
   if (dirtyInstances.length <= 0) { return; }
   var instID = dirtyInstances.shift();
   var inst = instances[instID];
-  inst.info.capSnapshot = inst.capServer.snapshot();
-  inst.icap.post(inst.info);
-  if (dirtyInstances.length > 0) {
-    setTimeout(dirtyProcess, 1000);
-  }
+  inst.state.capSnapshot = inst.capServer.snapshot();
+  inst.storageCap.post(inst.state, dirtyProcess);
 };
 var dirty = function(inst) {
   var instID = inst.id;
   if (dirtyInstances.indexOf(instID) >= 0) return;
   dirtyInstances.push(instID);
-  if (dirtyInstances.length > 1) return;
-  setTimeout(dirtyProcess, 1000);
+  if (dirtyInstances.length === 1)
+    setTimeout(dirtyProcess, 1000);
 };
 var ensureSync = function(inst, k) {
   var ix = dirtyInstances.indexOf(inst.id);
   if (ix == -1) { k(); }
   else {
-    inst.info.capSnapshot = inst.capServer.snapshot();
     dirtyInstances.splice(ix, 1);
-    inst.icap.post(inst.info, k);
+    inst.state.capSnapshot = inst.capServer.snapshot();
+    inst.storageCap.post(inst.state, k);
   }
 };
 
@@ -116,10 +129,10 @@ var ensureSync = function(inst, k) {
 // CapServers
 //
 var instanceResolver = function(id) {
-  if (instances[id] && !instances[id].info.remote) {
+  if (instances[id] && !instances[id].state.remote) {
     return instances[id].capServer.publicInterface;
   }
-  if (instances[id] && instances[id].info.remote) {
+  if (instances[id] && instances[id].state.remote) {
     return instances[id].capTunnel.sendInterface;
   }
   if (id === capServer.instanceID) {
@@ -132,8 +145,8 @@ capServer.setResolver(instanceResolver);
 
 var setupCapServer = function(inst) {
   var capServer;
-  if ('capSnapshot' in inst.info) {
-    capServer = new CapServer(inst.info.capSnapshot);
+  if ('capSnapshot' in inst.state) {
+    capServer = new CapServer(inst.state.capSnapshot);
   }
   else {
     capServer = new CapServer();
@@ -192,22 +205,22 @@ var stopDropHover = function(node, rc) {
 var desk = undefined;
 var protoContainer = undefined;
 
-var launchEmbeddedInstance = function(inst) {
-  // TODO(jpolitz) check if inst.info claims to be remote, and pop out
-  var instInfo = inst.info;
+var launchOldInstance = function(inst) {
+  // TODO(jpolitz) check if inst.state claims to be remote, and pop out
+  var instState = inst.state;
   var container = protoContainer.clone();
   var header = container.find('.belay-container-header');
   var holder = container.find('.belay-container-holder');
   holder.empty();
   container.appendTo(desk);
-  container.css('left', instInfo.window.left)
-           .css('top', instInfo.window.top)
-           .width(instInfo.window.width || '10em')
-           .height(instInfo.window.height || '6em');
+  container.css('left', instState.window.left)
+           .css('top', instState.window.top)
+           .width(instState.window.width || '10em')
+           .height(instState.window.height || '6em');
   var extras = {
     storage: {
-      get: function() { return instInfo.data; },
-      put: function(d) { instInfo.data = d; dirty(inst); }
+      get: function() { return instState.data; },
+      put: function(d) { instState.data = d; dirty(inst); }
     },
     capServer: inst.capServer,
     ui: {
@@ -219,8 +232,8 @@ var launchEmbeddedInstance = function(inst) {
             minWidth: minWidth,
             minHeight: minHeight,
             stop: function(ev, ui) {
-              instInfo.window.width = container.width();
-              instInfo.window.height = container.height();
+              instState.window.width = container.width();
+              instState.window.height = container.height();
               dirty(inst);
             }
           });
@@ -233,8 +246,8 @@ var launchEmbeddedInstance = function(inst) {
               container.height() != minHeight) {
             container.width(minWidth);
             container.height(minHeight);
-            instInfo.window.width = container.width();
-            instInfo.window.height = container.height();
+            instState.window.width = container.width();
+            instState.window.height = container.height();
             dirty(inst);
           }
         }
@@ -314,8 +327,8 @@ var launchEmbeddedInstance = function(inst) {
     // handle: container.find('.belay-container-header'),
     stack: '.belay-container',
     stop: function(ev, ui) {
-      instInfo.window.left = container.css('left');
-      instInfo.window.top = container.css('top');
+      instState.window.left = container.css('left');
+      instState.window.top = container.css('top');
       dirty(inst);
     }
   });
@@ -326,7 +339,7 @@ var launchEmbeddedInstance = function(inst) {
     inst.capServer.revokeAll();
     delete instances[inst.id];
     container.hide(function() { container.remove(); });
-    inst.icap.remove(function() {}, function() {});
+    inst.storageCap.remove(function() {}, function() {});
   });
   closeBox.hover(function() { closeBox.addClass('hover'); },
                  function() { closeBox.removeClass('hover'); });
@@ -342,38 +355,18 @@ var launchEmbeddedInstance = function(inst) {
 
   dirty(inst);
 
-  foop(instInfo.iurl, holder, extras);
-};
-
-var launchWindowedInstance = function(inst) {
-  // TODO(jpolitz) check if inst.info claims to be remote, and pop out
-  var instInfo = inst.info;
-
-  // TODO(mzero) create cap for storage to station
-  // gets/puts from instInfo.data, and dirty(inst) on put
-
-  dirty(inst);
-  instInfo.belayInstance.get(function(launch) {
-    var port = windowManager.open(launch.page, inst.id);
-    setupCapTunnel(inst.id, port);
-    inst.capTunnel.sendOutpost(undefined, { launch: launch });
-  });
-};
-
-var launchInstance = function(inst) {
-    if ('belayInstance' in inst.info) return launchWindowedInstance(inst);
-    if ('iurl' in inst.info) return launchEmbeddedInstance(inst);
+  foop(instState.iurl, holder, extras);
 };
 
 var windowOptions = function(inst) {
-  var width = inst.info.window.width;
+  var width = inst.state.window.width;
   // NOTE(jpolitz): offset below is to deal with the window's frame
-  var height = inst.info.window.height + 12;
+  var height = inst.state.window.height + 12;
   return 'width=' + width + ',height=' + height;
 };
 
 var launchExternal = function(inst) {
-  inst.info.remote = true;
+  inst.state.remote = true;
   dirty(inst);
   ensureSync(inst, function() {
     var port = windowManager.open(
@@ -383,24 +376,67 @@ var launchExternal = function(inst) {
         windowOptions(inst));
     setupCapTunnel(inst.id, port);
     var restoreCap = capServer.grant(function() {
-        getAndLaunchInstance(inst.icap);
+        getAndLaunchInstance(inst.storageCap);
         return true;
       });
-    inst.capTunnel.initializeAsOutpost(capServer, [inst.icap, restoreCap]);
+    inst.capTunnel.initializeAsOutpost(capServer,
+        [inst.storageCap, restoreCap]);
   });
 };
 
-var getAndLaunchInstance = function(icap) {
-  icap.get(function(instInfo) {
+
+var launchNewInstance = function(inst) {
+  var instState = inst.state;
+
+  // TODO(mzero) create cap for storage to station
+  // gets/puts from instState.data, and dirty(inst) on put
+
+  dirty(inst);
+  instState.belayInstance.get(function(launchInfo) {
+    inst.launchInfo = launchInfo;
+    if (launchInfo.page) {
+      var features = [];
+      if ('width' in launchInfo.page.window)
+        features.push('width=' + Number(launchInfo.page.window.width));
+      if ('height' in launchInfo.page.window)
+        features.push('height=' + Number(launchInfo.page.window.height));
+
+      var port = windowManager.open(launchInfo.page.html, inst.id,
+          features.join(','));
+
+      setupCapTunnel(inst.id, port);
+      inst.capTunnel.sendOutpost(undefined, { info: launchInfo.info });
+    }
+    else if (launchInfo.gadget) {
+      alert("launchNewInstance: can't launch gadgets for now");
+      // get launchInfo.gadget.html & .scripts
+      // insert html into div
+      // cajaVM.compileModule(concat of scripts)
+    }
+    else {
+      alert('launchNewInstance: no known way to launch this instance');
+    }
+  });
+};
+
+var launchInstance = function(inst) {
+    if ('belayInstance' in inst.state) return launchNewInstance(inst);
+    if ('iurl' in inst.state) {
+      if (inst.state.remote) launchExternal(inst);
+      else launchOldInstance(inst);
+    }
+};
+
+var getAndLaunchInstance = function(storageCap) {
+  storageCap.get(function(instState) {
     var inst = {
-      icap: icap,
-      info: instInfo
+      storageCap: storageCap,
+      state: instState
     };
     setupCapServer(inst);
     inst.id = inst.capServer.instanceID; // TODO(mzero): hack!
     instances[inst.id] = inst;
-    if (instInfo.remote) launchExternal(inst);
-    else launchInstance(inst);
+    launchInstance(inst);
   },
   function(status) { alert('Failed to load instance: ' + status); });
 };
@@ -422,59 +458,62 @@ var initialize = function(instanceCaps) {
   var nextLeft = 100;
   var nextTop = 50;
 
+  function createInstanceFromTool(toolInfo) {
 
-  var createEmbeddedInstanceFromTool = function(info) {
-    $.ajax({
-      url: info.url,
-      dataType: 'text',
-      success: function(data, status, xhr) {
-        var inst = {
-          info: {
-            remote: false,
-            iurl: data,
-            info: undefined,
-            window: { top: nextTop += 10, left: nextLeft += 20}
-          }
-        };
-        setupCapServer(inst);
-        // TODO(arjun) still a hack. Should we be concatenaing URLs here?
-        inst.icap = capServer.grant(instanceInfo.instanceBase + inst.id);
-        instances[inst.id] = inst;
-        launchInstance(inst);
-        dirty(inst);
-      },
-      error: function(xhr, status, error) {
-        alert('Failed to createEmbededInstanceFromTool ' + info.name + ', status = ' + status);
-      }
-    });
-  };
+    function initializeAndLaunchNewInstance(inst) {
+      setupCapServer(inst);
+      // TODO(arjun) still a hack. Should we be concatenaing URLs here?
+      inst.storageCap = capServer.grant(instanceInfo.instanceBase + inst.id);
+      instances[inst.id] = inst;
+      launchInstance(inst);
+      dirty(inst);
+    }
 
-  var createWindowedInstanceFromTool = function(info) {
-    capServer.restore(info.generate).get(
-      function(data) {
-        var inst = {
-          info: {
-            belayInstance: data,
-            info: undefined
-          }
-        };
-        setupCapServer(inst);
-        // TODO(arjun) still a hack. Should we be concatenaing URLs here?
-        inst.icap = capServer.grant(instanceInfo.instanceBase + inst.id);
-        instances[inst.id] = inst;
-        launchInstance(inst);
-        dirty(inst);
-      },
-      function(error) {
-        alert('Failed to createInstanceFromTool ' + info.name +
-          ', error = ' + error);
-      }
-    );
-  };
+    function createOldInstanceFromTool() {
+      // Old generate cap protocol: it returns a string that is an old instance
+      // cap.  The old instance cap returns a string that is JS to run in a div.
+      $.ajax({
+        url: toolInfo.url,
+        dataType: 'text',
+        success: function(data, status, xhr) {
+          var inst = {
+            state: {
+              remote: false,
+              iurl: data,
+              info: undefined,
+              window: { top: nextTop += 10, left: nextLeft += 20}
+                // TODO(mzero): should happen in launch if window pos missing
+            }
+          };
+          initializeAndLaunchNewInstance(inst);
+        },
+        error: function(xhr, status, error) {
+          alert('Failed to createOldInstanceFromTool ' +
+            toolInfo.name + ', status = ' + status);
+        }
+      });
+    };
 
-  var createInstanceFromTool = function(info) {
-    if ('generate' in info) return createWindowedInstanceFromTool(info);
-    else return createEmbeddedInstanceFromTool(info);
+    function createNewInstanceFromTool() {
+      toolInfo.generate.get(
+        function(data) {
+          var inst = {
+            state: {
+              belayInstance: data,
+              info: undefined
+            }
+          };
+          initializeAndLaunchNewInstance(inst);
+        },
+        function(error) {
+          alert('Failed to createNewInstanceFromTool ' +
+            toolInfo.name + ', error = ' + error);
+        }
+      );
+    };
+
+    if ('generate' in toolInfo) return createNewInstanceFromTool();
+    else return createOldInstanceFromTool();
   };
 
   defaultTools.forEach(function(toolInfo) {
@@ -482,7 +521,7 @@ var initialize = function(instanceCaps) {
     tool.find('p').text(toolInfo.name);
     tool.find('img').attr('src', toolInfo.icon);
     tool.appendTo(toolbar);
-    tool.click(capture1(createInstanceFromTool, toolInfo));
+    tool.click(function() { createInstanceFromTool(toolInfo); return false; });
   });
 
   instanceCaps.forEach(getAndLaunchInstance);

@@ -39,21 +39,6 @@ class InstanceData(db.Model):
 
 
 
-class GenerateHandler(webapp.RequestHandler):
-  def get(self):
-    feed_uuid = uuid.uuid4()
-    feed_id = str(feed_uuid)
-    content = server_url + "/?s=" + feed_id
-    xhr_content(content, "text/plain", self.response)
-
-class BelayGenerateHandler(webapp.RequestHandler):
-  def get(self):
-    feed_uuid = uuid.uuid4()
-    feed_id = str(feed_uuid)
-    content = server_url + "/belay/launch?s=" + feed_id
-    xhr_content(content, "text/plain", self.response)
-
-
 class BaseHandler(BcapHandler):
   class InvalidStation(Exception):
     pass
@@ -95,41 +80,11 @@ class BaseHandler(BcapHandler):
       super(BaseHandler, self).handle_exception(exc, debug_mode)
     
 
-class LaunchHandler(BaseHandler):
+class BelayGenerateHandler(webapp.RequestHandler):
   def get(self):
-    station = self.validate_station()
-    if not station.is_saved():
-      station.put()
-
-    app = {
-	  'caps': {
-	    'instances': "%s/instances?s=%s" % (server_url, station.key().name()),
-	    'instanceBase': '%s/instance?s=%s&i=' % (server_url, station.key().name())
-	  }
-	}
-
-    template = """
-    var $ = os.jQuery;
-
-    var app = %(app)s;
-
-    $.ajax({
-      url: "%(server_url)s/station.js",
-      dataType: "text",
-      success: function(data, status, xhr) {
-        cajaVM.compileModule(data)({os: os, app: app});
-      },
-      error: function(xhr, status, error) {
-        alert("Failed to load station: " + status);
-      }
-    });
-    """
-
-    content = template % {
-      'app': json.dumps(app),
-      'server_url': server_url,
-    }
-  
+    feed_uuid = uuid.uuid4()
+    feed_id = str(feed_uuid)
+    content = server_url + "/belay/launch?s=" + feed_id
     xhr_content(content, "text/plain", self.response)
 
 
@@ -188,11 +143,9 @@ class InstancesHandler(BaseHandler):
 
 
 application = webapp.WSGIApplication(
-  [('/',        LaunchHandler),
-  ('/generate', GenerateHandler),
-  ('/instance', InstanceHandler),
-  ('/belay/generate', BelayGenerateHandler),
+  [('/belay/generate', BelayGenerateHandler),
   ('/belay/launch',   BelayLaunchHandler),
+  ('/instance', InstanceHandler),
   ('/instances',InstancesHandler),
   ],
   debug=True)

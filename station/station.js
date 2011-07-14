@@ -1,11 +1,11 @@
 // Copyright 2011 Google Inc. All Rights Reserved.
-// 
+//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-// 
+//
 //     http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -181,7 +181,7 @@ var startDropHover = function(node, rc) {
     for (var i = 0; i < sources.length; ++i) {
       var s = sources.eq(i);
       if (s.data('rc') == rc) s.addClass('belay-possible');
-    }    
+    }
   }
 };
 var stopDropHover = function(node, rc) {
@@ -348,28 +348,28 @@ var launchEmbeddedInstance = function(inst) {
 var launchWindowedInstance = function(inst) {
   // TODO(jpolitz) check if inst.info claims to be remote, and pop out
   var instInfo = inst.info;
-  
+
   // TODO(mzero) create cap for storage to station
   // gets/puts from instInfo.data, and dirty(inst) on put
-  
+
   dirty(inst);
   instInfo.belayInstance.get(function(launch) {
     var port = windowManager.open(launch.page, inst.id);
     setupCapTunnel(inst.id, port);
-    inst.capTunnel.sendOutpost(undefined, { launch: launch });    
+    inst.capTunnel.sendOutpost(undefined, { launch: launch });
   });
 };
 
 var launchInstance = function(inst) {
     if ('belayInstance' in inst.info) return launchWindowedInstance(inst);
-    if ('iurl' in inst.info)          return launchEmbeddedInstance(inst);
+    if ('iurl' in inst.info) return launchEmbeddedInstance(inst);
 };
 
 var windowOptions = function(inst) {
   var width = inst.info.window.width;
   // NOTE(jpolitz): offset below is to deal with the window's frame
   var height = inst.info.window.height + 12;
-  return "width=" + width + ",height=" + height;
+  return 'width=' + width + ',height=' + height;
 };
 
 var launchExternal = function(inst) {
@@ -455,7 +455,7 @@ var initialize = function(instanceCaps) {
         var inst = {
           info: {
             belayInstance: data,
-            info: undefined,
+            info: undefined
           }
         };
         setupCapServer(inst);
@@ -474,9 +474,9 @@ var initialize = function(instanceCaps) {
 
   var createInstanceFromTool = function(info) {
     if ('generate' in info) return createWindowedInstanceFromTool(info);
-    else                    return createEmbeddedInstanceFromTool(info);
+    else return createEmbeddedInstanceFromTool(info);
   };
-  
+
   defaultTools.forEach(function(toolInfo) {
     var tool = protoTool.clone();
     tool.find('p').text(toolInfo.name);
@@ -491,9 +491,9 @@ var initialize = function(instanceCaps) {
 // TODO(arjun): Retreiving vanilla HTML. Not a Belay cap?
 $(function() {
   topDiv = $('#aux div').eq(0);
-  
+
   var tunnel = new CapTunnel(window.belayPort);
-  tunnel.setOutpostHandler(function(outpost){
+  tunnel.setOutpostHandler(function(outpost) {
     instanceInfo = outpost.info;
     var instancesCap = capServer.restore(instanceInfo.instances);
     instancesCap.get(initialize, function(err) { alert(err.message); });

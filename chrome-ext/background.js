@@ -1,11 +1,11 @@
 // Copyright 2011 Google Inc. All Rights Reserved.
-// 
+//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-// 
+//
 //     http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,11 +23,11 @@ var MAKESTATION = 'http://localhost:9001/belay/generate';
 var stationIndex = 'stationIndex';
 
 var stations = (function() {
-  var stations = localStorage.stations ? 
-    JSON.parse(localStorage.stations) : {}; 
+  var stations = localStorage.stations ?
+    JSON.parse(localStorage.stations) : {};
 
   function setStation(name, stationURL) {
-    stations[name] = stationURL; 
+    stations[name] = stationURL;
     localStorage.stations = JSON.stringify(stations);
   }
 
@@ -47,13 +47,13 @@ var stations = (function() {
 var launchStation = function(data) {
   var page = data.page;
   var info = data.info;
-  chrome.tabs.create({ url: page }, 
+  chrome.tabs.create({ url: page },
     function(tab) {
       var tunnel = new CapTunnel(getTabPort(tab.id));
-      // TODO(jpolitz): make ext be the CapServer's id if we make one 
+      // TODO(jpolitz): make ext be the CapServer's id if we make one
       tunnel.sendOutpost('ext', [], { info: info });
     });
-}
+};
 
 //
 // Ports to pages
@@ -63,14 +63,14 @@ var getTabPort = (function() {
   var ports = Object.create(null);
 
   var getTabPort = function(tabID) {
-    if(!(tabID in ports)) ports[tabID] = new PortQueue();
+    if (!(tabID in ports)) ports[tabID] = new PortQueue();
     return ports[tabID];
-  } 
+  }
 
   var makeRelayPort = function(tabID) {
     var extPort = {
       postMessage: function(message, ports) {
-        if(ports && ports.length > 0) { throw 'Cannot send ports on ExtPorts'; }
+        if (ports && ports.length > 0) { throw 'TabPort: Can\'t send ports'; }
         // TODO(jpolitz): make sure tabID still exists
         chrome.tabs.sendRequest(tabID, message);
       },
@@ -83,7 +83,7 @@ var getTabPort = (function() {
     function(message, sender, sendResponse) {
       var tabID = sender.tab.id;
       var port = getTabPort(tabID);
-      if (message.type === 'init') port.setPort(makeRelayPort(tabID))
+      if (message.type === 'init') port.setPort(makeRelayPort(tabID));
       else port.onmessage(message);
     });
 

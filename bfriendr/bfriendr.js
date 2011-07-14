@@ -1,11 +1,11 @@
 // Copyright 2011 Google Inc. All Rights Reserved.
-// 
+//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-// 
+//
 //     http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -40,7 +40,7 @@ var initMessagesUI = function(container, showHideMessages) {
     showHideMessages(false);
     return false;
   });
-  
+
   var serCapRC = false;
   var serCapToSend = false;
 
@@ -57,7 +57,7 @@ var initMessagesUI = function(container, showHideMessages) {
     else {
       msgElt = capMsgTemplate.clone();
       var chitImg = msgElt.find('img:eq(0)');
-      os.ui.capDraggable(chitImg, msg.resource_class, 
+      os.ui.capDraggable(chitImg, msg.resource_class,
         function(selectedRC) {
           return os.capServer.restore(msg.capability);
         });

@@ -20,5 +20,5 @@
 
 # TODO(jpolitz): make this script more usable
 
-cp ../belay/portQueue.js ./includes/
-cp ../belay/caps.js ./includes/
+cp ../lib/js/portQueue.js ./includes/
+cp ../lib/js/caps.js ./includes/

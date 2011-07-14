@@ -113,8 +113,7 @@ class DirectCapServerTestCase(Defaults):
 
     result = invokeCapURL(extern_url, 'GET')
 
-    self.assertEqual(result.out.getvalue(), \
-      json.dumps({"value": {"success": True}}))
+    self.assertEqual(result, {"success": True})
  
 
 class GrantHandler(BcapHandler):

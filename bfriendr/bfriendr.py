@@ -315,10 +315,8 @@ class ConversationReadHandler(CapServer.CapHandler):
     readMine = CapServer.regrant(StreamReadHandler, friend_info)
     readTheirs = CapServer.Capability(friend_info.read_their_stream)
 
-    mine = readMine.invoke('GET')
-    mine = CapServer.dataPostProcess(mine.out.getvalue())['items']
-    theirs = readTheirs.invoke('GET')
-    theirs = CapServer.dataPostProcess(theirs.out.getvalue())['items']
+    mine = readMine.invoke('GET')['items']
+    theirs = readTheirs.invoke('GET')['items']
 
     combined = mine
     combined.extend(theirs)
@@ -377,7 +375,7 @@ class IntroduceYourselfHandler(CapServer.CapHandler):
     # TODO(jpolitz): should images be modeled as caps or no?
     if 'image' in card_data:
       response = CapServer.Capability(card_data['image']).invoke('GET')
-      their_card.image = db.Blob(response.out.getvalue())
+      their_card.image = db.Blob(response.content)
       their_card.imageType = response.headers['Content-Type']
     their_card.put()
 
@@ -407,27 +405,26 @@ class IntroduceMeToHandler(CapServer.CapHandler):
     cap = request['introductionCap']
 
     # TODO(jpolitz): useful abstraction so card.toJSON is unnecessary
-    response = cap.invoke('POST',
-                          {'card': card.toJSON(),
-                           'streamForYou': stream})
+    intro_info = cap.invoke('POST',
+                            {'card': card.toJSON(),
+                             'streamForYou': stream})
 
-    cap_response = CapServer.dataPostProcess(response.out.getvalue())
-    card_data = cap_response['card']
+    card_data = intro_info['card']
     friend_card = CardData(name=card_data['name'],
                            email=card_data['email'],
                            notes=card_data['notes'])
     # TODO(jpolitz): should images be modeled as caps or no?
     if 'image' in card_data:
       response = CapServer.Capability(card_data['image']).invoke('GET')
-      friend_card.image = db.Blob(response.out.getvalue())
+      friend_card.image = db.Blob(response.content)
       friend_card.imageType = response.headers['Content-Type']
     friend_card.put()
 
     new_friend.card=friend_card
     blank_card.delete()
 
-    if('streamForYou' in cap_response):
-      new_friend.read_their_stream = cap_response['streamForYou'].serialize()
+    if('streamForYou' in intro_info):
+      new_friend.read_their_stream = intro_info['streamForYou'].serialize()
 
     new_friend.put()
     self.bcapResponse({

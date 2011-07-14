@@ -19,6 +19,7 @@ import os
 import uuid
 import urlparse
 import json
+import re
 
 from google.appengine.api import urlfetch
 from google.appengine.ext import db
@@ -63,6 +64,13 @@ def invokeLocalCap(capURL, method, data=""):
 
   return handler.response
   
+# NOTE(jpolitz): BcapHandlers and urlfetch.fetch() return different data
+# structures.  invokeCapURL() needs to handle both, since it simulates a
+# local HTTP cap invocation through ProxyHandler.
+# If the invocation is of a normal capability, the value of the invocation
+# is processed normally.  However, if the response is an image, the form of
+# the response is that of a urlfetch.fetch() response object in both cases:
+# http://code.google.com/appengine/docs/python/urlfetch/responseobjects.html
 def invokeCapURL(capURL, meth, data=""):
   parsed = urlparse.urlparse(capURL)
   prefix = this_server_url_prefix()
@@ -70,9 +78,29 @@ def invokeCapURL(capURL, meth, data=""):
   parsed_prefix = parsed.scheme + "://" + parsed.netloc
 
   if parsed_prefix == prefix:
-    return invokeLocalCap(parsed.path, meth, data) 
+    result = invokeLocalCap(parsed.path, meth, data)
+    # TODO(jpolitz): other Content-Types
+    if re.match('image/.*', result.headers['Content-Type']):
+      # TODO(jpolitz): is this sufficient wrapping?
+      class Wrapper(object):
+        def __init__(self):
+          self.content = result.out.getvalue()
+          self.content_was_truncated = False
+          self.status_code = 200 
+          self.headers = result.headers
+          self.final_url = capURL
+
+      return Wrapper()
+    else:
+      return dataPostProcess(result.out.getvalue())
   else:
-    return urlfetch.fetch(capURL, method=meth, payload=data)
+    result = urlfetch.fetch(capURL, method=meth, payload=data) 
+    if result.status_code >= 400 and request.status_code <= 600:
+      raise BcapException('CapServer: remote invoke of ' + capURL + ' failed.')
+    elif re.match('image/.*', result.headers['Content-Type']):
+      return result 
+    else:
+      return dataPostProcess(result.content)
 
 class Capability(object):
   def __init__(self, ser):

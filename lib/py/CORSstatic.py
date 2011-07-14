@@ -41,8 +41,8 @@ if extension not in mimeTypeMap:
   print os.environ['SERVER_PROTOCOL'],"500 Unknown static file extension"
   sys.exit()
 
-basePath = os.path.dirname(os.path.dirname(os.environ['PATH_TRANSLATED']))
-	# presumes that this script is one level below the root of the application
+basePath = os.path.dirname(os.path.dirname(os.path.dirname(os.environ['PATH_TRANSLATED'])))
+	# presumes that this script is two levels below the root of the application
 filePath = os.path.join(basePath,pathInfo)
 
 f = open(filePath, 'rb')

@@ -18,7 +18,7 @@ from google.appengine.api import memcache
 from google.appengine.ext import db
 from google.appengine.ext import testbed
 from google.appengine.ext import webapp
-from lib.belay import *
+from lib.py.belay import *
 
 from google.appengine.ext.webapp import Request
 from google.appengine.ext.webapp import Response

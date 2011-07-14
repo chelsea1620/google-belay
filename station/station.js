@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-var $ = os.jQuery;
 
-var capServer = new os.CapServer();
-var instancesCap = capServer.restore(app.caps.instances);
+var topDiv;
+var instanceInfo;
+var capServer = new CapServer();
 
 var defaultTools = [
     { name: 'Hello',
@@ -46,8 +46,8 @@ var capture1 = function(f, a) { return function() { return f(a); } };
 // Desk top area
 //
 var resizeDesk = function(s) {
-  //os.topDiv.find('#belay-station-outer').width(s.w);
-  os.topDiv.find('#belay-desk').height(s.h);
+  //topDiv.find('#belay-station-outer').width(s.w);
+  topDiv.find('#belay-desk').height(s.h);
   return false;
 };
 var setupDeskSizes = function(top) {
@@ -92,7 +92,7 @@ var dirtyProcess = function() {
   inst.info.capSnapshot = inst.capServer.snapshot();
   inst.icap.post(inst.info);
   if (dirtyInstances.length > 0) {
-    os.setTimeout(dirtyProcess, 1000);
+    setTimeout(dirtyProcess, 1000);
   }
 };
 var dirty = function(inst) {
@@ -100,7 +100,7 @@ var dirty = function(inst) {
   if (dirtyInstances.indexOf(instID) >= 0) return;
   dirtyInstances.push(instID);
   if (dirtyInstances.length > 1) return;
-  os.setTimeout(dirtyProcess, 1000);
+  setTimeout(dirtyProcess, 1000);
 };
 var ensureSync = function(inst, k) {
   var ix = dirtyInstances.indexOf(inst.id);
@@ -133,10 +133,10 @@ capServer.setResolver(instanceResolver);
 var setupCapServer = function(inst) {
   var capServer;
   if ('capSnapshot' in inst.info) {
-    capServer = new os.CapServer(inst.info.capSnapshot);
+    capServer = new CapServer(inst.info.capSnapshot);
   }
   else {
-    capServer = new os.CapServer();
+    capServer = new CapServer();
     inst.id = capServer.instanceID;
   }
   inst.capServer = capServer;
@@ -144,7 +144,7 @@ var setupCapServer = function(inst) {
 };
 
 var setupCapTunnel = function(instID, port) {
-  var tunnel = new os.CapTunnel(port);
+  var tunnel = new CapTunnel(port);
   var instance;
   if (instances[instID]) {
     instance = instances[instID];
@@ -174,7 +174,7 @@ var stopDrag = function(info) {
 };
 var startDropHover = function(node, rc) {
   node.addClass('belay-selected');
-  var sources = os.topDiv.find('.belay-cap-source');
+  var sources = topDiv.find('.belay-cap-source');
   if (rc == '*') {
     sources.addClass('belay-possible');
   } else {
@@ -186,7 +186,7 @@ var startDropHover = function(node, rc) {
 };
 var stopDropHover = function(node, rc) {
   node.removeClass('belay-selected');
-  os.topDiv.find('.belay-cap-source').removeClass('belay-possible');
+  topDiv.find('.belay-cap-source').removeClass('belay-possible');
 };
 
 var desk = undefined;
@@ -291,7 +291,7 @@ var launchEmbeddedInstance = function(inst) {
           if (!data) return;
           var qLoc = data.indexOf('?');
           data = qLoc == -1 ? data : data.slice(qLoc);
-          var params = os.jQuery.parseQuery(data);
+          var params = jQuery.parseQuery(data);
           var scope = params.scope;
           var cap = params.cap;
 
@@ -342,7 +342,7 @@ var launchEmbeddedInstance = function(inst) {
 
   dirty(inst);
 
-  os.foop(instInfo.iurl, holder, extras);
+  foop(instInfo.iurl, holder, extras);
 };
 
 var launchWindowedInstance = function(inst) {
@@ -354,7 +354,7 @@ var launchWindowedInstance = function(inst) {
   
   dirty(inst);
   instInfo.belayInstance.get(function(launch) {
-    var port = os.window.openDirectly(launch.page);
+    var port = windowManager.open(launch.page, inst.id);
     setupCapTunnel(inst.id, port);
     inst.capTunnel.sendOutpost(undefined, { launch: launch });    
   });
@@ -376,7 +376,10 @@ var launchExternal = function(inst) {
   inst.info.remote = true;
   dirty(inst);
   ensureSync(inst, function() {
-    var port = os.window.open('http://localhost:9001/substation.js', inst.id,
+    var port = windowManager.open(
+        'http://localhost:9000/subbelay?url=' +
+                encodeURI('http://localhost:9001/substation.js'),
+        inst.id,
         windowOptions(inst));
     setupCapTunnel(inst.id, port);
     var restoreCap = capServer.grant(function() {
@@ -399,11 +402,11 @@ var getAndLaunchInstance = function(icap) {
     if (instInfo.remote) launchExternal(inst);
     else launchInstance(inst);
   },
-  function(status) { os.alert('Failed to load instance: ' + status); });
+  function(status) { alert('Failed to load instance: ' + status); });
 };
 
 var initialize = function(instanceCaps) {
-  var top = os.topDiv;
+  var top = topDiv;
   var toolbar = top.find('#belay-toolbar');
   desk = top.find('#belay-desk');
 
@@ -414,7 +417,7 @@ var initialize = function(instanceCaps) {
   desk.find('.belay-container').remove(); // remove the rest
 
   setupDeskSizes(top);
-  setupTestButton(top, function() { os.alert('test!'); });
+  setupTestButton(top, function() { alert('test!'); });
 
   var nextLeft = 100;
   var nextTop = 50;
@@ -435,13 +438,13 @@ var initialize = function(instanceCaps) {
         };
         setupCapServer(inst);
         // TODO(arjun) still a hack. Should we be concatenaing URLs here?
-        inst.icap = capServer.grant(app.caps.instanceBase + inst.id);
+        inst.icap = capServer.grant(instanceInfo.instanceBase + inst.id);
         instances[inst.id] = inst;
         launchInstance(inst);
         dirty(inst);
       },
       error: function(xhr, status, error) {
-        os.alert('Failed to createEmbededInstanceFromTool ' + info.name + ', status = ' + status);
+        alert('Failed to createEmbededInstanceFromTool ' + info.name + ', status = ' + status);
       }
     });
   };
@@ -457,13 +460,13 @@ var initialize = function(instanceCaps) {
         };
         setupCapServer(inst);
         // TODO(arjun) still a hack. Should we be concatenaing URLs here?
-        inst.icap = capServer.grant(app.caps.instanceBase + inst.id);
+        inst.icap = capServer.grant(instanceInfo.instanceBase + inst.id);
         instances[inst.id] = inst;
         launchInstance(inst);
         dirty(inst);
       },
       function(error) {
-        os.alert('Failed to createInstanceFromTool ' + info.name +
+        alert('Failed to createInstanceFromTool ' + info.name +
           ', error = ' + error);
       }
     );
@@ -486,14 +489,13 @@ var initialize = function(instanceCaps) {
 };
 
 // TODO(arjun): Retreiving vanilla HTML. Not a Belay cap?
-$.ajax({
-  url: 'http://localhost:9001/station.html',
-  dataType: 'text',
-  success: function(data, status, xhr) {
-    os.topDiv.html(data);
-    instancesCap.get(initialize, function(err) { os.alert(err.message); });
-  },
-  error: function(xhr, status, error) {
-    os.alert('Failed to load station: ' + status);
-  }
+$(function() {
+  topDiv = $('#aux div').eq(0);
+  
+  var tunnel = new CapTunnel(window.belayPort);
+  tunnel.setOutpostHandler(function(outpost){
+    instanceInfo = outpost.info;
+    var instancesCap = capServer.restore(instanceInfo.instances);
+    instancesCap.get(initialize, function(err) { alert(err.message); });
+  });
 });

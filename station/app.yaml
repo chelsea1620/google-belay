@@ -19,12 +19,6 @@ api_version: 1
 
 handlers:
 
-- url: /
-  script: station.py
-
-- url: /generate
-  script: station.py
-  
 - url: /instance
   script: station.py
 

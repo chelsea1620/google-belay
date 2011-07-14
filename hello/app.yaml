@@ -19,9 +19,6 @@ api_version: 1
 
 handlers:
 
-- url: /generate
-  script: generate.py
-
 - url: /belay/generate
   script: generate-belay.py
 

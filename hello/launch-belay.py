@@ -17,10 +17,14 @@
 from utils import *
 
 response = {
-    'page': {
+    'x-page': {
       'html': server_url("/hello-belay.html"),
       'window': { 'width': 200, 'height': 120 }
-    }, 
+    },
+    'gadget': {
+      'html': server_url("/hello-gadget.html"),
+      'scripts': [ server_url("/hello.js") ]
+    },
     'info': { }
   }
 

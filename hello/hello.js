@@ -12,8 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-var $ = os.jQuery;
-var me = os.topDiv;
+// before this script, be sure that the following is set:
+//    topDiv -- a jQuery object for the top div
+//    storage.get & storage.put -- save and restore state
 
 var languageMap = {
   ar: 'مرحبا العالم!',
@@ -42,22 +43,17 @@ var languageMap = {
 var languages = [];
 for (var l in languageMap) { languages.push(l); }
 
-me.load('http://localhost:9002/hello.html', function() {
-  var p = me.find('p');
-
-  var setLang = function(l) {
-    p.text(languageMap[l]);
-    if (os.storage.get() != l) {
-      os.storage.put(l);
-    }
+var setLang = function(l) {
+  topDiv.find('p').text(languageMap[l]);
+  if (storage.get() != l) {
+     storage.put(l);
   }
+}
 
-  var l = os.storage.get() || 'en';
+topDiv.find('a').click(function() {
+  var l = languages[Math.floor(Math.random() * languages.length)];
   setLang(l);
-
-  me.find('#pick-language').click(function() {
-    var l = languages[Math.floor(Math.random() * languages.length)];
-    setLang(l);
-    return false;
-  });
+  return false;
 });
+
+setLang(storage.get() || 'en');

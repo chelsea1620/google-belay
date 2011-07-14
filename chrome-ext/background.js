@@ -25,35 +25,69 @@ var stationIndex = 'stationIndex';
 var stations = (function() {
   var stations = localStorage.stations ?
     JSON.parse(localStorage.stations) : {};
+  // Not persisted
+  var byTab = Object.create(null);
 
-  function setStation(name, stationURL) {
+
+  function set(name, stationURL) {
     stations[name] = stationURL;
     localStorage.stations = JSON.stringify(stations);
   }
 
-  function getStation(name) {
+  function setTab(tabID, stationURL, stationTunnel) {
+    byTab[tabID] = { url: stationURL, tunnel: stationTunnel };
+  }
+
+  function get(name) {
     return stations[name];
   }
 
-  function stationNames() {
+  function getTab(tabID) {
+    return byTab[tabID];
+  }
+
+  function names() {
     return Object.keys(stations);
   }
 
-  return { set: setStation, get: getStation, names: stationNames };
+  return Object.freeze({
+    set: set,
+    get: get,
+    names: names,
+    setTab: setTab,
+    getTab: getTab
+  });
 })();
 
 // { info: instanceInfo, page: url } -> undef
 // opens a page, and sends info over
-var launchStation = function(data) {
+var launchStation = function(url, data) {
   var page = data.page;
   var info = data.info;
   chrome.tabs.create({ url: page },
     function(tab) {
       var tunnel = new CapTunnel(getTabPort(tab.id));
-      // TODO(jpolitz): make ext be the CapServer's id if we make one
-      tunnel.sendOutpost('ext', [], { info: info });
+      stations.setTab(tab.id, url, tunnel);
     });
 };
+
+// NOTE(jpolitz): This event is called twice on page load, and twice
+// on page refresh.  We only handle 'complete' events, so we can be
+// sure that the receiving tab is correctly set up.
+chrome.tabs.onUpdated.addListener(function(tabID, info, tab) {
+  if (info.status !== 'complete') return;
+  var stationTabInfo = stations.getTab(tabID);
+  if (stationTabInfo === undefined) return;
+  $.ajax({
+    url: stationTabInfo.url,
+    dataType: 'json',
+    success: function(data, status, xhr) {
+      if (data.page === info.url || info.url === undefined) {
+        stationTabInfo.tunnel.
+          sendOutpost('ext', [], { info: data.info });
+      }
+    }});
+});
 
 //
 // Ports to pages
@@ -83,7 +117,8 @@ var getTabPort = (function() {
     function(message, sender, sendResponse) {
       var tabID = sender.tab.id;
       var port = getTabPort(tabID);
-      if (message.type === 'init') port.setPort(makeRelayPort(tabID));
+      if (message.type === 'init' && !port.hasPort()) 
+        port.setPort(makeRelayPort(tabID));
       else port.onmessage(message);
     });
 

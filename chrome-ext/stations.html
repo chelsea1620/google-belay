@@ -34,7 +34,7 @@ $(document).ready(function() {
       url: url,
       dataType: 'json',
       success: function(data, status, xhr) {
-        bgPage.launchStation(data);
+        bgPage.launchStation(url, data);
         window.close();
       },
       failure: function(_) {

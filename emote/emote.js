@@ -12,21 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-var me = os.topDiv;
 
 var postComplete = function(succeeded) {
-  me.find('.emote-message-posting').hide();
-  var m = me.find(
+  topDiv.find('.emote-message-posting').hide();
+  var m = topDiv.find(
     succeeded ? '.emote-message-posted' : '.emote-message-failed');
   m.show();
-  os.setTimeout(function() { m.fadeOut('slow'); }, 3000);
+  setTimeout(function() { m.fadeOut('slow'); }, 3000);
 };
 
 var rcPost = 'urn:x-belay://resouce-class/social-feed/post';
 var showPanel = function(feedCap) {
-  me.find('.emote-panel').show();
-  me.find('.emote-post').click(function(ev) {
-    me.find('.emote-message-posting').show();
+  topDiv.find('.emote-panel').show();
+  topDiv.find('.emote-post').click(function(ev) {
+    topDiv.find('.emote-message-posting').show();
     feedCap.post(
       { body: ev.target.innerText, via: 'emote' },
       function() { postComplete(true); },
@@ -37,21 +36,19 @@ var showPanel = function(feedCap) {
   });
 };
 
-me.load('http://localhost:9005/emote.html', function() {
-  os.ui.resize(160, 90, false);
+ui.resize(160, 90, false);
 
-  var feedCap = os.storage.get();
+var feedCap = storage.get();
 
-  if (feedCap) {
-    showPanel(os.capServer.restore(feedCap));
-  }
-  else {
-    var invite = me.find('.emote-invite');
-    invite.show();
-    os.ui.capDroppable(invite, rcPost, function(ser) {
-      invite.hide();
-      showPanel(os.capServer.restore(ser));
-      os.storage.put(ser);
-    });
-  }
-});
+if (feedCap) {
+  showPanel(capServer.restore(feedCap));
+}
+else {
+  var invite = topDiv.find('.emote-invite');
+  invite.show();
+  ui.capDroppable(invite, rcPost, function(ser) {
+    invite.hide();
+    showPanel(capServer.restore(ser));
+    storage.put(ser);
+  });
+}

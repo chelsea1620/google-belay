@@ -157,26 +157,33 @@ class ReaderViewHandler(ViewHandler):
 
 class DataProfileHandler(BaseHandler):
   def post(self):
-    feed_id = self.validate_feed();
-    feed = FeedData(key_name=feed_id);
+    feed_id = self.validate_feed()
+    feed = FeedData(key_name=feed_id)
     
-    feed.name = self.request.get('name')
-    feed.location = self.request.get('location')
+    request = self.bcapRequest()
+    feed.name = request.get('name')
+    feed.location = request.get('location')
     feed.put()
 
     self.xhr_response()
 
 class DataPostHandler(BaseHandler):
   def post(self):
-    feed_id = self.validate_feed();
-    feed = FeedData(key_name=feed_id);
-
-    item = ItemData(parent=feed, body=self.request.get('body'))
-    v = self.request.get('when')
-    if (v):
+    feed_id = self.validate_feed()
+    feed = FeedData(key_name=feed_id)
+    
+    request = self.bcapRequest()
+    v = request.get('body', '')
+    if not v:
+      self.error(400, "Empty or missing posting body")
+      return
+      
+    item = ItemData(parent=feed, body=request['body'])
+    v = request.get('when', '')
+    if v:
       item.when = v
-    v = self.request.get('via')
-    if (v):
+    v = request.get('via', '')
+    if v:
       item.via = v
     item.put()
 

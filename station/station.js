@@ -416,9 +416,16 @@ var launchGadgetInstance = function(inst) {
     topDiv: topDiv,
     launchInfo: inst.launch.info,
     storage: {
-      get: function() { return instState.data; },
-      put: function(d) { instState.data = d; dirty(inst); }
+      get: function(k) { k(instState.data); },
+      put: function(d, k) { 
+        instState.data = d; 
+        dirty(inst); 
+        if (k) { k(); }
+      }
     },
+    // windowed instances require onBelayReady; gadgets also have it for
+    // uniformity
+    onBelayReady: function(callback) { callback(); },
     capServer: inst.capServer,
     ui: {
       resize: function(minWidth, minHeight, resizable) {

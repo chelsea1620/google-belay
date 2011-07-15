@@ -28,7 +28,7 @@ var defaultTools = [
     },
     { name: 'Buzzer',
       icon: 'http://localhost:9004/tool-buzzer.png',
-      url: 'http://localhost:9004/generate'
+      generate: capServer.restore('http://localhost:9004/belay/generate')
     },
     { name: 'Emote',
       icon: 'http://localhost:9005/tool-emote.png',

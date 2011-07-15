@@ -83,7 +83,7 @@ chrome.tabs.onUpdated.addListener(function(tabID, info, tab) {
     success: function(data, status, xhr) {
       if (data.page === info.url || info.url === undefined) {
         stationTabInfo.tunnel.
-          sendOutpost('ext', [], { info: data.info });
+          sendOutpost({ info: data.info }); 
       }
     }});
 });

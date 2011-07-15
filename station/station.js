@@ -109,7 +109,11 @@ var dirtyProcess = function() {
   if (dirtyInstances.length <= 0) { return; }
   var instID = dirtyInstances.shift();
   var inst = instances[instID];
-  inst.state.capSnapshot = inst.capServer.snapshot();
+  // TODO(arjun): who should do the saving? should windowed instances also
+  // have a capserver stored by station?
+  if (inst.capServer) {
+    inst.state.capSnapshot = inst.capServer.snapshot();
+  }
   inst.storageCap.post(inst.state, dirtyProcess);
 };
 var dirty = function(inst) {
@@ -412,9 +416,16 @@ var launchGadgetInstance = function(inst) {
     topDiv: topDiv,
     launchInfo: inst.launch.info,
     storage: {
-      get: function() { return instState.data; },
-      put: function(d) { instState.data = d; dirty(inst); }
+      get: function(k) { k(instState.data); },
+      put: function(d, k) { 
+        instState.data = d; 
+        dirty(inst); 
+        if (k) { k(); }
+      }
     },
+    // windowed instances require onBelayReady; gadgets also have it for
+    // uniformity
+    onBelayReady: function(callback) { callback(); },
     capServer: inst.capServer,
     ui: {
       resize: function(minWidth, minHeight, resizable) {
@@ -573,7 +584,14 @@ var launchNewInstance = function(inst) {
           features.join(','));
 
       setupCapTunnel(inst.id, port);
-      inst.capTunnel.sendOutpost(undefined, { info: launch.info });
+      inst.capTunnel.sendOutpost({ 
+        info: launch.info,
+        storage: capServer.grant({
+          get: function() { return instState.data; },
+          put: function(d) { instState.data = d; dirty(inst); }
+        })
+        .serialize()
+      });
     }
     else if (launch.gadget) {
       launchGadgetInstance(inst);

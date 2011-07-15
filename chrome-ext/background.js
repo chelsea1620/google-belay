@@ -12,6 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+var capServer = new CapServer('background');
+
+
 // { tabID : { callbackName : [ rcList, info ] }}
 var offerMap = Object.create(null);
 var acceptMap = Object.create(null);
@@ -19,30 +22,17 @@ var acceptMap = Object.create(null);
 //
 // Station setup
 //
-var MAKESTATION = 'http://localhost:9001/belay/generate';
-
 var stations = (function() {
   var stations = localStorage.stations ?
     JSON.parse(localStorage.stations) : {};
-  // Not persisted
-  var byTab = Object.create(null);
-
 
   function set(name, stationURL) {
     stations[name] = stationURL;
     localStorage.stations = JSON.stringify(stations);
   }
 
-  function setTab(tabID, stationURL, stationTunnel) {
-    byTab[tabID] = { url: stationURL, tunnel: stationTunnel };
-  }
-
   function get(name) {
     return stations[name];
-  }
-
-  function getTab(tabID) {
-    return byTab[tabID];
   }
 
   function names() {
@@ -53,20 +43,46 @@ var stations = (function() {
     set: set,
     get: get,
     names: names,
-    setTab: setTab,
-    getTab: getTab
   });
 })();
 
-// { info: instanceInfo, page: url } -> undef
+var MAKESTATION = 'http://localhost:9001/belay/generate';
+
+var makeStation = function(name, k) {
+  capServer.restore(MAKESTATION).get(
+    function(stationCap) {
+      // TODO(mzero): should be defensive about stationCap being a Cap
+      stations.set(name, stationCap.serialize());
+      if (k) k();
+    },
+    function(_) {
+      console.log('Failed to gen station');
+    });
+};
+
+var launchStation = function(name) {
+  launch(stations.get(name));
+}
+
+
+
+var launchedTabs = Object.create(null);
+
 // opens a page, and sends info over
-var launchStation = function(url, data) {
-  var page = data.page;
-  var info = data.info;
-  chrome.tabs.create({ url: page },
-    function(tab) {
-      var tunnel = new CapTunnel(getTabPort(tab.id));
-      stations.setTab(tab.id, url, tunnel);
+var launch = function(url) {
+  capServer.restore(url).get(
+    function(data) {
+      var page = data.page;
+      var info = data.info;
+      chrome.tabs.create({ url: page.html },
+        function(tab) {
+          var tunnel = new CapTunnel(getTabPort(tab.id));
+          launchedTabs[tab.id] = {
+            url: url, html: page.html, info: info, tunnel: tunnel };
+        });
+    },
+    function(_) {
+      console.log('Launch failed.');
     });
 };
 
@@ -75,17 +91,24 @@ var launchStation = function(url, data) {
 // sure that the receiving tab is correctly set up.
 chrome.tabs.onUpdated.addListener(function(tabID, info, tab) {
   if (info.status !== 'complete') return;
-  var stationTabInfo = stations.getTab(tabID);
-  if (stationTabInfo === undefined) return;
-  $.ajax({
-    url: stationTabInfo.url,
-    dataType: 'json',
-    success: function(data, status, xhr) {
-      if (data.page === info.url || info.url === undefined) {
-        stationTabInfo.tunnel.
-          sendOutpost({ info: data.info }); 
-      }
-    }});
+  var tabInfo = launchedTabs[tabID];
+  if (tabInfo === undefined) return;
+  
+  var sendToTunnel = function(info) {
+    tabInfo.tunnel.sendOutpost(capServer.dataPreProcess({ info: info }));
+  };
+  
+  if (tabInfo.info) {
+    sendToTunnel(tabInfo.info);
+    tabInfo.info = undefined;
+  } else {
+    capServer.restore(tabInfo.url).get(
+      function(data) {
+        if (data.page.html === info.html || info.url === undefined) {
+          sendToTunnel(data.info); 
+        }
+      });
+  }
 });
 
 //

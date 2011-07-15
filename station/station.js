@@ -392,15 +392,14 @@ var launchPageInstance = function(inst) {
       features.join(','));
 
   setupCapTunnel(inst.state.id, port);
-  inst.capTunnel.sendOutpost({ 
+  inst.capTunnel.sendOutpost(capServer.dataPreProcess({ 
     info: inst.launch.info,
     instanceID: inst.state.id,
     storage: capServer.grant({
       get: function() { return inst.state.data; },
       put: function(d) { inst.state.data = d; dirty(inst); }
     })
-    .serialize()
-  });
+  }));
 };
 
 var launchInstance = function(inst) {
@@ -497,8 +496,8 @@ $(function() {
 
   var tunnel = new CapTunnel(window.belayPort);
   tunnel.setOutpostHandler(function(outpost) {
-    instanceInfo = outpost.info;
-    var instancesCap = capServer.restore(instanceInfo.instances);
+    instanceInfo = capServer.dataPostProcess(outpost).info;
+    var instancesCap = instanceInfo.instances;
     instancesCap.get(initialize, function(err) { alert(err.message); });
   });
 });

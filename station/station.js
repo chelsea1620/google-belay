@@ -24,7 +24,7 @@ var defaultTools = [
     },
     { name: 'Sticky',
       icon: 'http://localhost:9003/tool-stickies.png',
-      url: 'http://localhost:9003/generate'
+      generate: capServer.restore('http://localhost:9003/belay/generate')
     },
     { name: 'Buzzer',
       icon: 'http://localhost:9004/tool-buzzer.png',
@@ -87,7 +87,7 @@ var instances = {};
        remote: bool, -- is old style is popped out
 
        belayInstance: cap(belay/instance),
-       launchInfo: {
+       launch: {
           page: { html: url, window: { width: int, height: int } },
           gadget: { html: url, scripts: [url] },
           info: any
@@ -410,6 +410,7 @@ var launchGadgetInstance = function(inst) {
   
   var extras = {
     topDiv: topDiv,
+    launchInfo: inst.launch.info,
     storage: {
       get: function() { return instState.data; },
       put: function(d) { instState.data = d; dirty(inst); }
@@ -547,8 +548,8 @@ var launchGadgetInstance = function(inst) {
 
   dirty(inst);
 
-  topDiv.load(inst.launchInfo.gadget.html, function() {
-    foop(inst.launchInfo.gadget.scripts, extras);
+  topDiv.load(inst.launch.gadget.html, function() {
+    foop(inst.launch.gadget.scripts, extras);
   });
 };
 
@@ -559,22 +560,22 @@ var launchNewInstance = function(inst) {
   // gets/puts from instState.data, and dirty(inst) on put
 
   dirty(inst);
-  instState.belayInstance.get(function(launchInfo) {
-    inst.launchInfo = launchInfo;
-    if (launchInfo.page) {
+  instState.belayInstance.get(function(launch) {
+    inst.launch = launch;
+    if (launch.page) {
       var features = [];
-      if ('width' in launchInfo.page.window)
-        features.push('width=' + Number(launchInfo.page.window.width));
-      if ('height' in launchInfo.page.window)
-        features.push('height=' + Number(launchInfo.page.window.height));
+      if ('width' in launch.page.window)
+        features.push('width=' + Number(launch.page.window.width));
+      if ('height' in launch.page.window)
+        features.push('height=' + Number(launch.page.window.height));
 
-      var port = windowManager.open(launchInfo.page.html, inst.id,
+      var port = windowManager.open(launch.page.html, inst.id,
           features.join(','));
 
       setupCapTunnel(inst.id, port);
-      inst.capTunnel.sendOutpost(undefined, { info: launchInfo.info });
+      inst.capTunnel.sendOutpost(undefined, { info: launch.info });
     }
-    else if (launchInfo.gadget) {
+    else if (launch.gadget) {
       launchGadgetInstance(inst);
     }
     else {

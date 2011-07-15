@@ -185,10 +185,6 @@ var initialize = function() {
   var addFriendArea = topDiv.find('.bfriendr-cards .bfriendr-add');
   var inviteButton = addFriendArea.find('button');
 
-  for (var k in app.caps) {
-    app.caps[k] = capServer.restore(app.caps[k]);
-  }
-
   var showHideMyCard = function(show) {
     if (show) {
       myCardDiv.slideDown('fast', function() {
@@ -217,7 +213,7 @@ var initialize = function() {
   var uploadMyImageUrl = undefined;
 
   var fetchMyCard = function() {
-    app.caps.myCard.get(function(cardInfo) {
+    launchInfo.myCard.get(function(cardInfo) {
       myCardDiv.find('input[name=name]').val(cardInfo.name);
       myCardDiv.find('input[name=email]').val(cardInfo.email);
       myCardDiv.find('textarea').val(cardInfo.notes);
@@ -276,7 +272,7 @@ var initialize = function() {
       email: myCardDiv.find('input[name=email]').val(),
       notes: myCardDiv.find('textarea').val()
     };
-    app.caps.myCard.put(cardInfo);
+    launchInfo.myCard.put(cardInfo);
   });
 
   inviteButton.click(function(evt) {
@@ -290,30 +286,19 @@ var initialize = function() {
                   'below into your bfriendr window to accept the invite.\n\n';
     var url = 'http://' + window.serverBase + 'nav.png?';
     url += 'scope=' + rcIntroduceYourself + '&';
-    url += 'cap=' + app.caps.introduceYourself.serialize();
+    url += 'cap=' + launchInfo.introduceYourself.serialize();
     window.gmail(to, name + ', come join bfriendr!', message + url);
   });
 
   ui.capDraggable(myCardToggle, rcIntroduceYourself,
-    function(selectedRC) { return app.caps.introduceYourself; });
+    function(selectedRC) { return launchInfo.introduceYourself; });
   ui.capDroppable(addFriendArea, rcIntroduceYourself,
     function(c) {
-      app.caps.introduceMeTo.post({introductionCap: capServer.restore(c) });
+      launchInfo.introduceMeTo.post({introductionCap: capServer.restore(c) });
     });
 
   var messageUI = initMessagesUI(messagesDiv, showHideMessages);
-  initCardUI(app.caps.friends, cardListDiv, messageUI);
+  initCardUI(launchInfo.friends, cardListDiv, messageUI);
 };
 
-// TODO(arjun): Retreiving vanilla HTML. Not a Belay cap?
-$.ajax({
-  url: 'http://localhost:9009/bfriendr.html',
-  dataType: 'text',
-  success: function(data, status, xhr) {
-    topDiv.html(data);
-    initialize();
-  },
-  error: function(xhr, status, error) {
-    alert('Failed to load bfriendr html: ' + status);
-  }
-});
+initialize();

@@ -28,9 +28,9 @@ from google.appengine.ext.webapp.util import run_wsgi_app
 
 
 
-server_url = "http://" + os.environ['HTTP_HOST']
-  # TODO(mzero): this should be safer
-
+def server_url(path):
+  return CapServer.this_server_url_prefix() + path
+  
 def delete_entity(entity):
   CapServer.revokeEntity(entity)
   entity.delete()
@@ -138,9 +138,8 @@ class IntroduceYourselfHandler(CapServer.CapHandler): pass
 
 class GenerateHandler(CapServer.BcapHandler):
   def get(self):
-    self.xhr_content(CapServer.grant(LaunchHandler, new_account()).serialize(), 
-        "text/plain")
-        
+    self.bcapResponse(CapServer.grant(LaunchHandler, new_account()))
+
 class GenerateAccountHandler(CapServer.BcapHandler):
   def get(self):
     self.bcapResponse(CapServer.grant(AccountInfoHandler, new_account()))
@@ -148,45 +147,22 @@ class GenerateAccountHandler(CapServer.BcapHandler):
 class LaunchHandler(CapServer.CapHandler):
   def get(self):
     account = self.get_entity()
-    app = {
-	  'caps': {
-      'friends':  CapServer.regrant(FriendsListHandler, account).serialize(),
-      'myCard':  CapServer.regrant(CardInfoHandler, account.my_card).serialize(),
-      'introduceYourself': CapServer.regrant(IntroduceYourselfHandler, account).serialize(),
-      'introduceMeTo': CapServer.regrant(IntroduceMeToHandler, account).serialize(),
+    response = {
+    'gadget': {
+      'html': server_url('/bfriendr.html'),
+      'scripts': [ server_url('/bfriendr.js') ]
+    },
+	  'info': {
+      'friends':  CapServer.regrant(FriendsListHandler, account),
+      'myCard':  CapServer.regrant(CardInfoHandler, account.my_card),
+      'introduceYourself': CapServer.regrant(IntroduceYourselfHandler, account),
+      'introduceMeTo': CapServer.regrant(IntroduceMeToHandler, account),
       # TODO(mzero): or should this be just the following?
-      'account':  CapServer.regrant(AccountInfoHandler, account).serialize(),
+      'account':  CapServer.regrant(AccountInfoHandler, account),
 	    }
 	  }
-    
-    template = """
-    var $ = os.jQuery;
-
-    var app = %(app)s;
-    
-    var exports = Object.create(null);
-    exports["os"] = os;
-    exports["app"] = app;
-    Object.keys(os).forEach(function(name) { exports[name] = os[name];  });
-
-    $.ajax({
-      url: "%(server_url)s/bfriendr.js",
-      dataType: "text",
-      success: function(data, status, xhr) {
-        cajaVM.compileModule(data)(exports);
-      },
-      error: function(xhr, status, error) {
-        alert("Failed to load bfriendr: " + status);
-      }
-    });
-    """
-
-    content = template % {
-      'app': json.dumps(app),
-      'server_url': server_url,
-    }
-  
-    self.xhr_content(content, "text/plain")
+      
+    self.bcapResponse(response)
 
 
 class AccountInfoHandler(CapServer.CapHandler):
@@ -435,7 +411,7 @@ class IntroduceMeToHandler(CapServer.CapHandler):
 # Externally Visible URL Paths
 application = webapp.WSGIApplication(
   [(r'/cap/.*', CapServer.ProxyHandler),
-   ('/generate', GenerateHandler),
+   ('/belay/generate', GenerateHandler),
    ('/generate-account', GenerateAccountHandler),
   ],
   debug=True)

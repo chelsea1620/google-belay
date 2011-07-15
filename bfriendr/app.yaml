@@ -19,7 +19,7 @@ api_version: 1
 
 handlers:
 
-- url: /generate
+- url: /belay/generate
   script: bfriendr.py
 
 - url: /generate-account

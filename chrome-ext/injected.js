@@ -21,6 +21,7 @@ chrome.extension.sendRequest({ type: 'init' });
 // yet exist on the page
 chrome.extension.onRequest.addListener(
   function(message, sender, sendResponse) {
+    // This data field simulates the data field on PostMessage events.
     divChannel.innerText = JSON.stringify({data: message});
 
     var evt = document.createEvent('Event');

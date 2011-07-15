@@ -492,35 +492,31 @@ var CAP_EXPORTS = (function() {
   };
 
   CapTunnel.prototype.initializeAsOutpost = function(server, seedCaps) {
-    this.sendOutpost(server.instanceID,
-      seedCaps.map(function(cap) { return cap.serialize(); }));
+    this.sendOutpost({
+      instID: server.instanceID,
+      seedSers: seedCaps.map(function(cap) { return cap.serialize(); })
+    });
   };
 
-  CapTunnel.prototype.sendOutpost = function(instID, seedSers, extras) {
+  CapTunnel.prototype.sendOutpost = function(outpostData) {
     var message = {
       op: 'outpost',
-      instID: instID,
-      seedSers: seedSers
+      outpostData: outpostData
     };
-    for (var i in extras) {
-      if (extras.hasOwnProperty(i) && !message.hasOwnProperty(i)) {
-        message[i] = extras[i];
-      }
-    }
     this.port.postMessage(message);
   };
 
   CapTunnel.prototype.handleOutpost = function(message) {
     this._outpostMessage = message;
     if (this.hasOwnProperty('_outpostHandler')) {
-      this._outpostHandler(message);
+      this._outpostHandler(message.outpostData);
     }
   };
 
   CapTunnel.prototype.setOutpostHandler = function(callback) {
     this._outpostHandler = callback;
     if (this.hasOwnProperty('_outpostMessage')) {
-      this._outpostHandler(this._outpostMessage);
+      this._outpostHandler(this._outpostMessage.outpostData);
     }
   };
 

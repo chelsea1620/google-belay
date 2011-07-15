@@ -83,9 +83,6 @@ var instances = {};
    { id: uuid,       -- the id of this instance
      storageCap: cap,-- where station stores instance state (see next member)
      state: {
-       iurl: url,    -- url to JS to load into a gadget (deprecated)
-       remote: bool, -- is old style is popped out
-
        belayInstance: cap(belay/instance),
        launch: {
           page: { html: url, window: { width: int, height: int } },
@@ -137,10 +134,10 @@ var ensureSync = function(inst, k) {
 // CapServers
 //
 var instanceResolver = function(id) {
-  if (instances[id] && !instances[id].state.remote) {
+  if (instances[id] && !instances[id].capServer) {
     return instances[id].capServer.publicInterface;
   }
-  if (instances[id] && instances[id].state.remote) {
+  if (instances[id] && instances[id].capTunnel) {
     return instances[id].capTunnel.sendInterface;
   }
   if (id === capServer.instanceID) {
@@ -212,187 +209,6 @@ var stopDropHover = function(node, rc) {
 
 var desk = undefined;
 var protoContainer = undefined;
-
-var launchOldInstance = function(inst) {
-  // TODO(jpolitz) check if inst.state claims to be remote, and pop out
-  var instState = inst.state;
-  var container = protoContainer.clone();
-  var header = container.find('.belay-container-header');
-  var holder = container.find('.belay-container-holder');
-  holder.empty();
-  var topDiv = $('<div></div>').prependTo(holder);
-  container.appendTo(desk);
-  container.css('left', instState.window.left)
-           .css('top', instState.window.top)
-           .width(instState.window.width || '10em')
-           .height(instState.window.height || '6em');
-  var extras = {
-    topDiv: topDiv,
-    storage: {
-      get: function() { return instState.data; },
-      put: function(d) { instState.data = d; dirty(inst); }
-    },
-    capServer: inst.capServer,
-    ui: {
-      resize: function(minWidth, minHeight, resizable) {
-        if (resizable) {
-          container.resizable({
-            containment: desk,
-            handles: 'se',
-            minWidth: minWidth,
-            minHeight: minHeight,
-            stop: function(ev, ui) {
-              instState.window.width = container.width();
-              instState.window.height = container.height();
-              dirty(inst);
-            }
-          });
-          if (container.width() < minWidth) container.width(minWidth);
-          if (container.height() < minHeight) container.height(minHeight);
-        }
-        else {
-          container.resizable('destroy');
-          if (container.width() != minWidth ||
-              container.height() != minHeight) {
-            container.width(minWidth);
-            container.height(minHeight);
-            instState.window.width = container.width();
-            instState.window.height = container.height();
-            dirty(inst);
-          }
-        }
-      },
-      capDraggable: function(node, rc, generator) {
-        var helper = node.clone();
-        var info = {
-          node: node,
-          resourceClass: rc,
-          generator: function(rc) {
-            var cap = generator(rc);
-            dirty(inst);
-            return cap.serialize();
-          }
-        };
-        node.data('rc', rc);
-        node.draggable({
-          appendTo: desk,
-          helper: function() { return helper; },
-          start: function() { startDrag(info); },
-          stop: function() { stopDrag(info); },
-          scope: 'default',
-          zIndex: 9999
-        });
-        node.addClass('belay-cap-source');
-      },
-      capDroppable: function(node, rc, acceptor) {
-        node.droppable({
-          scope: 'default',
-          activeClass: 'belay-possible',
-          hoverClass: 'belay-selected',
-          drop: function(evt, ui) {
-            var info = capDraggingInfo;
-            acceptor(info.generator(info.resourceClass), info.resourceClass);
-          },
-          accept: function(elt) {
-            return (rc === '*') || (elt.data('rc') === rc);
-          }
-        });
-
-        // Note:  Without preventDf on dragenter and dragover, the
-        // browser will not send the drop event
-        var preventDf = function(e) {
-          e.originalEvent.preventDefault();
-          return false;
-        };
-        node.bind('dragenter', preventDf);
-        node.bind('dragover', preventDf);
-        node.bind('drop', function(e) {
-          if (!e.originalEvent.dataTransfer) return;
-          var data = e.originalEvent.dataTransfer.getData('text/plain');
-          if (!data)
-            data = e.originalEvent.dataTransfer.getData('text/uri-list');
-          if (!data) return;
-          var qLoc = data.indexOf('?');
-          data = qLoc == -1 ? data : data.slice(qLoc);
-          var params = jQuery.parseQuery(data);
-          var scope = params.scope;
-          var cap = params.cap;
-
-          if (scope == rc) {
-            acceptor(capServer.restore(cap));
-          }
-        });
-
-        node.addClass('belay-cap-target');
-        node.hover(
-          function() { startDropHover(node, rc); },
-          function() { stopDropHover(node, rc); });
-      }
-    }
-  };
-
-  container.draggable({
-    containment: desk,
-    cursor: 'crosshair',
-    // handle: container.find('.belay-container-header'),
-    stack: '.belay-container',
-    stop: function(ev, ui) {
-      instState.window.left = container.css('left');
-      instState.window.top = container.css('top');
-      dirty(inst);
-    }
-  });
-
-  header.append('<div class="belay-control">×</div>');
-  var closeBox = header.find(':last-child');
-  closeBox.click(function() {
-    inst.capServer.revokeAll();
-    delete instances[inst.id];
-    container.hide(function() { container.remove(); });
-    inst.storageCap.remove(function() {}, function() {});
-  });
-  closeBox.hover(function() { closeBox.addClass('hover'); },
-                 function() { closeBox.removeClass('hover'); });
-
-  header.append('<div class="belay-control">↑</div>');
-  var maxBox = header.find(':last-child');
-  maxBox.click(function() {
-    container.hide(function() { container.remove(); });
-    launchExternal(inst);
-  });
-  maxBox.hover(function() { maxBox.addClass('hover'); },
-               function() { maxBox.removeClass('hover'); });
-
-  dirty(inst);
-
-  foop(instState.iurl, extras);
-};
-
-var windowOptions = function(inst) {
-  var width = inst.state.window.width;
-  // NOTE(jpolitz): offset below is to deal with the window's frame
-  var height = inst.state.window.height + 12;
-  return 'width=' + width + ',height=' + height;
-};
-
-var launchExternal = function(inst) {
-  inst.state.remote = true;
-  dirty(inst);
-  ensureSync(inst, function() {
-    var port = windowManager.open(
-        'http://localhost:9000/subbelay?url=' +
-                encodeURI('http://localhost:9001/substation.js'),
-        inst.id,
-        windowOptions(inst));
-    setupCapTunnel(inst.id, port);
-    var restoreCap = capServer.grant(function() {
-        getAndLaunchInstance(inst.storageCap);
-        return true;
-      });
-    inst.capTunnel.initializeAsOutpost(capServer,
-        [inst.storageCap, restoreCap]);
-  });
-};
 
 var launchGadgetInstance = function(inst) {
   var instState = inst.state;
@@ -551,8 +367,9 @@ var launchGadgetInstance = function(inst) {
   header.append('<div class="belay-control">↑</div>');
   var maxBox = header.find(':last-child');
   maxBox.click(function() {
-    container.hide(function() { container.remove(); });
-    launchExternal(inst);
+    // container.hide(function() { container.remove(); });
+    // launchExternal(inst);
+    alert("pop-out not yet implemented");
   });
   maxBox.hover(function() { maxBox.addClass('hover'); },
                function() { maxBox.removeClass('hover'); });
@@ -564,7 +381,28 @@ var launchGadgetInstance = function(inst) {
   });
 };
 
-var launchNewInstance = function(inst) {
+var launchPageInstance = function(inst) {
+  var features = [];
+  if ('width' in launch.page.window)
+    features.push('width=' + Number(launch.page.window.width));
+  if ('height' in launch.page.window)
+    features.push('height=' + Number(launch.page.window.height));
+
+  var port = windowManager.open(launch.page.html, inst.id,
+      features.join(','));
+
+  setupCapTunnel(inst.id, port);
+  inst.capTunnel.sendOutpost({ 
+    info: launch.info,
+    storage: capServer.grant({
+      get: function() { return instState.data; },
+      put: function(d) { instState.data = d; dirty(inst); }
+    })
+    .serialize()
+  });
+};
+
+var launchInstance = function(inst) {
   var instState = inst.state;
 
   // TODO(mzero) create cap for storage to station
@@ -574,40 +412,15 @@ var launchNewInstance = function(inst) {
   instState.belayInstance.get(function(launch) {
     inst.launch = launch;
     if (launch.page) {
-      var features = [];
-      if ('width' in launch.page.window)
-        features.push('width=' + Number(launch.page.window.width));
-      if ('height' in launch.page.window)
-        features.push('height=' + Number(launch.page.window.height));
-
-      var port = windowManager.open(launch.page.html, inst.id,
-          features.join(','));
-
-      setupCapTunnel(inst.id, port);
-      inst.capTunnel.sendOutpost({ 
-        info: launch.info,
-        storage: capServer.grant({
-          get: function() { return instState.data; },
-          put: function(d) { instState.data = d; dirty(inst); }
-        })
-        .serialize()
-      });
+      launchPageInstance(inst);
     }
     else if (launch.gadget) {
       launchGadgetInstance(inst);
     }
     else {
-      alert('launchNewInstance: no known way to launch this instance');
+      alert('launchInstance: no known way to launch this instance');
     }
   });
-};
-
-var launchInstance = function(inst) {
-    if ('belayInstance' in inst.state) return launchNewInstance(inst);
-    if ('iurl' in inst.state) {
-      if (inst.state.remote) launchExternal(inst);
-      else launchOldInstance(inst);
-    }
 };
 
 var getAndLaunchInstance = function(storageCap) {
@@ -649,51 +462,21 @@ var initialize = function(instanceCaps) {
       dirty(inst);
     }
 
-    function createOldInstanceFromTool() {
-      // Old generate cap protocol: it returns a string that is an old instance
-      // cap.  The old instance cap returns a string that is JS to run in a div.
-      $.ajax({
-        url: toolInfo.url,
-        dataType: 'text',
-        success: function(data, status, xhr) {
-          var inst = {
-            state: {
-              remote: false,
-              iurl: data,
-              info: undefined,
-              window: { top: nextTop += 10, left: nextLeft += 20}
-                // TODO(mzero): should happen in launch if window pos missing
-            }
-          };
-          initializeAndLaunchNewInstance(inst);
-        },
-        error: function(xhr, status, error) {
-          alert('Failed to createOldInstanceFromTool ' +
-            toolInfo.name + ', status = ' + status);
-        }
-      });
-    };
-
-    function createNewInstanceFromTool() {
-      toolInfo.generate.get(
-        function(data) {
-          var inst = {
-            state: {
-              belayInstance: data,
-              info: undefined
-            }
-          };
-          initializeAndLaunchNewInstance(inst);
-        },
-        function(error) {
-          alert('Failed to createNewInstanceFromTool ' +
-            toolInfo.name + ', error = ' + error);
-        }
-      );
-    };
-
-    if ('generate' in toolInfo) return createNewInstanceFromTool();
-    else return createOldInstanceFromTool();
+    toolInfo.generate.get(
+      function(data) {
+        var inst = {
+          state: {
+            belayInstance: data,
+            info: undefined
+          }
+        };
+        initializeAndLaunchNewInstance(inst);
+      },
+      function(error) {
+        alert('Failed to createNewInstanceFromTool ' +
+          toolInfo.name + ', error = ' + error);
+      }
+    );
   };
 
   defaultTools.forEach(function(toolInfo) {

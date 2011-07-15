@@ -43,11 +43,13 @@ var languageMap = {
 var languages = [];
 for (var l in languageMap) { languages.push(l); }
 
-var setLang = function(l) {
-  topDiv.find('p').text(languageMap[l]);
-  if (storage.get() != l) {
-     storage.put(l);
-  }
+var setLang = function(lang) {
+  topDiv.find('p').text(languageMap[lang]);
+  storage.get(function(storedLang) {
+    if (storedLang != lang) {
+     storage.put(lang);
+    }
+  });
 }
 
 topDiv.find('a').click(function() {
@@ -56,4 +58,7 @@ topDiv.find('a').click(function() {
   return false;
 });
 
-setLang(storage.get() || 'en');
+storage.get(function(lang) {
+  setLang(lang || 'en');
+});
+

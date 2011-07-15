@@ -17,7 +17,7 @@
 from lib.py.utils import *
 
 response = {
-    'x-page': {
+    'page': {
       'html': server_url("/hello-belay.html"),
       'window': { 'width': 200, 'height': 120 }
     },

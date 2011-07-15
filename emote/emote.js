@@ -36,19 +36,23 @@ var showPanel = function(feedCap) {
   });
 };
 
-ui.resize(160, 90, false);
+onBelayReady(function() {
+  ui.resize(160, 90, false);
+ 
 
-var feedCap = storage.get();
-
-if (feedCap) {
-  showPanel(capServer.restore(feedCap));
-}
-else {
-  var invite = topDiv.find('.emote-invite');
-  invite.show();
-  ui.capDroppable(invite, rcPost, function(ser) {
-    invite.hide();
-    showPanel(capServer.restore(ser));
-    storage.put(ser);
+  storage.get(function(feedCap) { 
+  
+    if (feedCap) {
+      showPanel(capServer.restore(feedCap));
+    }
+    else {
+      var invite = topDiv.find('.emote-invite');
+      invite.show();
+      ui.capDroppable(invite, rcPost, function(ser) {
+        invite.hide();
+        showPanel(capServer.restore(ser));
+        storage.put(ser);
+      });
+    }
   });
-}
+});

@@ -23,40 +23,12 @@ limitations under the License.
   <script type="text/javascript" src="lib/js/portQueue.js"></script>
   <script type="text/javascript" src="lib/js/windowremote.js"></script>
   <script type="text/javascript" src="lib/js/caps.js"></script>
+  <script src="lib/js/belay-client.js"></script>
+  <script type="text/javascript" src="hello.js"></script>
 </head>
 <body id="hello-page">
   <div class="hello-thing">
     <p>Hello World!</p>
     <a href="#">✪</a>
   </div>
-  <script>
-var storage;
-
-var server = new CapServer();
-var tunnel = new CapTunnel(openerPort);
-var resolver = function(instID) { return tunnel.sendInterface; };
-server.setResolver(resolver);
-
-var topDiv = $('.hello-thing');
-
-var onBelayReady = (function() {
-  var callbacks = [];
-  var isReady = false;
-
-  tunnel.setOutpostHandler(function(outpostData) {
-    storage = server.restore(outpostData.storage);
-    callbacks.forEach(function(f) { f(); });
-    isReady = true;
-    callbacks = null;
-  });
-
-  return function(callback) {
-    if (isReady) { callback(); }
-    else { callbacks.push(callback); }
-  };
-})();
-
-
-  </script>
-  <script type="text/javascript" src="hello.js"></script>
 </body>

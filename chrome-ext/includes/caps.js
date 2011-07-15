@@ -77,10 +77,10 @@ var CAP_EXPORTS = (function() {
                   type: method,
                   url: url,
                   success: function(data, status, xhr) {
-                    success(data);
+                    if (success) success(data);
                   },
                   error: function(xhr, status, message) {
-                    failure({status: Number(xhr.status) || 501,
+                    if (failure) failure({status: Number(xhr.status) || 501,
                              message: message});
                   }});
   };
@@ -215,16 +215,16 @@ var CAP_EXPORTS = (function() {
 
 
 
-  var CapServer = function(snapshot) {
+  var CapServer = function(instanceID, snapshot) {
+    if (typeof instanceID !== 'string') { throw 'CapServer: Bad instanceID'; }
     this.reviveMap = {};  // map capID -> key or cap or url
     this.implMap = {};    // map capID -> impls
     this.reviver = null;
-    this.instanceID = newUUIDv4();
+    this.instanceID = instanceID; 
     this.resolver = function(id) { return null; };
     if (snapshot) {
       snapshot = JSON.parse(snapshot);
       this.reviveMap = snapshot.map;
-      this.instanceID = snapshot.id;
     }
 
     this.publicInterface = (function(me) {
@@ -452,7 +452,7 @@ var CAP_EXPORTS = (function() {
   };
 
   CapServer.prototype.dataPostProcess = function(w) {
-    if (w === undefined) return w;
+    if (w === undefined || w.trim() === '' ) return undefined;
     var me = this;
     return JSON.parse(w, function(k, v) {
       try {
@@ -582,10 +582,12 @@ var CAP_EXPORTS = (function() {
 
   return {
     CapServer: CapServer,
-    CapTunnel: CapTunnel
+    CapTunnel: CapTunnel,
+    newUUIDv4: newUUIDv4
   };
 })();
 
 var CapServer = CAP_EXPORTS.CapServer;
 var CapTunnel = CAP_EXPORTS.CapTunnel;
+var newUUIDv4 = CAP_EXPORTS.newUUIDv4;
 

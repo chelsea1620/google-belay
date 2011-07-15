@@ -15,7 +15,7 @@
 
 var topDiv;
 var instanceInfo;
-var capServer = new CapServer();
+var capServer = new CapServer(newUUIDv4());
 
 var defaultTools = [
     { name: 'Hello',
@@ -80,9 +80,10 @@ var setupTestButton = function(top, f) {
 var instances = {};
 /*
   a map from instanceIDs to
-   { id: uuid,       -- the id of this instance
+   { 
      storageCap: cap,-- where station stores instance state (see next member)
      state: {
+       id: uuid,
        belayInstance: cap(belay/instance),
        launch: {
           page: { html: url, window: { width: int, height: int } },
@@ -114,14 +115,14 @@ var dirtyProcess = function() {
   inst.storageCap.post(inst.state, dirtyProcess);
 };
 var dirty = function(inst) {
-  var instID = inst.id;
+  var instID = inst.state.id;
   if (dirtyInstances.indexOf(instID) >= 0) return;
   dirtyInstances.push(instID);
   if (dirtyInstances.length === 1)
     setTimeout(dirtyProcess, 1000);
 };
 var ensureSync = function(inst, k) {
-  var ix = dirtyInstances.indexOf(inst.id);
+  var ix = dirtyInstances.indexOf(inst.state.id);
   if (ix == -1) { k(); }
   else {
     dirtyInstances.splice(ix, 1);
@@ -134,7 +135,7 @@ var ensureSync = function(inst, k) {
 // CapServers
 //
 var instanceResolver = function(id) {
-  if (instances[id] && !instances[id].capServer) {
+  if (instances[id] && instances[id].capServer) {
     return instances[id].capServer.publicInterface;
   }
   if (instances[id] && instances[id].capTunnel) {
@@ -151,11 +152,10 @@ capServer.setResolver(instanceResolver);
 var setupCapServer = function(inst) {
   var capServer;
   if ('capSnapshot' in inst.state) {
-    capServer = new CapServer(inst.state.capSnapshot);
+    capServer = new CapServer(inst.state.id, inst.state.capSnapshot);
   }
   else {
-    capServer = new CapServer();
-    inst.id = capServer.instanceID;
+    capServer = new CapServer(inst.state.id);
   }
   inst.capServer = capServer;
   capServer.setResolver(instanceResolver);
@@ -357,7 +357,7 @@ var launchGadgetInstance = function(inst) {
   var closeBox = header.find(':last-child');
   closeBox.click(function() {
     inst.capServer.revokeAll();
-    delete instances[inst.id];
+    delete instances[inst.state.id];
     container.hide(function() { container.remove(); });
     inst.storageCap.remove(function() {}, function() {});
   });
@@ -383,20 +383,21 @@ var launchGadgetInstance = function(inst) {
 
 var launchPageInstance = function(inst) {
   var features = [];
-  if ('width' in launch.page.window)
-    features.push('width=' + Number(launch.page.window.width));
-  if ('height' in launch.page.window)
-    features.push('height=' + Number(launch.page.window.height));
+  if ('width' in inst.launch.page.window)
+    features.push('width=' + Number(inst.launch.page.window.width));
+  if ('height' in inst.launch.page.window)
+    features.push('height=' + Number(inst.launch.page.window.height));
 
-  var port = windowManager.open(launch.page.html, inst.id,
+  var port = windowManager.open(inst.launch.page.html, inst.state.id,
       features.join(','));
 
-  setupCapTunnel(inst.id, port);
+  setupCapTunnel(inst.state.id, port);
   inst.capTunnel.sendOutpost({ 
-    info: launch.info,
+    info: inst.launch.info,
+    instanceID: inst.state.id,
     storage: capServer.grant({
-      get: function() { return instState.data; },
-      put: function(d) { instState.data = d; dirty(inst); }
+      get: function() { return inst.state.data; },
+      put: function(d) { inst.state.data = d; dirty(inst); }
     })
     .serialize()
   });
@@ -430,8 +431,7 @@ var getAndLaunchInstance = function(storageCap) {
       state: instState
     };
     setupCapServer(inst);
-    inst.id = inst.capServer.instanceID; // TODO(mzero): hack!
-    instances[inst.id] = inst;
+    instances[inst.state.id] = inst;
     launchInstance(inst);
   },
   function(status) { alert('Failed to load instance: ' + status); });
@@ -454,10 +454,11 @@ var initialize = function(instanceCaps) {
   function createInstanceFromTool(toolInfo) {
 
     function initializeAndLaunchNewInstance(inst) {
+      inst.state.id = newUUIDv4();
       setupCapServer(inst);
       // TODO(arjun) still a hack. Should we be concatenaing URLs here?
-      inst.storageCap = capServer.grant(instanceInfo.instanceBase + inst.id);
-      instances[inst.id] = inst;
+      inst.storageCap = capServer.grant(instanceInfo.instanceBase + inst.state.id);
+      instances[inst.state.id] = inst;
       launchInstance(inst);
       dirty(inst);
     }

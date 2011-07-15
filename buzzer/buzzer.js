@@ -29,16 +29,12 @@ var formAjax = function(form, callback) {
                input.type + ' named ' + input.name);
     }
   }
-  jQuery.ajax({
-    url: form.action,
-    type: form.method || 'GET',
-    data: data,
-    dataType: 'json',
-    error: function(xhr, status, err) {
-      alert('form update failed: ' + status);
-    },
-    success: function(data, status, xhr) { callback(data); }
-  });
+  capServer.restore(form.action).invoke(
+    form.method || 'GET',
+    data,
+    callback,
+    function() { alert('form update failed: ' + status); }
+    );
 };
 
 var rcPost = 'urn:x-belay://resouce-class/social-feed/post';

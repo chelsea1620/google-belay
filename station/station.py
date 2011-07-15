@@ -27,9 +27,28 @@ from google.appengine.ext import webapp
 from google.appengine.ext.webapp.util import run_wsgi_app
 
 
-server_url = "http://" + os.environ['HTTP_HOST']
-  # TODO(mzero): this should be safer
+def server_url(path):
+  return this_server_url_prefix() + path
+
+def keyName(key):
+  if isinstance(key, str):
+    return key
+  return key.name()
   
+def launch_url(stationKey):
+  return server_url('/belay/launch?s=' + keyName(stationKey))
+  
+def instances_url(stationKey):
+  return server_url('/instances?s=' + keyName(stationKey))
+
+def instance_url(stationKey, instanceKey):
+  return server_url('/instance?s=' + keyName(stationKey)
+    + '&i=' + keyName(instanceKey))
+
+def cap(url):
+  return { '@': url }
+
+
 
 class StationData(db.Model):
   pass
@@ -82,10 +101,9 @@ class BaseHandler(BcapHandler):
 
 class BelayGenerateHandler(BaseHandler):
   def get(self):
-    feed_uuid = uuid.uuid4()
-    feed_id = str(feed_uuid)
-    content = server_url + "/belay/launch?s=" + feed_id
-    self.xhr_content(content, "text/plain")
+    station_uuid = uuid.uuid4()
+    station_id = str(station_uuid)
+    self.bcapResponse(cap(launch_url(station_id)))
 
 
 class BelayLaunchHandler(BaseHandler):
@@ -95,16 +113,14 @@ class BelayLaunchHandler(BaseHandler):
       station.put()
 
     reply = {
-      'page': "%s/your-stuff.html" % server_url,
-      # 'page': { 'html': "%s/your-stuff.html" % server_url },
+      'page': { 'html': server_url("/your-stuff.html") },
   	  'info': {
-  	    'instances': "%s/instances?s=%s" % (server_url, station.key().name()),
-  	    'instanceBase': '%s/instance?s=%s&i=' % (server_url, station.key().name())
+  	    'instances': cap(instances_url(station.key())),
+  	    'instanceBase': instance_url(station.key(), '')
   	  }
 	  }
 
-    self.xhr_content(json.dumps(reply), "text/plain;charset=UTF-8")
-    # self.xhr_content(dataPreProcess(reply), "text/plain;charset=UTF-8")
+    self.bcapResponse(reply)    
 
 
 class InstanceHandler(BaseHandler):
@@ -133,13 +149,7 @@ class InstancesHandler(BaseHandler):
     q.ancestor(station)
     ids = []
     for instanceKey in q:
-      template ='%(server_url)s/instance?s=%(station_id)s&i=%(instance_id)s'
-      instance_url = template  % {
-          'server_url': server_url,
-          'station_id': station.key().name(),
-          'instance_id': instanceKey.name(),
-        }
-      ids.append({ '@' : instance_url })
+      ids.append(cap(instance_url(station.key(), instanceKey)))
     
     self.bcapResponse(ids)
 

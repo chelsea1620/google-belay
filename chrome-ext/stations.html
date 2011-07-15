@@ -21,78 +21,36 @@ limitations under the License.
 <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.js"></script>
 <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.14/jquery-ui.js"></script>
 <script>
-var bgPage = chrome.extension.getBackgroundPage();
-var stations = bgPage.stations;
-
-
 $(document).ready(function() {
   var bgPage = chrome.extension.getBackgroundPage();
   var stations = bgPage.stations;
 
-  var getAndLaunch = function(url) {
-    $.ajax({
-      url: url,
-      dataType: 'json',
-      success: function(data, status, xhr) {
-        bgPage.launchStation(url, data);
-        window.close();
-      },
-      failure: function(_) {
-        console.log('Failed to launch station.');
-      }
-    });
-  }
-
+  var defaultName = 'defaultStation';
+  
   if(stations.names().length === 0) {
-    $.ajax({
-      url: bgPage.MAKESTATION,
-      dataType: "text",
-      success: function(data, status, xhr) {
-        stations.set('defaultStation', data);
-        getAndLaunch(stations.get(stations.names()[0]));
-      },
-      failure: function(_) {
-        console.log('Failed to gen station');
-      }
+    bgPage.makeStation(defaultName, function() {
+      bgPage.launchStation(defaultName);
     });
   }
   else {
-    getAndLaunch(stations.get(stations.names()[0]));
+    bgPage.launchStation(stations.names()[0]);
   }
 
 if(false) {
   $('#generate').click(function(evt) {
     var name = $('#newStationName').val();
-    $.ajax({
-      url: bgPage.MAKESTATION,
-      dataType: "text",
-      success: function(data, status, xhr) {
-        stations.set(name, data);
-      },
-      failure: function(_) {
-        console.log('Failed to gen station');
-      }
-    });
+    bgPage.makeStation(name);
   });
 
   var accounts = $('#accountList');
   stations.names().forEach(function(name) {
-    var opt = $('<option></option>').text(name).val(stations.get(name));
+    var opt = $('<option></option>').text(name).val(name);
     accounts.append(opt);
   });
 
   $('#launch').click(function(evt) {
-    var stationURL = $("#accountList option:selected").val();
-    $.ajax({
-      url: stationURL,
-      dataType: 'json',
-      success: function(data, status, xhr) {
-        bgPage.launchStation(data);
-      },
-      failure: function(_) {
-        console.log('Failed to launch station.');
-      }
-    });
+    var name = $("#accountList option:selected").val();
+    bgPage.launchStation(name);
   });
 }
 });

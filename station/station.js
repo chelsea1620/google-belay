@@ -36,7 +36,7 @@ var defaultTools = [
     },
     { name: 'bfriendr',
       icon: 'http://localhost:9001/tool.png',
-      url: 'http://localhost:9009/generate'
+      generate: capServer.restore('http://localhost:9009/belay/generate')
     }
   ];
 

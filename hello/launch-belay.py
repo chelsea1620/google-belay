@@ -14,7 +14,7 @@
 
 #!/usr/bin/env python
 
-from utils import *
+from lib.py.utils import *
 
 response = {
     'x-page': {

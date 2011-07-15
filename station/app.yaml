@@ -19,9 +19,6 @@ api_version: 1
 
 handlers:
 
-- url: /instance
-  script: station.py
-
 - url: /belay/generate
   script: station.py
 
@@ -29,6 +26,9 @@ handlers:
   script: station.py
 
 - url: /instances
+  script: station.py
+
+- url: /instance
   script: station.py
 
 - url: /(.*\.(html|css|js|png))

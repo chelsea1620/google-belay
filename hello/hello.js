@@ -52,13 +52,14 @@ var setLang = function(lang) {
   });
 }
 
-topDiv.find('a').click(function() {
-  var l = languages[Math.floor(Math.random() * languages.length)];
-  setLang(l);
-  return false;
+onBelayReady(function() {
+  topDiv.find('a').click(function() {
+    var l = languages[Math.floor(Math.random() * languages.length)];
+    setLang(l);
+    return false;
+  });
+  
+  storage.get(function(lang) {
+    setLang(lang || 'en');
+  });
 });
-
-storage.get(function(lang) {
-  setLang(lang || 'en');
-});
-

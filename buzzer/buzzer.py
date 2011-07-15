@@ -28,25 +28,16 @@ from google.appengine.ext.webapp.util import run_wsgi_app
 os.environ['DJANGO_SETTINGS_MODULE'] = 'settings'
 from django.template.loader import render_to_string
 
+from lib.py import belay
 
-server_url = "http://" + os.environ['HTTP_HOST']
-  # TODO(mzero): this should be safer
+def server_url(path):
+  return belay.this_server_url_prefix() + path
 
-def xhr_response(response):
-  response.headers.add_header("Access-Control-Allow-Origin", "*")
+def server_feed_url(path, feed_id):
+  return server_url(path + "?" + feed_id)
 
-def xhr_content(content, content_type, response):
-  xhr_response(response)
-  response.out.write(content)
-  response.headers.add_header("Cache-Control", "no-cache")
-  response.headers.add_header("Content-Type", content_type)
-  response.headers.add_header("Expires", "Fri, 01 Jan 1990 00:00:00 GMT")
-  
-def render_to_response(tmpl_filename, dictionary, response):
-  """Note that this is different than Django's similarly named function"""
-  content = render_to_string(tmpl_filename, dictionary)
-  # django is misguided here - it doesn't read the file as UTF-8
-  xhr_content(content, "text/html;charset=UTF-8", response)
+def server_cap(path, feed_id):
+  return { '@': server_feed_url(path, feed_id) }
 
 
 class FeedData(db.Model):
@@ -80,7 +71,7 @@ class ItemData(db.Model):
 
 
 
-class BaseHandler(webapp.RequestHandler):
+class BaseHandler(belay.BcapHandler):
   class InvalidFeed(Exception):
     pass
 
@@ -96,6 +87,12 @@ class BaseHandler(webapp.RequestHandler):
       self.error(404)
     else:
       super(BaseHandler, self).handle_exception(exc, debug_mode)
+
+  def render_to_response(self, tmpl_filename, dictionary):
+    """Note that this is different than Django's similarly named function"""
+    content = render_to_string(tmpl_filename, dictionary)
+    # django is misguided here - it doesn't read the file as UTF-8
+    self.xhr_content(content, "text/html;charset=UTF-8")
     
 
 class LaunchHandler(BaseHandler):
@@ -103,46 +100,26 @@ class LaunchHandler(BaseHandler):
     feed_id = self.validate_feed();
     feed = FeedData.get_by_key_name(feed_id);
 
-    app = {
-      'caps': {
-        'editor': '%s/view/editor?%s' % (server_url, feed_id),
-        'post': '%s/data/post?%s' % (server_url, feed_id)
+    response = {
+      'gadget': {
+        'html': server_feed_url("/view/editor", feed_id),
+        'scripts': [ server_url("/buzzer.js") ]
       },
-      'data': {
+      'info': {
+        'post_cap': server_cap('/data/post', feed_id),
+        'editor_url': server_feed_url("/view/editor", feed_id),
         'name': feed and (feed.name + " in " + feed.location) or ''
       }
     }
 
-    template = """
-var $ = os.jQuery;
+    self.bcapResponse(response)    
 
-var app = %(app)s;
 
-$.ajax({
-  url: "%(server_url)s/buzzer.js",
-  dataType: "text",
-  success: function(data, status, xhr) {
-    cajaVM.compileModule(data)({os: os, app: app});
-  },
-  error: function(xhr, status, error) {
-    alert("Failed to load buzzer: " + status);
-  }
-});
-"""
-    content = template % {
-      'server_url': server_url,
-      'app': json.dumps(app)
-    }
-    
-    xhr_content(content, "text/plain", self.response)
-    
-    
-class GenerateHandler(webapp.RequestHandler):
+class GenerateHandler(BaseHandler):
   def get(self):
     feed_uuid = uuid.uuid4()
     feed_id = str(feed_uuid)
-    content = server_url + "/?" + feed_id
-    xhr_content(content, "text/plain", self.response)
+    self.bcapResponse(server_cap("/belay/launch", feed_id))
 
 
 class ViewHandler(BaseHandler):
@@ -158,17 +135,16 @@ class ViewHandler(BaseHandler):
     q.order('-when');
     items = q.fetch(10);
     
-    render_to_response('buzzer.tmpl',
-      { 'css_url': server_url + '/buzzer.css',
-        'chit_url': server_url + '/chit-24.png',
-        'post_url': server_url + '/data/post?' + feed_id,
-        'profile_url': server_url + '/data/profile?' + feed_id,
+    self.render_to_response('buzzer.tmpl',
+      { 'css_url': server_url('/buzzer.css'),
+        'chit_url': server_url('/chit-24.png'),
+        'post_url': server_feed_url('/data/post', feed_id),
+        'profile_url': server_feed_url('/data/profile', feed_id),
         'include_post': self.include_post(),
         'need_profile': need_profile,
         'feed': feed,
         'items': items,
-      },
-      self.response)
+      })
 
 class EditorViewHandler(ViewHandler):
   def include_post(self):
@@ -188,7 +164,7 @@ class DataProfileHandler(BaseHandler):
     feed.location = self.request.get('location')
     feed.put()
 
-    xhr_response(self.response)
+    self.xhr_response()
 
 class DataPostHandler(BaseHandler):
   def post(self):
@@ -204,13 +180,13 @@ class DataPostHandler(BaseHandler):
       item.via = v
     item.put()
 
-    xhr_response(self.response)
+    self.xhr_response()
 
 
 
 application = webapp.WSGIApplication(
-  [('/', LaunchHandler),
-  ('/generate', GenerateHandler),
+  [('/belay/launch', LaunchHandler),
+  ('/belay/generate', GenerateHandler),
   ('/view/editor', EditorViewHandler),
   ('/view/reader', ReaderViewHandler),
   ('/data/profile', DataProfileHandler),

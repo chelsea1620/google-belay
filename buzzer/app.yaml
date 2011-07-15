@@ -19,10 +19,10 @@ api_version: 1
 
 handlers:
 
-- url: /
+- url: /belay/launch
   script: buzzer.py
 
-- url: /generate
+- url: /belay/generate
   script: buzzer.py
 
 - url: /view/.*

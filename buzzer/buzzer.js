@@ -12,9 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-var me = os.topDiv;
-
-os.ui.resize(150, 200, true);
+ui.resize(150, 200, true);
 
 var formAjax = function(form, callback) {
   var data = {};
@@ -27,17 +25,17 @@ var formAjax = function(form, callback) {
       // do nothing
     }
     else {
-      os.alert('Unhandled type of form input: ' +
+      alert('Unhandled type of form input: ' +
                input.type + ' named ' + input.name);
     }
   }
-  os.jQuery.ajax({
+  jQuery.ajax({
     url: form.action,
     type: form.method || 'GET',
     data: data,
     dataType: 'json',
     error: function(xhr, status, err) {
-      os.alert('form update failed: ' + status);
+      alert('form update failed: ' + status);
     },
     success: function(data, status, xhr) { callback(data); }
   });
@@ -48,33 +46,31 @@ var rcPost = 'urn:x-belay://resouce-class/social-feed/post';
 var capReviver = function(resClass) {
   if (resClass == rcPost) {
     var poster = function(data) {
-      os.jQuery.ajax({
-        url: app.caps.post,
-        type: 'POST',
-        data: {
-          body: '' + data.body,
-          via: '' + data.via
+      launchInfo.post_cap.post(
+        {
+          body: data.body,
+          via: data.via
         },
-        success: function() { reload(); }
-      });
+        reload
+      );
     };
-    return os.capServer.buildSyncFunction(poster);
+    return capServer.buildSyncFunction(poster);
   }
   return null;
 };
 
-os.capServer.setReviver(capReviver);
+capServer.setReviver(capReviver);
 
 var reload = function() {
-  me.load(app.caps.editor, function() {
-    var forms = me.find('.buzzer-thing form');
-    me.find('.buzzer-thing form').submit(function(ev) {
+  topDiv.load(launchInfo.editor_url, function() {
+    var forms = topDiv.find('.buzzer-thing form');
+    topDiv.find('.buzzer-thing form').submit(function(ev) {
       formAjax(ev.target, reload);
       ev.preventDefault();
       return false;
     });
-    os.ui.capDraggable(me.find('.buzzer-chit'), rcPost, function(selectedRC) {
-      return os.capServer.grantKey(selectedRC);
+    ui.capDraggable(topDiv.find('.buzzer-chit'), rcPost, function(selectedRC) {
+      return capServer.grantKey(selectedRC);
     });
   });
 };

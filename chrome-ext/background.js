@@ -20,7 +20,6 @@ var acceptMap = Object.create(null);
 // Station setup
 //
 var MAKESTATION = 'http://localhost:9001/belay/generate';
-var stationIndex = 'stationIndex';
 
 var stations = (function() {
   var stations = localStorage.stations ?
@@ -117,8 +116,10 @@ var getTabPort = (function() {
     function(message, sender, sendResponse) {
       var tabID = sender.tab.id;
       var port = getTabPort(tabID);
-      if (message.type === 'init' && !port.hasPort()) 
-        port.setPort(makeRelayPort(tabID));
+      if (message.type === 'init') {
+        if (!port.hasPort()) port.setPort(makeRelayPort(tabID));
+        return;
+      }
       else port.onmessage(message);
     });
 

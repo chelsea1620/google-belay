@@ -22,6 +22,9 @@ from google.appengine.ext import db
 from google.appengine.ext import webapp
 from google.appengine.ext.webapp.util import run_wsgi_app
 
+from lib.py import belay
+
+
 class StickyData(db.Model):
   note_id = db.StringProperty(required=True);
   data = db.TextProperty();
@@ -38,26 +41,21 @@ def validate_note(note_id):
     raise InvalidNote()
 
 
-class DataHandler(webapp.RequestHandler):
+class DataHandler(belay.BcapHandler):
   def get(self):
     note_id = validate_note(self.request.query_string)
     q = StickyData.all()
     q.filter('note_id =', note_id)
     sdata = q.fetch(1)
     
-    content = u""
+    text = u""
     if len(sdata) == 1:
-      content = sdata[0].data
+      text = sdata[0].data
     
-    headers = self.response.headers
-    headers.add_header("Access-Control-Allow-Origin", "*")
-    headers.add_header("Cache-Control", "no-cache")
-    headers.add_header("Content-Type", "text/plain;charset=UTF-8")
-    headers.add_header("Expires", "Fri, 01 Jan 1990 00:00:00 GMT")
-    self.response.out.write(content)
+    self.bcapResponse(text)
     
       
-  def post(self):
+  def put(self):
     note_id = validate_note(self.request.query_string)
     q = StickyData.all()
     q.filter('note_id =', note_id)
@@ -68,11 +66,10 @@ class DataHandler(webapp.RequestHandler):
     else:
       sdata = StickyData(note_id=note_id)
       
-    sdata.data = db.Text(self.request.body, 'UTF-8')
-      # TODO: Should be fetching the encoding from the request headers
+    sdata.data = db.Text(self.bcapRequest())
     sdata.put()
 
-    self.response.headers.add_header("Access-Control-Allow-Origin", "*")
+    self.bcapNullResponse()
 
 
   def handle_exception(self, exc, debug_mode):

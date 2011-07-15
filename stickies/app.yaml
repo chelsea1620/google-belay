@@ -19,10 +19,10 @@ api_version: 1
 
 handlers:
 
-- url: /
+- url: /belay/launch
   script: launch.py
 
-- url: /generate
+- url: /belay/generate
   script: generate.py
 
 - url: /data

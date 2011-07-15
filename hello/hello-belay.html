@@ -31,22 +31,17 @@ limitations under the License.
   </div>
   <script>
 
-function initialize(launchInfo) { }
+var storage;
 
 var server = new CapServer();
 var tunnel = new CapTunnel(openerPort);
 var resolver = function(instID) { return tunnel.sendInterface; };
-tunnel.setLocalResolver(resolver);
-tunnel.setOutpostHandler(function(message) {
-  initialize(message.seedSers.launch);
+server.setResolver(resolver);
+tunnel.setOutpostHandler(function(outpostData) {
+  storage = server.restore(outpostData.storage);
 });
 
 var topDiv = $('.hello-thing');
-var fakeDataStore;
-var storage = {
-  'get': function() { return fakeDataStore; },
-  'put': function(l) { fakeDataStore = l; }
-};
 
   </script>
   <script type="text/javascript" src="hello.js"></script>

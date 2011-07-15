@@ -76,9 +76,9 @@ describe('CapServer', function() {
 
   beforeEach(function() {
     mockAjax.clear();
-    capServer1 = new CapServer();
-    capServer2 = new CapServer();
-    capServer3 = new CapServer();
+    capServer1 = new CapServer(newUUIDv4());
+    capServer2 = new CapServer(newUUIDv4());
+    capServer3 = new CapServer(newUUIDv4());
     mockAjax.setServer(capServer3);
   });
 
@@ -635,7 +635,7 @@ describe('CapServer', function() {
         });
 
         var makeNewServer = function() {
-          servers[0] = capServer1 = new CapServer(snapshot);
+          servers[0] = capServer1 = new CapServer(newUUIDv4(), snapshot);
           capServer1.setResolver(instanceResolver);
         };
         var setNewReviver = function() {
@@ -712,7 +712,7 @@ describe('CapServer', function() {
         it('should restore an unresolvable cap as dead', function() {
           var c1 = capServer1.grant(f100);
           var s1 = c1.serialize();
-          var capServer3 = new CapServer();
+          var capServer3 = new CapServer(newUUIDv4());
           var c1restored = capServer3.restore(s1);
           mkRunner(c1restored).runsGetAndExpectFailure();
         });

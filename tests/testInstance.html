@@ -27,7 +27,7 @@ limitations under the License.
       
       $(function(){
         var tunnel = new CapTunnel(openerPort);       log("Constructed tunnel");
-        var server = new CapServer();                 log("Constructed server");
+        var server = new CapServer(newUUIDv4());      log("Constructed server");
         tunnel.setLocalResolver(function(instID) {
           return server.publicInterface;
         });

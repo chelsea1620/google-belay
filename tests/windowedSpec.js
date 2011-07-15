@@ -124,8 +124,8 @@ describe('CapTunnels', function() {
         expect(outpostMessage.seedSers.length).toEqual(1);
         expect(typeof outpostMessage.seedSers[0]).toEqual('string');
 
-        localServer1 = new CapServer();
-        localServer2 = new CapServer();
+        localServer1 = new CapServer(newUUIDv4());
+        localServer2 = new CapServer(newUUIDv4());
 
         var ifaceMap = {};
         ifaceMap[outpostMessage.instID] = tunnel.sendInterface;

@@ -101,6 +101,10 @@ class LaunchHandler(BaseHandler):
     feed = FeedData.get_by_key_name(feed_id);
 
     response = {
+      'page': {
+        'html': server_url('/buzzer-belay.html'),
+        'window': { 'width': 150, 'height': 200 } 
+      },
       'gadget': {
         'html': server_feed_url("/view/editor", feed_id),
         'scripts': [ server_url("/buzzer.js") ]
@@ -153,7 +157,6 @@ class EditorViewHandler(ViewHandler):
 class ReaderViewHandler(ViewHandler):
   def include_post(self):
     return False
-
 
 class DataProfileHandler(BaseHandler):
   def post(self):

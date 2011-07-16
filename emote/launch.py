@@ -17,6 +17,10 @@
 from lib.py.utils import *
 
 response = {
+    'page': {
+      'html': server_url("/emote-belay.html"),
+      'window': { 'width': 160, 'height': 90 }
+    },
     'gadget': {
       'html': server_url("/emote.html"),
       'scripts': [ server_url("/emote.js") ]

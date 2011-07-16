@@ -395,9 +395,14 @@ var launchPageInstance = function(inst) {
   inst.capTunnel.sendOutpost(capServer.dataPreProcess({ 
     info: inst.launch.info,
     instanceID: inst.state.id,
+    initialSnapshot: (inst.state.capSnapshot ? inst.state.capSnapshot : false),
     storage: capServer.grant({
       get: function() { return inst.state.data; },
       put: function(d) { inst.state.data = d; dirty(inst); }
+    }),
+    snapshot: capServer.grant({
+      get: function() { return inst.state.capSnapshot; },
+      put: function(snap) { inst.state.capSnapshot = snap; dirty(inst); }
     })
   }));
 };
@@ -453,7 +458,7 @@ var initialize = function(instanceCaps) {
   function createInstanceFromTool(toolInfo) {
 
     function initializeAndLaunchNewInstance(inst) {
-      inst.state.id = newUUIDv4();
+      if(!inst.state.id) inst.state.id = newUUIDv4();
       setupCapServer(inst);
       // TODO(arjun) still a hack. Should we be concatenaing URLs here?
       inst.storageCap = capServer.grant(instanceInfo.instanceBase + inst.state.id);

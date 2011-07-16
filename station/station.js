@@ -66,15 +66,6 @@ var nextTop = 50;
 
 
 //
-// Testing
-//
-var setupTestButton = function(top, f) {
-  var controls = top.find('#belay-controls');
-  controls.append('<a href="#">test</a>');
-  controls.find(':last-child').click(f);
-};
-
-//
 // Instance Data
 //
 var instances = {};
@@ -90,8 +81,10 @@ var instances = {};
           gadget: { html: url, scripts: [url] },
           info: any
        },
-
        capSnapshot: string,
+
+       name: string,
+       opened: string, -- 'page', 'gadget', or 'none'
        window: {     -- info on gadget location
          top: int, left: int, width: int, height: int,
        },
@@ -407,39 +400,40 @@ var launchPageInstance = function(inst) {
   }));
 };
 
-var launchInstance = function(inst) {
+var launchInstance = function(inst, openType) {
   var instState = inst.state;
-
+  
   // TODO(mzero) create cap for storage to station
   // gets/puts from instState.data, and dirty(inst) on put
 
   dirty(inst);
   instState.belayInstance.get(function(launch) {
     inst.launch = launch;
-    if (launch.page) {
+    
+    var preferred;
+    if ('gadget' in launch) preferred = 'gadget';
+    else if ('page' in launch) preferred = 'page';
+    
+    if (openType == 'restore') {
+      if ('opened' in instState) openType = instState.opened;
+      else openType = preferred;
+    }
+    else if (openType == 'openAny') {
+      openType = preferred;
+    };
+    
+    if (openType == 'page' && launch.page) {
       launchPageInstance(inst);
     }
-    else if (launch.gadget) {
+    else if (openType == 'gadget' && launch.gadget) {
       launchGadgetInstance(inst);
     }
     else {
-      alert('launchInstance: no known way to launch this instance');
+      alert('launchInstance: this instance cannot open as a ' + openType);
     }
   });
 };
 
-var getAndLaunchInstance = function(storageCap) {
-  storageCap.get(function(instState) {
-    var inst = {
-      storageCap: storageCap,
-      state: instState
-    };
-    setupCapServer(inst);
-    instances[inst.state.id] = inst;
-    launchInstance(inst);
-  },
-  function(status) { alert('Failed to load instance: ' + status); });
-};
 
 var initialize = function(instanceCaps) {
   var top = topDiv;
@@ -453,29 +447,48 @@ var initialize = function(instanceCaps) {
   desk.find('.belay-container').remove(); // remove the rest
 
   setupDeskSizes(top);
-  setupTestButton(top, function() { alert('test!'); });
 
-  function createInstanceFromTool(toolInfo) {
 
-    function initializeAndLaunchNewInstance(inst) {
-      if(!inst.state.id) inst.state.id = newUUIDv4();
-      setupCapServer(inst);
-      // TODO(arjun) still a hack. Should we be concatenaing URLs here?
-      inst.storageCap = capServer.grant(instanceInfo.instanceBase + inst.state.id);
-      instances[inst.state.id] = inst;
-      launchInstance(inst);
-      dirty(inst);
-    }
+  var itemsDiv = topDiv.find('#belay-items');
+  var itemsTable = itemsDiv.find('table');
+  var protoItemRow = itemsTable.find('tr').eq(0).detach();
+  itemsTable.find('tr').remove();
 
-    toolInfo.generate.get(
-      function(data) {
+  var addInstance = function(inst, openType) {
+    setupCapServer(inst);
+    instances[inst.state.id] = inst;
+
+    var row = protoItemRow.clone();
+    row.find('td').eq(0).text(inst.state.name || 'an item');
+    row.find('td.actions .open-page').click(function() {
+        launchInstance(inst, 'page');
+      });
+    row.find('td.actions .open-gadget').click(function() {
+        launchInstance(inst, 'gadget');
+      });
+    row.find('td.actions .remove').click(function() {
+        alert("item removal not implemented yet");
+      });
+    row.appendTo(itemsTable);
+    
+    launchInstance(inst, openType);
+  };  
+  
+  var addInstanceFromTool = function(toolInfo) {
+    toolInfo.generate.get(function(data) {
+        var newID = newUUIDv4();
         var inst = {
+          storageCap: capServer.grant(instanceInfo.instanceBase + newID),
+            // TODO(arjun) still a hack. Should we be concatenaing URLs here?
           state: {
+            id: newID,
             belayInstance: data,
+            name: "an instance of " + toolInfo.name,
             info: undefined
           }
         };
-        initializeAndLaunchNewInstance(inst);
+        addInstance(inst, 'openAny');
+        dirty(inst);
       },
       function(error) {
         alert('Failed to createNewInstanceFromTool ' +
@@ -483,19 +496,32 @@ var initialize = function(instanceCaps) {
       }
     );
   };
+  
+  var addInstanceFromStorage = function(storageCap) {
+    storageCap.get(function(instState) {
+        var inst = {
+          storageCap: storageCap,
+          state: instState
+        };
+        addInstance(inst, 'restore');
+      },
+      function(status) { alert('Failed to load instance: ' + status); }
+    );
+  };
+
 
   defaultTools.forEach(function(toolInfo) {
     var tool = protoTool.clone();
     tool.find('p').text(toolInfo.name);
     tool.find('img').attr('src', toolInfo.icon);
     tool.appendTo(toolbar);
-    tool.click(function() { createInstanceFromTool(toolInfo); return false; });
+    tool.click(function() { addInstanceFromTool(toolInfo); return false; });
   });
 
-  instanceCaps.forEach(getAndLaunchInstance);
+  instanceCaps.forEach(addInstanceFromStorage);
 };
 
-// TODO(arjun): Retreiving vanilla HTML. Not a Belay cap?
+
 $(function() {
   topDiv = $('#aux div').eq(0);
 

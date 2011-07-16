@@ -38,15 +38,16 @@ limitations under the License.
   overflow: auto;
 }
 
-#belay-toolbar {
+#belay-toolbar,
+#belay-items {
   background-color: #eaf2f6;
   border-top: 1px solid #4e8acb;
-  border-bottom: 1px solid #4e8acb;
   padding: 0.5em;
 }
 
 #belay-toolbar h2,
-#belay-desk h2 {
+#belay-desk h2,
+#belay-items h2 {
   display: inline;
   vertical-align: top;
   color: #999;
@@ -64,7 +65,39 @@ limitations under the License.
   text-align: center;
 }
 
+#belay-items div {
+  background: #fff;
+  padding: 0.5em 1em;
+}
+
+#belay-items table {
+  margin: 0;
+  border-collapse: collapse;
+  width: 100%;
+}
+
+#belay-items tr + tr {
+  border-top: 1px solid #d5d5d5;
+}
+
+#belay-items tr:hover {
+  background: #f4f4f4;
+}
+
+#belay-items td {
+  padding: 0.25em 0.5em;
+}
+
+#belay-items td.actions {
+  color: #aaa;
+  width: 8em;
+}
+#belay-items td.actions span:hover {
+  color: #264a93;
+}
+
 #belay-desk {
+  border-top: 1px solid #4e8acb;
   background-color: #eee;
   height: 350px;
   position: relative;

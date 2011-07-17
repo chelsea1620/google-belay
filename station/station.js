@@ -45,6 +45,9 @@ var defaultIcon = 'http://localhost:9001/tool.png';
 //
 // Desk top area
 //
+var showItems = function() { }; // reset in setupLayout
+var showDesk = function() { }; // reset in setupLayout
+
 var setupLayout = function() {
   var deskSizes = {
     small: 350,
@@ -67,22 +70,42 @@ var setupLayout = function() {
 
   var itemsMaxHeight = items.css('maxHeight');
   
-  $('#belay-nav-toolbar').click(function() { toolbar.slideToggle(); });
-  $('#belay-nav-items').click(function() { items.slideToggle(); });
-  $('#belay-nav-desk').click(function() { 
-    if (desk.css('display') == 'none') {
-      desk.slideDown();
-      items.css('maxHeight', items.height());
-      items.animate({ maxHeight: itemsMaxHeight });
-    }
-    else {
-      desk.slideUp();
+  var visible = function(n) { return n.css('display') != 'none'; };
+  
+  showItems = function() { items.slideDown(); };
+  showDesk = function() {
+    desk.slideDown();
+    items.css('maxHeight', items.height());
+    items.animate({ maxHeight: itemsMaxHeight });
+  };
+
+  var hideItems = function() {
+    items.slideUp();
+    if (! visible(desk)) showDesk();
+  };
+  var hideDesk = function() {
+    desk.slideUp();
+    if (visible(items)) {
       items.animate({ maxHeight: items.height() + desk.height() },
         function() {
           items.css('maxHeight', 'inherit');
         });
     }
-  });
+    else {
+      items.css('maxHeight', 'inherit');
+      showItems();
+    }
+  };
+  
+  var toggle = function(node, shower, hider) {
+    if (visible(node)) hider(); else shower();
+  };
+  
+  $('#belay-nav-toolbar').click(function() { toolbar.slideToggle(); });
+  $('#belay-nav-items').click(function() {
+      toggle(items, showItems, hideItems); });
+  $('#belay-nav-desk').click(function() { 
+      toggle(desk, showDesk, hideDesk); });
 };
 
 
@@ -240,6 +263,8 @@ var protoContainer = undefined;
 var topGadget = function(inst) {
   var g = inst.gadgetNode;
   if (!g) return;
+  
+  showDesk();
   
   var gs = $.makeArray(desk.find('.belay-container'));
   gs.sort(function(a,b) { return a.style.zIndex - b.style.zIndex });
@@ -569,7 +594,8 @@ var initialize = function(instanceCaps) {
       function() { 
         if (inst.gadgetNode) inst.gadgetNode.removeClass('belay-hilite');
       });
-    row.appendTo(itemsTable);
+    row.prependTo(itemsTable);
+    showItems();
     
     launchInstance(inst, openType);
   };  

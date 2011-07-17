@@ -211,6 +211,17 @@ var desk = undefined;
 var protoContainer = undefined;
 
 
+var topGadget = function(inst) {
+  var g = inst.gadgetNode;
+  if (!g) return;
+  
+  var gs = $.makeArray(desk.find('.belay-container'));
+  gs.sort(function(a,b) { return a.style.zIndex - b.style.zIndex });
+  $.each(gs, function(i,d) { d.style.zIndex = i; });
+  g[0].style.zIndex = gs.length;
+}
+
+
 var closeGadgetInstance = function(inst) {
   if (inst.gadgetNode) {
     var g = inst.gadgetNode;
@@ -377,6 +388,7 @@ var launchGadgetInstance = function(inst) {
       dirty(inst);
     }
   });
+  container.click(function() { topGadget(inst); });
 
   header.append('<div class="belay-control">×</div>');
   var closeBox = header.find(':last-child');
@@ -397,6 +409,7 @@ var launchGadgetInstance = function(inst) {
   dirty(inst);
 
   topDiv.load(inst.launch.gadget.html, function() {
+    topGadget(inst);
     foop(inst.launch.gadget.scripts, extras);
   });
 };
@@ -510,6 +523,7 @@ var initialize = function(instanceCaps) {
     var row = protoItemRow.clone();
     inst.rowNode = row;
     
+    row.click(function() { topGadget(inst); });
     row.find('td').eq(0).text(inst.state.name || 'an item');
     row.find('td.actions .open-page').click(function() {
         launchInstance(inst, 'page');

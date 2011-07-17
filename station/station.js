@@ -43,23 +43,46 @@ var defaultTools = [
 //
 // Desk top area
 //
-var resizeDesk = function(s) {
-  //topDiv.find('#belay-station-outer').width(s.w);
-  topDiv.find('#belay-desk').height(s.h);
-  return false;
-};
-var setupDeskSizes = function(top) {
-  var controls = top.find('#belay-controls');
+var setupLayout = function() {
   var deskSizes = {
-    small: {w: 600, h: 350},
-    medium: {w: 1200, h: 650},
-    large: {w: 2200, h: 1200} };
+    small: 350,
+    medium: 650,
+    large: 1200
+  };
+  
+  var controls = $('#belay-controls');
+  var toolbar = $('#belay-toolbar');
+  var items = $('#belay-items');
+  var desk = $('#belay-desk');
+
   for (var p in deskSizes) {
-    var s = deskSizes[p];
-    controls.append('<a href="#">' + p + '</a> ');
-    controls.find(':last-child').click(function() { return resizeDesk(s); });
+    var tool = $('<span></span>').text(p);
+    tool.click((function(s) {
+        return function() { desk.height(s); };
+      })(deskSizes[p]));
+    controls.append(tool);
   }
+
+  var itemsMaxHeight = items.css('maxHeight');
+  
+  $('#belay-nav-toolbar').click(function() { toolbar.slideToggle(); });
+  $('#belay-nav-items').click(function() { items.slideToggle(); });
+  $('#belay-nav-desk').click(function() { 
+    if (desk.css('display') == 'none') {
+      desk.slideDown();
+      items.css('maxHeight', items.height());
+      items.animate({ maxHeight: itemsMaxHeight });
+    }
+    else {
+      desk.slideUp();
+      items.animate({ maxHeight: items.height() + desk.height() },
+        function() {
+          items.css('maxHeight', 'inherit');
+        });
+    }
+  });
 };
+
 
 var nextLeft = 100;
 var nextTop = 50;
@@ -499,7 +522,8 @@ var initialize = function(instanceCaps) {
   protoContainer = desk.find('.belay-container').eq(0).detach();
   desk.find('.belay-container').remove(); // remove the rest
 
-  setupDeskSizes(top);
+
+  setupLayout(top);
 
 
   var itemsDiv = topDiv.find('#belay-items');
@@ -574,7 +598,7 @@ var initialize = function(instanceCaps) {
     );
   };
 
-
+  
   defaultTools.forEach(function(toolInfo) {
     var tool = protoTool.clone();
     tool.find('p').text(toolInfo.name);

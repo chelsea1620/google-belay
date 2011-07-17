@@ -562,6 +562,13 @@ var initialize = function(instanceCaps) {
     row.find('td.actions .remove').click(function() {
         removeInstance(inst);
       });
+    row.hover(
+      function() {
+        if (inst.gadgetNode) inst.gadgetNode.addClass('belay-hilite');
+      },
+      function() { 
+        if (inst.gadgetNode) inst.gadgetNode.removeClass('belay-hilite');
+      });
     row.appendTo(itemsTable);
     
     launchInstance(inst, openType);

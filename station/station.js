@@ -84,7 +84,7 @@ var instances = {};
        capSnapshot: string,
 
        name: string,
-       opened: string, -- 'page', 'gadget', or 'none'
+       opened: string, -- 'page', 'gadget', or 'closed'
        window: {     -- info on gadget location
          top: int, left: int, width: int, height: int,
        },
@@ -92,6 +92,10 @@ var instances = {};
      },
      capServer: caps -- the cap server for this instance (if !state.remote)
      capTunnel: capt -- the cap tunnel for this instance (if state.remote)
+
+     rowNode: node -- node in the item list
+     pageWindow: window -- if open in page view, the window it is in
+     gadgetNode: node -- if open in gadget view, the container node it is in
    }
 */
 
@@ -203,7 +207,32 @@ var stopDropHover = function(node, rc) {
 var desk = undefined;
 var protoContainer = undefined;
 
+
+var closeGadgetInstance = function(inst) {
+  if (inst.gadgetNode) {
+    var g = inst.gadgetNode;
+    g.hide(function() { g.remove(); });
+    inst.gadgetNode = undefined;
+    inst.state.opened = 'closed';
+    dirty(inst);
+  }
+}
+
+var closePageInstance = function(inst) {
+  if (inst.pageWindow) {
+    // inst.pageWindow.close();
+    // TODO(mzero): we don't really have a window to close
+    inst.pageWindow = undefined;
+    inst.state.opened = 'closed';
+    dirty(inst);
+  }
+}
+
+
 var launchGadgetInstance = function(inst) {
+  if (inst.gadgetNode) return;
+  closePageInstance(inst);
+  
   var instState = inst.state;
 
   if (!('window' in instState)) {
@@ -348,25 +377,20 @@ var launchGadgetInstance = function(inst) {
 
   header.append('<div class="belay-control">×</div>');
   var closeBox = header.find(':last-child');
-  closeBox.click(function() {
-    inst.capServer.revokeAll();
-    delete instances[inst.state.id];
-    container.hide(function() { container.remove(); });
-    inst.storageCap.remove(function() {}, function() {});
-  });
+  closeBox.click(function() { closeGadgetInstance(inst); });
   closeBox.hover(function() { closeBox.addClass('hover'); },
                  function() { closeBox.removeClass('hover'); });
 
-  header.append('<div class="belay-control">↑</div>');
-  var maxBox = header.find(':last-child');
-  maxBox.click(function() {
-    // container.hide(function() { container.remove(); });
-    // launchExternal(inst);
-    alert("pop-out not yet implemented");
-  });
-  maxBox.hover(function() { maxBox.addClass('hover'); },
-               function() { maxBox.removeClass('hover'); });
-
+  if ('page' in inst.launch) {
+    header.append('<div class="belay-control">↑</div>');
+    var maxBox = header.find(':last-child');
+    maxBox.click(function() { launchPageInstance(inst); });
+    maxBox.hover(function() { maxBox.addClass('hover'); },
+                 function() { maxBox.removeClass('hover'); });
+  }
+  
+  inst.gadgetNode = container;
+  inst.state.opened = 'gadget';
   dirty(inst);
 
   topDiv.load(inst.launch.gadget.html, function() {
@@ -375,6 +399,12 @@ var launchGadgetInstance = function(inst) {
 };
 
 var launchPageInstance = function(inst) {
+  if (inst.pageWindow) return;
+  closeGadgetInstance(inst);
+  inst.pageWindow = true;
+  inst.state.opened = 'page';
+  dirty(inst);
+  
   var features = [];
   if ('width' in inst.launch.page.window)
     features.push('width=' + Number(inst.launch.page.window.width));
@@ -409,23 +439,30 @@ var launchInstance = function(inst, openType) {
   dirty(inst);
   instState.belayInstance.get(function(launch) {
     inst.launch = launch;
+    var canGadget = 'gadget' in launch;
+    var canPage = 'page' in launch;
     
-    var preferred;
-    if ('gadget' in launch) preferred = 'gadget';
-    else if ('page' in launch) preferred = 'page';
+    var row = inst.rowNode;
+    var asVis = function(b) { return b ? 'visible' : 'hidden'; }
+    row.find('.open-gadget').css('visibility', asVis(canGadget));
+    row.find('.open-page').css('visibility', asVis(canPage));
+    
+    var preferred = canGadget ? 'gadget' : (canPage ? 'page' : 'none');
     
     if (openType == 'restore') {
-      if ('opened' in instState) openType = instState.opened;
-      else openType = preferred;
+      openType = ('opened' in instState) ? instState.opened : preferred;
     }
     else if (openType == 'openAny') {
       openType = preferred;
     };
     
-    if (openType == 'page' && launch.page) {
+    if (openType == 'closed' || openType == 'none') {
+      // leave closed!
+    }
+    else if (openType == 'page' && canPage) {
       launchPageInstance(inst);
     }
-    else if (openType == 'gadget' && launch.gadget) {
+    else if (openType == 'gadget' && canGadget) {
       launchGadgetInstance(inst);
     }
     else {
@@ -454,11 +491,22 @@ var initialize = function(instanceCaps) {
   var protoItemRow = itemsTable.find('tr').eq(0).detach();
   itemsTable.find('tr').remove();
 
+  var removeInstance = function(inst) {
+    closeGadgetInstance(inst);
+    closePageInstance(inst);
+    inst.rowNode.fadeOut(function() { inst.rowNode.remove(); });
+    inst.capServer.revokeAll();
+    delete instances[inst.state.id];
+    inst.storageCap.remove();
+  };
+  
   var addInstance = function(inst, openType) {
     setupCapServer(inst);
     instances[inst.state.id] = inst;
 
     var row = protoItemRow.clone();
+    inst.rowNode = row;
+    
     row.find('td').eq(0).text(inst.state.name || 'an item');
     row.find('td.actions .open-page').click(function() {
         launchInstance(inst, 'page');
@@ -467,7 +515,7 @@ var initialize = function(instanceCaps) {
         launchInstance(inst, 'gadget');
       });
     row.find('td.actions .remove').click(function() {
-        alert("item removal not implemented yet");
+        removeInstance(inst);
       });
     row.appendTo(itemsTable);
     

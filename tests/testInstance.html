@@ -41,9 +41,8 @@ limitations under the License.
 
         var invokeMyAsync = 
           server.grant(function(remoteReceiveCap, sk, fk) {
-          setTimeout(function() { 
-            remoteReceiveCap.post(999, sk, fk); }, 0);
-        });
+            setTimeout(function() { remoteReceiveCap.post(999, sk, fk); }, 0);
+          });
         
         var seedCap = server.grant(function(v) { 
           log("seedCap invoked with: " + v);
@@ -53,8 +52,13 @@ limitations under the License.
           return undefined;
         });
         log("Constructed seedCap");
-        
-        tunnel.initializeAsOutpost(server, [ seedCap ]);
+
+        outpostData = server.dataPreProcess({
+            instID: server.instanceID,
+            seedSers: [ seedCap ]
+        }); 
+                                             
+        tunnel.sendOutpost(outpostData);
       });
     </script>
   </head>

@@ -110,9 +110,9 @@ describe('CapTunnels', function() {
   });
 
   describe('with local capservers', function() {
-    var localServer1, localServer2;
+    var localServer1;
 
-    var outpostMessage;
+    var outpostMessage, outpostData;
     beforeEach(function() {
       outpostMessage = false;
       tunnel.setOutpostHandler(function(msg) { outpostMessage = msg; });
@@ -120,22 +120,21 @@ describe('CapTunnels', function() {
           'outpost read timeout', 1000);
 
       runs(function() {
-        expect(typeof outpostMessage.instID).toEqual('string');
-        expect(outpostMessage.seedSers.length).toEqual(1);
-        expect(typeof outpostMessage.seedSers[0]).toEqual('string');
-
         localServer1 = new CapServer(newUUIDv4());
-        localServer2 = new CapServer(newUUIDv4());
+
+        outpostData = localServer1.dataPostProcess(outpostMessage);
+
+        expect(typeof outpostData.instID).toEqual('string');
+        expect(outpostData.seedSers.length).toEqual(1);
+        expect(typeof outpostData.seedSers[0]).toEqual('object');
 
         var ifaceMap = {};
-        ifaceMap[outpostMessage.instID] = tunnel.sendInterface;
+        ifaceMap[outpostData.instID] = tunnel.sendInterface;
         ifaceMap[localServer1.instanceID] = localServer1.publicInterface;
-        ifaceMap[localServer2.instanceID] = localServer2.publicInterface;
 
         var resolver = function(instID) { return ifaceMap[instID] || null; };
         tunnel.setLocalResolver(resolver);
         localServer1.setResolver(resolver);
-        localServer2.setResolver(resolver);
       });
     });
 
@@ -143,7 +142,7 @@ describe('CapTunnels', function() {
       var result;
       var done = false;
       runs(function() {
-        var remoteSeedCap = localServer1.restore(outpostMessage.seedSers[0]);
+        var remoteSeedCap = outpostData.seedSers[0];
         remoteSeedCap.post('answer',
           function(data) { result = data; done = true; },
           function(err) { done = true; });
@@ -155,7 +154,7 @@ describe('CapTunnels', function() {
     it('should be able to invoke a local cap from the remote side', function() {
       var invokeWithThreeCap;
       runs(function() {
-        var remoteSeedCap = localServer1.restore(outpostMessage.seedSers[0]);
+        var remoteSeedCap = outpostData.seedSers[0];
         remoteSeedCap.post('invokeWithThree',
           function(data) { invokeWithThreeCap = data; },
           function(err) { });
@@ -185,8 +184,8 @@ describe('CapTunnels', function() {
           'invoking invokeWithThree cap', 250);
       runs(function() {
         expect(receivedMessage).toEqual(3);
-  expect(succeeded).toBe(true);
-  expect(threeResult).toBe(32);
+        expect(succeeded).toBe(true);
+        expect(threeResult).toBe(32);
       });
     });
 
@@ -201,7 +200,7 @@ describe('CapTunnels', function() {
 
       var remoteAsyncCap;
       runs(function() {
-        var remoteSeedCap = localServer1.restore(outpostMessage.seedSers[0]);
+        var remoteSeedCap = outpostData.seedSers[0]; 
         remoteSeedCap.post('remoteAsync',
           function(data) { remoteAsyncCap = data; },
           function(err) { });
@@ -226,7 +225,7 @@ describe('CapTunnels', function() {
                'get asyncResult', 250);
       runs(function() {
         expect(messageFromRemote[0]).toEqual(999);
-  expect(asyncResult[0]).toBe(1041);
+        expect(asyncResult[0]).toBe(1041);
       });
 
     });

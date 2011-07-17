@@ -146,6 +146,12 @@ limitations under the License.
   box-shadow: 0 2px 6px #666;
 }
 
+.belay-container.belay-hilite {
+  box-shadow: 0 0 4px 4px #666;
+  -webkit-box-shadow: 0 0 4px 4px #666;
+  -moz-box-shadow: 0 0 4px 4px #666;
+}
+
 .belay-container-header {
   height: 12px;
   width: 100%;

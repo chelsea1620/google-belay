@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 var divChannel = document.getElementById('__belayDivChannel');
 
 chrome.extension.sendRequest({ type: 'init' });
@@ -35,4 +34,41 @@ divChannel.addEventListener('postMessage', function(evt) {
   evt.preventDefault();
   return false;
 });
+
+// Illuminate elements for the background page.
+(function () {
+  var port = chrome.extension.connect({ name: 'highlight' });
+
+  var sourceSel = '.belay-cap-source';
+  var highlightClassName = 'belay-possible';
+
+  var onHighlight = function(args) {
+    var rc = args.rc;
+    console.assert(typeof rc === 'string');
+    
+    onUnHighlight({ });
+    $(document)
+    .find(sourceSel)
+    .filter(function(ix) { 
+      console.log(this.getAttribute('data-rc'));
+      return rc === '*' || this.getAttribute('data-rc') === rc; 
+     })
+    .addClass(highlightClassName);
+  };
+
+  var onUnHighlight = function(args) {
+    $(document)
+    .find(sourceSel)
+    .removeClass(highlightClassName);
+  };
+
+  var handlers = {
+    'highlight': onHighlight,
+    'unhighlight': onUnHighlight
+  };
+
+  port.onMessage.addListener(function(msg) { 
+    handlers[msg.type](msg); 
+  });
+})();
 

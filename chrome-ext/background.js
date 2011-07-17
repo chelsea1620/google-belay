@@ -12,8 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-var capServer = new CapServer('background');
-
+var capServer = new CapServer(newUUIDv4());
 
 // { tabID : { callbackName : [ rcList, info ] }}
 var offerMap = Object.create(null);
@@ -77,6 +76,14 @@ var launch = function(url) {
       chrome.tabs.create({ url: page.html },
         function(tab) {
           var tunnel = new CapTunnel(getTabPort(tab.id));
+          tunnel.setLocalResolver(function(instID) {
+            if(instID === capServer.instanceID) {
+              return capServer.publicInterface;
+            }
+            else {
+              return null;
+            }
+          });
           launchedTabs[tab.id] = {
             url: url, html: page.html, info: info, tunnel: tunnel };
         });
@@ -95,7 +102,14 @@ chrome.tabs.onUpdated.addListener(function(tabID, info, tab) {
   if (tabInfo === undefined) return;
   
   var sendToTunnel = function(info) {
-    tabInfo.tunnel.sendOutpost(capServer.dataPreProcess({ info: info }));
+    tabInfo.tunnel.sendOutpost(capServer.dataPreProcess({ 
+      info: info,
+      browserID: capServer.instanceID,
+      services: {
+        highlightByRC: capServer.grant(highlighting.highlightByRC),
+        unhighlight: capServer.grant(highlighting.unhighlight)
+      }
+    }));
   };
   
   if (tabInfo.info) {
@@ -143,9 +157,52 @@ var getTabPort = (function() {
         if (!port.hasPort()) port.setPort(makeRelayPort(tabID));
         return;
       }
-      else port.onmessage(message);
+      else port.onmessage({ data: message });
     });
 
   return Object.freeze(getTabPort);
 })();
 
+// highlighting draggable/droppable elements
+var highlighting = (function() {
+
+  var ports = Object.create(null);
+
+  var highlightByRC = function(rc) {
+    console.assert(typeof rc === 'string');
+
+    Object.keys(ports).forEach(function(tabId) {
+      ports[tabId].postMessage({ type: 'highlight', rc: rc });
+    });
+  };
+
+  var unhighlight = function() {
+    Object.keys(ports).forEach(function(tabId) {
+      ports[tabId].postMessage({ type: 'unhighlight' });
+    });
+  };
+
+  var registerHighlighter = function(port) {
+    var tabId = port.sender.tab.id;
+   
+    console.assert(!(tabId in ports)); // sanity check
+    ports[tabId] = port;
+
+    port.onDisconnect.addListener(function() {
+      delete ports[tabId];
+    });
+  };
+  
+  return { 
+    registerHighlighter: registerHighlighter,
+    highlightByRC: highlightByRC,
+    unhighlight: unhighlight
+  };
+
+})();
+
+chrome.extension.onConnect.addListener(function(port) {
+  if (port.name === 'highlight') { 
+    highlighting.registerHighlighter(port); 
+  }
+});

@@ -16,6 +16,9 @@
 var topDiv;
 var instanceInfo;
 var capServer = new CapServer(newUUIDv4());
+var belayBrowserID;
+var belayBrowwerTunnel;
+var belayBrowser;
 
 var defaultTools = [
     { name: 'Hello',
@@ -170,6 +173,9 @@ var instanceResolver = function(id) {
   if (id === capServer.instanceID) {
     return capServer.publicInterface;
   }
+  if (id === belayBrowserID) {
+    return belayBrowserTunnel.sendInterface;
+  }
   return null;
 };
 
@@ -218,19 +224,11 @@ var stopDrag = function(info) {
 };
 var startDropHover = function(node, rc) {
   node.addClass('belay-selected');
-  var sources = topDiv.find('.belay-cap-source');
-  if (rc == '*') {
-    sources.addClass('belay-possible');
-  } else {
-    for (var i = 0; i < sources.length; ++i) {
-      var s = sources.eq(i);
-      if (s.data('rc') == rc) s.addClass('belay-possible');
-    }
-  }
+  belayBrowser.highlightByRC.put(rc);
 };
 var stopDropHover = function(node, rc) {
   node.removeClass('belay-selected');
-  topDiv.find('.belay-cap-source').removeClass('belay-possible');
+  belayBrowser.unhighlight.put();
 };
 
 var desk = undefined;
@@ -345,7 +343,7 @@ var launchGadgetInstance = function(inst) {
             return cap.serialize();
           }
         };
-        node.data('rc', rc);
+        node.attr('data-rc', rc);
         node.draggable({
           appendTo: desk,
           helper: function() { return helper; },
@@ -366,7 +364,7 @@ var launchGadgetInstance = function(inst) {
             acceptor(info.generator(info.resourceClass), info.resourceClass);
           },
           accept: function(elt) {
-            return (rc === '*') || (elt.data('rc') === rc);
+            return (rc === '*') || (elt.attr('data-rc') === rc);
           }
         });
 
@@ -619,9 +617,13 @@ var initialize = function(instanceCaps) {
 $(function() {
   topDiv = $('#aux div').eq(0);
 
-  var tunnel = new CapTunnel(window.belayPort);
-  tunnel.setOutpostHandler(function(outpost) {
-    instanceInfo = capServer.dataPostProcess(outpost).info;
+  belayBrowserTunnel = new CapTunnel(window.belayPort);
+  belayBrowserTunnel.setLocalResolver(instanceResolver);
+  belayBrowserTunnel.setOutpostHandler(function(outpost) {
+    outpost = capServer.dataPostProcess(outpost);
+    belayBrowserID = outpost.browserID;
+    belayBrowser = outpost.services;
+    instanceInfo = outpost.info;
     var instancesCap = instanceInfo.instances;
     instancesCap.get(initialize, function(err) { alert(err.message); });
   });

@@ -40,6 +40,8 @@ var defaultTools = [
     }
   ];
 
+var defaultIcon = 'http://localhost:9001/tool.png';
+
 //
 // Desk top area
 //
@@ -107,6 +109,7 @@ var instances = {};
        capSnapshot: string,
 
        name: string,
+       icon: url,
        opened: string, -- 'page', 'gadget', or 'closed'
        window: {     -- info on gadget location
          top: int, left: int, width: int, height: int,
@@ -548,7 +551,8 @@ var initialize = function(instanceCaps) {
     inst.rowNode = row;
     
     row.click(function() { topGadget(inst); });
-    row.find('td').eq(0).text(inst.state.name || 'an item');
+    row.find('td.icon img').attr('src', inst.state.icon || defaultIcon);
+    row.find('td.name').text(inst.state.name || 'an item');
     row.find('td.actions .open-page').click(function() {
         launchInstance(inst, 'page');
       });
@@ -573,6 +577,7 @@ var initialize = function(instanceCaps) {
             id: newID,
             belayInstance: data,
             name: "an instance of " + toolInfo.name,
+            icon: toolInfo.icon,
             info: undefined
           }
         };

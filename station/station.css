@@ -74,7 +74,7 @@ limitations under the License.
 }
 
 #belay-items {
-  max-height: 8em;
+  max-height: 10em;
   overflow: auto;
 }
 
@@ -102,6 +102,17 @@ limitations under the License.
   padding: 0.25em 0.5em;
 }
 
+#belay-items td.icon {
+  width: 1em;
+  padding: 0 0.5em;
+}
+
+#belay-items td.icon img {
+  height: 1.78125em;
+  width: 1.5em;
+  position: relative;
+  top: 0.2em;
+}
 #belay-items td.actions {
   color: #aaa;
   width: 8em;

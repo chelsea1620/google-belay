@@ -101,9 +101,12 @@ var instances = {};
 
 var dirtyInstances = [];
 var dirtyProcess = function() {
-  if (dirtyInstances.length <= 0) { return; }
-  var instID = dirtyInstances.shift();
-  var inst = instances[instID];
+  var inst;
+  while (!inst) {
+    if (dirtyInstances.length <= 0) { return; }
+    var instID = dirtyInstances.shift(); 
+    inst = instances[instID];
+  }
   // TODO(arjun): who should do the saving? should windowed instances also
   // have a capserver stored by station?
   if (inst.capServer) {

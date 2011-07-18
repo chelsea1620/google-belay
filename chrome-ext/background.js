@@ -67,6 +67,15 @@ var launchStation = function(name) {
 
 var launchedTabs = Object.create(null);
 
+var makeTunnel = function(port) {
+  var tunnel = new CapTunnel(port);
+  tunnel.setLocalResolver(function(instID) {
+    if(instID === capServer.instanceID) return capServer.publicInterface;
+    else return null;
+  });
+  return tunnel;
+};
+
 // opens a page, and sends info over
 var launch = function(url) {
   capServer.restore(url).get(
@@ -75,15 +84,7 @@ var launch = function(url) {
       var info = data.info;
       chrome.tabs.create({ url: page.html },
         function(tab) {
-          var tunnel = new CapTunnel(getTabPort(tab.id));
-          tunnel.setLocalResolver(function(instID) {
-            if(instID === capServer.instanceID) {
-              return capServer.publicInterface;
-            }
-            else {
-              return null;
-            }
-          });
+          var tunnel = makeTunnel(tabPorts.getTabPort(tab.id)); 
           launchedTabs[tab.id] = {
             url: url, html: page.html, info: info, tunnel: tunnel };
         });
@@ -101,6 +102,8 @@ chrome.tabs.onUpdated.addListener(function(tabID, info, tab) {
   var tabInfo = launchedTabs[tabID];
   if (tabInfo === undefined) return;
   
+  tabInfo.tunnel = makeTunnel(tabPorts.refreshTabPort(tabID)); 
+
   var sendToTunnel = function(info) {
     tabInfo.tunnel.sendOutpost(capServer.dataPreProcess({ 
       info: info,
@@ -111,7 +114,7 @@ chrome.tabs.onUpdated.addListener(function(tabID, info, tab) {
       }
     }));
   };
-  
+
   if (tabInfo.info) {
     sendToTunnel(tabInfo.info);
     tabInfo.info = undefined;
@@ -129,13 +132,18 @@ chrome.tabs.onUpdated.addListener(function(tabID, info, tab) {
 // Ports to pages
 //
 
-var getTabPort = (function() {
+var tabPorts = (function() {
   var ports = Object.create(null);
 
   var getTabPort = function(tabID) {
     if (!(tabID in ports)) ports[tabID] = new PortQueue();
     return ports[tabID];
-  }
+  };
+
+  var refreshTabPort = function(tabID) {
+    if (tabID in ports) delete ports[tabID];
+    return getTabPort(tabID);
+  };
 
   var makeRelayPort = function(tabID) {
     var extPort = {
@@ -155,12 +163,14 @@ var getTabPort = (function() {
       var port = getTabPort(tabID);
       if (message.type === 'init') {
         if (!port.hasPort()) port.setPort(makeRelayPort(tabID));
-        return;
       }
       else port.onmessage({ data: message });
     });
 
-  return Object.freeze(getTabPort);
+  return Object.freeze({
+      getTabPort: getTabPort,
+      refreshTabPort: refreshTabPort
+  });
 })();
 
 // highlighting draggable/droppable elements

@@ -72,30 +72,33 @@ var setupLayout = function() {
   }
 
   var itemsMaxHeight = items.css('maxHeight');
-  
+
   var visible = function(n) { return n.css('display') != 'none'; };
   
   showItems = function() { items.slideDown(); };
   showDesk = function() {
-    desk.slideDown();
-    items.css('maxHeight', items.height());
-    items.animate({ maxHeight: itemsMaxHeight });
+    if (! visible(desk)) {
+      desk.slideDown();
+      if (items.css('maxHeight') == 'none')
+        items.css('maxHeight', items.height());
+      items.animate({ maxHeight: itemsMaxHeight });
+    }
   };
 
   var hideItems = function() {
     items.slideUp();
-    if (! visible(desk)) showDesk();
+    showDesk();
   };
   var hideDesk = function() {
     desk.slideUp();
     if (visible(items)) {
       items.animate({ maxHeight: items.height() + desk.height() },
         function() {
-          items.css('maxHeight', 'inherit');
+          items.css('maxHeight', 'none');
         });
     }
     else {
-      items.css('maxHeight', 'inherit');
+      items.css('maxHeight', 'none');
       showItems();
     }
   };
@@ -295,6 +298,7 @@ var closePageInstance = function(inst) {
 var launchGadgetInstance = function(inst) {
   if (inst.gadgetNode) return;
   closePageInstance(inst);
+  if (!inst.capServer) setupCapServer(inst);
   
   var instState = inst.state;
 
@@ -505,7 +509,6 @@ var initialize = function(instanceCaps) {
   };
   
   var addInstance = function(inst, openType) {
-    setupCapServer(inst);
     instances[inst.state.id] = inst;
 
     var row = protoItemRow.clone();

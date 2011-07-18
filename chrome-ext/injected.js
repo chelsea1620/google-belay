@@ -50,7 +50,6 @@ divChannel.addEventListener('postMessage', function(evt) {
     $(document)
     .find(sourceSel)
     .filter(function(ix) { 
-      console.log(this.getAttribute('data-rc'));
       return rc === '*' || this.getAttribute('data-rc') === rc; 
      })
     .addClass(highlightClassName);

@@ -48,10 +48,10 @@ onBelayReady(function() {
     else {
       var invite = topDiv.find('.emote-invite');
       invite.show();
-      ui.capDroppable(invite, rcPost, function(ser) {
+      ui.capDroppable(invite, rcPost, function(cap) {
         invite.hide();
-        showPanel(capServer.restore(ser));
-        storage.put(ser);
+        showPanel(cap);
+        storage.put(cap.serialize());
       });
     }
   });

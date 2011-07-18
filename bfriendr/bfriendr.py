@@ -105,7 +105,7 @@ class MessageData(db.Model):
     else:
       return {'message': self.message,
               'when': str(self.when),
-              'capability': str(self.capability),
+              'capability': CapServer.Capability(self.capability),
               'resource_class': str(self.resource_class)}
 
 class AccountData(db.Model):
@@ -275,9 +275,10 @@ class StreamPostHandler(CapServer.CapHandler):
     request = self.bcapRequest()
     msg = request['message'] 
     if 'capability' in request and 'resource_class' in request:
-      message_data = MessageData(message = msg, parent = friend_info,
-                                 capability = request['capability'],
-                                 resource_class = request['resource_class'])
+      message_data = \
+        MessageData(message = msg, parent = friend_info,
+                    capability = request['capability'].serialize(),
+                    resource_class = request['resource_class'])
     else:
       message_data = MessageData(message = msg, parent = friend_info)
     message_data.put()

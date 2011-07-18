@@ -42,10 +42,10 @@ var initMessagesUI = function(container, showHideMessages) {
   });
 
   var serCapRC = false;
-  var serCapToSend = false;
+  var capToSend = false;
 
-  ui.capDroppable(composeTextArea, '*', function(serCap, capRC) {
-    serCapToSend = serCap;
+  ui.capDroppable(composeTextArea, '*', function(cap, capRC) {
+    capToSend = cap;
     serCapRC = capRC;
   });
 
@@ -59,7 +59,7 @@ var initMessagesUI = function(container, showHideMessages) {
       var chitImg = msgElt.find('img:eq(0)');
       ui.capDraggable(chitImg, msg.resource_class,
         function(selectedRC) {
-          return capServer.restore(msg.capability);
+          return msg.capability;
         });
     }
     msgElt.find('p:eq(1)').text(msg.message || 'Received blank message.');
@@ -89,8 +89,8 @@ var initMessagesUI = function(container, showHideMessages) {
       else {
         msg = { 'message' : composeTextArea.val(),
                 'resource_class': serCapRC,
-                'capability': serCapToSend };
-        serCapToSend = false;
+                'capability': capToSend };
+        capToSend = false;
         serCapRC = false;
       }
       postCap.post(msg, handler);
@@ -294,7 +294,7 @@ var initialize = function() {
     function(selectedRC) { return launchInfo.introduceYourself; });
   ui.capDroppable(addFriendArea, rcIntroduceYourself,
     function(c) {
-      launchInfo.introduceMeTo.post({introductionCap: capServer.restore(c) });
+      launchInfo.introduceMeTo.post({introductionCap: c });
     });
 
   var messageUI = initMessagesUI(messagesDiv, showHideMessages);

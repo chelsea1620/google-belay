@@ -357,79 +357,17 @@ var launchGadgetInstance = function(inst) {
           }
         }
       },
-      capDraggable: function(node, rc, generator) {
-        var helper = node.clone();
-        var info = {
-          node: node,
-          resourceClass: rc,
-          generator: function(rc) {
-            var cap = generator(rc);
-            dirty(inst);
-            return cap.serialize();
-          }
-        };
-        node.attr('data-rc', rc);
-        node.draggable({
-          appendTo: desk,
-          helper: function() { return helper; },
-          start: function() { startDrag(info); },
-          stop: function() { stopDrag(info); },
-          scope: 'default',
-          zIndex: 9999
-        });
-        node.addClass('belay-cap-source');
-      },
-      capDroppable: function(node, rc, acceptor) {
-        node.droppable({
-          scope: 'default',
-          activeClass: 'belay-possible',
-          hoverClass: 'belay-selected',
-          drop: function(evt, ui) {
-            var info = capDraggingInfo;
-            acceptor(info.generator(info.resourceClass), info.resourceClass);
-          },
-          accept: function(elt) {
-            return (rc === '*') || (elt.attr('data-rc') === rc);
-          }
-        });
-
-        // Note:  Without preventDf on dragenter and dragover, the
-        // browser will not send the drop event
-        var preventDf = function(e) {
-          e.originalEvent.preventDefault();
-          return false;
-        };
-        node.bind('dragenter', preventDf);
-        node.bind('dragover', preventDf);
-        node.bind('drop', function(e) {
-          if (!e.originalEvent.dataTransfer) return;
-          var data = e.originalEvent.dataTransfer.getData('text/plain');
-          if (!data)
-            data = e.originalEvent.dataTransfer.getData('text/uri-list');
-          if (!data) return;
-          var qLoc = data.indexOf('?');
-          data = qLoc == -1 ? data : data.slice(qLoc);
-          var params = jQuery.parseQuery(data);
-          var scope = params.scope;
-          var cap = params.cap;
-
-          if (scope == rc) {
-            acceptor(capServer.restore(cap));
-          }
-        });
-
-        node.addClass('belay-cap-target');
-        node.hover(
-          function() { startDropHover(node, rc); },
-          function() { stopDropHover(node, rc); });
-      }
+      capDraggable: common.makeCapDraggable(inst.capServer,
+                      function() { dirty(inst); }),
+      capDroppable: common.makeCapDroppable(inst.capServer,
+                      function() { dirty(inst); })
     }
   };
 
   container.draggable({
     containment: desk,
     cursor: 'crosshair',
-    // handle: container.find('.belay-container-header'),
+    handle: container.find('.belay-container-header'),
     stack: '.belay-container',
     stop: function(ev, ui) {
       instState.window.left = container.css('left');

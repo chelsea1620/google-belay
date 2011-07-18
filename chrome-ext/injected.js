@@ -12,28 +12,40 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-var divChannel = document.getElementById('__belayDivChannel');
 
-chrome.extension.sendRequest({ type: 'init' });
 
-// TODO(jpolitz): Queue messages from the extension if the div doesn't
-// yet exist on the page
-chrome.extension.onRequest.addListener(
-  function(message, sender, sendResponse) {
-    // This data field simulates the data field on PostMessage events.
-    divChannel.innerText = JSON.stringify({data: message});
+var initialize = function(divChannel) {
+  chrome.extension.onRequest.addListener(
+    function(message, sender, sendResponse) {
+      // This data field simulates the data field on PostMessage events.
+      divChannel.innerText = JSON.stringify({data: message});
 
-    var evt = document.createEvent('Event');
-    evt.initEvent('onmessage', true, true);
-    divChannel.dispatchEvent(evt);
+      var evt = document.createEvent('Event');
+      evt.initEvent('onmessage', true, true);
+      divChannel.dispatchEvent(evt);
   });
 
-divChannel.addEventListener('postMessage', function(evt) {
-  var message = JSON.parse(divChannel.innerText);
-  chrome.extension.sendRequest(message);
-  evt.preventDefault();
-  return false;
-});
+  chrome.extension.sendRequest({ type: 'init' });
+
+  divChannel.addEventListener('postMessage', function(evt) {
+    var message = JSON.parse(divChannel.innerText);
+    chrome.extension.sendRequest(message);
+    evt.preventDefault();
+    return false;
+  });
+};
+
+var divChannel = document.getElementById('__belayDivChannel');
+
+if (divChannel) initialize(divChannel); 
+else {
+  document.addEventListener('DOMNodeInsertedIntoDocument', function (evt) {
+    if(evt.srcElement.id === '__belayDivChannel') {
+      initialize(evt.srcElement);
+    }
+  }, true);
+}
+
 
 // Illuminate elements for the background page.
 (function () {

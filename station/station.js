@@ -17,7 +17,7 @@ var topDiv;
 var instanceInfo;
 var capServer = new CapServer(newUUIDv4());
 var belayBrowserID;
-var belayBrowwerTunnel;
+var belayBrowserTunnel;
 var belayBrowser;
 
 var defaultTools = [

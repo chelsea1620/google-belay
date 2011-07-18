@@ -1,0 +1,21 @@
+{
+  "name": "Belay",
+  "version": "0.1",
+  "description": "Secure sharing.",
+  "browser_action": {
+    "default_icon": "icon.png",
+    "popup": "stations.html"
+  },
+  "background_page": "background.html",
+  "permissions": [
+    "http://*/*",
+    "file://*",
+    "tabs"
+  ],
+  "content_scripts" : [
+  {
+    "matches": ["http://*/*", "file://*"],
+    "js": ["jquery-1.6.2.js", "injected.js"],
+    "css": ["injected.css"]
+  }]
+}

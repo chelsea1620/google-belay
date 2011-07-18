@@ -295,6 +295,7 @@ var closePageInstance = function(inst) {
 var launchGadgetInstance = function(inst) {
   if (inst.gadgetNode) return;
   closePageInstance(inst);
+  if (!inst.capServer) setupCapServer(inst);
   
   var instState = inst.state;
 
@@ -567,7 +568,6 @@ var initialize = function(instanceCaps) {
   };
   
   var addInstance = function(inst, openType) {
-    setupCapServer(inst);
     instances[inst.state.id] = inst;
 
     var row = protoItemRow.clone();

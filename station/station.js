@@ -151,6 +151,7 @@ var instances = {};
      rowNode: node -- node in the item list
      pageWindow: window -- if open in page view, the window it is in
      gadgetNode: node -- if open in gadget view, the container node it is in
+     closeCap : cap -- present for windowed instances
    }
 */
 
@@ -193,7 +194,8 @@ var instanceResolver = function(id) {
   if (instances[id] && instances[id].capServer) {
     return instances[id].capServer.publicInterface;
   }
-  if (instances[id] && instances[id].windowedInstance) {
+  if (instances[id] && instances[id].windowedInstance &&
+      instances[id].opened !== 'closed') {
     return belayBrowserTunnel.sendInterface;
   }
   if (id === capServer.instanceID) {
@@ -247,20 +249,22 @@ var closeGadgetInstance = function(inst) {
   }
 }
 
-var closePageInstance = function(inst) {
-  if (inst.pageWindow) {
-    // inst.pageWindow.close();
-    // TODO(mzero): we don't really have a window to close
+// isForced is true if the page is already closed
+var closePageInstance = function(inst, isForced) {
+  if (inst.pageWindow) { // TODO(arjun): w** is this?
     inst.pageWindow = undefined;
     inst.state.opened = 'closed';
     dirty(inst);
+    if (!isForced) {
+      inst.closeCap.put();
+    }
   }
 }
 
 
 var launchGadgetInstance = function(inst) {
   if (inst.gadgetNode) return;
-  closePageInstance(inst);
+  closePageInstance(inst, false);
   if (!inst.capServer) setupCapServer(inst);
   
   var instState = inst.state;
@@ -387,6 +391,8 @@ var launchPageInstance = function(inst, launchCap) {
   launchCap.post({
     instID: inst.state.id,
     url: inst.launch.page.html,
+    height: inst.launch.page.window.height,
+    width: inst.launch.page.window.width,
     outpostData: {
       info: inst.launch.info,
       instanceID: inst.state.id,
@@ -402,8 +408,8 @@ var launchPageInstance = function(inst, launchCap) {
       })
     }
   }, 
-  function(result) {
-    // TODO(arjun): window closing cap, etc. would be received here.
+  function(closeCap) {
+    inst.closeCap = closeCap;
   },
   function(error) {
     console.assert(false);
@@ -487,7 +493,7 @@ var addInstance = function(inst, openType, launchCap) {
 
 var removeInstance = function(inst) {
 	closeGadgetInstance(inst);
-	closePageInstance(inst);
+	closePageInstance(inst, false);
 	inst.rowNode.fadeOut(function() { inst.rowNode.remove(); });
 	if (inst.capServer) inst.capServer.revokeAll();
 	delete instances[inst.state.id];
@@ -581,6 +587,13 @@ var newInstHandler = function(args) {
 	addInstance(inst, 'page', args.relaunch);
 };
 
+var closeInstHandler = function(instID) {
+  console.assert(instID in instances);
+  var inst = instances[instID];
+  closePageInstance(inst, true);
+  
+};
+
 $(function() {
   topDiv = $('#aux div').eq(0);
 
@@ -595,5 +608,6 @@ $(function() {
     var instancesCap = instanceInfo.instances;
     instancesCap.get(initialize, function(err) { alert(err.message); });
     outpost.setNewInstHandler.put(capServer.grant(newInstHandler));
+    outpost.setCloseInstHandler.put(capServer.grant(closeInstHandler));
   });
 });

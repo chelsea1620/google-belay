@@ -125,6 +125,19 @@ class GenerateHandler(BaseHandler):
     feed_id = str(feed_uuid)
     self.bcapResponse(server_cap("/belay/launch", feed_id))
 
+class GenerateProfileHandler(BaseHandler):
+  def post(self):
+    feed_uuid = uuid.uuid4()
+    feed_id = str(feed_uuid)
+
+    feed = FeedData(key_name=feed_id);
+    # TODO(jpolitz): bcapRequest should be used here, but was yielding None
+    # Find out why
+    feed.name = self.request.get('name')
+    feed.location = self.request.get('location')
+    feed.put()
+
+    self.bcapResponse(server_cap("/belay/launch", feed_id))
 
 class ViewHandler(BaseHandler):
   def get(self):
@@ -197,6 +210,7 @@ class DataPostHandler(BaseHandler):
 application = webapp.WSGIApplication(
   [('/belay/launch', LaunchHandler),
   ('/belay/generate', GenerateHandler),
+  ('/belay/generateProfile', GenerateProfileHandler),
   ('/view/editor', EditorViewHandler),
   ('/view/reader', ReaderViewHandler),
   ('/data/profile', DataProfileHandler),

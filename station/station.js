@@ -146,7 +146,7 @@ var instances = {};
        data: string  -- stored data for the instance
      },
      capServer: caps -- the cap server for this instance (if !state.remote)
-     capTunnel: capt -- the cap tunnel for this instance (if state.remote)
+     windowedInstance: bool -- if true, in a window (route via extension) 
 
      rowNode: node -- node in the item list
      pageWindow: window -- if open in page view, the window it is in
@@ -193,8 +193,8 @@ var instanceResolver = function(id) {
   if (instances[id] && instances[id].capServer) {
     return instances[id].capServer.publicInterface;
   }
-  if (instances[id] && instances[id].capTunnel) {
-    return instances[id].capTunnel.sendInterface;
+  if (instances[id] && instances[id].windowedInstance) {
+    return belayBrowserTunnel.sendInterface;
   }
   if (id === capServer.instanceID) {
     return capServer.publicInterface;
@@ -218,20 +218,6 @@ var setupCapServer = function(inst) {
   inst.capServer = capServer;
   capServer.setResolver(instanceResolver);
   capServer.setSyncNotifier(function() { dirty(inst); });
-};
-
-var setupCapTunnel = function(instID, port) {
-  var tunnel = new CapTunnel(port);
-  var instance;
-  if (instances[instID]) {
-    instance = instances[instID];
-  }
-  else { throw 'Creating a tunnel for non-existent instanceID!'; }
-
-  instance.capServer = undefined;
-  instance.capTunnel = tunnel;
-
-  tunnel.setLocalResolver(instanceResolver);
 };
 
 var desk = undefined;
@@ -367,7 +353,7 @@ var launchGadgetInstance = function(inst) {
   if ('page' in inst.launch) {
     header.append('<div class="belay-control">↑</div>');
     var maxBox = header.find(':last-child');
-    maxBox.click(function() { launchPageInstance(inst); });
+    maxBox.click(function() { launchPageInstance(inst, belayLaunch); });
     maxBox.hover(function() { maxBox.addClass('hover'); },
                  function() { maxBox.removeClass('hover'); });
   }
@@ -382,7 +368,7 @@ var launchGadgetInstance = function(inst) {
   });
 };
 
-var launchPageInstance = function(inst) {
+var launchPageInstance = function(inst, launchCap) {
   if (inst.pageWindow) return;
   closeGadgetInstance(inst);
   inst.pageWindow = true;
@@ -395,27 +381,36 @@ var launchPageInstance = function(inst) {
   if ('height' in inst.launch.page.window)
     features.push('height=' + Number(inst.launch.page.window.height));
 
-  var port = windowManager.open(inst.launch.page.html, inst.state.id,
-      features.join(','));
+  inst.capServer = undefined;
+  inst.windowedInstance = true;
 
-  setupCapTunnel(inst.state.id, port);
-  inst.capTunnel.sendOutpost(capServer.dataPreProcess({ 
-    info: inst.launch.info,
-    instanceID: inst.state.id,
-    initialSnapshot: (inst.state.capSnapshot ? inst.state.capSnapshot : false),
-    services : belayBrowser,
-    storage: capServer.grant({
-      get: function() { return inst.state.data; },
-      put: function(d) { inst.state.data = d; dirty(inst); }
-    }),
-    snapshot: capServer.grant({
-      get: function() { return inst.state.capSnapshot; },
-      put: function(snap) { inst.state.capSnapshot = snap; dirty(inst); }
-    })
-  }));
+  launchCap.post({
+    instID: inst.state.id,
+    url: inst.launch.page.html,
+    outpostData: {
+      info: inst.launch.info,
+      instanceID: inst.state.id,
+      initialSnapshot: inst.state.capSnapshot ? inst.state.capSnapshot : false,
+      services : belayBrowser,
+      storage: capServer.grant({
+        get: function() { return inst.state.data; },
+        put: function(d) {inst.state.data = d; dirty(inst); }
+      }),
+      snapshot: capServer.grant({
+        get: function() { return inst.state.capSnapshot; },
+        put: function(snap) { inst.state.capSnapshot = snap; dirty(inst); }
+      })
+    }
+  }, 
+  function(result) {
+    // TODO(arjun): window closing cap, etc. would be received here.
+  },
+  function(error) {
+    console.assert(false);
+  });
 };
 
-var launchInstance = function(inst, openType) {
+var launchInstance = function(inst, openType, launchCap) {
   var instState = inst.state;
   
   // TODO(mzero) create cap for storage to station
@@ -445,7 +440,7 @@ var launchInstance = function(inst, openType) {
       // leave closed!
     }
     else if (openType == 'page' && canPage) {
-      launchPageInstance(inst);
+      launchPageInstance(inst, launchCap);
     }
     else if (openType == 'gadget' && canGadget) {
       launchGadgetInstance(inst);
@@ -456,6 +451,48 @@ var launchInstance = function(inst, openType) {
   });
 };
 
+
+var protoItemRow; // TODO(jpolitz): factor this differently?
+var itemsTable;
+var addInstance = function(inst, openType, launchCap) {
+	instances[inst.state.id] = inst;
+
+	var row = protoItemRow.clone();
+	inst.rowNode = row;
+	
+	row.click(function() { topGadget(inst); });
+	row.find('td.icon img').attr('src', inst.state.icon || defaultIcon);
+	row.find('td.name').text(inst.state.name || 'an item');
+	row.find('td.actions .open-page').click(function() {
+			launchInstance(inst, 'page', belayLaunch);
+		});
+	row.find('td.actions .open-gadget').click(function() {
+			launchInstance(inst, 'gadget');
+		});
+	row.find('td.actions .remove').click(function() {
+			removeInstance(inst);
+		});
+	row.hover(
+		function() {
+			if (inst.gadgetNode) inst.gadgetNode.addClass('belay-hilite');
+		},
+		function() { 
+			if (inst.gadgetNode) inst.gadgetNode.removeClass('belay-hilite');
+		});
+	row.prependTo(itemsTable);
+	showItems();
+	
+	launchInstance(inst, openType, launchCap);
+};  
+
+var removeInstance = function(inst) {
+	closeGadgetInstance(inst);
+	closePageInstance(inst);
+	inst.rowNode.fadeOut(function() { inst.rowNode.remove(); });
+	if (inst.capServer) inst.capServer.revokeAll();
+	delete instances[inst.state.id];
+	inst.storageCap.remove();
+};
 
 var initialize = function(instanceCaps) {
   var top = topDiv;
@@ -473,49 +510,10 @@ var initialize = function(instanceCaps) {
 
 
   var itemsDiv = topDiv.find('#belay-items');
-  var itemsTable = itemsDiv.find('table');
-  var protoItemRow = itemsTable.find('tr').eq(0).detach();
+  itemsTable = itemsDiv.find('table');
+  protoItemRow = itemsTable.find('tr').eq(0).detach();
   itemsTable.find('tr').remove();
 
-  var removeInstance = function(inst) {
-    closeGadgetInstance(inst);
-    closePageInstance(inst);
-    inst.rowNode.fadeOut(function() { inst.rowNode.remove(); });
-    if (inst.capServer) inst.capServer.revokeAll();
-    delete instances[inst.state.id];
-    inst.storageCap.remove();
-  };
-  
-  var addInstance = function(inst, openType) {
-    instances[inst.state.id] = inst;
-
-    var row = protoItemRow.clone();
-    inst.rowNode = row;
-    
-    row.click(function() { topGadget(inst); });
-    row.find('td.icon img').attr('src', inst.state.icon || defaultIcon);
-    row.find('td.name').text(inst.state.name || 'an item');
-    row.find('td.actions .open-page').click(function() {
-        launchInstance(inst, 'page');
-      });
-    row.find('td.actions .open-gadget').click(function() {
-        launchInstance(inst, 'gadget');
-      });
-    row.find('td.actions .remove').click(function() {
-        removeInstance(inst);
-      });
-    row.hover(
-      function() {
-        if (inst.gadgetNode) inst.gadgetNode.addClass('belay-hilite');
-      },
-      function() { 
-        if (inst.gadgetNode) inst.gadgetNode.removeClass('belay-hilite');
-      });
-    row.prependTo(itemsTable);
-    showItems();
-    
-    launchInstance(inst, openType);
-  };  
   
   var addInstanceFromTool = function(toolInfo) {
     toolInfo.generate.get(function(data) {
@@ -531,7 +529,7 @@ var initialize = function(instanceCaps) {
             info: undefined
           }
         };
-        addInstance(inst, 'openAny');
+        addInstance(inst, 'openAny', belayLaunch);
         dirty(inst);
       },
       function(error) {
@@ -547,7 +545,7 @@ var initialize = function(instanceCaps) {
           storageCap: storageCap,
           state: instState
         };
-        addInstance(inst, 'restore');
+        addInstance(inst, 'restore', belayLaunch);
       },
       function(status) { alert('Failed to load instance: ' + status); }
     );
@@ -565,6 +563,23 @@ var initialize = function(instanceCaps) {
   instanceCaps.forEach(addInstanceFromStorage);
 };
 
+// Called by Belay (the extension) when a user visits a Web page, P, that wants
+// to morph into an instance. The supplied launch cap has the same signature
+// as belayLaunch. Instead of creating a new tab, it reloads P's tab.
+var newInstHandler = function(args) {
+  var instID = newUUIDv4();
+	var inst = {
+		storageCap: capServer.grant(instanceInfo.instanceBase + instID),
+			// TODO(arjun) still a hack. Should we be concatenaing URLs here?
+		state: {
+			id: instID,
+			belayInstance: args.launchData.launch,
+			name: 'an instance from ' + args.launchData.name,
+			icon: args.launchData.icon
+		}
+	};
+	addInstance(inst, 'page', args.relaunch);
+};
 
 $(function() {
   topDiv = $('#aux div').eq(0);
@@ -573,10 +588,12 @@ $(function() {
   belayBrowserTunnel.setLocalResolver(instanceResolver);
   belayBrowserTunnel.setOutpostHandler(function(outpost) {
     outpost = capServer.dataPostProcess(outpost);
+    belayLaunch = outpost.launch;
     belayBrowserID = outpost.browserID;
     belayBrowser = outpost.services;
     instanceInfo = outpost.info;
     var instancesCap = instanceInfo.instances;
     instancesCap.get(initialize, function(err) { alert(err.message); });
+    outpost.setNewInstHandler.put(capServer.grant(newInstHandler));
   });
 });

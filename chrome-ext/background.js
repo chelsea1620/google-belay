@@ -14,6 +14,21 @@
 
 var capServer = new CapServer(newUUIDv4());
 
+var resolver = function(instID) {
+  if (instID in instToTabID) {
+    return launchedInstances[instToTabID[instID]].tunnel.sendInterface;
+  }
+  else if (instID === capServer.instanceID) {
+    return capServer.publicInterface;
+  }
+  else {
+    // TODO(arjun): this is terrible; Joe told me to do this
+    return currentStation.tunnel.sendInterface;
+  }
+};
+
+capServer.setResolver(resolver);
+
 // { tabID : { callbackName : [ rcList, info ] }}
 var offerMap = Object.create(null);
 var acceptMap = Object.create(null);
@@ -63,16 +78,66 @@ var launchStation = function(name) {
   launch(stations.get(name));
 }
 
+var instToTabID = Object.create(null);
+var launchedInstances = Object.create(null);
+var launchedStations = Object.create(null);
 
+var makeSetNewInstHandler = function(station) {
+  return capServer.grant(function(handler) {
+    station.newInstHandler = handler;
+  });
+};
 
-var launchedTabs = Object.create(null);
+// Capability returned to station to launch instances in new windows.
+var makeLaunchHandler = function(station) {
+  return capServer.grant({
+    // TODO(arjun): I conjecture that we'll use delete to close windowed
+    // instances
+
+    // { instID: String, outpostData : Any, url: String }
+    post: function(args, sk, fk) {
+      chrome.tabs.create({ url: args.url }, function(tab) {
+        var tunnel = makeTunnel(tabPorts.getTabPort(tab.id)); 
+        launchedInstances[tab.id] = { instID: args.instID,
+                                      tunnel: tunnel,
+                                      url: args.url,
+                                      outpostData: args.outpostData };
+        instToTabID[args.instID] = tab.id;
+        // TODO(arjun): This is where the cap to close the instance might
+        // be returned.
+        sk(true);
+        // chrome.tabs.onUpdated fires on the next turn, sending the
+        // outpost message.
+      });
+    }
+  });
+};
+
+var instanceRequest = function(data, tabID) {
+  var launchData = capServer.dataPostProcess(data);
+  
+  currentStation.newInstHandler.post({ 
+    launchData: launchData,
+    relaunch: capServer.grant(function(args) {
+      chrome.tabs.update(tabID, { url: args.url }, function(tab) {
+        var tunnel = makeTunnel(tabPorts.refreshTabPort(tab.id)); 
+        launchedInstances[tab.id] = { instID: args.instID,
+                                      tunnel: tunnel,
+                                      url: args.url,
+                                      outpostData: args.outpostData };
+        instToTabID[args.instID] = tab.id;
+        // chrome.tabs.onUpdated _does not fire_ on the next turn.
+        tunnel.sendOutpost(capServer.dataPreProcess(args.outpostData));
+      });
+      return true;
+    })
+  });
+};
+
 
 var makeTunnel = function(port) {
   var tunnel = new CapTunnel(port);
-  tunnel.setLocalResolver(function(instID) {
-    if(instID === capServer.instanceID) return capServer.publicInterface;
-    else return null;
-  });
+  tunnel.setLocalResolver(resolver);
   return tunnel;
 };
 
@@ -85,7 +150,7 @@ var launch = function(url) {
       chrome.tabs.create({ url: page.html },
         function(tab) {
           var tunnel = makeTunnel(tabPorts.getTabPort(tab.id)); 
-          launchedTabs[tab.id] = {
+          launchedStations[tab.id] = {
             url: url, html: page.html, info: info, tunnel: tunnel };
         });
     },
@@ -94,13 +159,43 @@ var launch = function(url) {
     });
 };
 
+// Also runs on first-load
+var reloadInstance = function(tabID, info, tab) {
+  var instance = launchedInstances[tabID];
+  console.assert(instance);
+  instance.tunnel.sendOutpost(capServer.dataPreProcess(instance.outpostData));
+};
+
+var currentStation = false;
+
+chrome.tabs.onRemoved.addListener(function (tabID, removeInfo) {
+  if (tabID in launchedInstances) {
+    delete instToTabID[launchedInstances[tabID].instID];
+    delete launchedInstances[tabID];
+  }
+  else if (tabID in launchedStations) {
+    if (currentStation === launchedStations[tabID]) {
+      currentStation = false;
+    }
+    delete launchedStations[tabID];
+  }
+});
+
 // NOTE(jpolitz): This event is called twice on page load, and twice
 // on page refresh.  We only handle 'complete' events, so we can be
 // sure that the receiving tab is correctly set up.
 chrome.tabs.onUpdated.addListener(function(tabID, info, tab) {
   if (info.status !== 'complete') return;
-  var tabInfo = launchedTabs[tabID];
-  if (tabInfo === undefined) return;
+  var tabInfo = launchedStations[tabID];
+  if (tabInfo === undefined) {
+    if (tabID in launchedInstances) {
+      reloadInstance(tabID, info, tab);
+    }
+    return;
+  }
+
+  // TODO(arjun): hack--currentStation is the last loaded station
+  currentStation = tabInfo;
   
   tabInfo.tunnel = makeTunnel(tabPorts.refreshTabPort(tabID)); 
 
@@ -111,7 +206,9 @@ chrome.tabs.onUpdated.addListener(function(tabID, info, tab) {
       services: {
         highlightByRC: capServer.grant(highlighting.highlightByRC),
         unhighlight: capServer.grant(highlighting.unhighlight)
-      }
+      },
+      launch: makeLaunchHandler(tabInfo),
+      setNewInstHandler: makeSetNewInstHandler(tabInfo)
     }));
   };
 
@@ -149,7 +246,6 @@ var tabPorts = (function() {
     var extPort = {
       postMessage: function(message, ports) {
         if (ports && ports.length > 0) { throw 'TabPort: Can\'t send ports'; }
-        // TODO(jpolitz): make sure tabID still exists
         chrome.tabs.sendRequest(tabID, message);
       },
       onmessage: function() { throw 'ExtPort: onmessage not set.'; }
@@ -163,6 +259,9 @@ var tabPorts = (function() {
       var port = getTabPort(tabID);
       if (message.type === 'init') {
         if (!port.hasPort()) port.setPort(makeRelayPort(tabID));
+      }
+      else if (message.type === 'instanceRequest') {
+        instanceRequest(message.gen, tabID);
       }
       else port.onmessage({ data: message });
     });

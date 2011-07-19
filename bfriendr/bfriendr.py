@@ -148,6 +148,10 @@ class LaunchHandler(CapServer.CapHandler):
   def get(self):
     account = self.get_entity()
     response = {
+    'page': {
+      'html': server_url('/bfriendr-belay.html'),
+      'window': {'height': 800, 'width': 350}
+    },
     'gadget': {
       'html': server_url('/bfriendr.html'),
       'scripts': [ server_url('/bfriendr.js') ]

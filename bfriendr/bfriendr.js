@@ -301,4 +301,5 @@ var initialize = function() {
   initCardUI(launchInfo.friends, cardListDiv, messageUI);
 };
 
-initialize();
+onBelayReady(function() { initialize(); });
+

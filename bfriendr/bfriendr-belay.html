@@ -28,14 +28,14 @@ limitations under the License.
   <script src="lib/js/belay-client.js"></script>
   <script type="text/javascript" src="bfriendr.js"></script>
 </head>
-<body>
-<div class="bfriendr">
+<body id="bfriendr">
+<div class="bfriendr bfriendr-page">
   <div class="bfriendr-header">
     <h1><span class="bfriendr-logo"
       ><span class="bfriendr-red">b</span>friend<span class="bfriendr-red">r</span></span>
       <a class="bfriendr-nav" href=""
          style="width:50px;height:30px;background:url(http://localhost:9009/nav.png) no-repeat 0 -4px;"
-         /></h1>
+        ></a></h1>
   </div>
   <div class="bfriendr-mycard" style="display: none;">
     <div class="bfriendr-card">
@@ -44,15 +44,15 @@ limitations under the License.
         <li>
           <p class="bfriendr-instructions">This information is visible to your friends and those you've invited.</p>
           <div class="bfriendr-cardform">
-            <div class="bfriendr-cardimg" />
+            <div class="bfriendr-cardimg"></div>
             <p>Name: <input type="string" name="name" title="Who are you?" /></p>
             <p>E-mail: <input type="string" name="email" title="(optional)"/></p>
-            <div class="bfriendr-clear" />
+            <div class="bfriendr-clear"></div>
           </div>
           <p>Something about yourself:</p>
           <textarea title="Something about yourself"></textarea>
           <button><b>✎</b> Save</button>
-          <div class="bfriendr-clear" />
+          <div class="bfriendr-clear"></div>
         </li>
       </ul>
     </div>
@@ -61,25 +61,25 @@ limitations under the License.
     <div class="bfriendr-cards">
       <ul>
         <li class="bfriendr-card">
-          <a class="bfriendr-nav" href="" />
-          <div class="bfriendr-cardimg" />
+          <a class="bfriendr-nav" href=""></a>
+          <div class="bfriendr-cardimg"></div>
           <h3>Arjun Guha</h3>
           <p>blah blah woof woof</p>
-          <div class="bfriendr-clear" />
+          <div class="bfriendr-clear"></div>
         </li>
-        <li class="bfriendr-card">
-          <a class="bfriendr-nav" href="" />
-          <div class="bfriendr-cardimg" />
+        <li class="bfriendr-card bfriendr-card-active">
+          <a class="bfriendr-nav" href=""></a>
+          <div class="bfriendr-cardimg"></div>
           <h3>Joe Politz</h3>
           <p>blah blah woof woof</p>
-          <div class="bfriendr-clear" />
+          <div class="bfriendr-clear"></div>
         </li>
         <li class="bfriendr-card">
-          <a class="bfriendr-nav" href="" />
-          <div class="bfriendr-cardimg" />
+          <a class="bfriendr-nav" href=""></a>
+          <div class="bfriendr-cardimg"></div>
           <h3>Mark Lentczner</h3>
           <p>blah blah woof woof</p>
-          <div class="bfriendr-clear" />
+          <div class="bfriendr-clear"></div>
         </li>
         <li class="bfriendr-add">
           <p class="bfriendr-instructions">Invite a new friend:</p>
@@ -90,7 +90,7 @@ limitations under the License.
       </ul>
     </div>
     <div class="bfriendr-messages">
-      <h1><a class="bfriendr-nav" href="" /> <span class="bfriendr-message-friendname">Arjun Guha</span></h1>
+      <h1><a class="bfriendr-nav" href=""></a> <span class="bfriendr-message-friendname">Arjun Guha</span></h1>
       <ul>
         <li class="bfriendr-message">
           <p class="bfriendr-date">3 min ago</p>

@@ -154,8 +154,6 @@ var instanceRequest = function(data, tabID) {
                                       outpostData: args.outpostData,
                                       station: station };
         instToTabID[args.instID] = tab.id;
-        // chrome.tabs.onUpdated _does not fire_ on the next turn.
-        tunnel.sendOutpost(capServer.dataPreProcess(args.outpostData));
       });
       return makeCloseInstanceCap(args.instID);
     })

@@ -151,7 +151,7 @@ class GenerateHandler(CapServer.BcapHandler):
     response = {
       'launch': CapServer.grant(LaunchHandler, account),
       'icon': server_url('/person.png'),
-      'name': 'bfriendrs of ' + card.name
+      'name': 'bfriendr for ' + card.name
     }
     self.bcapResponse(response)
 
@@ -168,7 +168,7 @@ class LaunchHandler(CapServer.CapHandler):
       'html': server_url('/bfriendr-belay.html'),
       'window': {'height': 800, 'width': 350}
     },
-    'gadget': {
+    'x-gadget': {
       'html': server_url('/bfriendr.html'),
       'scripts': [ server_url('/bfriendr.js') ]
     },

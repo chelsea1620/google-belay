@@ -79,6 +79,14 @@ var launchStation = function(name) {
 }
 
 var instToTabID = Object.create(null);
+/* Maps tabIDs to
+  { instID: Str, 
+    outpostData: Any,    station-determined; background is transparent 
+    tunnel: CapTunnel,
+    url: Str,
+    station: ``Station'' 
+   }
+*/
 var launchedInstances = Object.create(null);
 var launchedStations = Object.create(null);
 
@@ -88,24 +96,42 @@ var makeSetNewInstHandler = function(station) {
   });
 };
 
+var makeCloseInstHandler = function(station) {
+  return capServer.grant(function(handler) {
+    station.closeInstHandler = handler; 
+  });
+};
+
+var makeCloseInstanceCap = function(instID) {
+  return capServer.grant(function() {
+    var tabID = instToTabID[instID];
+    delete instToTabID[instID];
+    delete launchedInstances[tabID];
+    // TODO(arjun): assume success; closing caps should be revoked when the
+    // instance is closed.
+    chrome.tabs.remove(tabID);
+  });
+};
+
 // Capability returned to station to launch instances in new windows.
 var makeLaunchHandler = function(station) {
   return capServer.grant({
-    // TODO(arjun): I conjecture that we'll use delete to close windowed
-    // instances
-
-    // { instID: String, outpostData : Any, url: String }
     post: function(args, sk, fk) {
-      chrome.tabs.create({ url: args.url }, function(tab) {
+      var width = typeof args.width === 'number' ? args.width : undefined;
+      var height = typeof args.height === 'number' ? args.height: undefined;
+      chrome.windows.create({ url: args.url,
+                              width: width,
+                              height: height }, 
+                            function(wnd) {
+        var tab = wnd.tabs[0];
         var tunnel = makeTunnel(tabPorts.getTabPort(tab.id)); 
         launchedInstances[tab.id] = { instID: args.instID,
                                       tunnel: tunnel,
                                       url: args.url,
-                                      outpostData: args.outpostData };
+                                      outpostData: args.outpostData,
+                                      station: station };
         instToTabID[args.instID] = tab.id;
-        // TODO(arjun): This is where the cap to close the instance might
-        // be returned.
-        sk(true);
+        sk(makeCloseInstanceCap(args.instID));
         // chrome.tabs.onUpdated fires on the next turn, sending the
         // outpost message.
       });
@@ -115,8 +141,9 @@ var makeLaunchHandler = function(station) {
 
 var instanceRequest = function(data, tabID) {
   var launchData = capServer.dataPostProcess(data);
+  var station = currentStation;
   
-  currentStation.newInstHandler.post({ 
+  station.newInstHandler.post({ 
     launchData: launchData,
     relaunch: capServer.grant(function(args) {
       chrome.tabs.update(tabID, { url: args.url }, function(tab) {
@@ -124,12 +151,13 @@ var instanceRequest = function(data, tabID) {
         launchedInstances[tab.id] = { instID: args.instID,
                                       tunnel: tunnel,
                                       url: args.url,
-                                      outpostData: args.outpostData };
+                                      outpostData: args.outpostData,
+                                      station: station };
         instToTabID[args.instID] = tab.id;
         // chrome.tabs.onUpdated _does not fire_ on the next turn.
         tunnel.sendOutpost(capServer.dataPreProcess(args.outpostData));
       });
-      return true;
+      return makeCloseInstanceCap(args.instID);
     })
   });
 };
@@ -168,16 +196,38 @@ var reloadInstance = function(tabID, info, tab) {
 
 var currentStation = false;
 
+var handleClosedStation = function(tabID) {
+  var station = launchedStations[tabID];
+  
+  if (currentStation === station) {
+    currentStation = false;
+  }
+
+  closeInstancesOfStation(station);
+  delete launchedStations[tabID];
+}
+
+var closeInstancesOfStation = function(station) {
+  Object.keys(launchedInstances).forEach(function(instTabID) {
+    var instance = launchedInstances[instTabID];
+    if (instance.station === station) {
+      delete instToTabID[instance.instID];
+      delete launchedInstances[instTabID];
+      chrome.tabs.remove(Number(instTabID));
+    }
+  });
+}
+
 chrome.tabs.onRemoved.addListener(function (tabID, removeInfo) {
   if (tabID in launchedInstances) {
-    delete instToTabID[launchedInstances[tabID].instID];
+    var station = launchedInstances[tabID].station;
+    var instID = launchedInstances[tabID].instID;
+    delete instToTabID[instID];
     delete launchedInstances[tabID];
+    station.closeInstHandler.put(instID);
   }
   else if (tabID in launchedStations) {
-    if (currentStation === launchedStations[tabID]) {
-      currentStation = false;
-    }
-    delete launchedStations[tabID];
+    handleClosedStation(tabID);
   }
 });
 
@@ -196,6 +246,8 @@ chrome.tabs.onUpdated.addListener(function(tabID, info, tab) {
 
   // TODO(arjun): hack--currentStation is the last loaded station
   currentStation = tabInfo;
+
+  closeInstancesOfStation(tabInfo);
   
   tabInfo.tunnel = makeTunnel(tabPorts.refreshTabPort(tabID)); 
 
@@ -208,7 +260,8 @@ chrome.tabs.onUpdated.addListener(function(tabID, info, tab) {
         unhighlight: capServer.grant(highlighting.unhighlight)
       },
       launch: makeLaunchHandler(tabInfo),
-      setNewInstHandler: makeSetNewInstHandler(tabInfo)
+      setNewInstHandler: makeSetNewInstHandler(tabInfo),
+      setCloseInstHandler: makeCloseInstHandler(tabInfo)
     }));
   };
 

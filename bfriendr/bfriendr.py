@@ -304,8 +304,25 @@ class ConversationReadHandler(CapServer.CapHandler):
     sorted_combined = sorted(combined, key = lambda(m): m['when'], reverse = True)
 
     self.bcapResponse({'items': sorted_combined})
-        
-        
+  
+  def post(self):
+    friend_info = self.get_entity()
+    request = self.bcapRequest()
+
+    when = request['when']
+
+    readMine = CapServer.regrant(StreamReadHandler, friend_info)
+    readTheirs = CapServer.Capability(friend_info.read_their_stream)
+
+    mine = readMine.invoke('GET')['items']
+    theirs = readTheirs.invoke('GET')['items']
+
+    combined = mine
+    combined.extend(theirs)
+    combined = filter(lambda(msg): msg['when'] > when, combined)
+    combined = sorted(combined, key = lambda(m): m['when'], reverse = True)
+    self.bcapResponse({'items': combined})
+
 
 class StreamReadHandler(CapServer.CapHandler):
   def get(self):

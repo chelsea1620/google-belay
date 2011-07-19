@@ -27,7 +27,10 @@ var initMessagesUI = function(container, showHideMessages) {
   var sendButton = msgs.find('button:eq(0)');
   var composeTextArea = msgs.find('textarea:eq(0)');
   var showFriendPane = container.find('.bfriendr-nav');
+  
+  msgs.find('.bfriendr-message').detach();
 
+  var latestMsgTime = '';
   var pollIntervalID = false;
 
   // i.e., hide this pane, detaching all timers, handlers, etc.
@@ -38,6 +41,8 @@ var initMessagesUI = function(container, showHideMessages) {
     }
     sendButton.unbind('click');
     showHideMessages(false);
+    latestMsgTime = '';
+    msgs.find('.bfriendr-message').detach();
     return false;    
   }
   showFriendPane.click(close);
@@ -63,6 +68,7 @@ var initMessagesUI = function(container, showHideMessages) {
           return msg.capability;
         });
     }
+    latestMsgTime = msg.when > latestMsgTime ? msg.when : latestMsgTime;
     msgElt.find('p:eq(1)').text(msg.message || 'Received blank message.');
     msgElt.find('.bfriendr-date:first').text(msg.when);
     msgs.append(msgElt);
@@ -70,8 +76,7 @@ var initMessagesUI = function(container, showHideMessages) {
 
   var mkRefreshConvHandler = function(conversationCap) {
     return function() {
-      conversationCap.get(function(conv) {
-        msgs.find('.bfriendr-message').detach();
+      conversationCap.post({ when: latestMsgTime }, function(conv) {
         conv.items.forEach(showMsg);
       });
     };

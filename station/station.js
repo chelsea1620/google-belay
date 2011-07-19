@@ -36,10 +36,6 @@ var defaultTools = [
     { name: 'Emote',
       icon: 'http://localhost:9005/tool-emote.png',
       generate: capServer.restore('http://localhost:9005/belay/generate')
-    },
-    { name: 'bfriendr',
-      icon: 'http://localhost:9001/tool.png',
-      generate: capServer.restore('http://localhost:9009/belay/generate')
     }
   ];
 
@@ -585,7 +581,7 @@ var newInstHandler = function(args) {
 		state: {
 			id: instID,
 			belayInstance: args.launchData.launch,
-			name: 'an instance from ' + args.launchData.name,
+			name: args.launchData.name,
 			icon: args.launchData.icon
 		}
 	};

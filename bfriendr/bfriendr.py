@@ -140,9 +140,25 @@ class GenerateHandler(CapServer.BcapHandler):
   def get(self):
     self.bcapResponse(CapServer.grant(LaunchHandler, new_account()))
 
+  def post(self):
+    account = new_account()
+    card = account.my_card
+    # TODO(mzero): never trust what they send you!
+    card.name = self.request.get('name')
+    card.email = self.request.get('email')
+    card.notes = self.request.get('notes')
+    card.put()
+    response = {
+      'launch': CapServer.grant(LaunchHandler, account),
+      'icon': server_url('/person.png'),
+      'name': 'bfriendr for ' + card.name
+    }
+    self.bcapResponse(response)
+
 class GenerateAccountHandler(CapServer.BcapHandler):
   def get(self):
     self.bcapResponse(CapServer.grant(AccountInfoHandler, new_account()))
+
 
 class LaunchHandler(CapServer.CapHandler):
   def get(self):
@@ -152,7 +168,7 @@ class LaunchHandler(CapServer.CapHandler):
       'html': server_url('/bfriendr-belay.html'),
       'window': {'height': 800, 'width': 350}
     },
-    'gadget': {
+    'x-gadget': {
       'html': server_url('/bfriendr.html'),
       'scripts': [ server_url('/bfriendr.js') ]
     },
@@ -304,8 +320,25 @@ class ConversationReadHandler(CapServer.CapHandler):
     sorted_combined = sorted(combined, key = lambda(m): m['when'], reverse = True)
 
     self.bcapResponse({'items': sorted_combined})
-        
-        
+  
+  def post(self):
+    friend_info = self.get_entity()
+    request = self.bcapRequest()
+
+    when = request['when']
+
+    readMine = CapServer.regrant(StreamReadHandler, friend_info)
+    readTheirs = CapServer.Capability(friend_info.read_their_stream)
+
+    mine = readMine.invoke('GET')['items']
+    theirs = readTheirs.invoke('GET')['items']
+
+    combined = mine
+    combined.extend(theirs)
+    combined = filter(lambda(msg): msg['when'] > when, combined)
+    combined = sorted(combined, key = lambda(m): m['when'], reverse = True)
+    self.bcapResponse({'items': combined})
+
 
 class StreamReadHandler(CapServer.CapHandler):
   def get(self):

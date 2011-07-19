@@ -19,7 +19,7 @@ from lib.py.utils import *
 response = {
     'page': {
       'html': server_url("/emote-belay.html"),
-      'window': { 'width': 160, 'height': 90 }
+      'window': { 'width': 300, 'height': 250 }
     },
     'gadget': {
       'html': server_url("/emote.html"),

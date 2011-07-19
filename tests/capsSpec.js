@@ -805,6 +805,33 @@ describe('CapServer', function() {
         mkRunner(e.cap).runsGetAndExpect(42);
       });
     });
+
+    describe('Synchronization', function() {
+      it('should synchronize on grants', function() {
+        var sync = false;
+        capServer1.setSyncNotifier(function() { sync = true; })
+        capServer1.grant(function() {});
+        expect(sync).toBe(true);
+      });
+
+      it('should synchronize on revoke', function() {
+        var syncCount = 0;
+        capServer1.setSyncNotifier(function() { syncCount++; })
+        capServer1.grant(function() {}, 'somekey');
+        capServer1.revoke('somekey')
+        expect(syncCount).toBe(2);
+      });
+
+      it('should synchronize on revokeAll', function() {
+        var syncCount = 0;
+        capServer1.setSyncNotifier(function() { syncCount++; })
+        capServer1.grant(function() {}, 'somekey');
+        capServer1.revokeAll();
+        expect(syncCount).toBe(2);
+      });
+    });
+
+    
   });
 });
 

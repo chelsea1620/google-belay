@@ -217,6 +217,7 @@ var setupCapServer = function(inst) {
   }
   inst.capServer = capServer;
   capServer.setResolver(instanceResolver);
+  capServer.setSyncNotifier(function() { dirty(inst); });
 };
 
 var setupCapTunnel = function(instID, port) {
@@ -503,7 +504,7 @@ var initialize = function(instanceCaps) {
     closeGadgetInstance(inst);
     closePageInstance(inst);
     inst.rowNode.fadeOut(function() { inst.rowNode.remove(); });
-    inst.capServer.revokeAll();
+    if (inst.capServer) inst.capServer.revokeAll();
     delete instances[inst.state.id];
     inst.storageCap.remove();
   };

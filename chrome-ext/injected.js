@@ -51,16 +51,17 @@ else {
 (function () {
   var port = chrome.extension.connect({ name: 'highlight' });
 
-  var sourceSel = '.belay-cap-source';
   var highlightClassName = 'belay-possible';
 
   var onHighlight = function(args) {
     var rc = args.rc;
-    console.assert(typeof rc === 'string');
+    var className = args.className;
+    console.assert(typeof rc === 'string' && 
+                   typeof className === 'string');
     
     onUnHighlight({ });
     $(document)
-    .find(sourceSel)
+    .find('.' + className)
     .filter(function(ix) { 
       return rc === '*' || this.getAttribute('data-rc') === rc; 
      })
@@ -69,7 +70,7 @@ else {
 
   var onUnHighlight = function(args) {
     $(document)
-    .find(sourceSel)
+    .find('.' + highlightClassName)
     .removeClass(highlightClassName);
   };
 

@@ -233,30 +233,6 @@ var setupCapTunnel = function(instID, port) {
   tunnel.setLocalResolver(instanceResolver);
 };
 
-
-//
-// Dragging Support
-//
-var capDraggingInfo;
-  // HACK: only works so long as only one drag in process at a time
-
-var startDrag = function(info) {
-  capDraggingInfo = info;
-  info.node.addClass('belay-selected');
-};
-var stopDrag = function(info) {
-  capDraggingInfo = undefined;
-  info.node.removeClass('belay-selected');
-};
-var startDropHover = function(node, rc) {
-  node.addClass('belay-selected');
-  belayBrowser.highlightByRC.put(rc);
-};
-var stopDropHover = function(node, rc) {
-  node.removeClass('belay-selected');
-  belayBrowser.unhighlight.put();
-};
-
 var desk = undefined;
 var protoContainer = undefined;
 
@@ -426,6 +402,7 @@ var launchPageInstance = function(inst) {
     info: inst.launch.info,
     instanceID: inst.state.id,
     initialSnapshot: (inst.state.capSnapshot ? inst.state.capSnapshot : false),
+    services : belayBrowser,
     storage: capServer.grant({
       get: function() { return inst.state.data; },
       put: function(d) { inst.state.data = d; dirty(inst); }

@@ -178,11 +178,10 @@ var highlighting = (function() {
 
   var ports = Object.create(null);
 
-  var highlightByRC = function(rc) {
-    console.assert(typeof rc === 'string');
-
+  var highlightByRC = function(args) {
+    args.type = 'highlight';
     Object.keys(ports).forEach(function(tabId) {
-      ports[tabId].postMessage({ type: 'highlight', rc: rc });
+      ports[tabId].postMessage(args);
     });
   };
 

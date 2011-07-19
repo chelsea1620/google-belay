@@ -22,7 +22,7 @@ handlers:
 - url: /belay/launch
   script: buzzer.py
 
-- url: /belay/generate
+- url: /belay/.*
   script: buzzer.py
 
 - url: /view/.*

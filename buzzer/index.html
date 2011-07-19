@@ -20,6 +20,7 @@ limitations under the License.
 <head>
   <meta charset="utf-8">
   <title>Belay Buzzer</title>
+  <link rel="stylesheet" href="buzzer.css">
   <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.js"></script>
   <script type="text/javascript" src="/lib/js/portQueue.js"></script>
   <script type="text/javascript" src="/lib/js/windowremote.js"></script>
@@ -28,6 +29,16 @@ limitations under the License.
   <script src="/index.js"></script>
 </head>
   <div class="buzzer-thing">
-    <button id="new-buzzer">Make a New Buzzer!</button>
+    <div class="buzzer-profile">
+      <p>Please tell your readers something about yourself before you start
+        posting:</p>
+      <form id="profileForm" action="/belay/generateProfile" method="POST">
+        <p>What do you call yourself?</p>
+        <p><input type="text" name="name" /></p>
+        <p>Where in the world are you?</p>
+        <p><input type="text" name="location" /></p>
+        <p><input type="submit" value="Submit" /></p>
+      </form>
+    </div>
   </div>
 </html>

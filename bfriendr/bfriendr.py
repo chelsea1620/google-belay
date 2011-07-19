@@ -140,9 +140,25 @@ class GenerateHandler(CapServer.BcapHandler):
   def get(self):
     self.bcapResponse(CapServer.grant(LaunchHandler, new_account()))
 
+  def post(self):
+    account = new_account()
+    card = account.my_card
+    # TODO(mzero): never trust what they send you!
+    card.name = self.request.get('name')
+    card.email = self.request.get('email')
+    card.notes = self.request.get('notes')
+    card.put()
+    response = {
+      'launch': CapServer.grant(LaunchHandler, account),
+      'icon': server_url('/person.png'),
+      'name': 'bfriendrs of ' + card.name
+    }
+    self.bcapResponse(response)
+
 class GenerateAccountHandler(CapServer.BcapHandler):
   def get(self):
     self.bcapResponse(CapServer.grant(AccountInfoHandler, new_account()))
+
 
 class LaunchHandler(CapServer.CapHandler):
   def get(self):

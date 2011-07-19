@@ -30,6 +30,10 @@ limitations under the License.
   padding: 0;
 }
 
+body#bfriendr {
+  padding: 0;
+}
+
 .bfriendr h1 {
   background-color: #fcf8c2;
   padding: 0.25em;
@@ -129,28 +133,6 @@ limitations under the License.
   z-index: 2000;
 }
 
-.bfriendr .bfriendr-content {
-  width: 100%;
-  height: 100%;
-  position: relative;
-  overflow: hidden;
-}
-
-.bfriendr .bfriendr-content-inner {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-}
-.bfriendr .bfriendr-content-inner > div {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  overflow: auto;
-}
-
 .bfriendr .bfriendr-mycard {
   margin: -8px 4px 0;
   border: 1px solid #000;
@@ -171,8 +153,58 @@ limitations under the License.
 .bfriendr .bfriendr-mycard input {
   width: 10em;
 }
-.bfriendr .bfriendr-cards {
+
+.bfriendr .bfriendr-content {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
 }
+
+.bfriendr .bfriendr-content-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+.bfriendr-gadget .bfriendr-content-inner > div {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+}
+.bfriendr-gadget .bfriendr-cards {
+}
+.bfriendr-gadget  .bfriendr-content .bfriendr-messages {
+  left: 100%;
+}
+
+.bfriendr-page .bfriendr-content-inner > div {
+  width: 50%;
+  height: 100%;
+  overflow: auto;
+}
+
+.bfriendr-page .bfriendr-cards {
+  border-right: 1px solid #c0c0c0;
+}
+.bfriendr-page .bfriendr-messages {
+  position: absolute;
+  top: 0;
+  left: 50%;
+}
+
+.bfriendr-page .bfriendr-messages h1 {
+  display: none;
+}
+
+.bfriendr-page .bfriendr-cards .bfriendr-card-active {
+  border-right: 5px solid #9292d3;
+  margin-right: 0;
+}
+
 .bfriendr .bfriendr-card .bfriendr-cardimg {
   background-image: url(person.png);
   background-repeat: no-repeat;
@@ -196,9 +228,6 @@ limitations under the License.
   margin: 0;
 }
 
-.bfriendr  .bfriendr-content .bfriendr-messages {
-  left: 100%;
-}
 .bfriendr .bfriendr-messages a.bfriendr-nav {  float: left;
   position: relative;
   top: -2px;

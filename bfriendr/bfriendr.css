@@ -202,7 +202,7 @@ body#bfriendr {
 
 .bfriendr-page .bfriendr-content {
   position: relative;
-  min-height: 90%;
+  min-height: 400px;
 }
 .bfriendr-page .bfriendr-cards.narrow {
   border-right: 1px solid #c0c0c0;
@@ -248,6 +248,14 @@ body#bfriendr {
   position: absolute;
   right: 0;
   top: 0.55em;
+}
+
+.bfriendr-welcome .bfriendr-content {
+  margin: 1em 3em;
+}
+
+.bfriendr-welcome p {
+  margin: 1em 0;
 }
 
 .bfriendr .bfriendr-message img {

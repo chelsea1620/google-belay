@@ -175,6 +175,7 @@ var initialize = function() {
   // ui.resize('300', '480', true);
   ui.resize('80', '80', true);
 
+  var inPage = topDiv.hasClass('.bfriendr-page');
   var header = topDiv.find('.bfriendr-header');
   var myCardDiv = topDiv.find('div.bfriendr-mycard');
   var myCardToggle = topDiv.find('.bfriendr-header .bfriendr-nav');
@@ -201,12 +202,18 @@ var initialize = function() {
     function() { showHideMyCard(!myCardShown); return false; });
 
   var showHideMessages = function(show) {
-    if (show) {
-      cardListDiv.animate({left: '-100%'}, 'fast');
-      messagesDiv.animate({left: '0%'}, 'fast');
-    } else {
-      cardListDiv.animate({left: '0%'}, 'fast');
-      messagesDiv.animate({left: '100%'}, 'fast');
+    if (inPage) {
+      if (show) messagesDiv.fadeIn('fast');
+      else messagesDiv.fadeOut('fast');
+    }
+    else {
+      if (show) {
+        cardListDiv.animate({left: '-100%'}, 'fast');
+        messagesDiv.animate({left: '0%'}, 'fast');
+      } else {
+        cardListDiv.animate({left: '0%'}, 'fast');
+        messagesDiv.animate({left: '100%'}, 'fast');
+      }
     }
   };
 

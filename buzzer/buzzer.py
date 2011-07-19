@@ -103,7 +103,7 @@ class LaunchHandler(BaseHandler):
     response = {
       'page': {
         'html': server_url('/buzzer-belay.html'),
-        'window': { 'width': 150, 'height': 200 } 
+        'window': { 'width': 300, 'height': 400 } 
       },
       'gadget': {
         'html': server_feed_url("/view/editor", feed_id),

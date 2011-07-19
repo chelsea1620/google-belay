@@ -365,3 +365,34 @@ chrome.extension.onConnect.addListener(function(port) {
     highlighting.registerHighlighter(port); 
   }
 });
+
+chrome.browserAction.onClicked.addListener(function(tabWhenClicked) {
+  var defaultName = 'defaultStation';
+  
+  if(stations.names().length === 0) {
+    makeStation(defaultName, function() {
+      launchStation(defaultName);
+    });
+  }
+  else {
+    launchStation(stations.names()[0]);
+  }
+
+  if(false) {
+    $('#generate').click(function(evt) {
+      var name = $('#newStationName').val();
+      makeStation(name);
+    });
+
+    var accounts = $('#accountList');
+    stations.names().forEach(function(name) {
+      var opt = $('<option></option>').text(name).val(name);
+      accounts.append(opt);
+    });
+
+    $('#launch').click(function(evt) {
+      var name = $("#accountList option:selected").val();
+      launchStation(name);
+    });
+  }
+});

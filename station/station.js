@@ -436,7 +436,12 @@ var launchInstance = function(inst, openType, launchCap) {
     var preferred = canGadget ? 'gadget' : (canPage ? 'page' : 'none');
     
     if (openType == 'restore') {
-      openType = ('opened' in instState) ? instState.opened : preferred;
+      if (instState.opened === 'page') {
+        openType = 'none';
+      }
+      else {
+        openType = ('opened' in instState) ? instState.opened : preferred;
+      }
     }
     else if (openType == 'openAny') {
       openType = preferred;

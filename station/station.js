@@ -14,6 +14,7 @@
 
 
 var topDiv;
+var ui;
 var instanceInfo;
 var capServer = new CapServer(newUUIDv4());
 var belayBrowserID;
@@ -526,6 +527,33 @@ var initialize = function(instanceCaps) {
   itemsTable.find('tr').remove();
 
   
+  // TODO(mzero): refactor the two addInstance functions and the newInstHandler
+  var addInstanceFromGenerate = function(genCap) {
+    genCap.get(function(data) {
+        var newID = newUUIDv4();
+        var inst = {
+          storageCap: capServer.grant(instanceInfo.instanceBase + newID),
+            // TODO(arjun) still a hack. Should we be concatenaing URLs here?
+          state: {
+            id: newID,
+            belayInstance: data.launch,
+            name: data.name,
+            icon: data.icon,
+            info: undefined,
+            created: (new Date()).valueOf()
+          }
+        };
+        addInstance(inst, 'openAny', belayLaunch);
+        dirty(inst);
+      },
+      function(error) {
+        alert('Failed to addInstanceFromGenerate, error = ' + error);
+      }
+    );
+  };
+  // ui.capDroppable(itemsDiv, 'belay/generate', addInstanceFromGenerate);
+  // ui.capDroppable(desk, 'belay/generate', addInstanceFromGenerate);
+  
   var addInstanceFromTool = function(toolInfo) {
     toolInfo.generate.get(function(data) {
         var newID = newUUIDv4();
@@ -628,5 +656,10 @@ $(function() {
     instancesCap.get(initialize, function(err) { alert(err.message); });
     outpost.setNewInstHandler.put(capServer.grant(newInstHandler));
     outpost.setCloseInstHandler.put(capServer.grant(closeInstHandler));
+    ui = {
+      resize: function() { /* do nothing in page mode */ },
+      capDraggable: common.makeCapDraggable(capServer, function(){}),
+      capDroppable: common.makeCapDroppable(capServer, function(){})
+    };
   });
 });

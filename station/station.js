@@ -551,8 +551,8 @@ var initialize = function(instanceCaps) {
       }
     );
   };
-  // ui.capDroppable(itemsDiv, 'belay/generate', addInstanceFromGenerate);
-  // ui.capDroppable(desk, 'belay/generate', addInstanceFromGenerate);
+  ui.capDroppable(itemsDiv, 'belay/generate', addInstanceFromGenerate);
+  ui.capDroppable(desk, 'belay/generate', addInstanceFromGenerate);
   
   var addInstanceFromTool = function(toolInfo) {
     toolInfo.generate.get(function(data) {

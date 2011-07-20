@@ -132,7 +132,7 @@ var instances = {};
           info: any
        },
        capSnapshot: string,
-
+       created: Int      -- time created (seconds since epoch)
        name: string,
        icon: url,
        opened: string, -- 'page', 'gadget', or 'closed'
@@ -501,6 +501,10 @@ var removeInstance = function(inst) {
 	inst.storageCap.remove();
 };
 
+var cmpInstByCreated = function(inst1, inst2) {
+  return inst1.state.created - inst2.state.created;
+};
+
 var initialize = function(instanceCaps) {
   var top = topDiv;
   var toolbar = top.find('#belay-toolbar');
@@ -533,7 +537,8 @@ var initialize = function(instanceCaps) {
             belayInstance: data,
             name: "an instance of " + toolInfo.name,
             icon: toolInfo.icon,
-            info: undefined
+            info: undefined,
+            created: (new Date()).valueOf()
           }
         };
         addInstance(inst, 'openAny', belayLaunch);
@@ -545,6 +550,14 @@ var initialize = function(instanceCaps) {
       }
     );
   };
+
+  var loadedInstances = [];
+  
+  var loadInsts = function() {
+    loadedInstances.sort(cmpInstByCreated).forEach(function(inst) {
+      addInstance(inst, 'restore', belayLaunch);
+    });
+  };
   
   var addInstanceFromStorage = function(storageCap) {
     storageCap.get(function(instState) {
@@ -552,7 +565,10 @@ var initialize = function(instanceCaps) {
           storageCap: storageCap,
           state: instState
         };
-        addInstance(inst, 'restore', belayLaunch);
+        loadedInstances.push(inst);
+        if (loadedInstances.length === instanceCaps.length) {
+          loadInsts();
+        }
       },
       function(status) { alert('Failed to load instance: ' + status); }
     );
@@ -568,6 +584,7 @@ var initialize = function(instanceCaps) {
   });
 
   instanceCaps.forEach(addInstanceFromStorage);
+  
 };
 
 // Called by Belay (the extension) when a user visits a Web page, P, that wants
@@ -582,7 +599,8 @@ var newInstHandler = function(args) {
 			id: instID,
 			belayInstance: args.launchData.launch,
 			name: args.launchData.name,
-			icon: args.launchData.icon
+			icon: args.launchData.icon,
+      created: (new Date()).valueOf()
 		}
 	};
 	addInstance(inst, 'page', args.relaunch);

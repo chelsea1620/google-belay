@@ -28,17 +28,17 @@ limitations under the License.
   <script type="text/javascript" src="/lib/js/divPort.js"></script>
   <script src="/index.js"></script>
 </head>
-  <div class="buzzer-thing">
-    <div class="buzzer-profile">
-      <p>Please tell your readers something about yourself before you start
-        posting:</p>
-      <form id="profileForm" action="/belay/generateProfile" method="POST">
-        <p>What do you call yourself?</p>
-        <p><input type="text" name="name" /></p>
-        <p>Where in the world are you?</p>
-        <p><input type="text" name="location" /></p>
-        <p><input type="submit" value="Submit" /></p>
-      </form>
-    </div>
+<body id="buzzer-page">
+  <h1><img src="tool-buzzer.png" />Be a busy blogger with Buzzer!</h1>
+  <div class="buzzer-profile">
+    <h2>Start your own buzzer:</h2>
+    <form id="profileForm" action="/belay/generateProfile" method="POST">
+      <p>What do you call yourself?</p>
+      <p><input type="text" name="name" /></p>
+      <p>Where in the world are you?</p>
+      <p><input type="text" name="location" /></p>
+      <p><input type="submit" value="Submit" /></p>
+    </form>
   </div>
+</body>
 </html>

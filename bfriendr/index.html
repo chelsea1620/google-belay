@@ -109,9 +109,9 @@ myCardDiv.find('button').click(function(evt) {
     dataType: 'text',
     success: function(data, status, xhr) {
       belayPort.postMessage({ 
-				type: 'instanceRequest',
-				gen: data
-			});
+        type: 'instanceRequest',
+        gen: data
+      });
     }
   });
 });

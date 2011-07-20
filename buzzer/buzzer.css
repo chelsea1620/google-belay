@@ -57,23 +57,21 @@ limitations under the License.
 }
 
 .buzzer-header form div {
-  margin-left: 29px;
   margin-right: 5em;
 }
-.buzzer-header form div.buzzer-chit {
+.buzzer-header div.buzzer-chit {
+  float: right;
   width: 26px;
   height: 24px;
-  position: absolute;
-  top: 4px;
-  left: 0;
-  margin: 0;
-  background: url(chit-24.png) no-repeat 0 0;
+  margin: 0 4px;
   border-width: 1px;
 }
-.buzzer-reader-chit {
-  display: none;
+.buzzer-header div.buzzer-reader-chit {
+  background: url(chit-24.png) no-repeat 0 0;
 }
-
+.buzzer-header div.buzzer-post-chit {
+  background: url(chit-25.png) no-repeat 0 0;
+}
 .buzzer-header textarea {
   width: 100%;
 }

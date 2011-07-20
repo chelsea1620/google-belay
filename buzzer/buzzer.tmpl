@@ -30,13 +30,15 @@ limitations under the License.
     </div>
   {% else %}
     <div class="buzzer-header">
+      {% if include_post %}
+        <div class="buzzer-chit buzzer-reader-chit" title="a read only version"
+          style="width:26px;height:24px;background:url({{ chit_read_url }}) no-repeat 0 0;"></div>
+        <div class="buzzer-chit buzzer-post-chit" title="post to this buzzer"
+          style="width:26px;height:24px;background:url({{ chit_post_url }}) no-repeat 0 0;"></div>
+      {% endif %}
       <p>{{ feed.name }} of {{ feed.location }}</p>
       {% if include_post %}
       <form action="{{ post_url }}" method="POST">
-        <div class="buzzer-chit buzzer-reader-chit" title="a read only version"
-          style="width:26px;height:24px;background:url({{ chit_url }}) no-repeat 0 0;"></div>
-        <div class="buzzer-chit buzzer-post-chit" title="post to this buzzer"
-          style="width:26px;height:24px;background:url({{ chit_url }}) no-repeat 0 0;"></div>
         <div>
           <textarea name="body" id="body">is...</textarea>
         </div>

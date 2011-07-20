@@ -187,7 +187,8 @@ class ViewHandler(BaseHandler):
     
     self.render_to_response('buzzer.tmpl',
       { 'css_url': server_url('/buzzer.css'),
-        'chit_url': server_url('/chit-24.png'),
+        'chit_read_url': server_url('/chit-24.png'),
+        'chit_post_url': server_url('/chit-25.png'),
         'post_url': server_feed_url('/data/post', feed_id),
         'profile_url': server_feed_url('/data/profile', feed_id),
         'include_post': self.include_post(),

@@ -76,9 +76,10 @@ limitations under the License.
 #belay-items {
   max-height: 10em;
   overflow: auto;
+  position: relative;
 }
 
-#belay-items div {
+#belay-items div.belay-inner {
   background: #fff;
   padding: 0.5em 1em;
   margin: 0.5em 0;
@@ -199,11 +200,34 @@ limitations under the License.
   -webkit-box-shadow: 0 0 4px 4px #f63;
   -moz-box-shadow: 0 0 4px 4px #f63;
 }
-.belay-cap-target.belay-possible {
-  box-shadow: 0 0 5px rgba(0, 0, 255, 0.5);
-  -webkit-box-shadow: 0 0 4px 4px #6cf;
-  -moz-box-shadow: 0 0 5px rgba(0, 0, 255, 0.5);
+#belay-items.belay-cap-target.belay-possible,
+#belay-desk.belay-cap-target.belay-possible {
+  box-shadow: none;
+  -webkit-box-shadow: none;
+  -moz-box-shadow: none;
 }
+#belay-items.belay-cap-target.belay-selected,
+#belay-desk.belay-cap-target.belay-selected {
+  box-shadow: none;
+  -webkit-box-shadow: none;
+  -moz-box-shadow: none;
+}
+.belay-drop-icon {
+  display: none;
+  position: absolute;
+  width: 96px;
+  height: 96px;
+  top: 16px;
+  left: 40%;
+  background: url(drop.png) no-repeat;
+  z-index: 2000;
+  margin: 0;
+  padding: 0;
+}
+.belay-cap-target.belay-possible .belay-drop-icon {
+  display: block;
+}
+
 .belay-cap-target.belay-selected {
   box-shadow: 0 0 4px 4px #39f;
   -webkit-box-shadow: 0 0 4px 4px #39f;

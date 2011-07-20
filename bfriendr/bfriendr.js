@@ -71,7 +71,7 @@ var initMessagesUI = function(container, showHideMessages) {
     latestMsgTime = msg.when > latestMsgTime ? msg.when : latestMsgTime;
     msgElt.find('p:eq(1)').text(msg.message || 'Received blank message.');
     msgElt.find('.bfriendr-date:first').text(msg.when);
-    msgs.append(msgElt);
+    msgs.find('li:first').after(msgElt);
   };
 
   var mkRefreshConvHandler = function(conversationCap) {

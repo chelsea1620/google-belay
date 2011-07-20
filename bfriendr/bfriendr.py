@@ -336,7 +336,7 @@ class ConversationReadHandler(CapServer.CapHandler):
     combined = mine
     combined.extend(theirs)
     combined = filter(lambda(msg): msg['when'] > when, combined)
-    combined = sorted(combined, key = lambda(m): m['when'], reverse = True)
+    combined = sorted(combined, key = lambda(m): m['when'])
     self.bcapResponse({'items': combined})
 
 

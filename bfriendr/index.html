@@ -58,12 +58,47 @@ limitations under the License.
   </div>
 </div>
 <script>
+
+var myCardImageDiv = $('.bfriendr-cardimg');
+var imageFile;
+
+var imageTypeRE = /image\/.*/;
+var preventDf = function(e) {
+    e.originalEvent.preventDefault();
+    return false;
+};
+myCardImageDiv.bind('dragenter', preventDf);
+myCardImageDiv.bind('dragover', preventDf);
+myCardImageDiv.bind('drop', function(e) {
+  var draggedFile;
+  var dt = e.originalEvent.dataTransfer;
+  for (var i = 0; i < dt.files.length; ++i) {
+    var file = dt.files[i];
+    if (!file.type.match(imageTypeRE)) continue;
+    draggedFile = file;
+    break;
+  }
+  if (draggedFile) {
+    imageFile = draggedFile;
+
+    var imgElt = myCardImageDiv.find('img');
+    if (imgElt.length == 0) {
+      imgElt = myCardImageDiv.append('<img>').find('img');
+    }
+    imgElt.attr('src', window.webkitURL.createObjectURL(imageFile));
+  }
+});
+
 var myCardDiv = $('.bfriendr-mycard');
 myCardDiv.find('button').click(function(evt) {
   var fd = new FormData();
   fd.append('name', myCardDiv.find('input[name=name]').val());
   fd.append('email', myCardDiv.find('input[name=email]').val());
   fd.append('notes', myCardDiv.find('textarea').val());
+  if (imageFile) {
+    fd.append('imageFile', imageFile);
+  }
+  
   $.ajax({
     url: "/belay/generate",
     cache: false,

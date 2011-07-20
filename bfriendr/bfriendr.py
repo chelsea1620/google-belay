@@ -142,9 +142,15 @@ class GenerateHandler(CapServer.BcapHandler):
     account = new_account()
     card = account.my_card
     # TODO(mzero): never trust what they send you!
-    card.name = self.request.get('name')
-    card.email = self.request.get('email')
-    card.notes = self.request.get('notes')
+    card.name = self.request.POST['name']
+    card.email = self.request.POST['email']
+    card.notes = self.request.POST['notes']
+    
+    if 'imageFile' in self.request.POST:
+        image = self.request.POST['imageFile']
+        card.image = image.value
+        card.imageType = image.type
+
     card.put()
     response = {
       'launch': CapServer.grant(LaunchHandler, account),

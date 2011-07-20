@@ -13,8 +13,7 @@
 // limitations under the License.
 
 $(function() {
-  var topDiv = $(document.body).find('.buzzer-thing');
-  var form = topDiv.find('#profileForm');
+  var form = $('#profileForm');
   form.submit(function(evt) {
     var name = form.find('[name="name"]').val();
     var loc = form.find('[name="location"]').val();

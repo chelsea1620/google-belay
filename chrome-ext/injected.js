@@ -62,8 +62,9 @@ else {
     onUnHighlight({ });
     $(document)
     .find('.' + className)
-    .filter(function(ix) { 
-      return rc === '*' || this.getAttribute('data-rc') === rc; 
+    .filter(function(ix) {
+      var ixrc = this.getAttribute('data-rc');
+      return ixrc === '*' || ixrc === rc; 
      })
     .addClass(highlightClassName);
   };

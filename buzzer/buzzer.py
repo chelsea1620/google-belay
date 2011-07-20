@@ -167,7 +167,7 @@ class GenerateReaderHandler(BaseHandler):
     feed = FeedData.get_by_key_name(feed_id);
     response = {
         'launch': server_cap('/belay/launchReader', feed_id),
-        'name': 'buzz about ' + feed.name + " from " + feed.location,
+        'name': 'buzz about ' + feed.name + " of " + feed.location,
         'icon': server_url('/tool-buzzer.png')
     };
     self.bcapResponse(response)

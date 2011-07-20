@@ -50,9 +50,10 @@ var initMessagesUI = function(container, showHideMessages) {
   var serCapRC = false;
   var capToSend = false;
 
-  ui.capDroppable(composeTextArea, '*', function(cap, capRC) {
+  ui.capDroppable(msgs.find('.bfriendr-instructions'), '*', function(cap, capRC) {
     capToSend = cap;
     serCapRC = capRC;
+    composeTextArea.val(composeTextArea.val() + " (see attached)");
   });
 
   var showMsg = function(msg) {

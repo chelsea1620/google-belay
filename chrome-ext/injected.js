@@ -64,7 +64,9 @@ else {
     .find('.' + className)
     .filter(function(ix) {
       var ixrc = this.getAttribute('data-rc');
-      return ixrc === '*' || ixrc === rc; 
+      return rc === '*' || ixrc === '*' || ixrc === rc ;
+      // TODO(mzero): in theory only one of ixrc or rc should be checked for
+      // wildcard, depending on if we are hilighting targets are sources. 
      })
     .addClass(highlightClassName);
   };

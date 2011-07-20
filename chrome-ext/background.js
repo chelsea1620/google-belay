@@ -377,22 +377,4 @@ chrome.browserAction.onClicked.addListener(function(tabWhenClicked) {
   else {
     launchStation(stations.names()[0]);
   }
-
-  if(false) {
-    $('#generate').click(function(evt) {
-      var name = $('#newStationName').val();
-      makeStation(name);
-    });
-
-    var accounts = $('#accountList');
-    stations.names().forEach(function(name) {
-      var opt = $('<option></option>').text(name).val(name);
-      accounts.append(opt);
-    });
-
-    $('#launch').click(function(evt) {
-      var name = $("#accountList option:selected").val();
-      launchStation(name);
-    });
-  }
 });

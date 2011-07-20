@@ -113,29 +113,34 @@ var makeCloseInstanceCap = function(instID) {
   });
 };
 
+// Instances may be launched in various ways. Once launched, this code
+// is used to remember the launched instance and send instance-manangement
+// capabilities to the station.
+var initLaunchedInstance = function(station, tab, args) {
+  launchedInstances[tab.id] = { 
+    instID: args.instID,
+    tunnel: makeTunnel(tabPorts.getTabPort(tab.id)),
+    url: args.url,
+    outpostData: args.outpostData,
+    station: station 
+  };
+  instToTabID[args.instID] = tab.id;
+  
+  return makeCloseInstanceCap(args.instID);
+  
+  // We expect that chrome.tabs.onUpdated fires on the next turn, sending the
+  // outpost message.
+};
+
 // Capability returned to station to launch instances in new windows.
 var makeLaunchHandler = function(station) {
-  return capServer.grant({
-    post: function(args, sk, fk) {
-      var width = typeof args.width === 'number' ? args.width : undefined;
-      var height = typeof args.height === 'number' ? args.height: undefined;
-      chrome.windows.create({ url: args.url,
-                              width: width,
-                              height: height }, 
-                            function(wnd) {
-        var tab = wnd.tabs[0];
-        var tunnel = makeTunnel(tabPorts.getTabPort(tab.id)); 
-        launchedInstances[tab.id] = { instID: args.instID,
-                                      tunnel: tunnel,
-                                      url: args.url,
-                                      outpostData: args.outpostData,
-                                      station: station };
-        instToTabID[args.instID] = tab.id;
-        sk(makeCloseInstanceCap(args.instID));
-        // chrome.tabs.onUpdated fires on the next turn, sending the
-        // outpost message.
+  return capServer.grant(function(args, sk, fk) {
+    var width = typeof args.width === 'number' ? args.width : undefined;
+    var height = typeof args.height === 'number' ? args.height: undefined;
+    chrome.windows.create({ url: args.url, width: width, height: height }, 
+                          function(wnd) {
+        sk(initLaunchedInstance(station, wnd.tabs[0], args));
       });
-    }
   });
 };
 
@@ -145,17 +150,10 @@ var instanceRequest = function(data, tabID) {
   
   station.newInstHandler.post({ 
     launchData: launchData,
-    relaunch: capServer.grant(function(args) {
+    relaunch: capServer.grant(function(args, sk, fk) {
       chrome.tabs.update(tabID, { url: args.url }, function(tab) {
-        var tunnel = makeTunnel(tabPorts.refreshTabPort(tab.id)); 
-        launchedInstances[tab.id] = { instID: args.instID,
-                                      tunnel: tunnel,
-                                      url: args.url,
-                                      outpostData: args.outpostData,
-                                      station: station };
-        instToTabID[args.instID] = tab.id;
+        sk(initLaunchedInstance(station, tab, args));
       });
-      return makeCloseInstanceCap(args.instID);
     })
   });
 };

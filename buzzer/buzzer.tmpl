@@ -30,7 +30,7 @@ limitations under the License.
     </div>
   {% else %}
     <div class="buzzer-header">
-      <p>{{ feed.name }} from {{ feed.location }}</p>
+      <p>{{ feed.name }} of {{ feed.location }}</p>
       {% if include_post %}
       <form action="{{ post_url }}" method="POST">
         <div class="buzzer-chit buzzer-reader-chit" title="a read only version"

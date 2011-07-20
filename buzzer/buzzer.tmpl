@@ -33,7 +33,9 @@ limitations under the License.
       <p>{{ feed.name }} from {{ feed.location }}</p>
       {% if include_post %}
       <form action="{{ post_url }}" method="POST">
-        <div class="buzzer-chit"
+        <div class="buzzer-chit buzzer-reader-chit" title="a read only version"
+          style="width:26px;height:24px;background:url({{ chit_url }}) no-repeat 0 0;"></div>
+        <div class="buzzer-chit buzzer-post-chit" title="post to this buzzer"
           style="width:26px;height:24px;background:url({{ chit_url }}) no-repeat 0 0;"></div>
         <div>
           <textarea name="body" id="body">is...</textarea>

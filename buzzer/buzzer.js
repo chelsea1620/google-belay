@@ -39,9 +39,10 @@ onBelayReady(function() {
   };
 
   var rcPost = 'urn:x-belay://resouce-class/social-feed/post';
-
+  var rcBelayGen = 'belay/generate';
+  
   var capReviver = function(resClass) {
-    if (resClass == rcPost) {
+    if (resClass == rcPost && launchInfo.post_cap) {
       var poster = function(data) {
         launchInfo.post_cap.post(
           {
@@ -66,8 +67,13 @@ onBelayReady(function() {
         ev.preventDefault();
         return false;
       });
-      ui.capDraggable(topDiv.find('.buzzer-chit'), rcPost, function(selectedRC) {
-        return capServer.grantKey(selectedRC);
+      ui.capDraggable(topDiv.find('.buzzer-reader-chit'), rcBelayGen,
+        function(selectedRC) {
+          return launchInfo.reader_gen_cap;
+      });
+      ui.capDraggable(topDiv.find('.buzzer-post-chit'), rcPost,
+        function(selectedRC) {
+          return capServer.grantKey(selectedRC);
       });
     });
   };

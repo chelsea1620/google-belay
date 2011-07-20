@@ -111,8 +111,30 @@ class LaunchHandler(BaseHandler):
       },
       'info': {
         'post_cap': server_cap('/data/post', feed_id),
+        'reader_gen_cap': server_cap("/belay/generateReader", feed_id),
         'editor_url': server_feed_url("/view/editor", feed_id),
-        'name': feed and (feed.name + " in " + feed.location) or ''
+      }
+    }
+
+    self.bcapResponse(response)    
+
+
+class LaunchReaderHandler(BaseHandler):
+  def get(self):
+    feed_id = self.validate_feed();
+    feed = FeedData.get_by_key_name(feed_id);
+
+    response = {
+      'page': {
+        'html': server_url('/buzzer-belay.html'),
+        'window': { 'width': 300, 'height': 400 } 
+      },
+      'gadget': {
+        'html': server_feed_url("/view/reader", feed_id),
+        'scripts': [ server_url("/buzzer.js") ]
+      },
+      'info': {
+        'editor_url': server_feed_url("/view/reader", feed_id),
       }
     }
 
@@ -138,6 +160,17 @@ class GenerateProfileHandler(BaseHandler):
     feed.put()
 
     self.bcapResponse(server_cap("/belay/launch", feed_id))
+
+class GenerateReaderHandler(BaseHandler):
+  def get(self):
+    feed_id = self.validate_feed();
+    feed = FeedData.get_by_key_name(feed_id);
+    response = {
+        'launch': server_cap('/belay/launchReader', feed_id),
+        'name': 'buzz about ' + feed.name + " from " + feed.location,
+        'icon': server_url('/tool-buzzer.png')
+    };
+    self.bcapResponse(response)
 
 class ViewHandler(BaseHandler):
   def get(self):
@@ -209,8 +242,10 @@ class DataPostHandler(BaseHandler):
 
 application = webapp.WSGIApplication(
   [('/belay/launch', LaunchHandler),
+  ('/belay/launchReader', LaunchReaderHandler),
   ('/belay/generate', GenerateHandler),
   ('/belay/generateProfile', GenerateProfileHandler),
+  ('/belay/generateReader', GenerateReaderHandler),
   ('/view/editor', EditorViewHandler),
   ('/view/reader', ReaderViewHandler),
   ('/data/profile', DataProfileHandler),

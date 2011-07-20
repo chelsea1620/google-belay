@@ -70,6 +70,9 @@ limitations under the License.
   background: url(chit-24.png) no-repeat 0 0;
   border-width: 1px;
 }
+.buzzer-reader-chit {
+  display: none;
+}
 
 .buzzer-header textarea {
   width: 100%;

@@ -20,8 +20,6 @@ import os
 
 import lib.py.belay as CapServer
 
-from django.utils import simplejson as json
-
 from google.appengine.ext import db
 from google.appengine.ext import webapp
 from google.appengine.ext.webapp.util import run_wsgi_app

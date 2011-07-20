@@ -502,10 +502,6 @@ var removeInstance = function(inst) {
 	inst.storageCap.remove();
 };
 
-var cmpInstByCreated = function(inst1, inst2) {
-  return inst1.state.created - inst2.state.created;
-};
-
 var initialize = function(instanceCaps) {
   var top = topDiv;
   var toolbar = top.find('#belay-toolbar');
@@ -582,6 +578,9 @@ var initialize = function(instanceCaps) {
   var loadedInstances = [];
   
   var loadInsts = function() {
+    var cmpInstByCreated = function(inst1, inst2) {
+      return inst1.state.created - inst2.state.created;
+    };
     loadedInstances.sort(cmpInstByCreated).forEach(function(inst) {
       addInstance(inst, 'restore', belayLaunch);
     });
@@ -620,25 +619,24 @@ var initialize = function(instanceCaps) {
 // as belayLaunch. Instead of creating a new tab, it reloads P's tab.
 var newInstHandler = function(args) {
   var instID = newUUIDv4();
-	var inst = {
-		storageCap: capServer.grant(instanceInfo.instanceBase + instID),
-			// TODO(arjun) still a hack. Should we be concatenaing URLs here?
-		state: {
-			id: instID,
-			belayInstance: args.launchData.launch,
-			name: args.launchData.name,
-			icon: args.launchData.icon,
+  var inst = {
+    storageCap: capServer.grant(instanceInfo.instanceBase + instID),
+    // TODO(arjun) still a hack. Should we be concatenaing URLs here?
+    state: {
+      id: instID,
+      belayInstance: args.launchData.launch,
+      name: args.launchData.name,
+      icon: args.launchData.icon,
       created: (new Date()).valueOf()
-		}
-	};
-	addInstance(inst, 'page', args.relaunch);
+    }
+  };
+  addInstance(inst, 'page', args.relaunch);
 };
 
 var closeInstHandler = function(instID) {
   console.assert(instID in instances);
   var inst = instances[instID];
   closePageInstance(inst, true);
-  
 };
 
 $(function() {

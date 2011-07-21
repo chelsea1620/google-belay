@@ -45,9 +45,32 @@ def instance_url(stationKey, instanceKey):
   return server_url('/instance?s=' + keyName(stationKey)
     + '&i=' + keyName(instanceKey))
 
+def tool_url(port, path):
+  return "http://%s:%d%s" % (os.environ['SERVER_NAME'], port, path)
+
 def cap(url):
   return { '@': url }
 
+def defaultTools():
+  return [
+    { 'name': 'Hello',
+      'icon': tool_url(9002, '/tool-hello.png'),
+      'generate': cap(tool_url(9002, '/belay/generate'))
+    },
+    { 'name': 'Sticky',
+      'icon': tool_url(9003, '/tool-stickies.png'),
+      'generate': cap(tool_url(9003, '/belay/generate'))
+    },
+    { 'name': 'Buzzer',
+      'icon': tool_url(9004, '/tool-buzzer.png'),
+      'generate': cap(tool_url(9004, '/belay/generate'))
+    },
+    { 'name': 'Emote',
+      'icon': tool_url(9005, '/tool-emote.png'),
+      'generate': cap(tool_url(9005, '/belay/generate'))
+    }
+  ]
+ 
 
 
 class StationData(db.Model):
@@ -114,11 +137,12 @@ class BelayLaunchHandler(BaseHandler):
 
     reply = {
       'page': { 'html': server_url("/your-stuff.html") },
-  	  'info': {
-  	    'instances': cap(instances_url(station.key())),
-  	    'instanceBase': instance_url(station.key(), '')
-  	  }
-	  }
+        'info': {
+          'instances': cap(instances_url(station.key())),
+          'instanceBase': instance_url(station.key(), ''),
+          'defaultTools': defaultTools()
+      }
+    }
 
     self.bcapResponse(reply)    
 

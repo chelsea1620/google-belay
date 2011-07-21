@@ -21,25 +21,6 @@ var belayBrowserID;
 var belayBrowserTunnel;
 var belayBrowser;
 
-var defaultTools = [
-    { name: 'Hello',
-      icon: 'http://localhost:9002/tool-hello.png',
-      generate: capServer.restore('http://localhost:9002/belay/generate')
-    },
-    { name: 'Sticky',
-      icon: 'http://localhost:9003/tool-stickies.png',
-      generate: capServer.restore('http://localhost:9003/belay/generate')
-    },
-    { name: 'Buzzer',
-      icon: 'http://localhost:9004/tool-buzzer.png',
-      generate: capServer.restore('http://localhost:9004/belay/generate')
-    },
-    { name: 'Emote',
-      icon: 'http://localhost:9005/tool-emote.png',
-      generate: capServer.restore('http://localhost:9005/belay/generate')
-    }
-  ];
-
 var defaultIcon = '/tool.png';
 
 //
@@ -502,7 +483,7 @@ var removeInstance = function(inst) {
 	inst.storageCap.remove();
 };
 
-var initialize = function(instanceCaps) {
+var initialize = function(instanceCaps, defaultTools) {
   var top = topDiv;
   var toolbar = top.find('#belay-toolbar');
   desk = top.find('#belay-desk');
@@ -651,7 +632,9 @@ $(function() {
     belayBrowser = outpost.services;
     instanceInfo = outpost.info;
     var instancesCap = instanceInfo.instances;
-    instancesCap.get(initialize, function(err) { alert(err.message); });
+    instancesCap.get(function(instances) {
+      initialize(instances, outpost.info.defaultTools);
+    }, function(err) { alert(err.message); });
     outpost.setNewInstHandler.put(capServer.grant(newInstHandler));
     outpost.setCloseInstHandler.put(capServer.grant(closeInstHandler));
     ui = {

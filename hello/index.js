@@ -1,6 +1,6 @@
 window.addEventListener('load', function() {
   $.ajax({
-    url: '/belay/generate',
+    url: '/belay/generate-instance',
     dataType: 'text',
     success: function(data, status, xhr) {
       window.setTimeout(function() {

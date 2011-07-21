@@ -22,7 +22,7 @@ response = {
       'window': { 'width': 300, 'height': 250 }
     },
     'gadget': {
-      'html': server_url("/emote.html"),
+      'html': server_url("/view/gadget"),
       'scripts': [ server_url("/emote.js") ]
     },
     'info': { }

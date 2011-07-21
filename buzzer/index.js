@@ -32,7 +32,7 @@ $(function() {
           type: 'instanceRequest',
           gen: JSON.stringify({value: {
             launch: JSON.parse(data).value,
-            icon: 'http://localhost:9004/tool-buzzer.png',
+            icon: '/tool-buzzer.png',
             name: instanceName
           }})
         });

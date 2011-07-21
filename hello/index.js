@@ -8,7 +8,7 @@ window.addEventListener('load', function() {
 					type: 'instanceRequest', 
 					gen: JSON.stringify({value: {
 							launch: JSON.parse(data).value,
-							icon: 'http://localhost:9002/tool-hello.png',
+							icon: '/tool-hello.png',
 							name: 'Hello' 
 					}})
 				});

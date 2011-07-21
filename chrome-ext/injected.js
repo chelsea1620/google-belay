@@ -13,16 +13,46 @@
 // limitations under the License.
 
 
+var butterBar = function(msg, sendResp) {
+  var bar = $('<div id="belaySuggest"' +
+              'style="position: fixed; width: 100%; height: 18pt; ' +
+                     'left: 0px; top: -18pt; background-color: #ffffcc;' +
+                     'font-family: Helvetica, sans-serif; font-size: 12pt;' +
+                     '-webkit-transition: -webkit-transform 0.5s ease-in' +
+                     '">' +
+               '<span>I recognize you</span>' +
+               '</div>');
+
+  Object.keys(msg.suggests).forEach(function(instID) {
+    var btn = $('<button></button>');
+    btn.text(msg.suggests[instID]);
+    btn.click(function() { bar.remove(); sendResp(instID); });
+    bar.append(btn);
+  });
+
+  closeBtn = $('<button>Close</button>');
+  bar.append(closeBtn);
+  closeBtn.click(function() { bar.remove(); });
+
+  $(document.body).append(bar);
+  window.setTimeout(
+    function() { bar.css('webkitTransform', 'translateY(18pt)'); }, 0);
+};
 
 var initialize = function(divChannel) {
   chrome.extension.onRequest.addListener(
     function(message, sender, sendResponse) {
-      // This data field simulates the data field on PostMessage events.
-      divChannel.innerText = JSON.stringify({data: message});
+      if (message.op === 'butterBar') {
+        butterBar(message, sendResponse);
+      }
+      else {
+        // This data field simulates the data field on PostMessage events.
+        divChannel.innerText = JSON.stringify({data: message});
 
-      var evt = document.createEvent('Event');
-      evt.initEvent('onmessage', true, true);
-      divChannel.dispatchEvent(evt);
+        var evt = document.createEvent('Event');
+        evt.initEvent('onmessage', true, true);
+        divChannel.dispatchEvent(evt);
+      }
   });
 
   chrome.extension.sendRequest({ type: 'init' });

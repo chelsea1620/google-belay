@@ -20,6 +20,8 @@ var capServer = new CapServer(newUUIDv4());
 var belayBrowserID;
 var belayBrowserTunnel;
 var belayBrowser;
+var belaySuggestInst;
+var belayRemoveSuggestInst;
 
 var defaultTools = [
     { name: 'Hello',
@@ -415,7 +417,7 @@ var launchPageInstance = function(inst, launchCap) {
 
 var launchInstance = function(inst, openType, launchCap) {
   var instState = inst.state;
-  
+
   // TODO(mzero) create cap for storage to station
   // gets/puts from instState.data, and dirty(inst) on put
 
@@ -491,6 +493,15 @@ var addInstance = function(inst, openType, launchCap) {
 	showItems();
 	
 	launchInstance(inst, openType, launchCap);
+  
+  belaySuggestInst.put({
+    instID: inst.state.id,
+    domain: inst.state.belayInstance.serialize().match('https?://[^/]*')[0],
+    name: inst.state.name, 
+    launchClicked: capServer.grant(function(launch) {
+      launchPageInstance(inst, launch);
+    })
+  });
 };  
 
 var removeInstance = function(inst) {
@@ -500,6 +511,10 @@ var removeInstance = function(inst) {
 	if (inst.capServer) inst.capServer.revokeAll();
 	delete instances[inst.state.id];
 	inst.storageCap.remove();
+  belayRemoveSuggestInst.put({
+    instID: inst.state.id,
+    domain: inst.state.belayInstance.serialize().match('https?://[^/]*')[0]
+  });
 };
 
 var initialize = function(instanceCaps) {
@@ -649,11 +664,15 @@ $(function() {
     belayLaunch = outpost.launch;
     belayBrowserID = outpost.browserID;
     belayBrowser = outpost.services;
+    belaySuggestInst = outpost.suggestInst;
+    belayRemoveSuggestInst = outpost.removeSuggestInst;
     instanceInfo = outpost.info;
     var instancesCap = instanceInfo.instances;
     instancesCap.get(initialize, function(err) { alert(err.message); });
-    outpost.setNewInstHandler.put(capServer.grant(newInstHandler));
-    outpost.setCloseInstHandler.put(capServer.grant(closeInstHandler));
+    outpost.setStationCallbacks.put({
+      newInstHandler: capServer.grant(newInstHandler),
+      closeInstHandler: capServer.grant(closeInstHandler),
+    });
     ui = {
       resize: function() { /* do nothing in page mode */ },
       capDraggable: common.makeCapDraggable(capServer, function(){}),

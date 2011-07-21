@@ -33,6 +33,9 @@ capServer.setResolver(resolver);
 var offerMap = Object.create(null);
 var acceptMap = Object.create(null);
 
+// Maps URLs to suggestions.
+var suggestions = Object.create(null);
+
 //
 // Station setup
 //
@@ -90,15 +93,11 @@ var instToTabID = Object.create(null);
 var launchedInstances = Object.create(null);
 var launchedStations = Object.create(null);
 
-var makeSetNewInstHandler = function(station) {
-  return capServer.grant(function(handler) {
-    station.newInstHandler = handler;
-  });
-};
-
-var makeCloseInstHandler = function(station) {
-  return capServer.grant(function(handler) {
-    station.closeInstHandler = handler; 
+var makeSetStationCallbacks = function(station) {
+  return capServer.grant(function(cbs) {
+    // TODO(arjun): basic runtime checks needed
+    station.newInstHandler = cbs.newInstHandler;
+    station.closeInstHandler = cbs.closeInstHandler;
   });
 };
 
@@ -190,6 +189,30 @@ var reloadInstance = function(tabID, info, tab) {
   instance.tunnel.sendOutpost(capServer.dataPreProcess(instance.outpostData));
 };
 
+// A station can associate instances with URLs using this cap. When visiting
+// a matching URL, Belay presents these suggestions to the user.
+var makeSuggestInst = function(station) {
+  return capServer.grant(function(args) {
+    if (!(args.domain in suggestions)) {
+      suggestions[args.domain] = Object.create(null);
+    }
+    suggestions[args.domain][args.instID] = {
+      station: station,
+      name: args.name,
+      launchClicked: args.launchClicked
+    };
+  });
+};
+
+var makeRemoveSuggestInst = function(station) {
+  return capServer.grant(function(args) {
+    if (args.domain in suggestions) {
+      delete (suggestions[args.domain])[args.instID];
+    }
+  });
+};
+
+
 var currentStation = false;
 
 var handleClosedStation = function(tabID) {
@@ -198,6 +221,18 @@ var handleClosedStation = function(tabID) {
   if (currentStation === station) {
     currentStation = false;
   }
+
+  Object.keys(suggestions).forEach(function(domain) {
+    var suggests = suggestion[domain];
+    Object.keys(suggests).forEach(function(instID) {
+      if (suggests[instID].station === station) {
+        delete suggests[instID];
+      }
+    });
+   if (Object.keys(suggests).length === 0) {
+     delete suggestions[domain];
+   }
+  });
 
   closeInstancesOfStation(station);
   delete launchedStations[tabID];
@@ -227,6 +262,42 @@ chrome.tabs.onRemoved.addListener(function (tabID, removeInfo) {
   }
 });
 
+// Displays a butter bar with suggestions, if there are any.
+var suggestFor = function(tab) {
+  var m = tab.url.match('^https?://[^/]*');
+  if (!(m !== null &&  // failed match returns null
+        m[0] in suggestions && 
+        Object.keys(suggestions[m[0]]).length > 0)) {
+    return;
+  }
+
+  var domain = m[0];
+  var suggests = suggestions[domain];
+
+  // suggests cannot be turned to JSON itself, since it is circular with
+  // station.
+  var flattenedSuggests = Object.create(null);
+  Object.keys(suggests).forEach(function(instID) {
+    flattenedSuggests[instID] = suggests[instID].name;
+  });
+
+  chrome.tabs.sendRequest(tab.id,
+    { op: 'butterBar', suggests: flattenedSuggests },
+    function(instID) {
+      if (instID in instToTabID) {
+        chrome.tabs.update(instToTabID[instID], { selected: true });
+      }
+      else {
+        suggests[instID].launchClicked.post(
+          capServer.grant(function(args, sk, fk) {
+            chrome.tabs.update(tab.id, { url: args.url }, function(tab) {
+              sk(initLaunchedInstance(suggests[instID].station, tab, args));
+            });
+          }));
+      }
+    });
+}
+
 // NOTE(jpolitz): This event is called twice on page load, and twice
 // on page refresh.  We only handle 'complete' events, so we can be
 // sure that the receiving tab is correctly set up.
@@ -236,6 +307,10 @@ chrome.tabs.onUpdated.addListener(function(tabID, info, tab) {
   if (tabInfo === undefined) {
     if (tabID in launchedInstances) {
       reloadInstance(tabID, info, tab);
+    }
+    else {
+      // navigation to a non-Belay Web page
+      suggestFor(tab);
     }
     return;
   }
@@ -256,8 +331,9 @@ chrome.tabs.onUpdated.addListener(function(tabID, info, tab) {
         unhighlight: capServer.grant(highlighting.unhighlight)
       },
       launch: makeLaunchHandler(tabInfo),
-      setNewInstHandler: makeSetNewInstHandler(tabInfo),
-      setCloseInstHandler: makeCloseInstHandler(tabInfo)
+      setStationCallbacks: makeSetStationCallbacks(tabInfo),
+      suggestInst: makeSuggestInst(tabInfo),
+      removeSuggestInst: makeRemoveSuggestInst(tabInfo)
     }));
   };
 

@@ -28,5 +28,8 @@ handlers:
 - url: /data
   script: data.py
 
+- url: /view/gadget
+  script: gadget.py
+
 - url: /(.*\.(html|css|js|png))
   script: lib/py/CORSstatic.py

@@ -1,3 +1,4 @@
+
 # Copyright 2011 Google Inc. All Rights Reserved.
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,24 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-application: belay-emote
-version: 1
-runtime: python
-api_version: 1
+#!/usr/bin/env python
 
-handlers:
+from lib.py.utils import *
 
-- url: /belay/generate
-  script: generate.py
+html = file("emote.html")
+content = html.read().format(url=server_url("/emote.css"))
+html.close()
 
-- url: /belay/generate-instance
-  script: generate-instance.py
-
-- url: /belay/launch
-  script: launch.py
-
-- url: /view/gadget
-  script: gadget.py
-
-- url: /(.*\.(html|css|js|png))
-  script: lib/py/CORSstatic.py
+xhr_response(content, "text/html;charset=UTF-8")

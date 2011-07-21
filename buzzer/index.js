@@ -30,12 +30,7 @@ $(function() {
 
         belayPort.postMessage({
           type: 'instanceRequest',
-          gen: JSON.stringify({value: {
-            launch: JSON.parse(data).value,
-            icon: 'http://localhost:9004/tool-buzzer.png',
-            name: instanceName
-          }})
-        });
+          gen: data});
       },
       failure: function() {
         console.log('JSON failed');

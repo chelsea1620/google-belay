@@ -22,8 +22,14 @@ handlers:
 - url: /belay/generate
   script: generate-belay.py
 
+- url: /belay/generate-instance
+  script: generate-instance.py
+
 - url: /belay/launch
   script: launch-belay.py
+
+- url: /view/gadget
+  script: gadget.py
 
 - url: /(.*\.(html|css|js|png))
   script: lib/py/CORSstatic.py

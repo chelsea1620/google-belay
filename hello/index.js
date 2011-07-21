@@ -1,17 +1,12 @@
 window.addEventListener('load', function() {
   $.ajax({
-    url: '/belay/generate',
+    url: '/belay/generate-instance',
     dataType: 'text',
     success: function(data, status, xhr) {
       window.setTimeout(function() {
 				belayPort.postMessage({ 
 					type: 'instanceRequest', 
-					gen: JSON.stringify({value: {
-							launch: JSON.parse(data).value,
-							icon: 'http://localhost:9002/tool-hello.png',
-							name: 'Hello' 
-					}})
-				});
+					gen: data});
 			}, 500);
 		},
     failure: function() {

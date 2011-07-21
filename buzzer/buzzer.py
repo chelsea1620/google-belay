@@ -159,7 +159,13 @@ class GenerateProfileHandler(BaseHandler):
     feed.location = self.request.get('location')
     feed.put()
 
-    self.bcapResponse(server_cap("/belay/launch", feed_id))
+    response = {
+      'launch': server_cap("/belay/launch", feed_id),
+      'icon': server_url("/tool-buzzer.png"),
+      'name': '%s of %s' % (feed.name, feed.location)
+    }
+
+    self.bcapResponse(response)
 
 class GenerateReaderHandler(BaseHandler):
   def get(self):

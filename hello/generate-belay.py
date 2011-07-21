@@ -15,5 +15,6 @@
 #!/usr/bin/env python
 
 from lib.py.utils import *
+import os
 
 bcap_response({ '@': server_url("/belay/launch") })

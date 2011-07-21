@@ -22,7 +22,7 @@ response = {
       'window': { 'width': 200, 'height': 120 }
     },
     'gadget': {
-      'html': server_url("/hello-gadget.html"),
+      'html': server_url("/view/gadget"),
       'scripts': [ server_url("/hello.js") ]
     },
     'info': { }

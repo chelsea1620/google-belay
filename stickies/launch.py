@@ -37,7 +37,7 @@ else:
 
 response = {
     'gadget': {
-      'html': server_url("/sticky.html"),
+      'html': server_url("/view/gadget"),
       'scripts': [ server_url("/sticky.js") ]
     },
     'info': {

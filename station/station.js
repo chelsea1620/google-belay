@@ -40,7 +40,7 @@ var defaultTools = [
     }
   ];
 
-var defaultIcon = 'http://localhost:9001/tool.png';
+var defaultIcon = '/tool.png';
 
 //
 // Desk top area

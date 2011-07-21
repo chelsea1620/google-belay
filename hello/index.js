@@ -6,12 +6,7 @@ window.addEventListener('load', function() {
       window.setTimeout(function() {
 				belayPort.postMessage({ 
 					type: 'instanceRequest', 
-					gen: JSON.stringify({value: {
-							launch: JSON.parse(data).value,
-							icon: '/tool-hello.png',
-							name: 'Hello' 
-					}})
-				});
+					gen: data});
 			}, 500);
 		},
     failure: function() {

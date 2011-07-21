@@ -15,5 +15,10 @@
 #!/usr/bin/env python
 
 from lib.py.utils import *
+import os
 
-bcap_response({ '@': server_url("/belay/launch") })
+bcap_response({
+  'launch': { '@': server_url("/belay/launch") },
+  'icon': "http://%s:9002/tool-hello.png" % (os.environ['SERVER_NAME']),
+  'name': 'Hello'
+})

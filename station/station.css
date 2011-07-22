@@ -200,12 +200,15 @@ limitations under the License.
   -webkit-box-shadow: 0 0 4px 4px #f63;
   -moz-box-shadow: 0 0 4px 4px #f63;
 }
-#belay-items.belay-cap-target.belay-possible,
-#belay-desk.belay-cap-target.belay-possible {
-  box-shadow: none;
-  -webkit-box-shadow: none;
-  -moz-box-shadow: none;
+
+#belay-items.belay-cap-target,
+#belay-desk.belay-cap-target {
+  transition: none;
+  -webkit-transition: none;
+  -moz-transition: none;
 }
+#belay-items.belay-cap-target.belay-possible,
+#belay-desk.belay-cap-target.belay-possible,
 #belay-items.belay-cap-target.belay-selected,
 #belay-desk.belay-cap-target.belay-selected {
   box-shadow: none;

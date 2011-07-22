@@ -271,6 +271,7 @@ var suggestFor = function(tab) {
     return;
   }
 
+
   var domain = m[0];
   var suggests = suggestions[domain];
 
@@ -278,8 +279,14 @@ var suggestFor = function(tab) {
   // station.
   var flattenedSuggests = Object.create(null);
   Object.keys(suggests).forEach(function(instID) {
-    flattenedSuggests[instID] = suggests[instID].name;
+    if (!(instID in instToTabID)) {
+      flattenedSuggests[instID] = suggests[instID].name;
+    }
   });
+
+  if (Object.keys(flattenedSuggests).length == 0) {
+    return;
+  }
 
   chrome.tabs.sendRequest(tab.id,
     { op: 'butterBar', suggests: flattenedSuggests },

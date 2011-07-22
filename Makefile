@@ -14,7 +14,7 @@
 
 EXT_INC=chrome-ext/includes
 
-EXT_DEPS=$(EXT_INC)/portQueue.js $(EXT_INC)/caps.js $(EXT_INC)/jQuery-1.6.2.js
+EXT_DEPS=$(EXT_INC)/portQueue.js $(EXT_INC)/caps.js $(EXT_INC)/jquery-1.6.2.js
 
 all: $(EXT_DEPS)
 
@@ -27,7 +27,7 @@ $(EXT_INC)/caps.js: lib/js/caps.js $(EXT_INC)
 $(EXT_INC)/portQueue.js: lib/js/portQueue.js $(EXT_INC)
 	cp $< $@
 
-$(EXT_INC)/jQuery-1.6.2.js: $(test -f $@) $(EXT_INC) 
+$(EXT_INC)/jquery-1.6.2.js: $(test -f $@) $(EXT_INC) 
 	curl https://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.js > $@
 
 clean:

@@ -181,6 +181,7 @@ class LaunchHandler(CapServer.CapHandler):
       'myCard':  CapServer.regrant(CardInfoHandler, account.my_card),
       'introduceYourself': CapServer.regrant(IntroduceYourselfHandler, account),
       'introduceMeTo': CapServer.regrant(IntroduceMeToHandler, account),
+      'chitURL': server_url('/chit.png'),
       # TODO(mzero): or should this be just the following?
       'account':  CapServer.regrant(AccountInfoHandler, account),
 	    }

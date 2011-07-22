@@ -27,8 +27,23 @@ var butterBar = function(msg, sendResp) {
     paddingBottom: '0.5em',
     borderBottom: 'solid 1px #630'
   });
+  
   var hiddenPosition;
-
+  var showBar = function() {
+    $(document.body).append(bar);
+    hiddenPosition = '-' + bar.outerHeight() + 'px';
+    bar.css('top', hiddenPosition);
+  
+    window.setTimeout(function() {
+      bar.css('-webkit-transition', 'all 0.5s ease-in');
+      bar.css('top', 0);
+    }, 0);
+  }
+  var removeBar = function() {
+    bar.css('top', hiddenPosition);
+    window.setTimeout(function() { bar.remove(); }, 1000);
+  };
+  
   var commonCSS = {
     paddingLeft: '0.5em',
     paddingRight: '0.5em',
@@ -43,7 +58,7 @@ var butterBar = function(msg, sendResp) {
     btn.css(commonCSS);
     btn.css('-webkit-appearance', 'square-button');
     btn.text(msg.suggests[instID]);
-    btn.click(function() { bar.remove(); sendResp(instID); });
+    btn.click(function() { removeBar(); sendResp(instID); });
     bar.append(btn);
   });
   
@@ -51,21 +66,9 @@ var butterBar = function(msg, sendResp) {
   closeBtn.css(commonCSS);
   closeBtn.css('float', 'right');
   bar.append(closeBtn);
-  closeBtn.click(function() {
-    bar.css('top', hiddenPosition);
-    window.setTimeout(function() { bar.remove(); }, 1000);
-    });
+  closeBtn.click(removeBar);
 
-  $(document.body).append(bar);
-  hiddenPosition = '-' + bar.outerHeight() + 'px';
-  bar.css('top', hiddenPosition);
-
-  window.setTimeout(function() {
-    bar.css({
-      top: 0,
-      '-webkit-transition': 'all 0.5s ease-in'
-    });
-  }, 0);
+  showBar();
 };
 
 var initialize = function(divChannel) {

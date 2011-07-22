@@ -1,5 +1,3 @@
-#!/bin/bash
-
 # Copyright 2011 Google Inc. All Rights Reserved.
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,11 +12,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Necessary because of http://code.google.com/p/chromium/issues/detail?id=27185,
-# we cannot symlink to these JS files from the extension.
-# If the extension needs other lib files, this is the place to add them
+EXT_INC=chrome-ext/includes
 
-# TODO(jpolitz): make this script more usable
+EXT_DEPS=$(EXT_INC)/portQueue.js $(EXT_INC)/caps.js $(EXT_INC)/jQuery-1.6.2.js
 
-cp ../lib/js/portQueue.js ./includes/
-cp ../lib/js/caps.js ./includes/
+all: $(EXT_DEPS)
+
+$(EXT_INC): $(test -d $@)
+	mkdir $@
+
+$(EXT_INC)/caps.js: lib/js/caps.js $(EXT_INC) 
+	cp $< $@
+
+$(EXT_INC)/portQueue.js: lib/js/portQueue.js $(EXT_INC)
+	cp $< $@
+
+$(EXT_INC)/jQuery-1.6.2.js: $(test -f $@) $(EXT_INC) 
+	curl https://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.js > $@
+
+clean:
+	rm -rf $(EXT_INC)

@@ -14,29 +14,58 @@
 
 
 var butterBar = function(msg, sendResp) {
-  var bar = $('<div id="belaySuggest"' +
-              'style="position: fixed; width: 100%; height: 18pt; ' +
-                     'left: 0px; top: -18pt; background-color: #ffffcc;' +
-                     'font-family: Helvetica, sans-serif; font-size: 12pt;' +
-                     '-webkit-transition: -webkit-transform 0.5s ease-in' +
-                     '">' +
-               '<span>I recognize you</span>' +
-               '</div>');
+  var bar = $('<div id="belaySuggest"></div>');
+  bar.css({
+    position: 'fixed',
+    width: '100%',
+    left: '0',
+    top: '-1000px',
+    backgroundColor: '#ffc',
+    fontFamily: 'Helvetica, sans-serif',
+    fontSize: '10pt',
+    paddingTop: '0.5em',
+    paddingBottom: '0.5em',
+    borderBottom: 'solid 1px #630'
+  });
+  var hiddenPosition;
+
+  var commonCSS = {
+    paddingLeft: '0.5em',
+    paddingRight: '0.5em',
+  };
+  
+  var lead = $('<span>Existing items:</span>');
+  lead.css(commonCSS);
+  bar.append(lead);
 
   Object.keys(msg.suggests).forEach(function(instID) {
     var btn = $('<button></button>');
+    btn.css(commonCSS);
+    btn.css('-webkit-appearance', 'square-button');
     btn.text(msg.suggests[instID]);
     btn.click(function() { bar.remove(); sendResp(instID); });
     bar.append(btn);
   });
-
-  closeBtn = $('<button>Close</button>');
+  
+  closeBtn = $('<span>⊗</span>');
+  closeBtn.css(commonCSS);
+  closeBtn.css('float', 'right');
   bar.append(closeBtn);
-  closeBtn.click(function() { bar.remove(); });
+  closeBtn.click(function() {
+    bar.css('top', hiddenPosition);
+    window.setTimeout(function() { bar.remove(); }, 1000);
+    });
 
   $(document.body).append(bar);
-  window.setTimeout(
-    function() { bar.css('webkitTransform', 'translateY(18pt)'); }, 0);
+  hiddenPosition = '-' + bar.outerHeight() + 'px';
+  bar.css('top', hiddenPosition);
+
+  window.setTimeout(function() {
+    bar.css({
+      top: 0,
+      '-webkit-transition': 'all 0.5s ease-in'
+    });
+  }, 0);
 };
 
 var initialize = function(divChannel) {

@@ -43,7 +43,7 @@ var initMessagesUI = function(container, showHideMessages) {
     showHideMessages(false);
     latestMsgTime = '';
     msgs.find('.bfriendr-message').detach();
-    return false;    
+    return false;
   }
   showFriendPane.click(close);
 
@@ -67,7 +67,8 @@ var initMessagesUI = function(container, showHideMessages) {
       ui.capDraggable(chitImg, msg.resource_class,
         function(selectedRC) {
           return msg.capability;
-        });
+        },
+        launchInfo.chitURL);
     }
     latestMsgTime = msg.when > latestMsgTime ? msg.when : latestMsgTime;
     msgElt.find('p:eq(1)').text(msg.message || 'Received blank message.');
@@ -320,11 +321,12 @@ var initialize = function() {
   });
 
   ui.capDraggable(myCardToggle, rcIntroduceYourself,
-    function(selectedRC) { return launchInfo.introduceYourself; });
+      function(selectedRC) { return launchInfo.introduceYourself; },
+      function() { return myCardImageDiv.find('img').attr('src'); });
   ui.capDroppable(addFriendArea, rcIntroduceYourself,
-    function(c) {
-      launchInfo.introduceMeTo.post({introductionCap: c });
-    });
+      function(c) {
+        launchInfo.introduceMeTo.post({introductionCap: c });
+      });
 
   var messageUI = initMessagesUI(messagesDiv, showHideMessages);
   initCardUI(launchInfo.friends, cardListDiv, messageUI);

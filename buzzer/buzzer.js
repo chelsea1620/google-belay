@@ -68,13 +68,11 @@ onBelayReady(function() {
         return false;
       });
       ui.capDraggable(topDiv.find('.buzzer-reader-chit'), rcBelayGen,
-        function(selectedRC) {
-          return launchInfo.reader_gen_cap;
-      });
+          function(selectedRC) { return launchInfo.reader_gen_cap; },
+          launchInfo.readChitURL);
       ui.capDraggable(topDiv.find('.buzzer-post-chit'), rcPost,
-        function(selectedRC) {
-          return capServer.grantKey(selectedRC);
-      });
+          function(selectedRC) { return capServer.grantKey(selectedRC); },
+          launchInfo.postChitURL);
     });
   };
 

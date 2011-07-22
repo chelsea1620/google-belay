@@ -113,6 +113,8 @@ class LaunchHandler(BaseHandler):
         'post_cap': server_cap('/data/post', feed_id),
         'reader_gen_cap': server_cap("/belay/generateReader", feed_id),
         'editor_url': server_feed_url("/view/editor", feed_id),
+        'readChitURL': server_url("/chit-24.png"),
+        'postChitURL': server_url("/chit-25.png")
       }
     }
 

@@ -35,10 +35,12 @@
   href="http://code.google.com/appengine/downloads.html">downloads page</a>.
   </li>
 
-  <li> Once you have AppEngine, your startup will vary depending on your
-platform.  If you are on a Mac, you can load the applications into the
-AppEngine launcher to start them.  There are seven directories you should load:
-belay/, station/, hello/, stickies/, buzzer/, emote/, and bfriendr/.
+  <li> Once you have AppEngine, your startup will vary depending on
+your platform.  If you are on a Mac, you can load the applications
+into the AppEngine launcher to start them. (Your launcher should
+look like <a href="art/appengine-config.png">like this</a>.) There are seven
+directories you should load: belay/, station/, hello/, stickies/,
+buzzer/, emote/, and bfriendr/.
 
 If you are on a Linux machine, there is a script, <code>run.sh</code>, in the main
 directory of the repository, that takes the path to your AppEngine installation's
@@ -62,7 +64,42 @@ requests on port 9001).
 
 </li>
 
-  </ol>
+</ol>
+
+<h1>Exploring The Belay Demo</h1>
+
+<p>The Belay extension adds a <img width="16" height="17"
+src="chrome-ext/icon.png"/> button to the address bar. Click this
+button to enter Belay Station. The primary purpose of Belay Station is
+to hold references to the user's items. When you first launch Belay,
+this item list is empty. Belay Station also contains links to create
+certain well-known items. For example, click on the "Buzzer" and
+"Emote" buttons to create instances of each. You can create as many as
+you wish; they are all independent.</p>
+
+<p>Emote is an emoticon-posting application that requires a capability
+to post to a Buzzer. You can drag the
+<img src="art/buzzer-post-chit.png"/> icon from a Buzzer onto an Emote
+to give it the capability to post to that Buzzer.  Posting continues
+to work even if you pop out Emote and Buzzer instances into their own
+windows.</p>
+
+<p>Bfriendr is an instant-messaging application that support sendings
+capabilities as messages. Unlike the other applications in the demo,
+bfriendr is launched by
+visiting <a href="http://localhost:9009/">http://localhost:9009/</a>.
+Enter a name, etc. and click "get going"; notice that Belay Station
+has a reference to this bfriendr account.  If you
+visit <a href="http://localhost:9009/">http://localhost:9009/</a>
+again, you can re-launch your account, or create a new, independent
+account.</p>
+
+<p>Drag the <img src="art/bfriendr-me.png"/> icon from one bfriendr
+onto the invite pane of another bfriendr to introduce them to each
+other. These bfriendr's can send messages to each other that include
+capabilities.</p>
+
 
 </body>
 </html>
+

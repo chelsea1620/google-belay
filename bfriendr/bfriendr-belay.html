@@ -1,0 +1,116 @@
+<!--
+Copyright 2011 Google Inc. All Rights Reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>bfriendr</title>
+  <link rel="stylesheet" href="lib/css/go.css">
+  <link rel="stylesheet" href="bfriendr.css">
+  <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.js"></script>
+  <script type="text/javascript" src="lib/js/portQueue.js"></script>
+  <script type="text/javascript" src="lib/js/divPort.js"></script>
+  <script type="text/javascript" src="lib/js/caps.js"></script>
+  <script src="lib/js/common.js"></script>
+  <script src="lib/js/belay-client.js"></script>
+  <script type="text/javascript" src="bfriendr.js"></script>
+</head>
+<body id="bfriendr">
+<div class="bfriendr bfriendr-page">
+  <div class="bfriendr-header">
+    <h1><span class="bfriendr-logo"
+      ><span class="bfriendr-red">b</span>friend<span class="bfriendr-red">r</span></span>
+      <a class="bfriendr-nav" href=""
+         style="width:50px;height:30px;background:url(/nav.png) no-repeat 0 -4px;"
+        ></a></h1>
+  </div>
+  <div class="bfriendr-mycard" style="display: none;">
+    <div class="bfriendr-card">
+      <h1><a href="">&lt;&lt;</a> Your card</h1>
+      <ul>
+        <li>
+          <p class="bfriendr-instructions">This information is visible to your friends and those you've invited.</p>
+          <div class="bfriendr-cardform">
+            <div class="bfriendr-cardimg"></div>
+            <p>Name: <input type="string" name="name" title="Who are you?" /></p>
+            <p>E-mail: <input type="string" name="email" title="(optional)"/></p>
+            <div class="bfriendr-clear"></div>
+          </div>
+          <p>Something about yourself:</p>
+          <textarea title="Something about yourself"></textarea>
+          <button><b>✎</b> Save</button>
+          <div class="bfriendr-clear"></div>
+        </li>
+      </ul>
+    </div>
+  </div>
+  <div class="bfriendr-content">
+    <div class="bfriendr-cards">
+      <ul>
+        <li class="bfriendr-card">
+          <a class="bfriendr-nav" href=""></a>
+          <div class="bfriendr-cardimg"></div>
+          <h3>Arjun Guha</h3>
+          <p>blah blah woof woof</p>
+          <div class="bfriendr-clear"></div>
+        </li>
+        <li class="bfriendr-card bfriendr-card-active">
+          <a class="bfriendr-nav" href=""></a>
+          <div class="bfriendr-cardimg"></div>
+          <h3>Joe Politz</h3>
+          <p>blah blah woof woof</p>
+          <div class="bfriendr-clear"></div>
+        </li>
+        <li class="bfriendr-card">
+          <a class="bfriendr-nav" href=""></a>
+          <div class="bfriendr-cardimg"></div>
+          <h3>Mark Lentczner</h3>
+          <p>blah blah woof woof</p>
+          <div class="bfriendr-clear"></div>
+        </li>
+        <li class="bfriendr-add">
+          <p class="bfriendr-instructions">Invite a new friend:</p>
+          <p>Name: <input type="string" name="name" /></p>
+          <p>E-mail: <input type="string" name="email" /></p>
+          <button><b>✚</b> Invite</button>
+        </li>
+      </ul>
+    </div>
+    <div class="bfriendr-messages">
+      <h1><a class="bfriendr-nav" href=""></a> <span class="bfriendr-message-friendname">Arjun Guha</span></h1>
+      <ul>
+        <li class="bfriendr-message">
+          <p class="bfriendr-date">3 min ago</p>
+          <p>What's for lunch, dude?</p>
+        </li>
+        <li class="bfriendr-message">
+          <p class="bfriendr-date">3 min ago</p>
+          <div class="bfriendr-cap-chit">
+            <img src="/chit.png" />
+          </div>
+          <p>Here's my blog</p>
+        </li>
+        <li class="bfriendr-add">
+          <p class="bfriendr-instructions">Send a message:</p>
+          <textarea></textarea>
+          <button><b>✈</b> Send</button>
+        </li>
+      </ul>
+    </div>
+  </div>
+</div>
+</body>
+</html>

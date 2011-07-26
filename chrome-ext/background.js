@@ -223,7 +223,7 @@ var handleClosedStation = function(tabID) {
   }
 
   Object.keys(suggestions).forEach(function(domain) {
-    var suggests = suggestion[domain];
+    var suggests = suggestions[domain];
     Object.keys(suggests).forEach(function(instID) {
       if (suggests[instID].station === station) {
         delete suggests[instID];

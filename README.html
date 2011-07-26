@@ -13,6 +13,13 @@
   Chrome, download it, install it, and visit this page with it.
   </li>
 
+  <li> <p> If you intend to do development, run <code>make</code> in the main
+directory.  This isn't necessary to run the demo, but it does set up some
+necessary files for development.  You should run <code>make</code> each time
+you pull in new changes from the repo.
+  </p>
+  </li>
+
   <li> <p> After you've done that, <a href="belay.crx">install the extension</a>.
   It will ask for your data on all web sites, and your tabs and browsing
   activity.  If that's OK with you, say yes and the Belay extension will be
@@ -46,24 +53,24 @@ directory of the repository, that takes the path to your AppEngine installation'
 For example, I have AppEngine installed in <code>/home/joe/src/google_appengine</code>,
 so I run:
 
+
 <pre>
-./run.sh /home/joe/src/google_appengine/dev_appserver.py
+jpolitz@jpolitz-glaptop:~/src/belay$ ./run.sh /home/joe/src/google_appengine/dev_appserver.py
+Started belay, pid in /tmp/belay/pids/belay/pid, log in /tmp/belay/logs/belay
+Started station, pid in /tmp/belay/pids/station/pid, log in /tmp/belay/logs/station
+Started hello, pid in /tmp/belay/pids/hello/pid, log in /tmp/belay/logs/hello
+Started stickies, pid in /tmp/belay/pids/stickies/pid, log in /tmp/belay/logs/stickies
+Started buzzer, pid in /tmp/belay/pids/buzzer/pid, log in /tmp/belay/logs/buzzer
+Started emote, pid in /tmp/belay/pids/emote/pid, log in /tmp/belay/logs/emote
+Started bfriendr, pid in /tmp/belay/pids/bfriendr/pid, log in /tmp/belay/logs/bfriendr
 </pre>
 
 <p>
-Running this will open seven terminal windows, each running one application.  The
-first time you do this, you may get a warning from AppEngine about auto-updating Python versions.
-Accepting or rejecting this will have no effect on Belay --- choose whatever you like.
+To get more information on using the startup script and restarting, just run
+<code>./run.sh</code> (with no arguments).
+
 </p>
 </li>
-
-<li>
-
-Now we can go back to Chrome and start up Belay Station (which is listening for
-requests on port 9001).
-
-</li>
-
 </ol>
 
 <h1>Exploring The Belay Demo</h1>

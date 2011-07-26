@@ -13,19 +13,18 @@
 # limitations under the License.
 #!/bin/bash
 
-APPE=$1
-RUN="gnome-terminal -x python"
+LOGS="/tmp/belay/logs"
+PIDS="/tmp/belay/pids"
+
+mkdir -p $LOGS
+mkdir -p $PIDS
 
 CLEAR=""
 
-CL=$2
-if [[ $CL == "clean" || $CL == "-clean" || $CL == "--clean" ]]; then
-  echo "Clearing datastores"
-  CLEAR="--clear_datastore"
-elif [[ $2 != "" || $1 == "" ]]; then
+usage() {
   echo "Usage:"
   echo ""
-  echo "  ./run.sh <appengine-path> [clean]"
+  echo "  ./run.sh <appengine-path> start|stop|restart|cleanstart|cleanrestart"
   echo ""
   echo "Runs all 7 Belay demo applications, with the following port mappings:"
   echo ""
@@ -42,15 +41,117 @@ elif [[ $2 != "" || $1 == "" ]]; then
   echo "    The path to the development executable for Python AppEngine, e.g.:"
   echo "    /home/bob/src/google_appengine/dev_appserver.py"
   echo ""
-  echo "  clean: Optional.  Clears all AppEngine datastores, then launches as usual."
+  echo "  start:"
+  echo "    Default if no options given.  Starts all of the Belay servers"
+  echo ""
+  echo "  stop:"
+  echo "    Stop Belay servers"
+  echo ""
+  echo "  restart:"
+  echo "    Same as ./run.sh stop followed by ./run.sh start"
+  echo ""
+  echo "  cleanstart:"
+  echo "    Same as start, but clears appengine datastores"
+  echo ""
+  echo "  cleanrestart:"
+  echo "    Same as ./run.sh stop followed by ./run.sh cleanstart"
   echo ""
   exit 0
+}
+
+checkargs() {
+  if [[ $1 == "" ]]; then
+    usage
+  elif [[ ! (-e $1) ]]; then
+    echo "ERROR: Can't find AppEngine at the given path: $1"
+    echo ""
+    usage
+    exit 1
+  fi
+
+  if [[   $2 == ""
+       || $2 == "start"
+       || $2 == "restart"
+       || $2 == "stop"
+       || $2 == "cleanstart"
+       || $2 == "cleanrestart" ]]; then
+    :
+  else
+    usage
+    exit 1
+  fi
+}
+
+startapp() {
+  local port=$1
+  local app=$2
+
+  local cmd="python $APPE -p $port $CLEAR $app"
+
+  mkdir -p $PIDS/$app
+
+  if [[ -e $PIDS/$app/pid ]]; then
+    echo "PID exists for $app in $PIDS/$app, refusing to start"
+    echo "try stop first, or use restart"
+    exit 1
+  fi
+
+  $cmd 2> $LOGS/$app &
+
+  echo $! > $PIDS/$app/pid
+  echo "Started $app, pid in $PIDS/$app/pid, log in $LOGS/$app"
+}
+
+stopapp() {
+  local app=$1
+
+  if [[ ! (-e $PIDS/$app/pid) ]]; then
+    echo "WARNING: No pid file for $app in $PIDS/$app"
+  else 
+    echo "Stopping $app..."
+    kill `cat $PIDS/$app/pid`
+    rm $PIDS/$app/pid
+  fi 
+}
+
+startall() {
+  startapp 9000 belay
+  startapp 9001 station
+  startapp 9002 hello
+  startapp 9003 stickies
+  startapp 9004 buzzer
+  startapp 9005 emote
+  startapp 9009 bfriendr
+}
+
+stopall() {
+  stopapp belay
+  stopapp station
+  stopapp hello
+  stopapp stickies
+  stopapp buzzer
+  stopapp emote
+  stopapp bfriendr
+}
+
+checkargs $1 $2
+
+APPE=$1
+OP=$2
+if [[ $OP == "" ]]; then
+  OP="start"
 fi
 
-$RUN $APPE -p 9000 $CLEAR belay
-$RUN $APPE -p 9001 $CLEAR station
-$RUN $APPE -p 9002 $CLEAR hello
-$RUN $APPE -p 9003 $CLEAR stickies
-$RUN $APPE -p 9004 $CLEAR buzzer
-$RUN $APPE -p 9005 $CLEAR emote
-$RUN $APPE -p 9009 $CLEAR bfriendr
+if [[ $OP == "cleanstart" || $CL == "cleanrestart" ]]; then
+  CLEAR="--clear_datastore"
+fi
+
+if [[ $OP == "stop" || $OP == "restart" || $OP == "cleanrestart" ]]; then
+  stopall
+fi
+
+if [[ $OP == "start" || $OP == "restart"
+   || $OP == "cleanstart" || $OP == "cleanrestart" ]]; then
+  startall
+fi
+

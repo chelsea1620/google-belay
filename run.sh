@@ -86,7 +86,7 @@ startapp() {
   local port=$1
   local app=$2
 
-  local cmd="python $APPE -p $port $CLEAR $app"
+  local cmd="python $APPE --skip_sdk_update_check -p $port $CLEAR $app"
 
   mkdir -p $PIDS/$app
 
@@ -142,7 +142,7 @@ if [[ $OP == "" ]]; then
   OP="start"
 fi
 
-if [[ $OP == "cleanstart" || $CL == "cleanrestart" ]]; then
+if [[ $OP == "cleanstart" || $OP == "cleanrestart" ]]; then
   CLEAR="--clear_datastore"
 fi
 

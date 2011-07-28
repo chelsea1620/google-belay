@@ -20,23 +20,23 @@ limitations under the License.
 <head>
   <title>Jasmine Test Runner</title>
   <link rel="stylesheet" type="text/css" href="jasmine/jasmine.css">
-  <script type="text/javascript" src="jasmine/jasmine.js"></script>
-  <script type="text/javascript" src="jasmine/jasmine-html.js"></script>
+  <script src="jasmine/jasmine.js"></script>
+  <script src="jasmine/jasmine-html.js"></script>
 
   <!-- include source files here... -->
-  <script type="text/javascript" src="../lib/js/caps.js"></script>
-  <script type="text/javascript" src="../lib/js/portQueue.js"></script>
-  <script type="text/javascript" src="../lib/js/windows.js"></script>
-  <script type="text/javascript" src="testUtils.js"></script>
+  <script src="../lib/js/caps.js"></script>
+  <script src="../lib/js/portQueue.js"></script>
+  <script src="../lib/js/windows.js"></script>
+  <script src="testUtils.js"></script>
 
   <!-- include spec files here... -->
-  <script type="text/javascript" src="capsSpec.js"></script>
-  <script type="text/javascript" src="windowedSpec.js"></script>
-  <script type="text/javascript" src="substationSpec.js"></script>
+  <script src="capsSpec.js"></script>
+  <script src="windowedSpec.js"></script>
+  <script src="substationSpec.js"></script>
 </head>
 <body>
 
-<script type="text/javascript">
+<script>
   jasmine.getEnv().addReporter(new jasmine.TrivialReporter());
   jasmine.getEnv().execute();
 </script>

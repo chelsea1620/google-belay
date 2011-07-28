@@ -4,11 +4,12 @@ window.addEventListener('load', function() {
     dataType: 'text',
     success: function(data, status, xhr) {
       window.setTimeout(function() {
-				belayPort.postMessage({ 
-					type: 'instanceRequest', 
-					gen: data});
-			}, 500);
-		},
+        belayPort.postMessage({
+          type: 'instanceRequest',
+          gen: data
+        });
+      }, 500);
+    },
     failure: function() {
       alert('Failed to generate instance');
     }

@@ -200,7 +200,7 @@ describe('CapTunnels', function() {
 
       var remoteAsyncCap;
       runs(function() {
-        var remoteSeedCap = outpostData.seedSers[0]; 
+        var remoteSeedCap = outpostData.seedSers[0];
         remoteSeedCap.post('remoteAsync',
           function(data) { remoteAsyncCap = data; },
           function(err) { });

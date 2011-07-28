@@ -40,7 +40,7 @@ onBelayReady(function() {
 
   var rcPost = 'urn:x-belay://resouce-class/social-feed/post';
   var rcBelayGen = 'belay/generate';
-  
+
   var capReviver = function(resClass) {
     if (resClass == rcPost && launchInfo.post_cap) {
       var poster = function(data) {

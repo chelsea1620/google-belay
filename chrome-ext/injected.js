@@ -27,13 +27,13 @@ var butterBar = function(msg, sendResp) {
     paddingBottom: '0.5em',
     borderBottom: 'solid 1px #630'
   });
-  
+
   var hiddenPosition;
   var showBar = function() {
     $(document.body).append(bar);
     hiddenPosition = '-' + bar.outerHeight() + 'px';
     bar.css('top', hiddenPosition);
-  
+
     window.setTimeout(function() {
       bar.css('-webkit-transition', 'all 0.5s ease-in');
       bar.css('top', 0);
@@ -43,12 +43,12 @@ var butterBar = function(msg, sendResp) {
     bar.css('top', hiddenPosition);
     window.setTimeout(function() { bar.remove(); }, 1000);
   };
-  
+
   var commonCSS = {
     paddingLeft: '0.5em',
-    paddingRight: '0.5em',
+    paddingRight: '0.5em'
   };
-  
+
   var lead = $('<span>Existing items:</span>');
   lead.css(commonCSS);
   bar.append(lead);
@@ -61,7 +61,7 @@ var butterBar = function(msg, sendResp) {
     btn.click(function() { removeBar(); sendResp(instID); });
     bar.append(btn);
   });
-  
+
   closeBtn = $('<span>⊗</span>');
   closeBtn.css(commonCSS);
   closeBtn.css('float', 'right');
@@ -99,10 +99,10 @@ var initialize = function(divChannel) {
 
 var divChannel = document.getElementById('__belayDivChannel');
 
-if (divChannel) initialize(divChannel); 
+if (divChannel) initialize(divChannel);
 else {
-  document.addEventListener('DOMNodeInsertedIntoDocument', function (evt) {
-    if(evt.srcElement.id === '__belayDivChannel') {
+  document.addEventListener('DOMNodeInsertedIntoDocument', function(evt) {
+    if (evt.srcElement.id === '__belayDivChannel') {
       initialize(evt.srcElement);
     }
   }, true);
@@ -110,7 +110,7 @@ else {
 
 
 // Illuminate elements for the background page.
-(function () {
+(function() {
   var port = chrome.extension.connect({ name: 'highlight' });
 
   var highlightClassName = 'belay-possible';
@@ -118,17 +118,17 @@ else {
   var onHighlight = function(args) {
     var rc = args.rc;
     var className = args.className;
-    console.assert(typeof rc === 'string' && 
+    console.assert(typeof rc === 'string' &&
                    typeof className === 'string');
-    
+
     onUnHighlight({ });
     $(document)
     .find('.' + className)
     .filter(function(ix) {
       var ixrc = this.getAttribute('data-rc');
-      return rc === '*' || ixrc === '*' || ixrc === rc ;
+      return rc === '*' || ixrc === '*' || ixrc === rc;
       // TODO(mzero): in theory only one of ixrc or rc should be checked for
-      // wildcard, depending on if we are hilighting targets are sources. 
+      // wildcard, depending on if we are hilighting targets are sources.
      })
     .addClass(highlightClassName);
   };
@@ -144,8 +144,8 @@ else {
     'unhighlight': onUnHighlight
   };
 
-  port.onMessage.addListener(function(msg) { 
-    handlers[msg.type](msg); 
+  port.onMessage.addListener(function(msg) {
+    handlers[msg.type](msg);
   });
 })();
 

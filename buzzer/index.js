@@ -24,7 +24,7 @@ $(function() {
       type: 'POST',
       data: {name: name, location: loc},
       success: function(data, status, xhr) {
-        var instanceName = name + " of " +  loc;
+        var instanceName = name + ' of ' + loc;
         console.log(instanceName);
         console.log(data);
 

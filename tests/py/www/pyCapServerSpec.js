@@ -1,11 +1,11 @@
 // Copyright 2011 Google Inc. All Rights Reserved.
-// 
+//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-// 
+//
 //     http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,7 +18,7 @@ function get(url) {
   $.ajax({
     url: url,
     async: false,
-    success: function(data) { 
+    success: function(data) {
       resp = JSON.parse(data);
       if (typeof resp === 'object' && resp.hasOwnProperty('value')) {
         resp = resp.value;
@@ -27,9 +27,9 @@ function get(url) {
         throw 'expected BCAP response, got ' + data;
       }
     },
-    error: function(xhr, status) { err = xhr.status; } 
+    error: function(xhr, status) { err = xhr.status; }
   });
-  if(err) throw err;
+  if (err) throw err;
   else return resp;
 }
 
@@ -50,7 +50,7 @@ describe('basic cap invocation', function() {
   it('should be able to invoke a granted cap', function() {
     var cap_response = get('/test_entry/grant');
     expect(get(cap_response)).toEqual({'success': true});
-  }); 
+  });
 
   it('should invoke caps granted as strings', function() {
     var cap_response = get('/test_entry/grantWithString');

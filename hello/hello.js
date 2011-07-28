@@ -50,7 +50,7 @@ var setLang = function(lang) {
      storage.put(lang);
     }
   });
-}
+};
 
 onBelayReady(function() {
   topDiv.find('a').click(function() {
@@ -58,7 +58,7 @@ onBelayReady(function() {
     setLang(l);
     return false;
   });
-  
+
   storage.get(function(lang) {
     setLang(lang || 'en');
   });

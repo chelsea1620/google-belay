@@ -38,10 +38,10 @@ var showPanel = function(feedCap) {
 
 onBelayReady(function() {
   ui.resize(160, 90, false);
- 
 
-  storage.get(function(feedCap) { 
-  
+
+  storage.get(function(feedCap) {
+
     if (feedCap) {
       showPanel(capServer.restore(feedCap));
     }

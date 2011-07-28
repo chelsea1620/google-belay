@@ -59,7 +59,7 @@ var stations = (function() {
   return Object.freeze({
     set: set,
     get: get,
-    names: names,
+    names: names
   });
 })();
 
@@ -79,15 +79,15 @@ var makeStation = function(name, k) {
 
 var launchStation = function(name) {
   launch(stations.get(name));
-}
+};
 
 var instToTabID = Object.create(null);
 /* Maps tabIDs to
-  { instID: Str, 
-    outpostData: Any,    station-determined; background is transparent 
+  { instID: Str,
+    outpostData: Any,    station-determined; background is transparent
     tunnel: CapTunnel,
     url: Str,
-    station: ``Station'' 
+    station: ``Station''
    }
 */
 var launchedInstances = Object.create(null);
@@ -116,17 +116,17 @@ var makeCloseInstanceCap = function(instID) {
 // is used to remember the launched instance and send instance-manangement
 // capabilities to the station.
 var initLaunchedInstance = function(station, tab, args) {
-  launchedInstances[tab.id] = { 
+  launchedInstances[tab.id] = {
     instID: args.instID,
     tunnel: makeTunnel(tabPorts.getTabPort(tab.id)),
     url: args.url,
     outpostData: args.outpostData,
-    station: station 
+    station: station
   };
   instToTabID[args.instID] = tab.id;
-  
+
   return makeCloseInstanceCap(args.instID);
-  
+
   // We expect that chrome.tabs.onUpdated fires on the next turn, sending the
   // outpost message.
 };
@@ -135,8 +135,8 @@ var initLaunchedInstance = function(station, tab, args) {
 var makeLaunchHandler = function(station) {
   return capServer.grant(function(args, sk, fk) {
     var width = typeof args.width === 'number' ? args.width : undefined;
-    var height = typeof args.height === 'number' ? args.height: undefined;
-    chrome.windows.create({ url: args.url, width: width, height: height }, 
+    var height = typeof args.height === 'number' ? args.height : undefined;
+    chrome.windows.create({ url: args.url, width: width, height: height },
                           function(wnd) {
         sk(initLaunchedInstance(station, wnd.tabs[0], args));
       });
@@ -146,8 +146,8 @@ var makeLaunchHandler = function(station) {
 var instanceRequest = function(data, tabID) {
   var launchData = capServer.dataPostProcess(data);
   var station = currentStation;
-  
-  station.newInstHandler.post({ 
+
+  station.newInstHandler.post({
     launchData: launchData,
     relaunch: capServer.grant(function(args, sk, fk) {
       chrome.tabs.update(tabID, { url: args.url }, function(tab) {
@@ -172,7 +172,7 @@ var launch = function(url) {
       var info = data.info;
       chrome.tabs.create({ url: page.html },
         function(tab) {
-          var tunnel = makeTunnel(tabPorts.getTabPort(tab.id)); 
+          var tunnel = makeTunnel(tabPorts.getTabPort(tab.id));
           launchedStations[tab.id] = {
             url: url, html: page.html, info: info, tunnel: tunnel };
         });
@@ -217,7 +217,7 @@ var currentStation = false;
 
 var handleClosedStation = function(tabID) {
   var station = launchedStations[tabID];
-  
+
   if (currentStation === station) {
     currentStation = false;
   }
@@ -236,7 +236,7 @@ var handleClosedStation = function(tabID) {
 
   closeInstancesOfStation(station);
   delete launchedStations[tabID];
-}
+};
 
 var closeInstancesOfStation = function(station) {
   Object.keys(launchedInstances).forEach(function(instTabID) {
@@ -247,9 +247,9 @@ var closeInstancesOfStation = function(station) {
       chrome.tabs.remove(Number(instTabID));
     }
   });
-}
+};
 
-chrome.tabs.onRemoved.addListener(function (tabID, removeInfo) {
+chrome.tabs.onRemoved.addListener(function(tabID, removeInfo) {
   if (tabID in launchedInstances) {
     var station = launchedInstances[tabID].station;
     var instID = launchedInstances[tabID].instID;
@@ -266,7 +266,7 @@ chrome.tabs.onRemoved.addListener(function (tabID, removeInfo) {
 var suggestFor = function(tab) {
   var m = tab.url.match('^https?://[^/]*');
   if (!(m !== null &&  // failed match returns null
-        m[0] in suggestions && 
+        m[0] in suggestions &&
         Object.keys(suggestions[m[0]]).length > 0)) {
     return;
   }
@@ -303,7 +303,7 @@ var suggestFor = function(tab) {
           }));
       }
     });
-}
+};
 
 // NOTE(jpolitz): This event is called twice on page load, and twice
 // on page refresh.  We only handle 'complete' events, so we can be
@@ -326,11 +326,11 @@ chrome.tabs.onUpdated.addListener(function(tabID, info, tab) {
   currentStation = tabInfo;
 
   closeInstancesOfStation(tabInfo);
-  
-  tabInfo.tunnel = makeTunnel(tabPorts.refreshTabPort(tabID)); 
+
+  tabInfo.tunnel = makeTunnel(tabPorts.refreshTabPort(tabID));
 
   var sendToTunnel = function(info) {
-    tabInfo.tunnel.sendOutpost(capServer.dataPreProcess({ 
+    tabInfo.tunnel.sendOutpost(capServer.dataPreProcess({
       info: info,
       browserID: capServer.instanceID,
       services: {
@@ -351,7 +351,7 @@ chrome.tabs.onUpdated.addListener(function(tabID, info, tab) {
     capServer.restore(tabInfo.url).get(
       function(data) {
         if (data.page.html === info.html || info.url === undefined) {
-          sendToTunnel(data.info); 
+          sendToTunnel(data.info);
         }
       });
   }
@@ -424,7 +424,7 @@ var highlighting = (function() {
 
   var registerHighlighter = function(port) {
     var tabId = port.sender.tab.id;
-   
+
     console.assert(!(tabId in ports)); // sanity check
     ports[tabId] = port;
 
@@ -432,8 +432,8 @@ var highlighting = (function() {
       delete ports[tabId];
     });
   };
-  
-  return { 
+
+  return {
     registerHighlighter: registerHighlighter,
     highlightByRC: highlightByRC,
     unhighlight: unhighlight
@@ -442,15 +442,15 @@ var highlighting = (function() {
 })();
 
 chrome.extension.onConnect.addListener(function(port) {
-  if (port.name === 'highlight') { 
-    highlighting.registerHighlighter(port); 
+  if (port.name === 'highlight') {
+    highlighting.registerHighlighter(port);
   }
 });
 
 chrome.browserAction.onClicked.addListener(function(tabWhenClicked) {
   var defaultName = 'defaultStation';
-  
-  if(stations.names().length === 0) {
+
+  if (stations.names().length === 0) {
     makeStation(defaultName, function() {
       launchStation(defaultName);
     });

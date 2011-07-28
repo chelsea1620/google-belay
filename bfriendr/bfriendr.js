@@ -27,7 +27,7 @@ var initMessagesUI = function(container, showHideMessages) {
   var sendButton = msgs.find('button:eq(0)');
   var composeTextArea = msgs.find('textarea:eq(0)');
   var showFriendPane = container.find('.bfriendr-nav');
-  
+
   msgs.find('.bfriendr-message').detach();
 
   var latestMsgTime = '';
@@ -50,11 +50,12 @@ var initMessagesUI = function(container, showHideMessages) {
   var serCapRC = false;
   var capToSend = false;
 
-  ui.capDroppable(msgs.find('.bfriendr-instructions'), '*', function(cap, capRC) {
-    capToSend = cap;
-    serCapRC = capRC;
-    composeTextArea.val(composeTextArea.val() + " (see attached)");
-  });
+  ui.capDroppable(msgs.find('.bfriendr-instructions'), '*',
+    function(cap, capRC) {
+      capToSend = cap;
+      serCapRC = capRC;
+      composeTextArea.val(composeTextArea.val() + ' (see attached)');
+    });
 
   var showMsg = function(msg) {
     var msgElt;
@@ -121,9 +122,9 @@ var initCardUI = function(friendsCap, container, messageUI) {
 
   container.click(function() {
     messageUI.close();
-    container.find('.bfriendr-card-active').removeClass('bfriendr-card-active')
+    container.find('.bfriendr-card-active').removeClass('bfriendr-card-active');
   });
-  
+
   var cardMap = Object.create(null);
 
   var updateCard = function(ui) {
@@ -137,7 +138,7 @@ var initCardUI = function(friendsCap, container, messageUI) {
       infoElt.text(friendInfo.card.notes || 'No Notes');
       messagesElt.click(function() {
         try {
-          ui.addClass('bfriendr-card-active')
+          ui.addClass('bfriendr-card-active');
           messageUI.refresh(friendInfo.card.name || 'No Name',
                             friendInfo.readConversation,
                             friendInfo.postToMyStream);
@@ -192,7 +193,7 @@ var initialize = function() {
   ui.resize('80', '80', true);
 
   var inPage = topDiv.hasClass('bfriendr-page');
-  
+
   var header = topDiv.find('.bfriendr-header');
   var myCardDiv = topDiv.find('div.bfriendr-mycard');
   var myCardToggle = topDiv.find('.bfriendr-header .bfriendr-nav');
@@ -220,11 +221,11 @@ var initialize = function() {
 
   var showHideMessagesPage = function(show) {
     if (show) {
-      cardListDiv.addClass('narrow')
+      cardListDiv.addClass('narrow');
       cardListDiv.animate({width: '50%'}, 'fast');
       messagesDiv.animate({left: '50%'}, 'fast');
     } else {
-      cardListDiv.removeClass('narrow')
+      cardListDiv.removeClass('narrow');
       cardListDiv.animate({width: '100%'}, 'fast');
       messagesDiv.animate({left: '100%'}, 'fast');
     }
@@ -239,7 +240,7 @@ var initialize = function() {
     }
   };
   var showHideMessages = inPage ? showHideMessagesPage : showHideMessagesGadget;
-  
+
   var uploadMyImageUrl = undefined;
 
   var fetchMyCard = function() {

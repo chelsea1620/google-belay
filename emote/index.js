@@ -5,8 +5,8 @@ $(function() {
       url: '/belay/generate-instance',
       dataType: 'text',
       success: function(data, status, xhr) {
-        belayPort.postMessage({ 
-          type: 'instanceRequest', 
+        belayPort.postMessage({
+          type: 'instanceRequest',
           gen: data
         });
       },
@@ -15,4 +15,4 @@ $(function() {
       }
     });
   });
-})
+});

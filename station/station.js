@@ -37,7 +37,7 @@ var setupLayout = function() {
     medium: 650,
     large: 1200
   };
-  
+
   var controls = $('#belay-controls');
   var toolbar = $('#belay-toolbar');
   var items = $('#belay-items');
@@ -54,7 +54,7 @@ var setupLayout = function() {
   var itemsMaxHeight = items.css('maxHeight');
 
   var visible = function(n) { return n.css('display') != 'none'; };
-  
+
   showItems = function() { items.slideDown(); };
   showDesk = function() {
     if (! visible(desk)) {
@@ -82,15 +82,15 @@ var setupLayout = function() {
       showItems();
     }
   };
-  
+
   var toggle = function(node, shower, hider) {
     if (visible(node)) hider(); else shower();
   };
-  
+
   $('#belay-nav-toolbar').click(function() { toolbar.slideToggle(); });
   $('#belay-nav-items').click(function() {
       toggle(items, showItems, hideItems); });
-  $('#belay-nav-desk').click(function() { 
+  $('#belay-nav-desk').click(function() {
       toggle(desk, showDesk, hideDesk); });
 };
 
@@ -105,7 +105,7 @@ var nextTop = 50;
 var instances = {};
 /*
   a map from instanceIDs to
-   { 
+   {
      storageCap: cap,-- where station stores instance state (see next member)
      state: {
        id: uuid,
@@ -126,7 +126,7 @@ var instances = {};
        data: string  -- stored data for the instance
      },
      capServer: caps -- the cap server for this instance (if !state.remote)
-     windowedInstance: bool -- if true, in a window (route via extension) 
+     windowedInstance: bool -- if true, in a window (route via extension)
 
      rowNode: node -- node in the item list
      pageWindow: window -- if open in page view, the window it is in
@@ -140,7 +140,7 @@ var dirtyProcess = function() {
   var inst;
   while (!inst) {
     if (dirtyInstances.length <= 0) { return; }
-    var instID = dirtyInstances.shift(); 
+    var instID = dirtyInstances.shift();
     inst = instances[instID];
   }
   // TODO(arjun): who should do the saving? should windowed instances also
@@ -209,14 +209,14 @@ var protoContainer = undefined;
 var topGadget = function(inst) {
   var g = inst.gadgetNode;
   if (!g) return;
-  
+
   showDesk();
-  
+
   var gs = $.makeArray(desk.find('.belay-container'));
-  gs.sort(function(a,b) { return a.style.zIndex - b.style.zIndex });
-  $.each(gs, function(i,d) { d.style.zIndex = i; });
+  gs.sort(function(a, b) { return a.style.zIndex - b.style.zIndex });
+  $.each(gs, function(i, d) { d.style.zIndex = i; });
   g[0].style.zIndex = gs.length;
-}
+};
 
 
 var closeGadgetInstance = function(inst) {
@@ -227,7 +227,7 @@ var closeGadgetInstance = function(inst) {
     inst.state.opened = 'closed';
     dirty(inst);
   }
-}
+};
 
 // isForced is true if the page is already closed
 var closePageInstance = function(inst, isForced) {
@@ -239,20 +239,20 @@ var closePageInstance = function(inst, isForced) {
       inst.closeCap.put();
     }
   }
-}
+};
 
 
 var launchGadgetInstance = function(inst) {
   if (inst.gadgetNode) return;
   closePageInstance(inst, false);
   if (!inst.capServer) setupCapServer(inst);
-  
+
   var instState = inst.state;
 
   if (!('window' in instState)) {
-    instState.window = { top: nextTop += 10, left: nextLeft += 20}
+    instState.window = { top: nextTop += 10, left: nextLeft += 20};
   }
-  
+
   var container = protoContainer.clone();
   var header = container.find('.belay-container-header');
   var holder = container.find('.belay-container-holder');
@@ -263,15 +263,15 @@ var launchGadgetInstance = function(inst) {
            .css('top', instState.window.top)
            .width(instState.window.width || '10em')
            .height(instState.window.height || '6em');
-  
+
   var extras = {
     topDiv: topDiv,
     launchInfo: inst.launch.info,
     storage: {
       get: function(k) { k(instState.data); },
-      put: function(d, k) { 
-        instState.data = d; 
-        dirty(inst); 
+      put: function(d, k) {
+        instState.data = d;
+        dirty(inst);
         if (k) { k(); }
       }
     },
@@ -341,7 +341,7 @@ var launchGadgetInstance = function(inst) {
     maxBox.hover(function() { maxBox.addClass('hover'); },
                  function() { maxBox.removeClass('hover'); });
   }
-  
+
   inst.gadgetNode = container;
   inst.state.opened = 'gadget';
   dirty(inst);
@@ -358,7 +358,7 @@ var launchPageInstance = function(inst, launchCap) {
   inst.pageWindow = true;
   inst.state.opened = 'page';
   dirty(inst);
-  
+
   var features = [];
   if ('width' in inst.launch.page.window)
     features.push('width=' + Number(inst.launch.page.window.width));
@@ -377,7 +377,7 @@ var launchPageInstance = function(inst, launchCap) {
       info: inst.launch.info,
       instanceID: inst.state.id,
       initialSnapshot: inst.state.capSnapshot ? inst.state.capSnapshot : false,
-      services : belayBrowser,
+      services: belayBrowser,
       storage: capServer.grant({
         get: function() { return inst.state.data; },
         put: function(d) {inst.state.data = d; dirty(inst); }
@@ -387,7 +387,7 @@ var launchPageInstance = function(inst, launchCap) {
         put: function(snap) { inst.state.capSnapshot = snap; dirty(inst); }
       })
     }
-  }, 
+  },
   function(closeCap) {
     inst.closeCap = closeCap;
   },
@@ -407,14 +407,14 @@ var launchInstance = function(inst, openType, launchCap) {
     inst.launch = launch;
     var canGadget = 'gadget' in launch;
     var canPage = 'page' in launch;
-    
+
     var row = inst.rowNode;
     var asVis = function(b) { return b ? 'visible' : 'hidden'; }
     row.find('.open-gadget').css('visibility', asVis(canGadget));
     row.find('.open-page').css('visibility', asVis(canPage));
-    
+
     var preferred = canGadget ? 'gadget' : (canPage ? 'page' : 'none');
-    
+
     if (openType == 'restore') {
       if (instState.opened === 'page') {
         openType = 'none';
@@ -425,8 +425,8 @@ var launchInstance = function(inst, openType, launchCap) {
     }
     else if (openType == 'openAny') {
       openType = preferred;
-    };
-    
+    }
+
     if (openType == 'closed' || openType == 'none') {
       // leave closed!
     }
@@ -446,52 +446,52 @@ var launchInstance = function(inst, openType, launchCap) {
 var protoItemRow; // TODO(jpolitz): factor this differently?
 var itemsTable;
 var addInstance = function(inst, openType, launchCap) {
-	instances[inst.state.id] = inst;
+  instances[inst.state.id] = inst;
 
-	var row = protoItemRow.clone();
-	inst.rowNode = row;
-	
-	row.click(function() { topGadget(inst); });
-	row.find('td.icon img').attr('src', inst.state.icon || defaultIcon);
-	row.find('td.name').text(inst.state.name || 'an item');
-	row.find('td.actions .open-page').click(function() {
-			launchInstance(inst, 'page', belayLaunch);
-		});
-	row.find('td.actions .open-gadget').click(function() {
-			launchInstance(inst, 'gadget');
-		});
-	row.find('td.actions .remove').click(function() {
-			removeInstance(inst);
-		});
-	row.hover(
-		function() {
-			if (inst.gadgetNode) inst.gadgetNode.addClass('belay-hilite');
-		},
-		function() { 
-			if (inst.gadgetNode) inst.gadgetNode.removeClass('belay-hilite');
-		});
-	row.prependTo(itemsTable);
-	showItems();
-	
-	launchInstance(inst, openType, launchCap);
-  
+  var row = protoItemRow.clone();
+  inst.rowNode = row;
+
+  row.click(function() { topGadget(inst); });
+  row.find('td.icon img').attr('src', inst.state.icon || defaultIcon);
+  row.find('td.name').text(inst.state.name || 'an item');
+  row.find('td.actions .open-page').click(function() {
+      launchInstance(inst, 'page', belayLaunch);
+    });
+  row.find('td.actions .open-gadget').click(function() {
+      launchInstance(inst, 'gadget');
+    });
+  row.find('td.actions .remove').click(function() {
+      removeInstance(inst);
+    });
+  row.hover(
+    function() {
+      if (inst.gadgetNode) inst.gadgetNode.addClass('belay-hilite');
+    },
+    function() {
+      if (inst.gadgetNode) inst.gadgetNode.removeClass('belay-hilite');
+    });
+  row.prependTo(itemsTable);
+  showItems();
+
+  launchInstance(inst, openType, launchCap);
+
   belaySuggestInst.put({
     instID: inst.state.id,
     domain: inst.state.belayInstance.serialize().match('https?://[^/]*')[0],
-    name: inst.state.name, 
+    name: inst.state.name,
     launchClicked: capServer.grant(function(launch) {
       launchPageInstance(inst, launch);
     })
   });
-};  
+};
 
 var removeInstance = function(inst) {
-	closeGadgetInstance(inst);
-	closePageInstance(inst, false);
-	inst.rowNode.fadeOut(function() { inst.rowNode.remove(); });
-	if (inst.capServer) inst.capServer.revokeAll();
-	delete instances[inst.state.id];
-	inst.storageCap.remove();
+  closeGadgetInstance(inst);
+  closePageInstance(inst, false);
+  inst.rowNode.fadeOut(function() { inst.rowNode.remove(); });
+  if (inst.capServer) inst.capServer.revokeAll();
+  delete instances[inst.state.id];
+  inst.storageCap.remove();
   belayRemoveSuggestInst.put({
     instID: inst.state.id,
     domain: inst.state.belayInstance.serialize().match('https?://[^/]*')[0]
@@ -518,7 +518,7 @@ var initialize = function(instanceCaps, defaultTools) {
   protoItemRow = itemsTable.find('tr').eq(0).detach();
   itemsTable.find('tr').remove();
 
-  
+
   // TODO(mzero): refactor the two addInstance functions and the newInstHandler
   var addInstanceFromGenerate = function(genCap) {
     genCap.get(function(data) {
@@ -545,7 +545,7 @@ var initialize = function(instanceCaps, defaultTools) {
   };
   ui.capDroppable(itemsDiv, 'belay/generate', addInstanceFromGenerate);
   ui.capDroppable(desk, 'belay/generate', addInstanceFromGenerate);
-  
+
   var addInstanceFromTool = function(toolInfo) {
     toolInfo.generate.get(function(data) {
         var newID = newUUIDv4();
@@ -555,7 +555,7 @@ var initialize = function(instanceCaps, defaultTools) {
           state: {
             id: newID,
             belayInstance: data,
-            name: "an instance of " + toolInfo.name,
+            name: 'an instance of ' + toolInfo.name,
             icon: toolInfo.icon,
             info: undefined,
             created: (new Date()).valueOf()
@@ -572,7 +572,7 @@ var initialize = function(instanceCaps, defaultTools) {
   };
 
   var loadedInstances = [];
-  
+
   var loadInsts = function() {
     var cmpInstByCreated = function(inst1, inst2) {
       return inst1.state.created - inst2.state.created;
@@ -581,7 +581,7 @@ var initialize = function(instanceCaps, defaultTools) {
       addInstance(inst, 'restore', belayLaunch);
     });
   };
-  
+
   var addInstanceFromStorage = function(storageCap) {
     storageCap.get(function(instState) {
         var inst = {
@@ -597,7 +597,7 @@ var initialize = function(instanceCaps, defaultTools) {
     );
   };
 
-  
+
   defaultTools.forEach(function(toolInfo) {
     var tool = protoTool.clone();
     tool.find('p').text(toolInfo.name);
@@ -607,7 +607,7 @@ var initialize = function(instanceCaps, defaultTools) {
   });
 
   instanceCaps.forEach(addInstanceFromStorage);
-  
+
 };
 
 // Called by Belay (the extension) when a user visits a Web page, P, that wants
@@ -654,12 +654,12 @@ $(function() {
     }, function(err) { alert(err.message); });
     outpost.setStationCallbacks.put({
       newInstHandler: capServer.grant(newInstHandler),
-      closeInstHandler: capServer.grant(closeInstHandler),
+      closeInstHandler: capServer.grant(closeInstHandler)
     });
     ui = {
       resize: function() { /* do nothing in page mode */ },
-      capDraggable: common.makeCapDraggable(capServer, function(){}),
-      capDroppable: common.makeCapDroppable(capServer, function(){})
+      capDraggable: common.makeCapDraggable(capServer, function() {}),
+      capDroppable: common.makeCapDroppable(capServer, function() {})
     };
   });
 });

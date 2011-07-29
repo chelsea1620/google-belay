@@ -22,64 +22,67 @@ mkdir -p $PIDS
 CLEAR=""
 
 usage() {
-  echo "Usage:"
-  echo ""
-  echo "  ./run.sh <appengine-path> start|stop|restart|cleanstart|cleanrestart"
-  echo ""
-  echo "Runs all 7 Belay demo applications, with the following port mappings:"
-  echo ""
-  echo "    belay:    9000"
-  echo "    station:  9001"
-  echo "    hello:    9002"
-  echo "    stickies: 9003"
-  echo "    buzzer:   9004"
-  echo "    emote:    9005"
-  echo "    bfriendr: 9009"
-  echo ""
-  echo "Arguments:"
-  echo "  <appengine-path>:"
-  echo "    The path to the development executable for Python AppEngine, e.g.:"
-  echo "    /home/bob/src/google_appengine/dev_appserver.py"
-  echo ""
-  echo "  start:"
-  echo "    Default if no options given.  Starts all of the Belay servers"
-  echo ""
-  echo "  stop:"
-  echo "    Stop Belay servers"
-  echo ""
-  echo "  restart:"
-  echo "    Same as ./run.sh stop followed by ./run.sh start"
-  echo ""
-  echo "  cleanstart:"
-  echo "    Same as start, but clears appengine datastores"
-  echo ""
-  echo "  cleanrestart:"
-  echo "    Same as ./run.sh stop followed by ./run.sh cleanstart"
-  echo ""
-  exit 0
+  exitval=0
+  if [[ ! -z $1 ]]; then
+    echo $1
+    echo
+    exitval=1
+  fi
+  
+  cat <<END
+Usage:
+  $0 [<appengine-path>] start|stop|restart|cleanstart|cleanrestart
+
+Start or stop all Belay demo applications
+
+Arguments:
+  <appengine-path>:
+    The path to the development executable for Python AppEngine, e.g.:
+    /home/bob/src/google_appengine/dev_appserver.py
+    Can be omitted if on your path
+
+  start:        Starts all of the Belay servers
+  stop:         Stop Belay servers
+  restart:      Same as stop followed by start
+  cleanstart:   Same as start, but clears appengine datastores
+  cleanrestart: Same as stop followed by cleanstart
+
+The applications are started with these port mappings:
+    station:  9001
+    hello:    9002
+    stickies: 9003
+    buzzer:   9004
+    emote:    9005
+    bfriendr: 9009
+END
+
+  exit $exitval
 }
 
 checkargs() {
-  if [[ $1 == "" ]]; then
-    usage
-  elif [[ ! (-e $1) ]]; then
-    echo "ERROR: Can't find AppEngine at the given path: $1"
-    echo ""
-    usage
-    exit 1
+  case $# in
+    1)  APPE=`which dev_appserver.py`
+        OP=$1
+        ;;
+    2)  APPE=$1
+        OP=$2
+        ;;
+    *)  usage
+        ;;
+  esac
+  
+  if [[ -z $APPE ]]; then
+    usage "ERROR: AppEngine not on path and not specified"
   fi
 
-  if [[   $2 == ""
-       || $2 == "start"
-       || $2 == "restart"
-       || $2 == "stop"
-       || $2 == "cleanstart"
-       || $2 == "cleanrestart" ]]; then
-    :
-  else
-    usage
-    exit 1
+  if [[ ! (-e $APPE) ]]; then
+    usage "ERROR: Can't find AppEngine at the given path: $APPE"
   fi
+
+  case $OP in
+    ""|start|restart|stop|cleanstart|cleanrestart) ;;
+    *)  usage "ERROR: Unrecognized command: $OP" ;;
+  esac
 }
 
 startapp() {
@@ -115,7 +118,6 @@ stopapp() {
 }
 
 startall() {
-  startapp 9000 belay
   startapp 9001 station
   startapp 9002 hello
   startapp 9003 stickies
@@ -125,7 +127,6 @@ startall() {
 }
 
 stopall() {
-  stopapp belay
   stopapp station
   stopapp hello
   stopapp stickies
@@ -136,11 +137,6 @@ stopall() {
 
 checkargs $1 $2
 
-APPE=$1
-OP=$2
-if [[ $OP == "" ]]; then
-  OP="start"
-fi
 
 if [[ $OP == "cleanstart" || $OP == "cleanrestart" ]]; then
   CLEAR="--clear_datastore"

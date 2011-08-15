@@ -75,6 +75,10 @@ checkargs() {
     usage "ERROR: AppEngine not on path and not specified"
   fi
 
+  if [[ -d $APPE ]]; then
+    APPE="$APPE/dev_appserver.py"
+  fi
+    
   if [[ ! (-e $APPE) ]]; then
     usage "ERROR: Can't find AppEngine at the given path: $APPE"
   fi

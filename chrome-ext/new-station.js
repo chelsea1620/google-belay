@@ -14,15 +14,12 @@
 
 $(function() {
   var bg = chrome.extension.getBackgroundPage();
-  var host = $('#host');
-  var port = $('#port');
+  var genURL = $('#genURL');
   var button = $('#submit');
 
   var submit = function(evt) {
-    var hostText = host.val();
-    var portText = port.val();
-    var stationURL = hostText + ":" + portText + "/belay/generate";
-    bg.makeStation('defaultStation', stationURL, function() {
+    var genURLText = genURL.val();
+    bg.makeStation('defaultStation', genURLText, function() {
       bg.launchAndClearPopup('defaultStation');
     });
   }

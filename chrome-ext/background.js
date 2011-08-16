@@ -63,10 +63,8 @@ var stations = (function() {
   });
 })();
 
-var MAKESTATION = 'http://localhost:9001/belay/generate';
-
-var makeStation = function(name, k) {
-  capServer.restore(MAKESTATION).get(
+var makeStation = function(name, genUrl, k) {
+  capServer.restore(genUrl).get(
     function(stationCap) {
       // TODO(mzero): should be defensive about stationCap being a Cap
       stations.set(name, stationCap.serialize());
@@ -447,15 +445,19 @@ chrome.extension.onConnect.addListener(function(port) {
   }
 });
 
-chrome.browserAction.onClicked.addListener(function(tabWhenClicked) {
-  var defaultName = 'defaultStation';
-
-  if (stations.names().length === 0) {
-    makeStation(defaultName, function() {
-      launchStation(defaultName);
-    });
-  }
-  else {
+if(stations.names().length === 0) {
+  chrome.browserAction.setPopup({ popup: "new-station.html" });
+}
+else {
+  chrome.browserAction.onClicked.addListener(function(tabWhenClicked) {
     launchStation(stations.names()[0]);
-  }
-});
+  });
+}
+
+function launchAndClearPopup(name) {
+  launchStation(name);
+  chrome.browserAction.setPopup({ popup: "" });
+  chrome.browserAction.onClicked.addListener(function(tabWhenClicked) {
+    launchStation(name);
+  });
+}

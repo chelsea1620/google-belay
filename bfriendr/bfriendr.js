@@ -66,9 +66,7 @@ var initMessagesUI = function(container, showHideMessages) {
       msgElt = capMsgTemplate.clone();
       var chitImg = msgElt.find('img:eq(0)');
       ui.capDraggable(chitImg, msg.resource_class,
-        function(selectedRC) {
-          return msg.capability;
-        },
+        msg.capability,
         launchInfo.chitURL);
     }
     latestMsgTime = msg.when > latestMsgTime ? msg.when : latestMsgTime;
@@ -306,23 +304,8 @@ var initialize = function() {
     launchInfo.myCard.put(cardInfo);
   });
 
-  inviteButton.click(function(evt) {
-    var serverLink = 'http://' + window.serverBase;
-    var to = addFriendArea.find('input[name=email]').val();
-    var name = addFriendArea.find('input[name=name]').val();
-    var message = 'Hello ' + name + '!\n\n' +
-                  'Come join us on bfriendr!\n\n' +
-                  'Visit this link: ' + serverLink +
-                  '\n\nThen highlight and drop the link ' +
-                  'below into your bfriendr window to accept the invite.\n\n';
-    var url = 'http://' + window.serverBase + 'nav.png?';
-    url += 'scope=' + rcIntroduceYourself + '&';
-    url += 'cap=' + launchInfo.introduceYourself.serialize();
-    window.gmail(to, name + ', come join bfriendr!', message + url);
-  });
-
   ui.capDraggable(myCardToggle, rcIntroduceYourself,
-      function(selectedRC) { return launchInfo.introduceYourself; },
+      launchInfo.introduceYourself,
       function() { return myCardImageDiv.find('img').attr('src'); });
   ui.capDroppable(addFriendArea, rcIntroduceYourself,
       function(c) {

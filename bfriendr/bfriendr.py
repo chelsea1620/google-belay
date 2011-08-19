@@ -168,25 +168,25 @@ class LaunchHandler(CapServer.CapHandler):
   def get(self):
     account = self.get_entity()
     response = {
-    'page': {
-      'html': server_url('/bfriendr-belay.html'),
-      'window': {'height': 800, 'width': 350}
-    },
-    'x-gadget': {
-      'html': server_url('/bfriendr.html'),
-      'scripts': [ server_url('/bfriendr.js') ]
-    },
-	  'info': {
-      'friends':  CapServer.regrant(FriendsListHandler, account),
-      'myCard':  CapServer.regrant(CardInfoHandler, account.my_card),
-      'introduceYourself': CapServer.regrant(IntroduceYourselfHandler, account),
-      'introduceMeTo': CapServer.regrant(IntroduceMeToHandler, account),
-      'chitURL': server_url('/chit.png'),
-      # TODO(mzero): or should this be just the following?
-      'account':  CapServer.regrant(AccountInfoHandler, account),
-	    }
-	  }
-      
+      'page': {
+        'html': server_url('/bfriendr-belay.html'),
+        'window': {'height': 800, 'width': 350}
+      },
+      'x-gadget': {
+        'html': server_url('/bfriendr.html'),
+        'scripts': [ server_url('/bfriendr.js') ]
+      },
+      'info': {
+        'friends':  CapServer.regrant(FriendsListHandler, account),
+        'myCard':  CapServer.regrant(CardInfoHandler, account.my_card),
+        'introduceYourself': CapServer.regrant(IntroduceYourselfHandler, account),
+        'introduceMeTo': CapServer.regrant(IntroduceMeToHandler, account),
+        'chitURL': server_url('/chit.png'),
+        # TODO(mzero): or should this be just the following?
+        'account':  CapServer.regrant(AccountInfoHandler, account),
+      }
+    }
+
     self.bcapResponse(response)
 
 
@@ -366,12 +366,11 @@ class MessageInfoHandler(CapServer.CapHandler):
       'capability': message.capability,
       'resourceClass':      message.resource_class
     })
-  
+
   def delete(self):
     message = self.get_entity()
     message.deleteAll()
     self.bcapNullResponse()
-
 
 class IntroduceYourselfHandler(CapServer.CapHandler):
   def get(self):
@@ -386,7 +385,7 @@ class IntroduceYourselfHandler(CapServer.CapHandler):
     stream = None
     if 'streamForYou' in request:
       stream = request['streamForYou']
-    
+
     their_card = CardData(name=card_data['name'],
                           email=card_data['email'],
                           notes=card_data['notes'],
@@ -478,7 +477,7 @@ CapServer.set_handlers(
    ('friend/convo',             ConversationReadHandler),
    
    ('friend/introduceMeTo',     IntroduceMeToHandler),
-   ('friend/introduceYourself', IntroduceYourselfHandler),
+   ('friend/introduceYourself', IntroduceYourselfHandler)
   ])
 
 

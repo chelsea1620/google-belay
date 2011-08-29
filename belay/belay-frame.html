@@ -1,0 +1,71 @@
+<!doctype html>
+<html>
+
+<body>
+I am the Belay frame.
+<ol id="log">
+</ol>
+
+<script>
+
+function log() {
+  var arr = [];
+
+  for (var i = 0; i < arguments.length; i++) {
+    arr.push(typeof arguments[i] === 'string' ? arguments[i] 
+                                              : JSON.stringify(arguments[i]));
+  }
+
+  var txt = document.createTextNode(arr.join(' '));
+  var li = document.createElement('li');
+  li.appendChild(txt);
+  document.getElementById('log').appendChild(li);
+}
+
+function msgFromWorker(e) {
+  log('Worker sent', e.data);
+  console.assert(typeof portToClient !== 'undefined');
+
+  var op = e.data.op;
+  if (op === 'needStation') {
+    log('Worker needs a station');
+
+
+  }
+  else if (op === 'forClient') {
+    portToClient.postMessage(e.data.msg);
+  } 
+  else if (op === 'log') {
+    e.data.msg.unshift('Worker logged');
+    log.apply(this, e.data.msg);
+  }
+  else {
+    console.assert(false, 'unexpected message from Worker');
+  }
+}
+
+function msgFromClient(e) {
+  log ('Client sent', e.data);
+  worker.port.sendMessage({ op: 'fromClient', msg: e.data });
+}
+
+function recvConn(e) {
+  console.assert(e.data === 'connect' && e.ports.length === 1,
+    'unexpected message from client');
+
+  portToClient = e.ports[0];
+  portToClient.addEventListener('message', msgFromClient);
+  window.removeEventListener(recvConn);
+  log('belay frame ready');
+}
+
+var portToClient;
+var worker = new SharedWorker('shared-worker.js');
+worker.port.addEventListener('message', msgFromWorker);
+worker.port.start();
+
+window.addEventListener('message', recvConn);
+</script>
+</body>
+
+</html>

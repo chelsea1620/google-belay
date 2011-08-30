@@ -42,7 +42,7 @@ function launchStation(launchCap, openerCap) {
   launchCap.get(function(data) {
     buildLauncher(openerCap)({
       url: data.page.html,
-      instID: newUUIDv4,
+      instID: newUUIDv4(),
       outpostData: { info: data.info },
       isStation: true
     });
@@ -58,27 +58,25 @@ self.addEventListener('connect', function(e) {
 
   iframeTunnel.setLocalResolver(resolver);
   iframeTunnel.setOutpostHandler(function(outpost) {
-    outpost = workerServer.dataPostProcess(outpost);    
+    outpost = workerServer.dataPostProcess(outpost);
     instToTunnel[outpost.iframeInstID] = iframeTunnel;
+    var location = outpost.clientLocation;
     if (location.hash in pendingLaunches) {
       // client is an instance we are expecting
       var pending = pendingLaunches[location.hash];
       delete pendingLaunches[location.hash];
       if (pending.isStation) {
-        pending.outpost.launch = buildLauncher(outpost.windowOpen);
+        pending.outpost.launch =
+          workerServer.grant(buildLauncher(outpost.windowOpen));
         // note that this is the station
         // add a cap for launching from the station, closing over outpost.windowOpen
       }
       instToTunnel[pending.instID] = iframeTunnel;
-      outpost.setUpClient.post({ outpost: pending });
+      outpost.setUpClient.post(pending);
     }
     else {
       // client might want to become an instance or the station
       outpost.setUpClient.post({
-        workerInstID: workerInstID,
-        // The outpost field is forwarded unmolested to the client. Other
-        // fields are not forwarded and thus may contain caps that are
-        // exclusively for the embedded <iframe>.
         outpost: {
           becomeInstance: workerServer.grant(function(launchCap) {
             stationCaps.newInstHandler.post({
@@ -88,7 +86,7 @@ self.addEventListener('connect', function(e) {
             }) 
           }),
           becomeStation: workerServer.grant(function() {
-            var openerCap = outpost.windowLocation;
+            var openerCap = outpost.windowOpen;
             outpost.localStorage.get(function(sto) {
               if (sto.stationLaunchCap) {
                 launchStation(sto.stationLaunchCap, openerCap);
@@ -104,7 +102,7 @@ self.addEventListener('connect', function(e) {
             });
           })
         }
-      })
+      });
     }
   }); // end setOutpustHandler
 

@@ -12,25 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-$(function() {
+onBelayReady(function() {
   var form = $('#profileForm');
   form.submit(function(evt) {
     var name = form.find('[name="name"]').val();
     var loc = form.find('[name="location"]').val();
-
     $.ajax({
       url: '/belay/generateProfile',
       dataType: 'text',
       type: 'POST',
       data: {name: name, location: loc},
       success: function(data, status, xhr) {
+        data = capServer.dataPostProcess(data);
         var instanceName = name + ' of ' + loc;
         console.log(instanceName);
         console.log(data);
 
-        belayPort.postMessage({
-          type: 'instanceRequest',
-          gen: data});
+        belay.outpost.becomeInstance.put(data);
       },
       failure: function() {
         console.log('JSON failed');

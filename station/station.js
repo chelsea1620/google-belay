@@ -635,10 +635,10 @@ var closeInstHandler = function(instID) {
   closePageInstance(inst, true);
 };
 
-$(function() {
+window.belay.portReady = function() {
   topDiv = $('#aux div').eq(0);
 
-  belayBrowserTunnel = new CapTunnel(window.belayPort);
+  belayBrowserTunnel = new CapTunnel(window.belay.port);
   belayBrowserTunnel.setLocalResolver(instanceResolver);
   belayBrowserTunnel.setOutpostHandler(function(outpost) {
     outpost = capServer.dataPostProcess(outpost);
@@ -662,4 +662,4 @@ $(function() {
       capDroppable: common.makeCapDroppable(capServer, function() {})
     };
   });
-});
+};

@@ -1,5 +1,8 @@
 <!doctype html>
 <html>
+<head>
+  <script src="lib/js/caps.js"></script>
+</head>
 
 <body>
 I am the Belay frame.
@@ -7,7 +10,6 @@ I am the Belay frame.
 </ol>
 
 <script>
-
 function log() {
   var arr = [];
 
@@ -22,49 +24,61 @@ function log() {
   document.getElementById('log').appendChild(li);
 }
 
-function msgFromWorker(e) {
-  log('Worker sent', e.data);
-  console.assert(typeof portToClient !== 'undefined');
 
-  var op = e.data.op;
-  if (op === 'needStation') {
-    log('Worker needs a station');
+var iframeInstID = newUUIDv4();
+var iframeServer = new CapServer(instID);
 
+var clientInstID;
+var clientTunnel;
 
-  }
-  else if (op === 'forClient') {
-    portToClient.postMessage(e.data.msg);
-  } 
-  else if (op === 'log') {
-    e.data.msg.unshift('Worker logged');
-    log.apply(this, e.data.msg);
-  }
-  else {
-    console.assert(false, 'unexpected message from Worker');
-  }
+var workerTunnel;
+
+function resolver(instID) {
+  if (instID === iframeInstID) { return iframeServer.publicInterface; }
+  if (instID === clientInstID) { return clientTunnel.sendInterface; }
+  return workerTunnel.sendInterface;
 }
 
-function msgFromClient(e) {
-  log ('Client sent', e.data);
-  worker.port.sendMessage({ op: 'fromClient', msg: e.data });
-}
+iframeServer.setResolver(resolver);
 
-function recvConn(e) {
-  console.assert(e.data === 'connect' && e.ports.length === 1,
-    'unexpected message from client');
-
-  portToClient = e.ports[0];
-  portToClient.addEventListener('message', msgFromClient);
-  window.removeEventListener(recvConn);
-  log('belay frame ready');
-}
-
-var portToClient;
 var worker = new SharedWorker('shared-worker.js');
-worker.port.addEventListener('message', msgFromWorker);
+function setUpWorker(e) {
+  worker.port.removeEventListener('message', setUpWorker);
+  workerTunnel = new CapTunnel(worker.port);
+  workerTunnel.setLocalResolver(resolver);
+  startIfReady();
+  log('worker tunnel ready');
+}
+worker.port.addEventListener('message', setUpWorker);
 worker.port.start();
 
-window.addEventListener('message', recvConn);
+function setUpClient(e) {
+  window.removeEventListener(setUpClient);
+  clientTunnel = new CapTunnel(e.ports[0]);
+  clientTunnel.setLocalResolver(resolver);
+  startIfReady();
+  log('client tunnel ready');
+}
+window.addEventListener('message', setUpClient);
+
+function startIfReady() {
+  if (!workerTunnel || !clientTunnel) return;
+  
+  workerTunnel.sendOutpost({
+    iframeInstID: iframeInstID,
+    clientLocation: window.top.location,
+    localStorage: iframeServer.grant({
+        get: function() { return JSON.parse(localStorage['belay'] || '{}'); },
+        put: function(v) { localStorage['belay'] = JSON.stringify(v); }
+      }),
+    windowOpen: iframeServer.grant(function(url) { window.open(url); }),
+    windowLocation: iframeServer.grant(function(url) { window.top.location = url; }),
+    setUpClient: iframeServer.grant(function(v) {
+      clientInstID = v.instID;
+      clientTunnel.sendOutpost(v.outpost);
+    })
+  });
+}
 </script>
 </body>
 

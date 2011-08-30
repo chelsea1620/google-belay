@@ -40,14 +40,48 @@ function buildLauncher(openerCap) {
 
 function launchStation(launchCap, openerCap) {
   launchCap.get(function(data) {
+    var stationInstID = newUUIDv4();
     buildLauncher(openerCap)({
       url: data.page.html,
-      instID: newUUIDv4(),
-      outpostData: { info: data.info },
+      instID: stationInstID,
+      outpostData: { instanceID: stationInstID, info: data.info },
       isStation: true
     });
   });
 }
+
+var stationCaps;
+
+function makeSetStationCallbacks() {
+  return workerServer.grant(function(callbacks) {
+    stationCaps = callbacks;
+  });
+};
+
+function makeSuggestInst() {
+  return workerServer.grant(function(v) {
+    log("suggestInst NYI");
+  });
+}
+
+function makeRemoveSuggestInst() {
+  return workerServer.grant(function(v) {
+    log("removeSuggestInst NYI");
+  });
+}
+
+function makeHighlighting() {
+  return {
+    highlightByRC: workerServer.grant(function(v) {
+      log("highlightByRC NYI");
+    }),
+    unhighlight: workerServer.grant(function(v) {
+      log("unhighlight NYI");
+    })
+  };
+}
+
+
 
 self.addEventListener('connect', function(e) { 
   var port = e.ports[0];
@@ -68,6 +102,10 @@ self.addEventListener('connect', function(e) {
       if (pending.isStation) {
         pending.outpost.launch =
           workerServer.grant(buildLauncher(outpost.windowOpen));
+        pending.outpost.setStationCallbacks = makeSetStationCallbacks();
+        pending.outpost.suggestInst = makeSuggestInst();
+        pending.outpost.removeSuggestInst = makeRemoveSuggestInst();
+        pending.outpost.services = makeHighlighting();
         // note that this is the station
         // add a cap for launching from the station, closing over outpost.windowOpen
       }
@@ -83,7 +121,7 @@ self.addEventListener('connect', function(e) {
               launchData: launchCap, // TODO(mzero): name?
               relaunch: workerServer
                           .grant(buildLauncher(outpost.windowLocation))
-            }) 
+            });
           }),
           becomeStation: workerServer.grant(function() {
             var openerCap = outpost.windowOpen;

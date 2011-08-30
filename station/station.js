@@ -16,8 +16,7 @@
 var topDiv;
 var ui;
 var instanceInfo;
-var capServer = new CapServer(newUUIDv4());
-var belayBrowserID;
+var capServer;
 var belayBrowserTunnel;
 var belayBrowser;
 var belaySuggestInst;
@@ -181,13 +180,9 @@ var instanceResolver = function(id) {
   if (id === capServer.instanceID) {
     return capServer.publicInterface;
   }
-  if (id === belayBrowserID) {
-    return belayBrowserTunnel.sendInterface;
-  }
-  return null;
+  return belayBrowserTunnel.sendInterface;
 };
 
-capServer.setResolver(instanceResolver);
 
 var setupCapServer = function(inst) {
   var capServer;
@@ -641,9 +636,13 @@ window.belay.portReady = function() {
   belayBrowserTunnel = new CapTunnel(window.belay.port);
   belayBrowserTunnel.setLocalResolver(instanceResolver);
   belayBrowserTunnel.setOutpostHandler(function(outpost) {
+		var radishServer = new CapServer('radish');
+		var initData = radishServer.dataPostProcess(outpost);
+		capServer = new CapServer(initData.instanceID);
+		capServer.setResolver(instanceResolver);
+
     outpost = capServer.dataPostProcess(outpost);
     belayLaunch = outpost.launch;
-    belayBrowserID = outpost.browserID;
     belayBrowser = outpost.services;
     belaySuggestInst = outpost.suggestInst;
     belayRemoveSuggestInst = outpost.removeSuggestInst;

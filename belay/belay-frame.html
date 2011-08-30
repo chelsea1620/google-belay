@@ -70,8 +70,13 @@ function startIfReady() {
     iframeInstID: iframeInstID,
     clientLocation: clientLocation,
     localStorage: iframeServer.grant({
-        get: function() { return JSON.parse(localStorage['belay'] || '{}'); },
-        put: function(v) { localStorage['belay'] = JSON.stringify(v); }
+        get: function() { 
+          return iframeServer.dataPostProcess(localStorage['belay'] ||
+                                              '{ "value": { } }');
+        },
+        put: function(v) { 
+          localStorage['belay'] = iframeServer.dataPreProcess(v);
+        }
       }),
     windowOpen: iframeServer.grant(function(url) { window.open(url); }),
     windowLocation: iframeServer.grant(function(url) { 
@@ -79,7 +84,7 @@ function startIfReady() {
     }),
     setUpClient: iframeServer.grant(function(v) {
       clientInstID = v.instID;
-      clientTunnel.sendOutpost(v.outpost);
+      clientTunnel.sendOutpost(iframeServer.dataPreProcess(v.outpost));
     })
   };
   workerTunnel.sendOutpost(iframeServer.dataPreProcess(outpostMsg));

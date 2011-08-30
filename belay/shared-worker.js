@@ -45,9 +45,12 @@ function launchStation(launchCap, openerCap) {
 }
 
 self.addEventListener('connect', function(e) { 
-  var iframeTunnel = new CapTunnel(e.ports[0]);
+  var port = e.ports[0];
+  var iframeTunnel = new CapTunnel(port);
+
   iframeTunnel.setLocalResolver(resolver);
   iframeTunnel.setOutpostHandler(function(outpost) {
+    outpost = workerServer.dataPostProcess(outpost);
     instToTunnel[outpost.iframeInstID] = iframeTunnel;
     if (location.hash in pendingLaunches) {
       // client is an instance we are expecting
@@ -88,5 +91,9 @@ self.addEventListener('connect', function(e) {
         })
       })
     }
-  });
+  }); // end setOutpustHandler
+
+  // Message received by belay-frame.html:setUpWorker. Once received, it
+  // creates its own end of the tunnel and sends an outpost message.
+  port.postMessage('for setUpWorker'); 
 });

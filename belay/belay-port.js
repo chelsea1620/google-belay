@@ -11,16 +11,20 @@ window.addEventListener('load', function() {
  
   var connect = function() {
     var chan = new MessageChannel();
-    // backward for Chrome and Safari
-    iframe.contentWindow.postMessage('', [chan.port2], '*');
+    iframe.contentWindow.postMessage(
+      // cross-domain <iframe> can set window.location but cannot read it
+      window.location, 
+      // two following args. backward for Chrome and Safari
+      [chan.port2], 
+      '*');
     window.belay.port = chan.port1;
     if (typeof window.belay.portReady === 'function') {
       window.belay.portReady();
     }
 
-    iframe.contentWindow.removeEventListener('load', connect);
+    iframe.removeEventListener('load', connect);
   };
 
-  iframe.contentWindow.addEventListener('load', connect);
+  iframe.addEventListener('load', connect);
 
 });

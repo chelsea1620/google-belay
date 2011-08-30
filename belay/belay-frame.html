@@ -26,10 +26,11 @@ function log() {
 
 
 var iframeInstID = newUUIDv4();
-var iframeServer = new CapServer(instID);
+var iframeServer = new CapServer(iframeInstID);
 
 var clientInstID;
 var clientTunnel;
+var clientLocation;
 
 var workerTunnel;
 
@@ -56,6 +57,7 @@ function setUpClient(e) {
   window.removeEventListener(setUpClient);
   clientTunnel = new CapTunnel(e.ports[0]);
   clientTunnel.setLocalResolver(resolver);
+  clientLocation = e.data;
   startIfReady();
   log('client tunnel ready');
 }
@@ -64,20 +66,23 @@ window.addEventListener('message', setUpClient);
 function startIfReady() {
   if (!workerTunnel || !clientTunnel) return;
   
-  workerTunnel.sendOutpost({
+  var outpostMsg = {
     iframeInstID: iframeInstID,
-    clientLocation: window.top.location,
+    clientLocation: clientLocation,
     localStorage: iframeServer.grant({
         get: function() { return JSON.parse(localStorage['belay'] || '{}'); },
         put: function(v) { localStorage['belay'] = JSON.stringify(v); }
       }),
     windowOpen: iframeServer.grant(function(url) { window.open(url); }),
-    windowLocation: iframeServer.grant(function(url) { window.top.location = url; }),
+    windowLocation: iframeServer.grant(function(url) { 
+      window.top.location = url; 
+    }),
     setUpClient: iframeServer.grant(function(v) {
       clientInstID = v.instID;
       clientTunnel.sendOutpost(v.outpost);
     })
-  });
+  };
+  workerTunnel.sendOutpost(iframeServer.dataPreProcess(outpostMsg));
 }
 </script>
 </body>

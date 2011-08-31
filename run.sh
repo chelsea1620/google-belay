@@ -48,6 +48,7 @@ Arguments:
   cleanrestart: Same as stop followed by cleanstart
 
 The applications are started with these port mappings:
+    belay:    9000
     station:  9001
     hello:    9002
     stickies: 9003
@@ -122,6 +123,7 @@ stopapp() {
 }
 
 startall() {
+  startapp 9000 belay
   startapp 9001 station
   startapp 9002 hello
   startapp 9003 stickies
@@ -131,6 +133,7 @@ startall() {
 }
 
 stopall() {
+  stopapp belay
   stopapp station
   stopapp hello
   stopapp stickies

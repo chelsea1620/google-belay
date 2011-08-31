@@ -27,11 +27,14 @@ window.addEventListener('load', function() {
   document.body.appendChild(iframe);
  
   var connect = function() {
-
-    var chan = new MessageChannel();
+    var belayChan = new MessageChannel();
+    // Certain window-manipulating actions cannot be performed by the cross-
+    // domain IFrame and are handled on this page by actionChan. Do not
+    // introduce a dependency on caps.js; it's stupid and would be broken
+    // by an adversarial container.
     var actionChan = new MessageChannel();
     
-    window.belay.port = chan.port1;
+    window.belay.port = belayChan.port1;
     window.belay.portReady();
 
     iframe.removeEventListener('load', connect);
@@ -64,7 +67,7 @@ window.addEventListener('load', function() {
       // cross-domain <iframe> can set window.location but cannot read it
       { DEBUG: window.belay.DEBUG, clientLocation: window.location }, 
       // two following args. backward for Chrome and Safari
-      [chan.port2, actionChan.port2], 
+      [belayChan.port2, actionChan.port2], 
       '*');
   };
 

@@ -135,6 +135,12 @@ function startIfReady() {
     windowLocation: iframeServer.grant(function(url) { 
       window.top.location = url; 
     }),
+    unhighlight: iframeServer.grant(function() {
+      actionPort.postMessage('unhighlight');
+    }),
+    highlight: iframeServer.grant(function(args) {
+      actionPort.postMessage({ op: 'highlight', args: args });
+    }),
     setUpClient: iframeServer.grant(function(v) {
       clientInstID = v.instID;
       log("client: " + clientInstID);

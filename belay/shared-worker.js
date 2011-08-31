@@ -96,13 +96,19 @@ function suggestFor(href) {
   return suggestions[domain];
 };
 
+var highlighters = Object.create(null);
+
 function makeHighlighting() {
   return {
     highlightByRC: workerServer.grant(function(v) {
-      log("highlightByRC NYI");
+      Object.keys(highlighters).forEach(function(k) {
+        highlighters[k].highlight.put([v.rc, v.className]);
+      });
     }),
     unhighlight: workerServer.grant(function(v) {
-      log("unhighlight NYI");
+      Object.keys(highlighters).forEach(function(k) {
+        highlighters[k].unhighlight.put();
+      });
     })
   };
 }
@@ -140,10 +146,15 @@ self.addEventListener('connect', function(e) {
         delete pending.launchClosures;
       }
       instToTunnel[pending.instID] = iframeTunnel;
+      highlighters[pending.iframeID] = {
+        highlight: outpost.highlight,
+        unhighlight: outpost.unhighlight
+      };
 
       iframeTunnel.onclosed = function() {
         delete instToTunnel[outpost.iframeID];
         delete instToTunnel[pending.instID];
+        delete highlighters[outpost.iframeID];
         if (!pending.isStation) {
           stationCaps.closeInstHandler.put(pending.instID);
         }

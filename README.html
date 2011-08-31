@@ -7,33 +7,8 @@
   <h1>Installing Belay</h1>
 
   <ol>
-  <li>
-  This version of the Belay demo requires <a
-  href="http://www.google.com/chrome">Google Chrome</a>.  If you don't have
-  Chrome, download it, install it, and visit this page with it.
-  </li>
 
-  <li> <p> If you intend to do development, run <code>make</code> in the main
-directory.  This isn't necessary to run the demo, but it does set up some
-necessary files for development.  You should run <code>make</code> each time
-you pull in new changes from the repo.
-  </p>
-  </li>
-
-  <li> <p> After you've done that, <a href="belay.crx">install the extension</a>.
-  It will ask for your data on all web sites, and your tabs and browsing
-  activity.  If that's OK with you, say yes and the Belay extension will be
-  installed.</p></li>
-
-  <li>
-  <p>Now Belay will be visible in your extension list, and there should be an
-  icon for Belay in the top right, next to the Wrench Menu.  If you have many
-  extensions installed, you may have to pull down a drop down list to see it 
-  (on a relatively fresh Chrome, it looks like <a href="art/after-install.png">this</a>).
-  Clicking on this icon now won't do anything, because we haven't started the
-  backend of Belay, where the real work happens.</p></li>
-
-  <li> <p> Next, we're going to start a bunch of Google AppEngine web servers that
+  <li> <p> The Belay demo has a number of  Google AppEngine web servers that
   drive Belay Station and the applications in the demo.  If you don't have Google
   AppEngine for Python, get it at the <a
   href="http://code.google.com/appengine/downloads.html">downloads page</a>.
@@ -75,9 +50,9 @@ To get more information on using the startup script and restarting, just run
 
 <h1>Exploring The Belay Demo</h1>
 
-<p>The Belay extension adds a <img width="16" height="17"
-src="chrome-ext/icon.png"/> button to the address bar. Click this
-button to enter Belay Station. The primary purpose of Belay Station is
+<p>Visit <a href="http://localhost:9000/pick-station.html"
+target="_blank">http://localhost:9000/pick-station.html</a>
+to enter Belay Station. The primary purpose of Belay Station is
 to hold references to the user's items. When you first launch Belay,
 this item list is empty. Belay Station also contains links to create
 certain well-known items. For example, click on the "Buzzer" and

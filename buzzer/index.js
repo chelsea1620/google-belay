@@ -12,8 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-belay.DEBUG = false;
-
 onBelayReady(function() {
   var form = $('#profileForm');
   form.submit(function(evt) {

@@ -6,15 +6,9 @@ window.belay = {
 
 window.addEventListener('load', function() {
 
-  var CSS_URL = 'http://localhost:9000/belay.css';
   var IFRAME_URL = "http://localhost:9000/belay-frame.html";
   var IFRAME_HEIGHT = window.belay.DEBUG ? '300px' : '40px';
   var HIGHLIGHT_CLASS = 'belay-possible';
-
-  var css = document.createElement('style');
-  css.setAttribute('type', 'text/css');
-  css.innerText = '@import url(\'' + CSS_URL + '\');';
-  document.head.appendChild(css);
 
   var iframe = document.createElement("iframe");  
   iframe.setAttribute("src", IFRAME_URL);

@@ -123,7 +123,7 @@ self.addEventListener('connect', function(e) {
     instToTunnel[outpost.iframeInstID] = iframeTunnel;
   
     iframeTunnel.onclosed = function() {
-      delete instToTunnel[outpost.frameInstID];
+      delete instToTunnel[outpost.iframeInstID];
     };
 
     var location = outpost.clientLocation;
@@ -146,15 +146,15 @@ self.addEventListener('connect', function(e) {
         delete pending.launchClosures;
       }
       instToTunnel[pending.instID] = iframeTunnel;
-      highlighters[pending.iframeID] = {
+      highlighters[outpost.iframeInstID] = {
         highlight: outpost.highlight,
         unhighlight: outpost.unhighlight
       };
 
       iframeTunnel.onclosed = function() {
-        delete instToTunnel[outpost.iframeID];
+        delete instToTunnel[outpost.iframeInstID];
         delete instToTunnel[pending.instID];
-        delete highlighters[outpost.iframeID];
+        delete highlighters[outpost.iframeInstID];
         if (!pending.isStation) {
           stationCaps.closeInstHandler.put(pending.instID);
         }

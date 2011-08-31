@@ -60,17 +60,41 @@ function makeSetStationCallbacks() {
   });
 };
 
+var suggestions = Object.create(null);
+
 function makeSuggestInst() {
-  return workerServer.grant(function(v) {
-    log("suggestInst NYI");
+  return workerServer.grant(function(args) {
+    if (!(args.domain in suggestions)) {
+      suggestions[args.domain] = Object.create(null);
+    }
+    suggestions[args.domain][args.instID] = {
+      station: station,
+      name: args.name,
+      launchClicked: args.launchClicked
+    };
   });
 }
 
 function makeRemoveSuggestInst() {
-  return workerServer.grant(function(v) {
-    log("removeSuggestInst NYI");
+  return workerServer.grant(function(args) {
+    if (args.domain in suggestions) {
+      delete (suggestions[args.domain])[args.instID];
+    }
   });
 }
+
+// Suggestions for the domain of href.
+function suggestFor(href) {
+  var m = href.match('^https?://[^/]*');
+  if (!(m !== null &&  // failed match returns null
+        m[0] in suggestions &&
+        Object.keys(suggestions[m[0]]).length > 0)) {
+    return [];
+  }
+
+  var domain = m[0];
+  return suggestions[domain];
+};
 
 function makeHighlighting() {
   return {
@@ -130,6 +154,16 @@ self.addEventListener('connect', function(e) {
     else {
       // client might want to become an instance or the station
       outpost.setUpClient.post({
+        suggestions: suggestFor(outpost.clientLocation.href),
+        clickSuggest: workerServer.grant(function(launchClicked) {
+          launchClicked.post(workerServer.grant(function(args, sk, fk) {
+            buildLauncher(outpost.windowLocation)
+              ({ instID: args.instID,
+                 outpostData: args.outpostData,
+                 isStation: false,
+                 url: args.url }, sk, fk);
+          }));
+        }),
         outpost: {
           becomeInstance: workerServer.grant(function(launchCap) {
             stationCaps.newInstHandler.post({

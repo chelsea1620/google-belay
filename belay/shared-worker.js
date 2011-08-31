@@ -7,9 +7,10 @@ var workerServer = new CapServer(workerInstID);
 
 var instToTunnel = Object.create(null);
 
-function log(msg) {
-  // Tunnel intercepts "log" messages
-  loggingPort.postMessage({ op: "log", msg: msg });
+var logCap;
+
+function log() {
+  logCap.put(Array.prototype.slice.call(arguments));
 }
 
 function resolver(instID) {
@@ -26,11 +27,12 @@ var stationGenerator =
 var pendingLaunches = Object.create(null);
 
 function buildLauncher(openerCap) {
-  return function(args) {
+  return function(args, sk, fk) {
     var pending = {
       instID: args.instID,
       outpost: args.outpostData,
-      isStation: args.isStation || false
+      isStation: args.isStation || false,
+      launchClosures: { sk: sk, fk: fk }
     };
     var hash = '#' + newUUIDv4();
     pendingLaunches[hash] = pending;
@@ -46,7 +48,7 @@ function launchStation(launchCap, openerCap) {
       instID: stationInstID,
       outpostData: { instanceID: stationInstID, info: data.info },
       isStation: true
-    });
+    }, function(_) { }, function(_) { });
   });
 }
 
@@ -81,19 +83,19 @@ function makeHighlighting() {
   };
 }
 
-
-
 self.addEventListener('connect', function(e) { 
   var port = e.ports[0];
   var iframeTunnel = new CapTunnel(port);
-
-  // Logging hack, prints to console of most recent window.
-  loggingPort = port;
-
   iframeTunnel.setLocalResolver(resolver);
   iframeTunnel.setOutpostHandler(function(outpost) {
     outpost = workerServer.dataPostProcess(outpost);
+    if (!logCap) { logCap = outpost.log; }
     instToTunnel[outpost.iframeInstID] = iframeTunnel;
+  
+    iframeTunnel.onclosed = function() {
+      delete instToTunnel[outpost.frameInstID];
+    };
+
     var location = outpost.clientLocation;
     if (location.hash in pendingLaunches) {
       // client is an instance we are expecting
@@ -109,7 +111,20 @@ self.addEventListener('connect', function(e) {
         // note that this is the station
         // add a cap for launching from the station, closing over outpost.windowOpen
       }
+      if (pending.launchClosures) {
+        pending.launchClosures.sk(workerServer.grant(outpost.windowClose));
+        delete pending.launchClosures;
+      }
       instToTunnel[pending.instID] = iframeTunnel;
+
+      iframeTunnel.onclosed = function() {
+        delete instToTunnel[outpost.iframeID];
+        delete instToTunnel[pending.instID];
+        if (!pending.isStation) {
+          stationCaps.closeInstHandler.put(pending.instID);
+        }
+      };
+
       outpost.setUpClient.post(pending);
     }
     else {

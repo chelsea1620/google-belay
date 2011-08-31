@@ -224,22 +224,12 @@ var closeGadgetInstance = function(inst) {
   }
 };
 
-// isForced is true if the page is already closed
-var closePageInstance = function(inst, isForced) {
-  if (inst.pageWindow) { // TODO(arjun): w** is this?
-    inst.pageWindow = undefined;
-    inst.state.opened = 'closed';
-    dirty(inst);
-    if (!isForced) {
-      inst.closeCap.put();
-    }
-  }
-};
-
 
 var launchGadgetInstance = function(inst) {
   if (inst.gadgetNode) return;
-  closePageInstance(inst, false);
+	if (inst.pageWindow) {
+    inst.closeCap.put();
+  }
   if (!inst.capServer) setupCapServer(inst);
 
   var instState = inst.state;
@@ -482,7 +472,9 @@ var addInstance = function(inst, openType, launchCap) {
 
 var removeInstance = function(inst) {
   closeGadgetInstance(inst);
-  closePageInstance(inst, false);
+  if (inst.pageWindow) {
+    inst.closeCap.put();
+  }
   inst.rowNode.fadeOut(function() { inst.rowNode.remove(); });
   if (inst.capServer) inst.capServer.revokeAll();
   delete instances[inst.state.id];
@@ -625,9 +617,14 @@ var newInstHandler = function(args) {
 };
 
 var closeInstHandler = function(instID) {
-  console.assert(instID in instances);
+  if (!(instID in instances)) return;
+
   var inst = instances[instID];
-  closePageInstance(inst, true);
+  if (inst.pageWindow) {
+    inst.pageWindow = undefined;
+    inst.state.opened = 'closed';
+    dirty(inst);
+  }
 };
 
 window.belay.portReady = function() {

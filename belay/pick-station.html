@@ -27,14 +27,11 @@ limitations under the License.
 <body>
 
 <button id="launch">Launch my station</button>
-Please wait while we load your station ...
 
 <script>
 onBelayReady(function() {
   launch.addEventListener('click', function() {
-    belay.outpost.becomeStation.get(function(_) {
-      console.log('ready to go');
-    });
+    belay.outpost.becomeStation.get();
   });
 });
 </script>

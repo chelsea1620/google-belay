@@ -20,9 +20,11 @@ limitations under the License.
   <title>bfriendr</title>
   <link rel="stylesheet" href="lib/css/go.css">
   <link rel="stylesheet" href="bfriendr.css">
+  <script src="http://localhost:9000/belay-port.js"></script>
+  <script src="/lib/js/common.js"></script>
+  <script src="/lib/js/belay-client.js"></script>
+  <script src="/lib/js/caps.js"></script>
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.js"></script>
-  <script src="lib/js/portQueue.js"></script>
-  <script src="lib/js/divPort.js"></script>
 </head>
 <body id="bfriendr">
 <div class="bfriendr bfriendr-welcome">
@@ -90,29 +92,30 @@ myCardImageDiv.bind('drop', function(e) {
 });
 
 var myCardDiv = $('.bfriendr-mycard');
-myCardDiv.find('button').click(function(evt) {
-  var fd = new FormData();
-  fd.append('name', myCardDiv.find('input[name=name]').val());
-  fd.append('email', myCardDiv.find('input[name=email]').val());
-  fd.append('notes', myCardDiv.find('textarea').val());
-  if (imageFile) {
-    fd.append('imageFile', imageFile);
-  }
-  
-  $.ajax({
-    url: "/belay/generate",
-    cache: false,
-    type: 'POST',
-    contentType: false,
-    processData: false,
-    data: fd,
-    dataType: 'text',
-    success: function(data, status, xhr) {
-      belayPort.postMessage({ 
-        type: 'instanceRequest',
-        gen: data
-      });
+
+onBelayReady(function() {
+  myCardDiv.find('button').click(function(evt) {
+    var fd = new FormData();
+    fd.append('name', myCardDiv.find('input[name=name]').val());
+    fd.append('email', myCardDiv.find('input[name=email]').val());
+    fd.append('notes', myCardDiv.find('textarea').val());
+    if (imageFile) {
+      fd.append('imageFile', imageFile);
     }
+    
+    $.ajax({
+      url: "/belay/generate",
+      cache: false,
+      type: 'POST',
+      contentType: false,
+      processData: false,
+      data: fd,
+      dataType: 'text',
+      success: function(data, status, xhr) {
+        data = capServer.dataPostProcess(data);
+        belay.outpost.becomeInstance.put(data);
+      }
+    });
   });
 });
 </script>

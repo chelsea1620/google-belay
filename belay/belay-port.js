@@ -11,6 +11,7 @@ window.addEventListener('load', function() {
  
   var connect = function() {
     var chan = new MessageChannel();
+    var actionChan = new MessageChannel();
     
     window.belay.port = chan.port1;
     window.belay.portReady();
@@ -21,8 +22,18 @@ window.addEventListener('load', function() {
       // cross-domain <iframe> can set window.location but cannot read it
       window.location, 
       // two following args. backward for Chrome and Safari
-      [chan.port2], 
+      [chan.port2, actionChan.port2], 
       '*');
+
+    actionChan.port1.onmessage = function(msg) {
+      if (msg.data === 'close') {
+        // This trick is all over the Web.
+        window.open('', '_self').close();
+      }
+      else {
+        console.log('unknown action', msg);
+      }
+    };
   };
 
   iframe.addEventListener('load', connect);

@@ -10,18 +10,24 @@ I am the Belay frame.
 </ol>
 
 <script>
-function log() {
+function log(args) {
+  if (!(args instanceof Array)) {
+    args = [args];
+  }
+
   var arr = [];
 
-  for (var i = 0; i < arguments.length; i++) {
-    arr.push(typeof arguments[i] === 'string' ? arguments[i] 
-                                              : JSON.stringify(arguments[i]));
+  for (var i = 0; i < args.length; i++) {
+    arr.push(typeof args[i] === 'string' ? args[i] 
+                                        : JSON.stringify(args[i]));
   }
 
   var txt = document.createTextNode(arr.join(' '));
   var li = document.createElement('li');
   li.appendChild(txt);
   document.getElementById('log').appendChild(li);
+  console.log.apply(console, args);
+  document.body.scrollTop = document.body.scrollHeight;
 }
 
 
@@ -31,6 +37,7 @@ var iframeServer = new CapServer(iframeInstID);
 var clientInstID;
 var clientTunnel;
 var clientLocation;
+var actionPort;
 
 var workerTunnel;
 
@@ -56,6 +63,7 @@ worker.port.start();
 function setUpClient(e) {
   window.removeEventListener(setUpClient);
   clientTunnel = new CapTunnel(e.ports[0]);
+  actionPort = e.ports[1];
   clientTunnel.setLocalResolver(resolver);
   clientLocation = e.data;
   startIfReady();
@@ -65,10 +73,12 @@ window.addEventListener('message', setUpClient);
 
 function startIfReady() {
   if (!workerTunnel || !clientTunnel) return;
+  log("frame: " + iframeInstID);
   
   var outpostMsg = {
     iframeInstID: iframeInstID,
     clientLocation: clientLocation,
+    log: iframeServer.grant(log),
     localStorage: iframeServer.grant({
         get: function() { 
           return iframeServer.dataPostProcess(localStorage['belay'] ||
@@ -79,11 +89,15 @@ function startIfReady() {
         }
       }),
     windowOpen: iframeServer.grant(function(url) { window.open(url); }),
+    windowClose: iframeServer.grant(function() {
+      actionPort.postMessage('close');
+    }),
     windowLocation: iframeServer.grant(function(url) { 
       window.top.location = url; 
     }),
     setUpClient: iframeServer.grant(function(v) {
       clientInstID = v.instID;
+      log("client: " + clientInstID);
       clientTunnel.sendOutpost(iframeServer.dataPreProcess(v.outpost));
     })
   };

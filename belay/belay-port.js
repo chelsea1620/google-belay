@@ -1,7 +1,7 @@
 // Sets window.belayPort to a MessagePort.
-// Invokes window.belayPortReady(window.belayPort), if the function is defined.
+// Invokes belay.portReady(belay.port), if the function is defined.
 window.belay = { 
-  DEBUG: true,
+  DEBUG: false,
 };
 
 window.addEventListener('load', function() {

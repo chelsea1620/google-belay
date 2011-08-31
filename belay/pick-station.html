@@ -29,6 +29,7 @@ limitations under the License.
 <button id="launch">Launch my station</button>
 
 <script>
+belay.DEBUG = true;
 onBelayReady(function() {
   launch.addEventListener('click', function() {
     belay.outpost.becomeStation.get();

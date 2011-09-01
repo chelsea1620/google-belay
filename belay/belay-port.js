@@ -8,6 +8,7 @@ window.addEventListener('load', function() {
 
   var IFRAME_URL = "http://localhost:9000/belay-frame.html";
   var IFRAME_HEIGHT = window.belay.DEBUG ? '300px' : '40px';
+  var IFRAME_NEG_HEIGHT = '-' + IFRAME_HEIGHT;
   var HIGHLIGHT_CLASS = 'belay-possible';
 
   var iframe = document.createElement("iframe");  
@@ -80,7 +81,7 @@ window.addEventListener('load', function() {
           iframe.style.display = 'none';
         }
         else {
-          iframe.style.top = '-' + IFRAME_HEIGHT;
+          iframe.style.top = IFRAME_NEG_HEIGHT;
         }
       }
       else if (msg.data === 'unhighlight') {

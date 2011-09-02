@@ -1,52 +1,9 @@
 // Sets window.belayPort to a MessagePort.
 // Invokes belay.portReady(), if the function is defined.
 
-window.addEventListener('load', function() {
-
-  var IFRAME_URL = "http://localhost:9000/belay-frame.html";
-  var IFRAME_HEIGHT = window.belay.DEBUG ? '300px' : '40px';
-  var IFRAME_NEG_HEIGHT = '-' + IFRAME_HEIGHT;
-  var HIGHLIGHT_CLASS = 'belay-possible';
-
-  var iframe = document.createElement("iframe");  
-  iframe.setAttribute("src", IFRAME_URL);
-  iframe.style.zIndex = 2000; // high enough???
-  iframe.style.position = 'absolute';
-  iframe.style.top = '-' + IFRAME_HEIGHT;
-  iframe.style.left = '0px';
-  iframe.style.width = '100%';
-  iframe.style.height = IFRAME_HEIGHT;
-  iframe.style.backgroundColor = '#ffffcc';
-  iframe.style.border = '0px';
-  if (window.belay.DEBUG) {
-    iframe.style.position = 'relative';
-  }
-  document.body.appendChild(iframe);
- 
-  function toArray(v) {
-    return Array.prototype.slice.call(v);
-  }
-
-  function unhighlight() {
-    var elts = window.document.getElementsByClassName(HIGHLIGHT_CLASS);
-    toArray(elts).forEach(function(elt) {
-      elt.className = elt.className.replace(' ' + HIGHLIGHT_CLASS,
-                                            ' ');
-    });
-  }
-
-  function highlight(rc, className) {
-    unhighlight();
-    toArray(window.document.getElementsByClassName(className))
-    .filter(function(elt) {
-      var ixrc = elt.getAttribute('data-rc');
-      return rc === '*' || ixrc === '*' || ixrc === rc;
-      // TODO(mzero): in theory only one of ixrc or rc should be checked for
-      // wildcard, depending on if we are hilighting targets are sources.
-     })
-    .forEach(function(elt) {
-      elt.className = elt.className + ' ' + HIGHLIGHT_CLASS;
-    });
+if (!window.belay) {
+  window.belay = { 
+    DEBUG: false,
   };
 }
 
@@ -56,13 +13,14 @@ window.addEventListener('load', function() {
   
     var IFRAME_URL = "http://localhost:9000/belay-frame.html";
     var IFRAME_HEIGHT = window.belay.DEBUG ? '300px' : '40px';
+    var IFRAME_NEG_HEIGHT = '-' + IFRAME_HEIGHT;
     var HIGHLIGHT_CLASS = 'belay-possible';
   
     var iframe = document.createElement("iframe");  
     iframe.setAttribute("src", IFRAME_URL);
     iframe.style.zIndex = 2000; // high enough???
     iframe.style.position = 'absolute';
-    iframe.style.top = '-' + IFRAME_HEIGHT;
+    iframe.style.top = IFRAME_NEG_HEIGHT;
     iframe.style.left = '0px';
     iframe.style.width = '100%';
     iframe.style.height = IFRAME_HEIGHT;
@@ -128,7 +86,7 @@ window.addEventListener('load', function() {
             iframe.style.display = 'none';
           }
           else {
-            iframe.style.top = '-' + IFRAME_HEIGHT;
+            iframe.style.top = IFRAME_NEG_HEIGHT;
           }
         }
         else if (msg.data === 'unhighlight') {
@@ -138,7 +96,7 @@ window.addEventListener('load', function() {
           highlight.apply(null, msg.data.args);
         }
         else {
-          iframe.style.top = IFRAME_NEG_HEIGHT;
+          console.log('unknown action', msg);
         }
       };
       

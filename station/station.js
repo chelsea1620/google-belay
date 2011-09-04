@@ -217,7 +217,7 @@ var topGadget = function(inst) {
 var closeGadgetInstance = function(inst) {
   if (inst.gadgetNode) {
     var g = inst.gadgetNode;
-    g.hide(function() { g.remove(); });
+    g.hide('slow', function() { g.remove(); });
     inst.gadgetNode = undefined;
     inst.state.opened = 'closed';
     dirty(inst);

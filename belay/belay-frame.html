@@ -129,7 +129,7 @@ function startIfReady() {
         }
       }),
     windowOpen: iframeServer.grant(function(url) { 
-      window.open(url, 'menubar=yes,toolbar=yes,location=yes'); 
+      window.open(url);
     }),
     windowClose: iframeServer.grant(function() {
       actionPort.postMessage('close');

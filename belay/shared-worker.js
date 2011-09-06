@@ -41,6 +41,7 @@ function buildLauncher(openerCap) {
 }
 
 function launchStation(launchCap, openerCap) {
+  suggestions = Object.create(null);
   launchCap.get(function(data) {
     var stationInstID = newUUIDv4();
     buildLauncher(openerCap)({

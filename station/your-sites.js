@@ -265,6 +265,17 @@ var removeInstance = function(inst) {
   });
 };
 
+// list of attributes we support
+var knownAttributes = [
+  { attr: 'name', en: 'Name' },
+  { attr: 'nick', en: 'Nickname' },
+  { attr: 'loc', en: 'Location' },
+  { attr: 'email', en: 'Email' },
+  { attr: 'phone', en: 'Phone' },
+  { attr: 'gender', en: 'Gender' },
+  { attr: 'age', en: 'Age' },
+];
+
 var setupSection = function(sectionElem) {
   var headerElem = sectionElem.find('.header');
   var attributesElem = sectionElem.find('.attributes');
@@ -279,6 +290,30 @@ var setupSection = function(sectionElem) {
       attributesDiv.slideUp(function() { attributesElem.hide(); });
     }
   });
+  
+  var data = {
+    name: 'Mark Lentczner',
+    nick: 'MtnViewMark',
+    loc: '94041',
+  };
+  
+  var attributesTable = attributesDiv.find('table');
+  var protoRow = attributesTable.find('tr').eq(0).detach();
+  knownAttributes.forEach(function(a) {
+    var row = protoRow.clone();
+    row.find('.tag').text(a.en);
+
+    if (a.attr in data) {
+      row.find('.include input').attr('checked', 'checked');
+      row.find('.value').text(data[a.attr]);
+    }
+    else {
+      row.find('.include input').removeAttr('checked');
+      row.find('.value').text('');
+    }
+    
+    row.appendTo(attributesTable);
+  })
 };
 
 var initialize = function(instanceCaps, defaultTools) {

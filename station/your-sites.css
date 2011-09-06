@@ -100,14 +100,14 @@ td {
 }
 
 /* @end */
-
-div.attributes {
+/* @group attributes */
+tr.attributes {
+  display: none;
+}
+.attributes div {
   width: inherit;
   margin-left: 3em;
-}
-
-.attributes table {
-  width: 8em;
+  margin-right:  -0.5em;
   background: #eef;
 }
 
@@ -120,6 +120,8 @@ div.attributes {
   text-align: right;
   color: #888;
 }
+/* @end */
+
 /* @group drag-n-drop */
 
 .belay-cap-source,

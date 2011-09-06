@@ -256,6 +256,22 @@ var removeInstance = function(inst) {
   });
 };
 
+var setupSection = function(sectionElem) {
+  var headerElem = sectionElem.find('.header');
+  var attributesElem = sectionElem.find('.attributes');
+  var attributesDiv = attributesElem.find('div');
+  headerElem.find('.settings').click(function() {
+    if (attributesElem.css('display') === 'none') {
+      attributesDiv.hide();
+      attributesElem.show();
+      attributesDiv.slideDown();
+    }
+    else {
+      attributesDiv.slideUp(function() { attributesElem.hide(); });
+    }
+  });
+};
+
 var initialize = function(instanceCaps, defaultTools) {
   var top = topDiv;
   
@@ -264,7 +280,8 @@ var initialize = function(instanceCaps, defaultTools) {
   var itemsDiv = topDiv.find('#belay-items');
   itemsTable = itemsDiv.find('table.items');
   protoItemRow = itemsTable.find('tr').eq(0).detach();
-
+  
+  itemsDiv.find('.section').each(function() { setupSection($(this)); });
 
   // TODO(mzero): refactor the two addInstance functions and the newInstHandler
   var addInstanceFromGenerate = function(genCap) {

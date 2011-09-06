@@ -136,7 +136,7 @@ class BelayLaunchHandler(BaseHandler):
       station.put()
 
     reply = {
-      'page': { 'html': server_url("/your-stuff.html") },
+      'page': { 'html': server_url("/your-sites.html") },
         'info': {
           'instances': cap(instances_url(station.key())),
           'instanceBase': instance_url(station.key(), ''),

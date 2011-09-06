@@ -24,6 +24,10 @@ var belayRemoveSuggestInst;
 
 var defaultIcon = '/tool.png';
 
+function domainOfInst(inst) {
+  return inst.state.belayInstance.serialize().match('https?://[^/]*')[0];
+}
+
 //
 // Instance Data
 //
@@ -160,6 +164,11 @@ var launchPageInstance = function(inst, launchCap) {
     }
   },
   function(closeCap) {
+    // Instance opened, so do not show it as a suggestion
+    belayRemoveSuggestInst.put({
+      instID: inst.state.id,
+      domain: domainOfInst(inst)
+    });
     inst.closeCap = closeCap;
   },
   function(error) {
@@ -234,7 +243,7 @@ var addInstance = function(inst, openType, launchCap) {
 
   belaySuggestInst.put({
     instID: inst.state.id,
-    domain: inst.state.belayInstance.serialize().match('https?://[^/]*')[0],
+    domain: domainOfInst(inst),
     name: inst.state.name,
     launchClicked: capServer.grant(function(launch) {
       launchPageInstance(inst, launch);
@@ -252,7 +261,7 @@ var removeInstance = function(inst) {
   inst.storageCap.remove();
   belayRemoveSuggestInst.put({
     instID: inst.state.id,
-    domain: inst.state.belayInstance.serialize().match('https?://[^/]*')[0]
+    domain: domainOfInst(inst)
   });
 };
 
@@ -366,6 +375,16 @@ var closeInstHandler = function(instID) {
     inst.state.opened = 'closed';
     dirty(inst);
   }
+
+  // Instace closed, so let it re-appear as a suggestion
+  belaySuggestInst.put({
+    instID: inst.state.id,
+    domain: domainOfInst(inst),
+    name: inst.state.name,
+    launchClicked: capServer.grant(function(launch) {
+      launchPageInstance(inst, launch);
+    })
+  });
 };
 
 window.belay.portReady = function() {

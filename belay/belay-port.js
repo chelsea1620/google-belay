@@ -108,6 +108,10 @@ if (!window.belay) {
         // two following args. backward for Chrome and Safari
         [belayChan.port2, actionChan.port2], 
         '*');
+        
+      var locClean = window.location.href.replace(/#.*/, '');
+      //window.location.replace(locClean);
+      history.replaceState(history.state, '', locClean);
     };
   
     iframe.addEventListener('load', connect);

@@ -64,6 +64,14 @@ var instances = Object.create(null);
    }
 */
 
+var cmpInstByCreated = function(inst1, inst2) {
+  return inst1.state.created - inst2.state.created;
+};
+
+function recentInstances(instances, numRecent) {
+  
+}
+
 var dirtyInstances = [];
 var dirtyProcess = function() {
   var inst;
@@ -247,35 +255,69 @@ var removeInstance = function(inst) {
 };
 
 var sections = {
-  names: [ 'Recent', 'News and Blogs', 'Forums and Discussions' ],
-  labels: Object.create(null), // Map<Name, jQuery>
-  visible: null,
+  names: [ 'Sites', 'Recent', 'News and Blogs', 'Forums and Discussions' ],
+  // Map<Name, { label: jQuery, list: jQuery, insts: inst }>
+  byName: Object.create(null),
+  sitesLabel: null, // jQuery
+  visible: [],
   add: function(name) {
-    var label = document.createElement('li');
-    label.appendChild(document.createTextNode(name));
-    document.getElementById('nav').appendChild(label);
+    if (name === 'Sites') {
+      sections.sitesLabel = $('#nav .selected').eq(0);
+      sections.sitesLabel.click(sections.showSites);
+      return;
+    }
+   
+    var label = $('<li>' + name + '</li>'); // todo: XSS
+    $('#nav').append(label);
 
     var section = protoSection.clone();
     section.css('display', 'none');
     section.appendTo($('#belay-items'));
-    sectionElts[name] = section;
+      
+    label.click(function(evt) { sections.show(name); });
+    label.droppable({ 
+      tolerance: 'pointer',
+      drop: function(evt, ui) {
+        // TODO: move it over
+        console.log('got it wooooo', evt, ui);
+      },
+      accept: function(elt) { return !!elt.data('belay-inst'); }
+    });
 
-    label.addEventListener('click', function(evt) { sections.show(name); });
-
-    sections.labels[name] = $(label);
+    sections.byName[name] = { label: label, list: section, insts: [] };
     
     setupSection(name, section);
   },
+  repopulateRecent: function() {
+    // TODO: do it
+  },
+  showSites: function() {
+    sections.sitesLabel.addClass('selected');
+    // all visible, except for Recent
+    sections.visible = 
+      Object.keys(sections.byName)
+      .map(function(k) { 
+        if (k === 'Recent') { return null; }
+        var sec = sections.byName[k];
+        sec.label.removeClass('selected');
+        sec.list.show();
+        return sec;
+      })
+      .filter(function(sec) { return sec !== null; });
+  },
   show: function(name) {
-    var label = this.labels[name];
-    var list = sectionElts[name];
-    label.addClass('selected');
-    list.show();
-    if (this.visible) {
-      this.visible.label.removeClass('selected');
-      this.visible.list.hide();
-    }
-    this.visible = { name: name, label: label, list: list };
+    var v = sections.byName[name];
+    sections.sitesLabel.removeClass('selected');
+    v.label.addClass('selected');
+    v.list.show();
+    sections.visible.forEach(function(sec) { 
+      if (sec !== v) {
+        sec.label.removeClass('selected');
+        sec.list.hide();
+      }
+    });
+    sections.visible = [v];
+    if (name === 'Recent') { sections.repopulateRecent(); }
   },
   deleteInstance: function(inst) {
     inst.rows.forEach(function(row) { 
@@ -298,16 +340,18 @@ var sections = {
     row.find('td.actions .remove').click(function() {
         removeInstance(inst);
       });
-
-    $(row).draggable({ 
+   
+    row.draggable({ 
       handle: icon, 
       helper: 'clone', 
       cursor: 'pointer' 
     });
+    row.data('belay-inst', true);
 
     inst.rows = [row];
+    var list = sections.byName[inst.state.section].list;
 
-    row.prependTo(sectionElts[inst.state.section].find('table.items').eq(0));
+    row.prependTo(list.find('table.items').eq(0));
   }
 }
 
@@ -323,10 +367,6 @@ var knownAttributes = [
 ];
 
 var protoSection; // initialized in initialize
-
-var sectionElts = Object.create(null); // Map<Name, jQuery> 
-
-
 
 var setupSection = function(name, sectionElem) {
   var data = {
@@ -450,9 +490,6 @@ var initialize = function(instanceCaps, defaultTools) {
   var loadedInstances = [];
 
   var loadInsts = function() {
-    var cmpInstByCreated = function(inst1, inst2) {
-      return inst1.state.created - inst2.state.created;
-    };
     loadedInstances.sort(cmpInstByCreated).forEach(function(inst) {
       addInstance(inst, 'restore', belayLaunch);
     });

@@ -169,6 +169,9 @@ var launchPageInstance = function(inst, launchCap) {
       snapshot: capServer.grant({
         get: function() { return inst.state.capSnapshot; },
         put: function(snap) { inst.state.capSnapshot = snap; dirty(inst); }
+      }),
+      setRefresh: capServer.grant(function(refreshCap) {
+        inst.refreshCap = refreshCap;
       })
     }
   },
@@ -494,7 +497,11 @@ var attributes = (function() {
     pushToInstance: function(inst) {
       if (inst.launch.attributes && inst.launch.attributes.set) {
         var data = sections.byName[inst.state.section].attributes;
-        inst.launch.attributes.set.put(data);
+        inst.launch.attributes.set.put(data, function() {
+          if (inst.refreshCap) {
+            inst.refreshCap.post({});
+          }
+        });
       }
     },
   }

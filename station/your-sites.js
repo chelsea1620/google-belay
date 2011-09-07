@@ -254,7 +254,9 @@ var removeInstance = function(inst) {
   });
 };
 
+
 var sections = {
+  proto: null,
   names: [ 'Sites', 'Recent', 'News and Blogs', 'Forums and Discussions' ],
   // Map<Name, { label: jQuery, list: jQuery, insts: inst }>
   byName: Object.create(null),
@@ -270,7 +272,7 @@ var sections = {
     var label = $('<li>' + name + '</li>'); // todo: XSS
     $('#nav').append(label);
 
-    var section = protoSection.clone();
+    var section = sections.proto.clone();
     section.css('display', 'none');
     section.appendTo($('#belay-items'));
       
@@ -286,7 +288,7 @@ var sections = {
 
     sections.byName[name] = { label: label, list: section, insts: [] };
     
-    setupSection(name, section);
+    attributes.setup(name, section);
   },
   showSites: function() {
     sections.sitesLabel.addClass('selected');
@@ -349,118 +351,117 @@ var sections = {
   }
 }
 
-// list of attributes we support
-var knownAttributes = [
-  { attr: 'name', en: 'Name' },
-  { attr: 'nick', en: 'Nickname' },
-  { attr: 'loc', en: 'Location' },
-  { attr: 'email', en: 'Email' },
-  { attr: 'phone', en: 'Phone' },
-  { attr: 'gender', en: 'Gender' },
-  { attr: 'age', en: 'Age' },
-];
+var attributes = (function() {
+  // list of attributes we support
+  var knownAttributes = [
+    { attr: 'name', en: 'Name' },
+    { attr: 'nick', en: 'Nickname' },
+    { attr: 'loc', en: 'Location' },
+    { attr: 'email', en: 'Email' },
+    { attr: 'phone', en: 'Phone' },
+    { attr: 'gender', en: 'Gender' },
+    { attr: 'age', en: 'Age' },
+  ];
 
-var protoSection; // initialized in initialize
+  return {
+    setup: function(name, sectionElem) {
+      var data = {
+        name: 'Mark Lentczner',
+        nick: 'MtnViewMark',
+        loc: '94041',
+      };
+      var editData;
 
-var setupSection = function(name, sectionElem) {
-  var data = {
-    name: 'Mark Lentczner',
-    nick: 'MtnViewMark',
-    loc: '94041',
-  };
-  var editData;
-
-  var headerElem = sectionElem.find('.header');
-  var attributesElem = sectionElem.find('.attributes');
-  var attributesDiv = attributesElem.find('.box');
-  var attributesTable = attributesDiv.find('table');
-  var protoRow = attributesTable.find('tr').eq(0).detach();
+      var headerElem = sectionElem.find('.header');
+      var attributesElem = sectionElem.find('.attributes');
+      var attributesDiv = attributesElem.find('.box');
+      var attributesTable = attributesDiv.find('table');
+      var protoRow = attributesTable.find('tr').eq(0).detach();
   
-  sectionElem.find('.name').text(name);
+      sectionElem.find('.name').text(name);
 
-  attributesTable.find('tr').remove();
-  knownAttributes.forEach(function(a) {
-    var row = protoRow.clone();
-    row.find('.include input').removeAttr('checked');
-    row.find('.tag').text(a.en);
-    row.find('.value').text('');
-    row.appendTo(attributesTable);
-  });
+      attributesTable.find('tr').remove();
+      knownAttributes.forEach(function(a) {
+        var row = protoRow.clone();
+        row.find('.include input').removeAttr('checked');
+        row.find('.tag').text(a.en);
+        row.find('.value').text('');
+        row.appendTo(attributesTable);
 
-  function resetAttributes(editable) {
-    editData = { };
+        function resetAttributes(editable) {
+          editData = { };
     
-    attributesTable.find('tr').each(function(i, tr) {
-      var a = knownAttributes[i];
-      var row = $(tr);
+          attributesTable.find('tr').each(function(i, tr) {
+            var a = knownAttributes[i];
+            var row = $(tr);
       
-      var includeInput = row.find('.include input');
-      var valueTD = row.find('.value');
+            var includeInput = row.find('.include input');
+            var valueTD = row.find('.value');
       
-      valueTD.empty();
-      if (a.attr in data) {
-        var v = data[a.attr];
-        editData[a.attr] = v;
-        includeInput.attr('checked', 'checked');
-        valueTD.text(v);
-      }
-      else {
-        includeInput.removeAttr('checked');
-        valueTD.text('');
-      }
-      
-      if (editable) {
-        valueTD.click(function() {
-          valueTD.unbind();
-          var input = $('<input />');
-          input.val(editData[a.attr]);
-          input.blur(function() {
-            var t = input.val().trim();
-            if (t === '') {
-              delete editData[a.attr];
-              includeInput.removeAttr('checked');
+            valueTD.empty();
+            if (a.attr in data) {
+              var v = data[a.attr];
+              editData[a.attr] = v;
+              includeInput.attr('checked', 'checked');
+              valueTD.text(v);
             }
             else {
-              editData[a.attr] = t;
-              includeInput.attr('checked', 'checked');
+              includeInput.removeAttr('checked');
+              valueTD.text('');
+            }
+      
+            if (editable) {
+              valueTD.click(function() {
+                valueTD.unbind();
+                var input = $('<input />');
+                input.val(editData[a.attr]);
+                input.blur(function() {
+                  var t = input.val().trim();
+                  if (t === '') {
+                    delete editData[a.attr];
+                    includeInput.removeAttr('checked');
+                  }
+                  else {
+                    editData[a.attr] = t;
+                    includeInput.attr('checked', 'checked');
+                  }
+                });
+                valueTD.empty();
+                valueTD.append(input);
+                input.focus();
+              });
             }
           });
-          valueTD.empty();
-          valueTD.append(input);
-          input.focus();
-        });
-      }
-    });
-  }
-  function showAttributes() {
-    if (attributesElem.css('display') !== 'none') return;
+        }
+        function showAttributes() {
+          if (attributesElem.css('display') !== 'none') return;
     
-    resetAttributes(true);
-    attributesDiv.hide();
-    attributesElem.show();
-    attributesDiv.slideDown();
-  }
-
-  function hideAttributes() {
-    resetAttributes(false);
-    setTimeout(function() {
-      attributesDiv.slideUp(function() { attributesElem.hide(); });
-    }, 300);
-  }
+          resetAttributes(true);
+          attributesDiv.hide();
+          attributesElem.show();
+          attributesDiv.slideDown();
+        }
+        function hideAttributes() {
+          resetAttributes(false);
+          setTimeout(function() {
+            attributesDiv.slideUp(function() { attributesElem.hide(); });
+          }, 300);
+        }
+        function saveAttributes() {
+          data = editData;
+          hideAttributes();
+        }
+        function cancelAttributes() {
+          hideAttributes();
+        }
   
-  function saveAttributes() {
-    data = editData;
-    hideAttributes();
+        headerElem.find('.settings').click(showAttributes);
+        attributesDiv.find('.save').click(saveAttributes);
+        attributesDiv.find('.cancel').click(cancelAttributes);
+      });
+    },
   }
-  
-  function cancelAttributes() {
-    hideAttributes();
-  }
-  
-  headerElem.find('.settings').click(showAttributes);
-  attributesDiv.find('.save').click(saveAttributes);
-  attributesDiv.find('.cancel').click(cancelAttributes);
-};
+})();
 
 var initialize = function(instanceCaps, defaultTools) {
   var top = topDiv;
@@ -469,8 +470,8 @@ var initialize = function(instanceCaps, defaultTools) {
 
   var itemsDiv = topDiv.find('#belay-items');
 
-  protoSection = topDiv.find('.section').eq(0).detach();
-  protoItemRow = protoSection.find('table.items tr').eq(0).detach();
+  sections.proto = topDiv.find('.section').eq(0).detach();
+  protoItemRow = sections.proto.find('table.items tr').eq(0).detach();
 
   sections.names.forEach(function(name) { sections.add(name); });
 

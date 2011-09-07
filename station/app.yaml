@@ -31,6 +31,9 @@ handlers:
 - url: /instance
   script: station.py
 
+- url: /cap/.*
+  script: station.py
+
 - url: /(.*\.(html|css|js|png))
   script: lib/py/CORSstatic.py
 

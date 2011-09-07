@@ -295,6 +295,7 @@ var sections = {
         row.detach();
         section.find('table.items').eq(0).prepend(row);
         dirty(inst);
+        attributes.pushToInstance(inst);
       },
       accept: function(elt) { return !!elt.data('belay-inst'); }
     });
@@ -473,13 +474,10 @@ var attributes = (function() {
           sections.byName[name].attributes = data = editData;
           attributesCap.put(data, hideAttributes);
           
-          console.log('instances at time of save', instances);
           Object.keys(instances).forEach(function(instID) {
             var inst = instances[instID];
-            if (inst.state.section === name
-                && inst.launch.attributes
-                && inst.launch.attributes.set) {
-              inst.launch.attributes.set.put(data);
+            if (inst.state.section === name) {
+              attributes.pushToInstance(inst);
             }
           });
         }
@@ -491,6 +489,13 @@ var attributes = (function() {
         attributesDiv.find('.save').click(saveAttributes);
         attributesDiv.find('.cancel').click(cancelAttributes);
       });
+    },
+    
+    pushToInstance: function(inst) {
+      if (inst.launch.attributes && inst.launch.attributes.set) {
+        var data = sections.byName[inst.state.section].attributes;
+        inst.launch.attributes.set.put(data);
+      }
     },
   }
 })();
@@ -577,6 +582,7 @@ var newInstHandler = function(args) {
     },
   };
   addInstance(inst, 'page', args.relaunch);
+  attributes.pushToInstnace(inst);
 };
 
 var closeInstHandler = function(instID) {

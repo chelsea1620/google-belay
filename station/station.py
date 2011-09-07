@@ -79,6 +79,9 @@ class StationData(db.Model):
 class InstanceData(db.Model):
   data = db.TextProperty()
 
+class SectionData(db.Model):
+  name = db.StringProperty(required=True)
+  attributes = db.TextProperty()
 
 
 class BaseHandler(BcapHandler):
@@ -140,7 +143,8 @@ class BelayLaunchHandler(BaseHandler):
         'info': {
           'instances': cap(instances_url(station.key())),
           'instanceBase': instance_url(station.key(), ''),
-          'defaultTools': defaultTools()
+          'defaultTools': defaultTools(),
+          'section': regrant(SectionHandler, station)
       }
     }
 
@@ -178,13 +182,50 @@ class InstancesHandler(BaseHandler):
     self.bcapResponse(ids)
 
 
+
+class SectionHandler(CapHandler):
+  def post(self):
+    station = self.get_entity()
+    sectionName = self.bcapRequest()
+    q = SectionData.all()
+    q.ancestor(station)
+    q.filter('name =', sectionName)
+    section = q.get()
+    if section is None:
+      section = SectionData(parent=station, name=sectionName)
+      section.put()
+    
+    self.bcapResponse({
+      'name': section.name,
+      'attributes': regrant(AttributesHandler, section)
+    })
+
+  
+class AttributesHandler(CapHandler):
+  def get(self):
+    section = self.get_entity()
+    self.bcapResponse(section.attributes)
+  
+  def put(self):
+    section = self.get_entity()
+    section.attributes = self.bcapRequest()
+    section.put()
+  
+
 application = webapp.WSGIApplication(
-  [('/belay/generate', BelayGenerateHandler),
-  ('/belay/launch',   BelayLaunchHandler),
-  ('/instance', InstanceHandler),
-  ('/instances',InstancesHandler),
+  [(r'/cap/.*', ProxyHandler),
+   ('/belay/generate', BelayGenerateHandler),
+   ('/belay/launch',   BelayLaunchHandler),
+   ('/instance', InstanceHandler),
+   ('/instances',InstancesHandler),
   ],
   debug=True)
+
+set_handlers(
+  '/cap',
+  [('section', SectionHandler),
+   ('attributes', AttributesHandler),
+  ])
 
 def main():
   logging.getLogger().setLevel(logging.DEBUG)

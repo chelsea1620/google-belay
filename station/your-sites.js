@@ -257,18 +257,26 @@ var removeInstance = function(inst) {
 
 var sections = {
   proto: null,
-  names: [ 'Sites', 'Recent', 'News and Blogs', 'Forums and Discussions' ],
+  names: [ 'Recent', 'News and Blogs', 'Forums and Discussions' ],
   // Map<Name, { label: jQuery, list: jQuery, insts: inst }>
   byName: Object.create(null),
   sitesLabel: null, // jQuery
   visible: [],
-  add: function(name) {
-    if (name === 'Sites') {
-      sections.sitesLabel = $('#nav .selected').eq(0);
-      sections.sitesLabel.click(sections.showSites);
-      return;
-    }
-   
+  
+  init: function(sectionCap) {
+    sections.sitesLabel = $('#nav .selected').eq(0);
+    sections.sitesLabel.click(sections.showSites);
+
+    sections.names.forEach(function(name) {
+      sectionCap.post(name, function(sectionInfo) {
+        sections.add(name, sectionInfo);
+        if (name == 'Recent') {
+          sections.show(name);
+        }
+      });
+    })
+  },
+  add: function(name, sectionInfo) {
     var label = $('<li>' + name + '</li>'); // todo: XSS
     $('#nav').append(label);
 
@@ -288,7 +296,7 @@ var sections = {
 
     sections.byName[name] = { label: label, list: section, insts: [] };
     
-    attributes.setup(name, section);
+    attributes.setup(name, section, sectionInfo.attributes);
   },
   showSites: function() {
     sections.sitesLabel.addClass('selected');
@@ -364,7 +372,7 @@ var attributes = (function() {
   ];
 
   return {
-    setup: function(name, sectionElem) {
+    setup: function(name, sectionElem, attributesCap) {
       var data = {
         name: 'Mark Lentczner',
         nick: 'MtnViewMark',
@@ -473,9 +481,7 @@ var initialize = function(instanceCaps, defaultTools) {
   sections.proto = topDiv.find('.section').eq(0).detach();
   protoItemRow = sections.proto.find('table.items tr').eq(0).detach();
 
-  sections.names.forEach(function(name) { sections.add(name); });
-
-  sections.show('Recent');
+  sections.init(instanceInfo.section);
 
   // TODO(mzero): refactor the two addInstance functions and the newInstHandler
   var addInstanceFromGenerate = function(genCap) {

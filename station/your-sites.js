@@ -57,7 +57,7 @@ var instances = Object.create(null);
      },
      capServer: caps -- the cap server for this instance (if !state.remote)
      windowedInstance: bool -- if true, in a window (route via extension)
-     rowNode: node -- node in the item list
+     rows: [node] -- nodes in the item list
      pageWindow: window -- if open in page view, the window it is in
      gadgetNode: node -- if open in gadget view, the container node it is in
      closeCap : cap -- present for windowed instances
@@ -187,10 +187,6 @@ var launchInstance = function(inst, openType, launchCap) {
     inst.launch = launch;
     var canPage = 'page' in launch;
 
-    var row = inst.rowNode;
-    var asVis = function(b) { return b ? 'visible' : 'hidden'; }
-    row.find('.open-page').css('visibility', asVis(canPage));
-
     var preferred = canPage ? 'page' : 'none';
 
     if (openType == 'restore') {
@@ -222,29 +218,7 @@ var protoItemRow; // TODO(jpolitz): factor this differently?
 var addInstance = function(inst, openType, launchCap) {
   instances[inst.state.id] = inst;
 
-  var row = protoItemRow.clone();
-  inst.rowNode = row;
-
-  var icon = row.find('td.icon img');
-  icon.attr('src', inst.state.icon || defaultIcon);
-  row.find('td.name').text(inst.state.name || 'an item');
-  row.find('td.actions .open-page').click(function() {
-      launchInstance(inst, 'page', belayLaunch);
-    });
-  row.find('td.actions .open-gadget').click(function() {
-      launchInstance(inst, 'gadget');
-    });
-  row.find('td.actions .remove').click(function() {
-      removeInstance(inst);
-    });
-
-  $(row).draggable({ 
-    handle: icon, 
-    helper: 'clone', 
-    cursor: 'pointer' 
-  });
-
-  row.prependTo(sectionElts[inst.state.section].find('table.items').eq(0));
+  sections.newInstance(inst);
 
   launchInstance(inst, openType, launchCap);
 
@@ -262,7 +236,7 @@ var removeInstance = function(inst) {
   if (inst.pageWindow) {
     inst.closeCap.put();
   }
-  inst.rowNode.fadeOut(function() { inst.rowNode.remove(); });
+  sections.deleteInstance(inst);
   if (inst.capServer) inst.capServer.revokeAll();
   delete instances[inst.state.id];
   inst.storageCap.remove();
@@ -272,7 +246,70 @@ var removeInstance = function(inst) {
   });
 };
 
-var sections = [ 'Recent', 'News and Blogs', 'Forums and Discussions' ];
+var sections = {
+  names: [ 'Recent', 'News and Blogs', 'Forums and Discussions' ],
+  labels: Object.create(null), // Map<Name, jQuery>
+  visible: null,
+  add: function(name) {
+    var label = document.createElement('li');
+    label.appendChild(document.createTextNode(name));
+    document.getElementById('nav').appendChild(label);
+
+    var section = protoSection.clone();
+    section.css('display', 'none');
+    section.appendTo($('#belay-items'));
+    sectionElts[name] = section;
+
+    label.addEventListener('click', function(evt) { sections.show(name); });
+
+    sections.labels[name] = $(label);
+    
+    setupSection(name, section);
+  },
+  show: function(name) {
+    var label = this.labels[name];
+    var list = sectionElts[name];
+    label.addClass('selected');
+    list.show();
+    if (this.visible) {
+      this.visible.label.removeClass('selected');
+      this.visible.list.hide();
+    }
+    this.visible = { name: name, label: label, list: list };
+  },
+  deleteInstance: function(inst) {
+    inst.rows.forEach(function(row) { 
+      row.fadeOut(400, function() { row.remove(); });
+    });
+    inst.rows = [];
+  },
+  newInstance: function(inst) {
+    var row = protoItemRow.clone();
+
+    var icon = row.find('td.icon img');
+    icon.attr('src', inst.state.icon || defaultIcon);
+    row.find('td.name').text(inst.state.name || 'an item');
+    row.find('td.actions .open-page').click(function() {
+        launchInstance(inst, 'page', belayLaunch);
+      });
+    row.find('td.actions .open-gadget').click(function() {
+        launchInstance(inst, 'gadget');
+      });
+    row.find('td.actions .remove').click(function() {
+        removeInstance(inst);
+      });
+
+    $(row).draggable({ 
+      handle: icon, 
+      helper: 'clone', 
+      cursor: 'pointer' 
+    });
+
+    inst.rows = [row];
+
+    row.prependTo(sectionElts[inst.state.section].find('table.items').eq(0));
+  }
+}
 
 // list of attributes we support
 var knownAttributes = [
@@ -287,33 +324,9 @@ var knownAttributes = [
 
 var protoSection; // initialized in initialize
 
-var visibleSection;
 var sectionElts = Object.create(null); // Map<Name, jQuery> 
 
-function showSection(name) {
-  if (visibleSection) {
-    visibleSection.hide();
-  }
-  var section = sectionElts[name];
-  section.show();
-  visibleSection = section; 
-}
 
-function addSection(name) {
-  var lst = document.getElementById('nav');
-  var elt = document.createElement('li');
-  elt.appendChild(document.createTextNode(name));
-  lst.appendChild(elt);
-
-  var section = protoSection.clone();
-  section.css('display', 'none');
-  section.appendTo($('#belay-items'));
-  sectionElts[name] = section;
-
-  elt.addEventListener('click', function(evt) { showSection(name); });
-
-  setupSection(name, section);
-}
 
 var setupSection = function(name, sectionElem) {
   var data = {
@@ -403,9 +416,10 @@ var initialize = function(instanceCaps, defaultTools) {
 
   protoSection = topDiv.find('.section').eq(0).detach();
   protoItemRow = protoSection.find('table.items tr').eq(0).detach();
-  
-  sections.forEach(addSection);
-  showSection('Recent');
+
+  sections.names.forEach(function(name) { sections.add(name); });
+
+  sections.show('Recent');
 
   // TODO(mzero): refactor the two addInstance functions and the newInstHandler
   var addInstanceFromGenerate = function(genCap) {

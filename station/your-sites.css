@@ -109,6 +109,7 @@ tr.attributes {
   margin-left: 3em;
   margin-right:  -0.5em;
   background: #eef;
+  display: none;
 }
 
 .attributes td.include {
@@ -119,6 +120,16 @@ tr.attributes {
   width: 7em;
   text-align: right;
   color: #888;
+}
+
+.attributes td.value {
+  position: relative;
+}
+.attributes td.value input {
+  width: 80%;
+  position: absolute;
+  left: 2px;
+  bottom: 0;
 }
 /* @end */
 

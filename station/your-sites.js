@@ -288,8 +288,12 @@ var sections = {
     label.droppable({ 
       tolerance: 'pointer',
       drop: function(evt, ui) {
-        // TODO: move it over
-        console.log('got it wooooo', evt, ui);
+        var row = ui.draggable;
+        var inst = row.data('belay-inst');
+        inst.state.section = name;
+        row.detach();
+        section.find('table.items').eq(0).prepend(row);
+        dirty(inst);
       },
       accept: function(elt) { return !!elt.data('belay-inst'); }
     });
@@ -351,10 +355,16 @@ var sections = {
    
     row.draggable({ 
       handle: icon, 
-      helper: 'clone', 
+      revert: 'invalid',
+      helper: function() {
+        var cl = row.clone();
+        cl.css('width', row.width());
+        cl.css('background-color', 'white');
+        return cl;
+      }, 
       cursor: 'pointer' 
     });
-    row.data('belay-inst', true);
+    row.data('belay-inst', inst);
 
     inst.rows = [row];
     var list = sections.byName[inst.state.section].list;
@@ -388,7 +398,7 @@ var attributes = (function() {
         var attributesTable = attributesDiv.find('table');
         var protoRow = attributesTable.find('tr').eq(0).detach();
   
-        sectionElem.find('.name').text(name);
+        sectionElem.find('.header .name').text(name);
 
         attributesTable.find('tr').remove();
         knownAttributes.forEach(function(a) {

@@ -288,22 +288,17 @@ var sections = {
     
     setupSection(name, section);
   },
-  repopulateRecent: function() {
-    // TODO: do it
-  },
   showSites: function() {
     sections.sitesLabel.addClass('selected');
     // all visible, except for Recent
     sections.visible = 
       Object.keys(sections.byName)
       .map(function(k) { 
-        if (k === 'Recent') { return null; }
         var sec = sections.byName[k];
         sec.label.removeClass('selected');
         sec.list.show();
         return sec;
-      })
-      .filter(function(sec) { return sec !== null; });
+      });
   },
   show: function(name) {
     var v = sections.byName[name];
@@ -317,7 +312,6 @@ var sections = {
       }
     });
     sections.visible = [v];
-    if (name === 'Recent') { sections.repopulateRecent(); }
   },
   deleteInstance: function(inst) {
     inst.rows.forEach(function(row) { 

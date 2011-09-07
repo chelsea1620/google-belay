@@ -31,7 +31,7 @@ function domainOfInst(inst) {
 //
 // Instance Data
 //
-var instances = {};
+var instances = Object.create(null);
 /*
   a map from instanceIDs to
    {
@@ -53,10 +53,10 @@ var instances = {};
          top: int, left: int, width: int, height: int,
        },
        data: string  -- stored data for the instance
+       section: string -- the section the instance belongs to
      },
      capServer: caps -- the cap server for this instance (if !state.remote)
      windowedInstance: bool -- if true, in a window (route via extension)
-
      rowNode: node -- node in the item list
      pageWindow: window -- if open in page view, the window it is in
      gadgetNode: node -- if open in gadget view, the container node it is in
@@ -219,14 +219,14 @@ var launchInstance = function(inst, openType, launchCap) {
 
 
 var protoItemRow; // TODO(jpolitz): factor this differently?
-var itemsTable;
 var addInstance = function(inst, openType, launchCap) {
   instances[inst.state.id] = inst;
 
   var row = protoItemRow.clone();
   inst.rowNode = row;
 
-  row.find('td.icon img').attr('src', inst.state.icon || defaultIcon);
+  var icon = row.find('td.icon img');
+  icon.attr('src', inst.state.icon || defaultIcon);
   row.find('td.name').text(inst.state.name || 'an item');
   row.find('td.actions .open-page').click(function() {
       launchInstance(inst, 'page', belayLaunch);
@@ -237,7 +237,14 @@ var addInstance = function(inst, openType, launchCap) {
   row.find('td.actions .remove').click(function() {
       removeInstance(inst);
     });
-  row.prependTo(itemsTable);
+
+  $(row).draggable({ 
+    handle: icon, 
+    helper: 'clone', 
+    cursor: 'pointer' 
+  });
+
+  row.prependTo(sectionElts[inst.state.section].find('table.items').eq(0));
 
   launchInstance(inst, openType, launchCap);
 
@@ -265,6 +272,8 @@ var removeInstance = function(inst) {
   });
 };
 
+var sections = [ 'Recent', 'News and Blogs', 'Forums and Discussions' ];
+
 // list of attributes we support
 var knownAttributes = [
   { attr: 'name', en: 'Name' },
@@ -276,7 +285,37 @@ var knownAttributes = [
   { attr: 'age', en: 'Age' },
 ];
 
-var setupSection = function(sectionElem) {
+var protoSection; // initialized in initialize
+
+var visibleSection;
+var sectionElts = Object.create(null); // Map<Name, jQuery> 
+
+function showSection(name) {
+  if (visibleSection) {
+    visibleSection.hide();
+  }
+  var section = sectionElts[name];
+  section.show();
+  visibleSection = section; 
+}
+
+function addSection(name) {
+  var lst = document.getElementById('nav');
+  var elt = document.createElement('li');
+  elt.appendChild(document.createTextNode(name));
+  lst.appendChild(elt);
+
+  var section = protoSection.clone();
+  section.css('display', 'none');
+  section.appendTo($('#belay-items'));
+  sectionElts[name] = section;
+
+  elt.addEventListener('click', function(evt) { showSection(name); });
+
+  setupSection(name, section);
+}
+
+var setupSection = function(name, sectionElem) {
   var data = {
     name: 'Mark Lentczner',
     nick: 'MtnViewMark',
@@ -290,6 +329,8 @@ var setupSection = function(sectionElem) {
   var attributesDiv = attributesElem.find('div');
   var attributesTable = attributesDiv.find('table');
   var protoRow = attributesTable.find('tr').eq(0).detach();
+  
+  sectionElem.find('.name').text(name);
 
   function showAttributes() {
     editData = data;
@@ -356,13 +397,15 @@ var setupSection = function(sectionElem) {
 var initialize = function(instanceCaps, defaultTools) {
   var top = topDiv;
   
-  top.find('.ex').remove(); // remove all the example layout on the page
+  $(document.body).find('.ex').remove(); // remove layout examples
 
   var itemsDiv = topDiv.find('#belay-items');
-  itemsTable = itemsDiv.find('table.items');
-  protoItemRow = itemsTable.find('tr').eq(0).detach();
+
+  protoSection = topDiv.find('.section').eq(0).detach();
+  protoItemRow = protoSection.find('table.items tr').eq(0).detach();
   
-  itemsDiv.find('.section').each(function() { setupSection($(this)); });
+  sections.forEach(addSection);
+  showSection('Recent');
 
   // TODO(mzero): refactor the two addInstance functions and the newInstHandler
   var addInstanceFromGenerate = function(genCap) {
@@ -432,8 +475,9 @@ var newInstHandler = function(args) {
       belayInstance: args.launchData.launch,
       name: args.launchData.name,
       icon: args.launchData.icon,
-      created: (new Date()).valueOf()
-    }
+      created: (new Date()).valueOf(),
+      section: 'Recent'
+    },
   };
   addInstance(inst, 'page', args.relaunch);
 };

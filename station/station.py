@@ -204,11 +204,11 @@ class SectionHandler(CapHandler):
 class AttributesHandler(CapHandler):
   def get(self):
     section = self.get_entity()
-    self.bcapResponse(section.attributes)
+    self.bcapResponse(json.loads(section.attributes or '{}'))
   
   def put(self):
     section = self.get_entity()
-    section.attributes = self.bcapRequest()
+    section.attributes = json.dumps(self.bcapRequest())
     section.put()
   
 

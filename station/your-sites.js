@@ -294,7 +294,11 @@ var sections = {
       accept: function(elt) { return !!elt.data('belay-inst'); }
     });
 
-    sections.byName[name] = { label: label, list: section, insts: [] };
+    sections.byName[name] = {
+      label: label,
+      list: section,
+      attributes: { }
+    };
     
     attributes.setup(name, section, sectionInfo.attributes);
   },
@@ -370,102 +374,102 @@ var attributes = (function() {
     { attr: 'gender', en: 'Gender' },
     { attr: 'age', en: 'Age' },
   ];
-
+  
   return {
     setup: function(name, sectionElem, attributesCap) {
-      var data = {
-        name: 'Mark Lentczner',
-        nick: 'MtnViewMark',
-        loc: '94041',
-      };
-      var editData;
+      attributesCap.get(function(data) {
+        sections.byName[name].attributes = data;
+        
+        var editData;
 
-      var headerElem = sectionElem.find('.header');
-      var attributesElem = sectionElem.find('.attributes');
-      var attributesDiv = attributesElem.find('.box');
-      var attributesTable = attributesDiv.find('table');
-      var protoRow = attributesTable.find('tr').eq(0).detach();
+        var headerElem = sectionElem.find('.header');
+        var attributesElem = sectionElem.find('.attributes');
+        var attributesDiv = attributesElem.find('.box');
+        var attributesTable = attributesDiv.find('table');
+        var protoRow = attributesTable.find('tr').eq(0).detach();
   
-      sectionElem.find('.name').text(name);
+        sectionElem.find('.name').text(name);
 
-      attributesTable.find('tr').remove();
-      knownAttributes.forEach(function(a) {
-        var row = protoRow.clone();
-        row.find('.include input').removeAttr('checked');
-        row.find('.tag').text(a.en);
-        row.find('.value').text('');
-        row.appendTo(attributesTable);
+        attributesTable.find('tr').remove();
+        knownAttributes.forEach(function(a) {
+          var row = protoRow.clone();
+          row.find('.include input').removeAttr('checked');
+          row.find('.tag').text(a.en);
+          row.find('.value').text('');
+          row.appendTo(attributesTable);
 
-        function resetAttributes(editable) {
-          editData = { };
+          function resetAttributes(editable) {
+            editData = { };
     
-          attributesTable.find('tr').each(function(i, tr) {
-            var a = knownAttributes[i];
-            var row = $(tr);
+            attributesTable.find('tr').each(function(i, tr) {
+              var a = knownAttributes[i];
+              var row = $(tr);
       
-            var includeInput = row.find('.include input');
-            var valueTD = row.find('.value');
+              var includeInput = row.find('.include input');
+              var valueTD = row.find('.value');
       
-            valueTD.empty();
-            if (a.attr in data) {
-              var v = data[a.attr];
-              editData[a.attr] = v;
-              includeInput.attr('checked', 'checked');
-              valueTD.text(v);
-            }
-            else {
-              includeInput.removeAttr('checked');
-              valueTD.text('');
-            }
+              valueTD.empty();
+              if (a.attr in data) {
+                var v = data[a.attr];
+                editData[a.attr] = v;
+                includeInput.attr('checked', 'checked');
+                valueTD.text(v);
+              }
+              else {
+                includeInput.removeAttr('checked');
+                valueTD.text('');
+              }
       
-            if (editable) {
-              valueTD.click(function() {
-                valueTD.unbind();
-                var input = $('<input />');
-                input.val(editData[a.attr]);
-                input.blur(function() {
-                  var t = input.val().trim();
-                  if (t === '') {
-                    delete editData[a.attr];
-                    includeInput.removeAttr('checked');
-                  }
-                  else {
-                    editData[a.attr] = t;
-                    includeInput.attr('checked', 'checked');
-                  }
+              if (editable) {
+                valueTD.click(function() {
+                  valueTD.unbind();
+                  var input = $('<input />');
+                  input.val(editData[a.attr]);
+                  input.blur(function() {
+                    var t = input.val().trim();
+                    if (t === '') {
+                      delete editData[a.attr];
+                      includeInput.removeAttr('checked');
+                    }
+                    else {
+                      editData[a.attr] = t;
+                      includeInput.attr('checked', 'checked');
+                    }
+                  });
+                  valueTD.empty();
+                  valueTD.append(input);
+                  input.focus();
                 });
-                valueTD.empty();
-                valueTD.append(input);
-                input.focus();
-              });
-            }
-          });
-        }
-        function showAttributes() {
-          if (attributesElem.css('display') !== 'none') return;
+              }
+            });
+          }
+          function showAttributes() {
+            if (attributesElem.css('display') !== 'none') return;
     
-          resetAttributes(true);
-          attributesDiv.hide();
-          attributesElem.show();
-          attributesDiv.slideDown();
-        }
-        function hideAttributes() {
-          resetAttributes(false);
-          setTimeout(function() {
-            attributesDiv.slideUp(function() { attributesElem.hide(); });
-          }, 300);
-        }
-        function saveAttributes() {
-          data = editData;
-          hideAttributes();
-        }
-        function cancelAttributes() {
-          hideAttributes();
-        }
+            resetAttributes(true);
+            attributesDiv.hide();
+            attributesElem.show();
+            attributesDiv.slideDown();
+          }
+          function hideAttributes() {
+            resetAttributes(false);
+            setTimeout(function() {
+              attributesDiv.slideUp(function() { attributesElem.hide(); });
+            }, 300);
+          }
+          function saveAttributes() {
+            sections.byName[name].attributes = data = editData;
+            attributesCap.put(data, hideAttributes);
+          }
+          function cancelAttributes() {
+            hideAttributes();
+          }
   
-        headerElem.find('.settings').click(showAttributes);
-        attributesDiv.find('.save').click(saveAttributes);
-        attributesDiv.find('.cancel').click(cancelAttributes);
+          headerElem.find('.settings').click(showAttributes);
+          attributesDiv.find('.save').click(saveAttributes);
+          attributesDiv.find('.cancel').click(cancelAttributes);
+        
+      });
       });
     },
   }

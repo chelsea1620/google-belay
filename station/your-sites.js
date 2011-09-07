@@ -277,43 +277,80 @@ var knownAttributes = [
 ];
 
 var setupSection = function(sectionElem) {
-  var headerElem = sectionElem.find('.header');
-  var attributesElem = sectionElem.find('.attributes');
-  var attributesDiv = attributesElem.find('div');
-  headerElem.find('.settings').click(function() {
-    if (attributesElem.css('display') === 'none') {
-      attributesDiv.hide();
-      attributesElem.show();
-      attributesDiv.slideDown();
-    }
-    else {
-      attributesDiv.slideUp(function() { attributesElem.hide(); });
-    }
-  });
-  
   var data = {
     name: 'Mark Lentczner',
     nick: 'MtnViewMark',
     loc: '94041',
   };
+  var editData;
   
+
+  var headerElem = sectionElem.find('.header');
+  var attributesElem = sectionElem.find('.attributes');
+  var attributesDiv = attributesElem.find('div');
   var attributesTable = attributesDiv.find('table');
   var protoRow = attributesTable.find('tr').eq(0).detach();
-  knownAttributes.forEach(function(a) {
-    var row = protoRow.clone();
-    row.find('.tag').text(a.en);
 
-    if (a.attr in data) {
-      row.find('.include input').attr('checked', 'checked');
-      row.find('.value').text(data[a.attr]);
+  function showAttributes() {
+    editData = data;
+    attributesTable.find('tr').remove();
+    
+    knownAttributes.forEach(function(a) {
+      var row = protoRow.clone();
+      row.find('.tag').text(a.en);
+      
+      var includeInput = row.find('.include input');
+      var valueTD = row.find('.value');
+      
+      if (a.attr in editData) {
+        includeInput.attr('checked', 'checked');
+        valueTD.text(editData[a.attr]);
+      }
+      else {
+        includeInput.removeAttr('checked');
+        valueTD.text('');
+      }
+      
+      valueTD.click(function() {
+        valueTD.unbind();
+        var input = $('<input />');
+        input.val(editData[a.attr]);
+        input.blur(function() {
+          var t = input.val().trim();
+          if (t === '') {
+            delete editData[a.attr];
+            includeInput.removeAttr('checked');
+          }
+          else {
+            editData[a.attr] = t;
+            includeInput.attr('checked', 'checked');
+          }
+        });
+        valueTD.empty();
+        valueTD.append(input);
+        input.focus();
+      });
+      
+      row.appendTo(attributesTable);
+    });
+
+    attributesDiv.hide();
+    attributesElem.show();
+    attributesDiv.slideDown();
+  }
+
+  function hideAttributes() {
+    attributesDiv.slideUp(function() { attributesElem.hide(); });
+  }
+  
+  headerElem.find('.settings').click(function() {
+    if (attributesElem.css('display') === 'none') {
+      showAttributes();
     }
     else {
-      row.find('.include input').removeAttr('checked');
-      row.find('.value').text('');
+      hideAttributes();
     }
-    
-    row.appendTo(attributesTable);
-  })
+  });
 };
 
 var initialize = function(instanceCaps, defaultTools) {

@@ -372,7 +372,7 @@ var setupSection = function(name, sectionElem) {
 
   var headerElem = sectionElem.find('.header');
   var attributesElem = sectionElem.find('.attributes');
-  var attributesDiv = attributesElem.find('div');
+  var attributesDiv = attributesElem.find('.box');
   var attributesTable = attributesDiv.find('table');
   var protoRow = attributesTable.find('tr').eq(0).detach();
   
@@ -433,6 +433,8 @@ var setupSection = function(name, sectionElem) {
     });
   }
   function showAttributes() {
+    if (attributesElem.css('display') !== 'none') return;
+    
     resetAttributes(true);
     attributesDiv.hide();
     attributesElem.show();

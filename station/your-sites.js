@@ -39,11 +39,6 @@ var instances = Object.create(null);
      state: {
        id: uuid,
        belayInstance: cap(belay/instance),
-       launch: {
-          page: { html: url, window: { width: int, height: int } },
-          gadget: { html: url, scripts: [url] },
-          info: any
-       },
        capSnapshot: string,
        created: Int      -- time created (seconds since epoch)
        name: string,
@@ -54,6 +49,12 @@ var instances = Object.create(null);
        },
        data: string  -- stored data for the instance
        section: string -- the section the instance belongs to
+     },
+     launch: {
+        page: { html: url, window: { width: int, height: int } },
+        gadget: { html: url, scripts: [url] },
+        info: any
+        attributes: { set: cap }
      },
      capServer: caps -- the cap server for this instance (if !state.remote)
      windowedInstance: bool -- if true, in a window (route via extension)
@@ -378,7 +379,7 @@ var attributes = (function() {
   var knownAttributes = [
     { attr: 'name', en: 'Name' },
     { attr: 'nick', en: 'Nickname' },
-    { attr: 'loc', en: 'Location' },
+    { attr: 'location', en: 'Location' },
     { attr: 'email', en: 'Email' },
     { attr: 'phone', en: 'Phone' },
     { attr: 'gender', en: 'Gender' },
@@ -407,79 +408,88 @@ var attributes = (function() {
           row.find('.tag').text(a.en);
           row.find('.value').text('');
           row.appendTo(attributesTable);
+        });
 
-          function resetAttributes(editable) {
-            editData = { };
-    
-            attributesTable.find('tr').each(function(i, tr) {
-              var a = knownAttributes[i];
-              var row = $(tr);
-      
-              var includeInput = row.find('.include input');
-              var valueTD = row.find('.value');
-      
-              valueTD.empty();
-              if (a.attr in data) {
-                var v = data[a.attr];
-                editData[a.attr] = v;
-                includeInput.attr('checked', 'checked');
-                valueTD.text(v);
-              }
-              else {
-                includeInput.removeAttr('checked');
-                valueTD.text('');
-              }
-      
-              if (editable) {
-                valueTD.click(function() {
-                  valueTD.unbind();
-                  var input = $('<input />');
-                  input.val(editData[a.attr]);
-                  input.blur(function() {
-                    var t = input.val().trim();
-                    if (t === '') {
-                      delete editData[a.attr];
-                      includeInput.removeAttr('checked');
-                    }
-                    else {
-                      editData[a.attr] = t;
-                      includeInput.attr('checked', 'checked');
-                    }
-                  });
-                  valueTD.empty();
-                  valueTD.append(input);
-                  input.focus();
-                });
-              }
-            });
-          }
-          function showAttributes() {
-            if (attributesElem.css('display') !== 'none') return;
-    
-            resetAttributes(true);
-            attributesDiv.hide();
-            attributesElem.show();
-            attributesDiv.slideDown();
-          }
-          function hideAttributes() {
-            resetAttributes(false);
-            setTimeout(function() {
-              attributesDiv.slideUp(function() { attributesElem.hide(); });
-            }, 300);
-          }
-          function saveAttributes() {
-            sections.byName[name].attributes = data = editData;
-            attributesCap.put(data, hideAttributes);
-          }
-          function cancelAttributes() {
-            hideAttributes();
-          }
+        function resetAttributes(editable) {
+          editData = { };
   
-          headerElem.find('.settings').click(showAttributes);
-          attributesDiv.find('.save').click(saveAttributes);
-          attributesDiv.find('.cancel').click(cancelAttributes);
-        
-      });
+          attributesTable.find('tr').each(function(i, tr) {
+            var a = knownAttributes[i];
+            var row = $(tr);
+    
+            var includeInput = row.find('.include input');
+            var valueTD = row.find('.value');
+    
+            valueTD.empty();
+            if (a.attr in data) {
+              var v = data[a.attr];
+              editData[a.attr] = v;
+              includeInput.attr('checked', 'checked');
+              valueTD.text(v);
+            }
+            else {
+              includeInput.removeAttr('checked');
+              valueTD.text('');
+            }
+    
+            if (editable) {
+              valueTD.click(function() {
+                valueTD.unbind();
+                var input = $('<input />');
+                input.val(editData[a.attr]);
+                input.blur(function() {
+                  var t = input.val().trim();
+                  if (t === '') {
+                    delete editData[a.attr];
+                    includeInput.removeAttr('checked');
+                  }
+                  else {
+                    editData[a.attr] = t;
+                    includeInput.attr('checked', 'checked');
+                  }
+                });
+                valueTD.empty();
+                valueTD.append(input);
+                input.focus();
+              });
+            }
+          });
+        }
+        function showAttributes() {
+          if (attributesElem.css('display') !== 'none') return;
+  
+          resetAttributes(true);
+          attributesDiv.hide();
+          attributesElem.show();
+          attributesDiv.slideDown();
+        }
+        function hideAttributes() {
+          resetAttributes(false);
+          setTimeout(function() {
+            attributesDiv.slideUp(function() { attributesElem.hide(); });
+          }, 300);
+        }
+        function saveAttributes() {
+          sections.byName[name].attributes = data = editData;
+          attributesCap.put(data, hideAttributes);
+          
+          console.log('instances at time of save', instances);
+          Object.keys(instances).forEach(function(instID) {
+            var inst = instances[instID];
+            if (inst.state.section === name
+                && inst.launch.attributes
+                && inst.launch.attributes.set) {
+              inst.launch.attributes.set.put(data);
+            }
+          });
+        }
+        function cancelAttributes() {
+          hideAttributes();
+        }        
+  
+        headerElem.find('.settings').click(showAttributes);
+        attributesDiv.find('.save').click(saveAttributes);
+        attributesDiv.find('.cancel').click(cancelAttributes);
       });
     },
   }

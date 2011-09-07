@@ -41,6 +41,7 @@ def server_cap(path, feed_id):
 
 
 class FeedData(db.Model):
+  title = db.StringProperty()
   name = db.StringProperty()
   location = db.StringProperty()
   
@@ -115,6 +116,9 @@ class LaunchHandler(BaseHandler):
         'editor_url': server_feed_url("/view/editor", feed_id),
         'readChitURL': server_url("/chit-24.png"),
         'postChitURL': server_url("/chit-25.png")
+      },
+      'attributes': {
+        'set': server_cap('/data/attributes', feed_id)
       }
     }
 
@@ -155,16 +159,13 @@ class GenerateProfileHandler(BaseHandler):
     feed_id = str(feed_uuid)
 
     feed = FeedData(key_name=feed_id);
-    # TODO(jpolitz): bcapRequest should be used here, but was yielding None
-    # Find out why
-    feed.name = self.request.get('name')
-    feed.location = self.request.get('location')
+    feed.title = self.request.get('title')
     feed.put()
 
     response = {
       'launch': server_cap("/belay/launch", feed_id),
       'icon': server_url("/tool-buzzer.png"),
-      'name': '%s of %s' % (feed.name, feed.location)
+      'name': feed.title
     }
 
     self.bcapResponse(response)
@@ -175,7 +176,7 @@ class GenerateReaderHandler(BaseHandler):
     feed = FeedData.get_by_key_name(feed_id);
     response = {
         'launch': server_cap('/belay/launchReader', feed_id),
-        'name': 'buzz about ' + feed.name + " of " + feed.location,
+        'name': 'buzz about ' + feed.title,
         'icon': server_url('/tool-buzzer.png')
     };
     self.bcapResponse(response)
@@ -184,9 +185,11 @@ class ViewHandler(BaseHandler):
   def get(self):
     feed_id = self.validate_feed();
     feed = FeedData.get_by_key_name(feed_id);
-    need_profile = feed == None or feed.name == ''
+    need_profile = feed == None or feed.title == ''
     if feed == None:
-      feed = FeedData(key_name=feed_id);
+      feed = FeedData(key_name=feed_id)
+    has_name = feed.name and feed.name != ''
+    has_location = feed.location and feed.location != ''
     
     q = ItemData.all();
     q.ancestor(feed);
@@ -203,6 +206,10 @@ class ViewHandler(BaseHandler):
         'need_profile': need_profile,
         'feed': feed,
         'items': items,
+        'has_name': has_name,
+        'has_location': has_location,
+        'has_subtitle': has_name or has_location
+        
       })
 
 class EditorViewHandler(ViewHandler):
@@ -219,8 +226,7 @@ class DataProfileHandler(BaseHandler):
     feed = FeedData(key_name=feed_id)
     
     request = self.bcapRequest()
-    feed.name = request.get('name')
-    feed.location = request.get('location')
+    feed.title = request.get('title')
     feed.put()
 
     self.xhr_response()
@@ -247,6 +253,17 @@ class DataPostHandler(BaseHandler):
 
     self.xhr_response()
 
+class SetAttributesHandler(BaseHandler):
+  def put(self):
+    feed_id = self.validate_feed()
+    feed = FeedData(key_name=feed_id)
+    request = self.bcapRequest()
+    
+    feed.name = request.get('name', '')
+    feed.location = request.get('location', '')
+    feed.put()
+    
+    self.xhr_response()
 
 
 application = webapp.WSGIApplication(
@@ -259,6 +276,7 @@ application = webapp.WSGIApplication(
   ('/view/reader', ReaderViewHandler),
   ('/data/profile', DataProfileHandler),
   ('/data/post', DataPostHandler),
+  ('/data/attributes', SetAttributesHandler),
   ],
   debug=True)
 

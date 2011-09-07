@@ -18,13 +18,10 @@ limitations under the License.
   <style scoped="scoped">@import url({{ css_url }});</style>
   {% if need_profile %}
     <div class="buzzer-profile">
-      <p>Please tell your readers something about yourself before you start
-        posting:</p>
+      <p>It's easy to get going!</p>
       <form action="{{ profile_url }}" method="POST">
-        <p>What do you call yourself?</p>
-        <p><input type="text" name="name" /></p>
-        <p>Where in the world are you?</p>
-        <p><input type="text" name="location" /></p>
+        <p>Just pick a name for your buzzer:</p>
+        <p><input type="text" name="title" /></p>
         <p><input type="submit" value="Submit" /></p>
       </form>
     </div>
@@ -36,7 +33,14 @@ limitations under the License.
         <div class="buzzer-chit buzzer-post-chit" title="post to this buzzer"
           style="width:26px;height:24px;background:url({{ chit_post_url }}) no-repeat 0 0;"></div>
       {% endif %}
-      <p>{{ feed.name }} of {{ feed.location }}</p>
+      <p>{{feed.title}}
+      {% if has_subtitle %}
+        <br /><small>—
+          {% if has_name %} by <i>{{ feed.name }}</i> {% endif %}
+          {% if has_location %} from <i>{{ feed.location }}</i> {% endif %}
+        </small>
+      {% endif %}
+      </p>
       {% if include_post %}
       <form action="{{ post_url }}" method="POST">
         <div>

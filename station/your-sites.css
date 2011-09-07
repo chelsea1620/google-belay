@@ -65,6 +65,10 @@ table {
   margin: 0;
 }
 
+.header {
+  margin-bottom: -1px;
+  border-bottom: 1px solid #d5d5d5;
+}
 .items tr {
   border-top: 1px solid #d5d5d5;
 }

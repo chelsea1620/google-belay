@@ -31,7 +31,7 @@ function domainOfInst(inst) {
 //
 // Instance Data
 //
-var instances = {};
+var instances = Object.create(null);
 /*
   a map from instanceIDs to
    {
@@ -53,16 +53,24 @@ var instances = {};
          top: int, left: int, width: int, height: int,
        },
        data: string  -- stored data for the instance
+       section: string -- the section the instance belongs to
      },
      capServer: caps -- the cap server for this instance (if !state.remote)
      windowedInstance: bool -- if true, in a window (route via extension)
-
-     rowNode: node -- node in the item list
+     rows: [node] -- nodes in the item list
      pageWindow: window -- if open in page view, the window it is in
      gadgetNode: node -- if open in gadget view, the container node it is in
      closeCap : cap -- present for windowed instances
    }
 */
+
+var cmpInstByCreated = function(inst1, inst2) {
+  return inst1.state.created - inst2.state.created;
+};
+
+function recentInstances(instances, numRecent) {
+  
+}
 
 var dirtyInstances = [];
 var dirtyProcess = function() {
@@ -187,10 +195,6 @@ var launchInstance = function(inst, openType, launchCap) {
     inst.launch = launch;
     var canPage = 'page' in launch;
 
-    var row = inst.rowNode;
-    var asVis = function(b) { return b ? 'visible' : 'hidden'; }
-    row.find('.open-page').css('visibility', asVis(canPage));
-
     var preferred = canPage ? 'page' : 'none';
 
     if (openType == 'restore') {
@@ -219,25 +223,10 @@ var launchInstance = function(inst, openType, launchCap) {
 
 
 var protoItemRow; // TODO(jpolitz): factor this differently?
-var itemsTable;
 var addInstance = function(inst, openType, launchCap) {
   instances[inst.state.id] = inst;
 
-  var row = protoItemRow.clone();
-  inst.rowNode = row;
-
-  row.find('td.icon img').attr('src', inst.state.icon || defaultIcon);
-  row.find('td.name').text(inst.state.name || 'an item');
-  row.find('td.actions .open-page').click(function() {
-      launchInstance(inst, 'page', belayLaunch);
-    });
-  row.find('td.actions .open-gadget').click(function() {
-      launchInstance(inst, 'gadget');
-    });
-  row.find('td.actions .remove').click(function() {
-      removeInstance(inst);
-    });
-  row.prependTo(itemsTable);
+  sections.newInstance(inst);
 
   launchInstance(inst, openType, launchCap);
 
@@ -255,7 +244,7 @@ var removeInstance = function(inst) {
   if (inst.pageWindow) {
     inst.closeCap.put();
   }
-  inst.rowNode.fadeOut(function() { inst.rowNode.remove(); });
+  sections.deleteInstance(inst);
   if (inst.capServer) inst.capServer.revokeAll();
   delete instances[inst.state.id];
   inst.storageCap.remove();
@@ -264,6 +253,107 @@ var removeInstance = function(inst) {
     domain: domainOfInst(inst)
   });
 };
+
+var sections = {
+  names: [ 'Sites', 'Recent', 'News and Blogs', 'Forums and Discussions' ],
+  // Map<Name, { label: jQuery, list: jQuery, insts: inst }>
+  byName: Object.create(null),
+  sitesLabel: null, // jQuery
+  visible: [],
+  add: function(name) {
+    if (name === 'Sites') {
+      sections.sitesLabel = $('#nav .selected').eq(0);
+      sections.sitesLabel.click(sections.showSites);
+      return;
+    }
+   
+    var label = $('<li>' + name + '</li>'); // todo: XSS
+    $('#nav').append(label);
+
+    var section = protoSection.clone();
+    section.css('display', 'none');
+    section.appendTo($('#belay-items'));
+      
+    label.click(function(evt) { sections.show(name); });
+    label.droppable({ 
+      tolerance: 'pointer',
+      drop: function(evt, ui) {
+        // TODO: move it over
+        console.log('got it wooooo', evt, ui);
+      },
+      accept: function(elt) { return !!elt.data('belay-inst'); }
+    });
+
+    sections.byName[name] = { label: label, list: section, insts: [] };
+    
+    setupSection(name, section);
+  },
+  repopulateRecent: function() {
+    // TODO: do it
+  },
+  showSites: function() {
+    sections.sitesLabel.addClass('selected');
+    // all visible, except for Recent
+    sections.visible = 
+      Object.keys(sections.byName)
+      .map(function(k) { 
+        if (k === 'Recent') { return null; }
+        var sec = sections.byName[k];
+        sec.label.removeClass('selected');
+        sec.list.show();
+        return sec;
+      })
+      .filter(function(sec) { return sec !== null; });
+  },
+  show: function(name) {
+    var v = sections.byName[name];
+    sections.sitesLabel.removeClass('selected');
+    v.label.addClass('selected');
+    v.list.show();
+    sections.visible.forEach(function(sec) { 
+      if (sec !== v) {
+        sec.label.removeClass('selected');
+        sec.list.hide();
+      }
+    });
+    sections.visible = [v];
+    if (name === 'Recent') { sections.repopulateRecent(); }
+  },
+  deleteInstance: function(inst) {
+    inst.rows.forEach(function(row) { 
+      row.fadeOut(400, function() { row.remove(); });
+    });
+    inst.rows = [];
+  },
+  newInstance: function(inst) {
+    var row = protoItemRow.clone();
+
+    var icon = row.find('td.icon img');
+    icon.attr('src', inst.state.icon || defaultIcon);
+    row.find('td.name').text(inst.state.name || 'an item');
+    row.find('td.actions .open-page').click(function() {
+        launchInstance(inst, 'page', belayLaunch);
+      });
+    row.find('td.actions .open-gadget').click(function() {
+        launchInstance(inst, 'gadget');
+      });
+    row.find('td.actions .remove').click(function() {
+        removeInstance(inst);
+      });
+   
+    row.draggable({ 
+      handle: icon, 
+      helper: 'clone', 
+      cursor: 'pointer' 
+    });
+    row.data('belay-inst', true);
+
+    inst.rows = [row];
+    var list = sections.byName[inst.state.section].list;
+
+    row.prependTo(list.find('table.items').eq(0));
+  }
+}
 
 // list of attributes we support
 var knownAttributes = [
@@ -276,7 +366,9 @@ var knownAttributes = [
   { attr: 'age', en: 'Age' },
 ];
 
-var setupSection = function(sectionElem) {
+var protoSection; // initialized in initialize
+
+var setupSection = function(name, sectionElem) {
   var data = {
     name: 'Mark Lentczner',
     nick: 'MtnViewMark',
@@ -289,6 +381,8 @@ var setupSection = function(sectionElem) {
   var attributesDiv = attributesElem.find('div');
   var attributesTable = attributesDiv.find('table');
   var protoRow = attributesTable.find('tr').eq(0).detach();
+  
+  sectionElem.find('.name').text(name);
 
   attributesTable.find('tr').remove();
   knownAttributes.forEach(function(a) {
@@ -375,13 +469,16 @@ var setupSection = function(sectionElem) {
 var initialize = function(instanceCaps, defaultTools) {
   var top = topDiv;
   
-  top.find('.ex').remove(); // remove all the example layout on the page
+  $(document.body).find('.ex').remove(); // remove layout examples
 
   var itemsDiv = topDiv.find('#belay-items');
-  itemsTable = itemsDiv.find('table.items');
-  protoItemRow = itemsTable.find('tr').eq(0).detach();
-  
-  itemsDiv.find('.section').each(function() { setupSection($(this)); });
+
+  protoSection = topDiv.find('.section').eq(0).detach();
+  protoItemRow = protoSection.find('table.items tr').eq(0).detach();
+
+  sections.names.forEach(function(name) { sections.add(name); });
+
+  sections.show('Recent');
 
   // TODO(mzero): refactor the two addInstance functions and the newInstHandler
   var addInstanceFromGenerate = function(genCap) {
@@ -412,9 +509,6 @@ var initialize = function(instanceCaps, defaultTools) {
   var loadedInstances = [];
 
   var loadInsts = function() {
-    var cmpInstByCreated = function(inst1, inst2) {
-      return inst1.state.created - inst2.state.created;
-    };
     loadedInstances.sort(cmpInstByCreated).forEach(function(inst) {
       addInstance(inst, 'restore', belayLaunch);
     });
@@ -451,8 +545,9 @@ var newInstHandler = function(args) {
       belayInstance: args.launchData.launch,
       name: args.launchData.name,
       icon: args.launchData.icon,
-      created: (new Date()).valueOf()
-    }
+      created: (new Date()).valueOf(),
+      section: 'Recent'
+    },
   };
   addInstance(inst, 'page', args.relaunch);
 };

@@ -15,19 +15,14 @@
 onBelayReady(function() {
   var form = $('#profileForm');
   form.submit(function(evt) {
-    var name = form.find('[name="name"]').val();
-    var loc = form.find('[name="location"]').val();
+    var title = form.find('[name="title"]').val();
     $.ajax({
       url: '/belay/generateProfile',
       dataType: 'text',
       type: 'POST',
-      data: {name: name, location: loc},
+      data: {title: title},
       success: function(data, status, xhr) {
         data = capServer.dataPostProcess(data);
-        var instanceName = name + ' of ' + loc;
-        console.log(instanceName);
-        console.log(data);
-
         belay.outpost.becomeInstance.put(data);
       },
       failure: function() {

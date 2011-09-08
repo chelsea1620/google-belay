@@ -1,0 +1,88 @@
+/*
+Copyright 2011 Google Inc. All Rights Reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+/* Go */
+@import url(go.css);
+
+@media all {
+/* Form */
+.x-form ul, .x-form li { margin: 1em 0; }
+.x-form ul { list-style: none; padding: 0; }
+.x-form ins { font-weight: bold; text-decoration: none; }
+}
+
+@media screen, projection {
+/* Box */
+body.rtl .x-box { float: left; margin: 0 1em 1em 0; }
+.x-box { background: #eee; border: 1px solid #ccc; float: right; margin: 0 0 1em 1em; padding: 1em; width: 250px; }
+.x-box img { display: block; margin: auto; }
+/* Breadcrumb */
+body { position: relative; }
+body.rtl #x-breadcrumb { left: auto; right: 175px; }
+body.product #x-breadcrumb { margin: 1em 0; position: static; }
+#x-breadcrumb { color: #333; left: 175px; line-height: 1.2; margin: 0; position: absolute; top: 4.15em; }
+#zh-CN #x-breadcrumb, #zh-TW #x-breadcrumb { top: 4.46em; }
+/* Button */
+.x-button *, .x-button-basic * { margin: 0; padding: 0; }
+.x-button, .x-button-basic { background: #cadef4; border: 1px solid #ccc; direction: ltr; line-height: 1.2; max-width: 795px; overflow: visible; padding: 15px; text-align: center; width: 20em; }
+.x-button p, .x-button-basic p { margin: 10px 0 0; text-align: center; }
+.x-button div, .x-button-basic div { background: url(//www.google.com/images/modules/buttons/g-button-1.gif) no-repeat; background-color: #5679a5; font-size: 1.3em; }
+.x-button div span, .x-button-basic div span { background: url(//www.google.com/images/modules/buttons/g-button-1.gif) right -400px no-repeat; display: block; height: 1%; width: 100%; }
+.x-button div span span { background: url(//www.google.com/images/modules/buttons/g-button-1.gif) left bottom no-repeat; }
+.x-button div span span a, .x-button-basic div span span a { background: url(//www.google.com/images/modules/buttons/g-button-2.gif) right bottom no-repeat; color: #fff !important; display: block; font-weight: bold; height: 1%; padding: 8px 18px 10px 13px; text-decoration: none; }
+.x-button-basic { background: none; border: 0; padding: 0; }
+.x-button-basic div { background: url(//www.google.com/images/modules/buttons/g-button-basic-1.gif) no-repeat; }
+.x-button-basic div span { background: url(//www.google.com/images/modules/buttons/g-button-basic-1.gif) right -400px no-repeat; }
+.x-button-basic div span span { background: url(//www.google.com/images/modules/buttons/g-button-basic-1.gif) left bottom no-repeat; }
+.x-button-basic div span span a { background: url(//www.google.com/images/modules/buttons/g-button-basic-2.gif) right bottom no-repeat; }
+/* Form */
+body.rtl .x-form .f-c1 li, body.rtl .x-form .f-c2 li, body.rtl .x-form .f-c3 li, body.rtl .x-form .f-c4 li { float: right; }
+.x-form li p { color: #777; margin: .3em 0 0; }
+.x-form li ul { height: 1%; margin: .5em 0 1em; }
+.x-form li li label, .x-form .f-c1 li, .x-form .f-c2 li, .x-form .f-c3 li, .x-form .f-c4 li { margin: 0; }
+.x-form li li, .x-form li li label { display: inline; }
+.x-form li li { margin: 0 1em 0 0; }
+.x-form li li label { font-weight: normal; }
+.x-form li li input, .x-form .button, .x-form .f-min { width: auto; }
+.x-form li li input { bottom: -.1em; position: relative; }
+.x-form label { margin: 0 0 .3em; }
+.x-form input { width: 250px; }
+.x-form ins { color: #c00; }
+.x-form .f-c1, .x-form .f-c2, .x-form .f-c3, .x-form .f-c4 { overflow: hidden; }
+.x-form .f-c1 li, .x-form .f-c2 li, .x-form .f-c3 li, .x-form .f-c4 li { display: block; float: left; }
+.x-form .f-c1 li { width: 100%; }
+.x-form .f-c2 li { width: 50%; }
+.x-form .f-c3 li { width: 33%; }
+.x-form .f-c4 li { width: 25%; }
+.x-form .f-compact { width: 50px; }
+/* Note */
+.x-note { color: #777; }
+/* Promo */
+body.rtl #x-promo { left: 15px; padding: 0 5px 0 0; right: auto; }
+#x-promo { margin: 0; padding: 0 0 0 5px; position: absolute; right: 15px; top: 15px; }
+/* Search, Language */
+body.rtl #x-search, body.rtl #x-lang { margin: -4.72em 175px 2.92em 0; text-align: left; }
+body.product #x-search, body.product #x-lang { margin-bottom: 1.7em; margin-top: -3.5em; }
+#x-search, #x-lang { margin: -4.72em 0 2.92em 175px; position: relative; text-align: right; }
+#x-search #q { width: 150px; }
+#zh-CN #x-search, #zh-CN #x-lang, #zh-TW #x-search, #zh-TW #x-lang { margin-bottom: 3.17em; margin-top: -5.08em; }
+#zh-CN body.product #x-search, #zh-CN body.product #x-lang, #zh-TW body.product #x-search, #zh-TW body.product #x-lang { margin-bottom: 1.84em; margin-top: -3.79em; }
+}
+
+@media print {
+/* Breadcrumb, Promo, Search, Language */
+#x-breadcrumb, #x-promo, #x-search, #x-lang { display: none; }
+}

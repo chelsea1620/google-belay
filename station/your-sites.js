@@ -56,6 +56,7 @@ var instances = Object.create(null);
         info: any
         attributes: { set: cap }
      },
+     delayedLaunchHash : UUID
      capServer: caps -- the cap server for this instance (if !state.remote)
      windowedInstance: bool -- if true, in a window (route via extension)
      rows: [node] -- nodes in the item list
@@ -346,6 +347,7 @@ var sections = {
   newInstance: function(inst) {
     var delayedLaunchUUID = '#' + newUUIDv4();
     var delayedLaunchURL = 'redirect.html' + delayedLaunchUUID;
+    inst.delayedLaunchHash = delayedLaunchUUID;
 
     var row = protoItemRow.clone();
 
@@ -585,15 +587,28 @@ var initialize = function(instanceCaps, defaultTools) {
 
 var delayed = {
   launchInfo: Object.create(null), // Map<UUID, launchInfo>
+  readySKs: Object.create(null), // Map<UUID, SK>
   // Called by Belay when a delayed window is ready. Should return launch
   // information to navigate to the actual instance.
-  readyHandler: function(hash) {
+  readyHandler: function(hash, sk, fk) {
     var info = delayed.launchInfo[hash];
-    delete (delayed.launchInfo)[hash];
-    return info;
+    if (info) {
+      delete (delayed.launchInfo)[hash];
+      sk(info);
+    }
+    else {
+      readySKs[hash] = sk;
+    }
   },
-  newDelayed: function(hash, arg) {
-    delayed.launchInfo[hash] = arg;
+  newDelayed: function(hash, info) {
+    var sk = delayed.readySKs[hash];
+    if (sk) {
+      delete (delayed.readySKs)[hash];
+      return sk(info);
+    }
+    else {
+      delayed.launchInfo[hash] = info;
+    }
   }
 }
 
@@ -626,6 +641,9 @@ var closeInstHandler = function(instID) {
     inst.state.opened = 'closed';
     dirty(inst);
   }
+    
+  // Re-prime the delayed URL for launching.
+  setDelayedLaunch.post(inst.delayedLaunchHash);
 
   // Instace closed, so let it re-appear as a suggestion
   belaySuggestInst.put({

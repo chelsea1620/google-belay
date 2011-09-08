@@ -114,6 +114,12 @@ function makeHighlighting() {
   };
 }
 
+var delayedLaunches = Object.create(null);
+
+function setDelayedLaunch(hash) {
+  delayedLaunches[hash] = true;
+}
+
 self.addEventListener('connect', function(e) { 
   var port = e.ports[0];
   var iframeTunnel = new CapTunnel(port);
@@ -139,6 +145,7 @@ self.addEventListener('connect', function(e) {
         pending.outpost.suggestInst = makeSuggestInst();
         pending.outpost.removeSuggestInst = makeRemoveSuggestInst();
         pending.outpost.services = makeHighlighting();
+        pending.outpost.setDelayedLaunch = workerServer.grant(setDelayedLaunch);
         // note that this is the station
         // add a cap for launching from the station, closing over outpost.windowOpen
       }
@@ -162,6 +169,19 @@ self.addEventListener('connect', function(e) {
       };
 
       outpost.setUpClient.post(pending);
+    }
+    else if (location.hash in delayedLaunches) {
+      // station opened this page for an instance
+      delete delayedLaunches[location.hash];
+      stationCaps.delayedReadyHandler.post(location.hash, function(arg) {
+        buildLauncher(outpost.windowLocation)
+          ({ url: arg.url,
+             instID: arg.instID, 
+             outpostData: arg.outpostData, 
+             isStation: false },
+           function() { },
+           function() { });
+      });
     }
     else {
       // client might want to become an instance or the station

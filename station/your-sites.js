@@ -272,6 +272,8 @@ var sections = {
   byName: Object.create(null),
   sitesLabel: null, // jQuery
   visible: [],
+  ready: false,
+  instToAdd: [],
   
   init: function(sectionCap) {
     sections.sitesLabel = $('#nav .selected').eq(0);
@@ -287,6 +289,8 @@ var sections = {
       }
       else {
         sections.showSites();
+        sections.ready = true;
+        sections.instToAdd.forEach(sections.newInstance);
       }
     }
 
@@ -368,6 +372,11 @@ var sections = {
     inst.rows = [];
   },
   newInstance: function(inst) {
+    if (!sections.ready) {
+      sections.instToAdd.push(inst);
+      return;
+    }
+    
     var delayedLaunchUUID = '#' + newUUIDv4();
     var delayedLaunchURL = 'redirect.html' + delayedLaunchUUID;
     inst.delayedLaunchHash = delayedLaunchUUID;
@@ -408,8 +417,11 @@ var sections = {
     row.data('belay-inst', inst);
 
     inst.rows = [row];
-    var list = sections.byName[inst.state.section || sections.defaultName].list;
-
+    if (!(inst.state.section in sections.byName)) {
+      inst.state.section = sections.defaultName;
+      dirty(inst);
+    }
+    var list = sections.byName[inst.state.section].list;
     row.prependTo(list.find('table.items').eq(0));
   }
 }

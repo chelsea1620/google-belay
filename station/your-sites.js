@@ -393,15 +393,49 @@ var sections = {
 
 var attributes = (function() {
   // list of attributes we support
+
+  var FixedAttribute = function(value) { this.fixed = value; };
+  FixedAttribute.prototype = {
+    build: function(td, setter) {
+      var span = $('<span></span>');
+      span.text(this.fixed);
+      td.empty();
+      td.append(span);
+    },
+    value: function(td, value) {
+      return this.fixed;
+    },
+    focus: function(td) {
+    },
+  };
+  
+  var TextAttribute = function() { };
+  TextAttribute.prototype = {
+    build: function(td, setter) {
+      var input = $('<input />');
+      input.change(function() {
+        setter(input.val().trim());
+      });
+      td.empty();
+      td.append(input);
+    },
+    value: function(td, value) {
+      td.find('input').val(value);
+      return value;
+    },
+    focus: function(td) {
+      td.find('input').focus();
+    },
+  };
+  
   var knownAttributes = [
-    { attr: 'name', en: 'Name' },
-    { attr: 'nick', en: 'Nickname' },
-    { attr: 'location', en: 'Location' },
-    { attr: 'email', en: 'Email' },
-    { attr: 'phone', en: 'Phone' },
-    { attr: 'gender', en: 'Gender' },
-    { attr: 'age', en: 'Age' },
+    { attr: 'name', en: 'Name', controller: new TextAttribute() },
+    { attr: 'location', en: 'Location', controller: new TextAttribute() },
+    { attr: 'email', en: 'Email', controller: new TextAttribute() },
+    { attr: 'gender', en: 'Gender', controller: new FixedAttribute('Female') },
+    { attr: 'age', en: 'Age', controller: new FixedAttribute('34') },
   ];
+  
   
   return {
     setup: function(name, sectionElem, attributesCap) {
@@ -423,7 +457,9 @@ var attributes = (function() {
           var row = protoRow.clone();
           row.find('.include input').removeAttr('checked');
           row.find('.tag').text(a.en);
-          row.find('.value').text('');
+          a.controller.build(row.find('.value'), function(v) {
+            editData[a.attr] = v;
+          });
           row.appendTo(attributesTable);
         });
 
@@ -436,58 +472,45 @@ var attributes = (function() {
     
             var includeInput = row.find('.include input');
             var valueTD = row.find('.value');
-    
-            valueTD.empty();
-            if (a.attr in data) {
-              var v = data[a.attr];
-              editData[a.attr] = v;
+            
+            function enable() {
+              editData[a.attr] = a.controller.value(valueTD, data[a.attr]);
               includeInput.attr('checked', 'checked');
-              valueTD.text(v);
+              valueTD.children().show();
             }
-            else {
+            function disable() {
+              delete editData[a.attr];
               includeInput.removeAttr('checked');
-              valueTD.text('');
-            }
-    
-            if (editable) {
+              valueTD.children().hide()
               valueTD.click(function() {
                 valueTD.unbind();
-                var input = $('<input />');
-                input.val(editData[a.attr]);
-                input.blur(function() {
-                  var t = input.val().trim();
-                  if (t === '') {
-                    delete editData[a.attr];
-                    includeInput.removeAttr('checked');
-                  }
-                  else {
-                    editData[a.attr] = t;
-                    includeInput.attr('checked', 'checked');
-                  }
-                });
-                valueTD.empty();
-                valueTD.append(input);
-                input.focus();
+                enable();
+                a.controller.focus(valueTD);
               });
             }
+            function able(bool) { bool ? enable() : disable(); }
+            
+            able(a.attr in data);
+            
+            includeInput.change(function() {
+              able(includeInput.attr('checked'));
+            });
           });
         }
         function showAttributes() {
           if (attributesElem.css('display') !== 'none') return;
   
-          resetAttributes(true);
+          resetAttributes();
           attributesDiv.hide();
           attributesElem.show();
           attributesDiv.slideDown();
         }
         function hideAttributes() {
-          resetAttributes(false);
-          setTimeout(function() {
-            attributesDiv.slideUp(function() { attributesElem.hide(); });
-          }, 300);
+          attributesDiv.slideUp(function() { attributesElem.hide(); });
         }
         function saveAttributes() {
           sections.byName[name].attributes = data = editData;
+          console.log('data saved:', data);
           attributesCap.put(data, hideAttributes);
           
           Object.keys(instances).forEach(function(instID) {

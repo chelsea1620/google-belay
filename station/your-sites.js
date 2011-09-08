@@ -429,10 +429,43 @@ var attributes = (function() {
     },
   };
   
+  var ChoiceAttribute = function(choices) { this.choices = choices; }
+  ChoiceAttribute.prototype = {
+    build: function(td, setter) {
+      var select = $('<select></select>');
+      select.addClass('button');
+      this.choices.forEach(function(choice) {
+        var option = $('<option></option>');
+        option.attr('value', choice);
+        option.text(choice);
+        select.append(option);
+      });
+      select.change(function() {
+        setter(select.val());
+      });
+      td.empty();
+      td.append(select);
+    },
+    value: function(td, value) {
+      td.find('select').val(value);
+      return td.find('select').val();
+    },
+    focus: function(td) {
+      td.find('select').focus();
+    }
+  }
+  
   var knownAttributes = [
-    { attr: 'name', en: 'Name', controller: new TextAttribute() },
-    { attr: 'location', en: 'Location', controller: new TextAttribute() },
-    { attr: 'email', en: 'Email', controller: new TextAttribute() },
+    { attr: 'name', en: 'Name', controller: new ChoiceAttribute(
+      ['Betsy Ross', 'Betsy Asburn', 'Betsy Claypool', 'Bee Girl']) },
+    { attr: 'location', en: 'Location', controller: new ChoiceAttribute(
+      ['239 Arch Street, Philadelphia, Pennsylvania',
+       'Philadelphia, Pennsylvania',
+       'Pennsylvania',
+       'USA']) },
+    { attr: 'email', en: 'Email', controller: new ChoiceAttribute(
+      ['besty@ross-upholstery.com', 'betsy@ralvery.com']
+      ) },
     { attr: 'gender', en: 'Gender', controller: new FixedAttribute('Female') },
     { attr: 'age', en: 'Age', controller: new FixedAttribute('34') },
   ];

@@ -26,11 +26,12 @@ limitations under the License.
 
 <body>
 
-<a href="#" id="launchNew" target="_blank">Launch my station</a><br />
-<a href="#" id="launchOld" target="_blank">Launch my <b>old</b> station</a>
+<p><a href="#" id="launchNew" target="_blank">Launch my station</a></p>
+<p><small><a href="#" id="launchOld" target="_blank">Launch my <b>old</b> station</a></small></p>
+
 
 <script>
-belay.DEBUG = true;
+belay.DEBUG = false;
 
 function setUpLaunchButton(id, params) {
   var launchBtn = document.getElementById(id);

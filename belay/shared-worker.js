@@ -22,7 +22,7 @@ function resolver(instID) {
 workerServer.setResolver(resolver);
 
 var stationGenerator =
-  workerServer.restore("http://localhost:9001/belay/generate");
+  workerServer.restore('http://localhost:9001/belay/generate');
 
 var pendingLaunches = Object.create(null);
 
@@ -59,7 +59,7 @@ function makeSetStationCallbacks() {
   return workerServer.grant(function(callbacks) {
     stationCaps = callbacks;
   });
-};
+}
 
 var suggestions = Object.create(null);
 
@@ -95,7 +95,7 @@ function suggestFor(href) {
 
   var domain = m[0];
   return suggestions[domain];
-};
+}
 
 var highlighters = Object.create(null);
 
@@ -121,7 +121,7 @@ function setDelayedLaunch(hash) {
   delayedLaunches[hash] = true;
 }
 
-self.addEventListener('connect', function(e) { 
+self.addEventListener('connect', function(e) {
   var port = e.ports[0];
   var iframeTunnel = new CapTunnel(port);
   iframeTunnel.setLocalResolver(resolver);
@@ -129,7 +129,7 @@ self.addEventListener('connect', function(e) {
     outpost = workerServer.dataPostProcess(outpost);
     if (!logCap) { logCap = outpost.log; }
     instToTunnel[outpost.iframeInstID] = iframeTunnel;
-  
+
     iframeTunnel.onclosed = function() {
       delete instToTunnel[outpost.iframeInstID];
     };
@@ -148,7 +148,8 @@ self.addEventListener('connect', function(e) {
         pending.outpost.services = makeHighlighting();
         pending.outpost.setDelayedLaunch = workerServer.grant(setDelayedLaunch);
         // note that this is the station
-        // add a cap for launching from the station, closing over outpost.windowOpen
+        // add a cap for launching from the station,
+        // closing over outpost.windowOpen
       }
       if (pending.launchClosures) {
         pending.launchClosures.sk(workerServer.grant(outpost.windowClose));
@@ -175,28 +176,31 @@ self.addEventListener('connect', function(e) {
       // station opened this page for an instance
       delete delayedLaunches[location.hash];
       stationCaps.delayedReadyHandler.post(location.hash, function(arg) {
-        buildLauncher(outpost.windowLocation)
-          ({ url: arg.url,
-             instID: arg.instID, 
-             outpostData: arg.outpostData, 
+        buildLauncher(outpost.windowLocation)(
+          { url: arg.url,
+             instID: arg.instID,
+             outpostData: arg.outpostData,
              isStation: false },
            function() { },
-           function() { });
+           function() { }
+        );
       });
     }
     else if (location.hash in stationDelayedLaunches) {
       var stationLaunchParams = stationDelayedLaunches[location.hash];
       //delete stationDelayedLaunches[location.hash];
-      
+
       outpost.localStorage.get(function(sto) {
         if (sto.stationLaunchCap) {
-          launchStation(sto.stationLaunchCap, stationLaunchParams, outpost.windowLocation);
+          launchStation(sto.stationLaunchCap, stationLaunchParams,
+            outpost.windowLocation);
         }
         else {
           stationGenerator.get(function(launchCap) {
             sto.stationLaunchCap = launchCap;
             outpost.localStorage.put(sto, function() {
-              launchStation(sto.stationLaunchCap, stationLaunchParams, outpost.windowLocation);
+              launchStation(sto.stationLaunchCap, stationLaunchParams,
+                outpost.windowLocation);
             });
           });
         }
@@ -208,7 +212,7 @@ self.addEventListener('connect', function(e) {
         suggestions: suggestFor(outpost.clientLocation.href),
         clickSuggest: workerServer.grant(function(launchClicked) {
           launchClicked.post(workerServer.grant(function(args, sk, fk) {
-            buildLauncher(outpost.windowLocation)
+            buildLauncher(outpost.windowLocation);
               ({ instID: args.instID,
                  outpostData: args.outpostData,
                  isStation: false,
@@ -233,5 +237,5 @@ self.addEventListener('connect', function(e) {
 
   // Message received by belay-frame.html:setUpWorker. Once received, it
   // creates its own end of the tunnel and sends an outpost message.
-  port.postMessage('for setUpWorker'); 
+  port.postMessage('for setUpWorker');
 });

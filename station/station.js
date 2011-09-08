@@ -227,7 +227,7 @@ var closeGadgetInstance = function(inst) {
 
 var launchGadgetInstance = function(inst) {
   if (inst.gadgetNode) return;
-	if (inst.pageWindow) {
+  if (inst.pageWindow) {
     inst.closeCap.put();
   }
   if (!inst.capServer) setupCapServer(inst);
@@ -633,10 +633,10 @@ window.belay.portReady = function() {
   belayBrowserTunnel = new CapTunnel(window.belay.port);
   belayBrowserTunnel.setLocalResolver(instanceResolver);
   belayBrowserTunnel.setOutpostHandler(function(outpost) {
-		var radishServer = new CapServer('radish');
-		var initData = radishServer.dataPostProcess(outpost);
-		capServer = new CapServer(initData.instanceID);
-		capServer.setResolver(instanceResolver);
+    var radishServer = new CapServer('radish');
+    var initData = radishServer.dataPostProcess(outpost);
+    capServer = new CapServer(initData.instanceID);
+    capServer.setResolver(instanceResolver);
 
     outpost = capServer.dataPostProcess(outpost);
     belayLaunch = outpost.launch;

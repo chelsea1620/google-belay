@@ -221,6 +221,9 @@ var launchInstance = function(inst, openType, launchCap) {
     else if (openType == 'page' && canPage) {
       launchPageInstance(inst, launchCap);
     }
+    else if (openType === 'gadget') {
+      // ignore
+    }
     else {
       alert('launchInstance: this instance cannot open as a ' + openType);
     }
@@ -285,25 +288,38 @@ var sections = {
   add: function(name, sectionInfo) {
     var label = $('<li>' + name + '</li>'); // todo: XSS
     $('#nav').append(label);
+  
+
+    var makeDroppable = function(elt) {
+      elt.droppable({ 
+        tolerance: 'pointer',
+        over: function(evt) {
+          elt.addClass('dropHover');
+        },
+        out: function(evt) {
+          elt.removeClass('dropHover');
+        },
+        drop: function(evt, ui) {
+          elt.removeClass('dropHover');
+          var row = ui.draggable;
+          var inst = row.data('belay-inst');
+          inst.state.section = name;
+          row.detach();
+          section.find('table.items').eq(0).prepend(row);
+          dirty(inst);
+          attributes.pushToInstance(inst);
+        },
+        accept: function(elt) { return !!elt.data('belay-inst'); }
+      });
+    };
 
     var section = sections.proto.clone();
     section.css('display', 'none');
     section.appendTo($('#belay-items'));
-      
     label.click(function(evt) { sections.show(name); });
-    label.droppable({ 
-      tolerance: 'pointer',
-      drop: function(evt, ui) {
-        var row = ui.draggable;
-        var inst = row.data('belay-inst');
-        inst.state.section = name;
-        row.detach();
-        section.find('table.items').eq(0).prepend(row);
-        dirty(inst);
-        attributes.pushToInstance(inst);
-      },
-      accept: function(elt) { return !!elt.data('belay-inst'); }
-    });
+    makeDroppable(label);
+    makeDroppable(section);
+
 
     sections.byName[name] = {
       label: label,
@@ -385,7 +401,7 @@ var sections = {
     row.data('belay-inst', inst);
 
     inst.rows = [row];
-    var list = sections.byName[inst.state.section].list;
+    var list = sections.byName[inst.state.section || 'Recent'].list;
 
     row.prependTo(list.find('table.items').eq(0));
   }

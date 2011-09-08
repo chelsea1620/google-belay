@@ -221,6 +221,9 @@ var launchInstance = function(inst, openType, launchCap) {
     else if (openType == 'page' && canPage) {
       launchPageInstance(inst, launchCap);
     }
+    else if (openType === 'gadget') {
+      // ignore
+    }
     else {
       alert('launchInstance: this instance cannot open as a ' + openType);
     }
@@ -385,7 +388,7 @@ var sections = {
     row.data('belay-inst', inst);
 
     inst.rows = [row];
-    var list = sections.byName[inst.state.section].list;
+    var list = sections.byName[inst.state.section || 'Recent'].list;
 
     row.prependTo(list.find('table.items').eq(0));
   }

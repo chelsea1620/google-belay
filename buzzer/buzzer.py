@@ -162,8 +162,6 @@ class GenerateProfileHandler(BaseHandler):
     feed.title = self.request.get('title')
     feed.put()
     
-    logging.debug('MY TITLE IS %s' % feed.title)
-
     response = {
       'launch': server_cap("/belay/launch", feed_id),
       'icon': server_url("/tool-buzzer.png"),

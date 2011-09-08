@@ -26,14 +26,16 @@ limitations under the License.
 
 <body>
 
-<button id="launch">Launch my station</button>
+<a href="#" id="launch" target="_blank">Launch my station</a>
 
 <script>
 belay.DEBUG = true;
 onBelayReady(function() {
-  launch.addEventListener('click', function() {
-    belay.outpost.becomeStation.get();
-  });
+  var launchBtn = document.getElementById('launch');
+  var stationHash = '#' + newUUIDv4();
+  launchBtn.setAttribute('href', 
+    'http://localhost:9001/redirect.html' + stationHash);
+  belay.outpost.setStationLaunchHash.put(stationHash);
 });
 </script>
 

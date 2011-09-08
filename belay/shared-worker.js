@@ -114,6 +114,8 @@ function makeHighlighting() {
   };
 }
 
+var stationLaunchHash;
+
 var delayedLaunches = Object.create(null);
 
 function setDelayedLaunch(hash) {
@@ -183,6 +185,21 @@ self.addEventListener('connect', function(e) {
            function() { });
       });
     }
+    else if (location.hash === stationLaunchHash) {
+      outpost.localStorage.get(function(sto) {
+        if (sto.stationLaunchCap) {
+          launchStation(sto.stationLaunchCap, outpost.windowLocation);
+        }
+        else {
+          stationGenerator.get(function(launchCap) {
+            sto.stationLaunchCap = launchCap;
+            outpost.localStorage.put(sto, function() {
+              launchStation(sto.stationLaunchCap, outpost.windowLocation);
+            });
+          });
+        }
+      });
+    }
     else {
       // client might want to become an instance or the station
       outpost.setUpClient.post({
@@ -204,21 +221,10 @@ self.addEventListener('connect', function(e) {
                           .grant(buildLauncher(outpost.windowLocation))
             });
           }),
-          becomeStation: workerServer.grant(function() {
-            var openerCap = outpost.windowOpen;
-            outpost.localStorage.get(function(sto) {
-              if (sto.stationLaunchCap) {
-                launchStation(sto.stationLaunchCap, openerCap);
-              }
-              else {
-                stationGenerator.get(function(launchCap) {
-                  sto.stationLaunchCap = launchCap;
-                  outpost.localStorage.put(sto, function() {
-                    launchStation(sto.stationLaunchCap, openerCap);
-                  });
-                });
-              }
-            });
+          setStationLaunchHash: workerServer.grant(function(hash) {
+            if (typeof stationLaunchHash === 'undefined') {
+              stationLaunchHash = hash;
+            }
           })
         }
       });

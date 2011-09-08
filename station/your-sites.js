@@ -572,6 +572,8 @@ var initialize = function(instanceCaps, defaultTools) {
           storageCap: storageCap,
           state: instState
         };
+        inst.state.opened = 
+          inst.state.opened === 'gadget' ? 'gadget' : 'closed';
         loadedInstances.push(inst);
         if (loadedInstances.length === instanceCaps.length) {
           loadInsts();

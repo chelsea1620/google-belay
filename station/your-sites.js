@@ -197,6 +197,7 @@ var launchInstance = function(inst, openType, launchCap) {
   dirty(inst);
   instState.belayInstance.get(function(launch) {
     inst.launch = launch;
+    attributes.pushToInstance(inst);
     var canPage = 'page' in launch;
 
     var preferred = canPage ? 'page' : 'none';
@@ -589,7 +590,6 @@ var newInstHandler = function(args) {
     },
   };
   addInstance(inst, 'page', args.relaunch);
-  attributes.pushToInstnace(inst);
 };
 
 var closeInstHandler = function(instID) {

@@ -266,7 +266,8 @@ var removeInstance = function(inst) {
 
 var sections = {
   proto: null,
-  names: [ 'Recent', 'News and Blogs', 'Forums and Discussions' ],
+  defaultName: 'Uncategorized',
+  names: [ 'Uncategorized', 'Personal', 'Shopping', 'Games', 'Casual', 'Work' ],
   // Map<Name, { label: jQuery, list: jQuery, insts: inst }>
   byName: Object.create(null),
   sitesLabel: null, // jQuery
@@ -276,14 +277,20 @@ var sections = {
     sections.sitesLabel = $('#nav .selected').eq(0);
     sections.sitesLabel.click(sections.showSites);
 
-    sections.names.forEach(function(name) {
-      sectionCap.post(name, function(sectionInfo) {
-        sections.add(name, sectionInfo);
-        if (name == 'Recent') {
-          sections.show(name);
-        }
-      });
-    })
+    function addNextSection(names) {
+      if (names.length) {
+        var name = names.shift();
+        sectionCap.post(name, function(sectionInfo) {
+          sections.add(name, sectionInfo);
+          addNextSection(names);
+        });
+      }
+      else {
+        sections.showSites();
+      }
+    }
+
+    addNextSection(sections.names);
   },
   add: function(name, sectionInfo) {
     var label = $('<li>' + name + '</li>'); // todo: XSS
@@ -401,7 +408,7 @@ var sections = {
     row.data('belay-inst', inst);
 
     inst.rows = [row];
-    var list = sections.byName[inst.state.section || 'Recent'].list;
+    var list = sections.byName[inst.state.section || sections.defaultName].list;
 
     row.prependTo(list.find('table.items').eq(0));
   }
@@ -695,7 +702,7 @@ var newInstHandler = function(args) {
       name: args.launchData.name,
       icon: args.launchData.icon,
       created: (new Date()).valueOf(),
-      section: 'Recent'
+      section: sections.defaultName
     },
   };
   addInstance(inst, 'page', args.relaunch);

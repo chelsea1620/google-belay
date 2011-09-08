@@ -161,6 +161,8 @@ class GenerateProfileHandler(BaseHandler):
     feed = FeedData(key_name=feed_id);
     feed.title = self.request.get('title')
     feed.put()
+    
+    logging.debug('MY TITLE IS %s' % feed.title)
 
     response = {
       'launch': server_cap("/belay/launch", feed_id),
@@ -256,7 +258,8 @@ class DataPostHandler(BaseHandler):
 class SetAttributesHandler(BaseHandler):
   def put(self):
     feed_id = self.validate_feed()
-    feed = FeedData(key_name=feed_id)
+    feed = FeedData.get_by_key_name(feed_id)
+    assert feed is not None
     request = self.bcapRequest()
     
     feed.name = request.get('name', '')

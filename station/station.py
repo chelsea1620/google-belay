@@ -134,12 +134,23 @@ class BelayGenerateHandler(BaseHandler):
 
 class BelayLaunchHandler(BaseHandler):
   def get(self):
+    return self.launch('new')
+  
+  def post(self):
+    params = self.bcapRequest()
+    return self.launch(params.get('version', 'new'))
+
+  def launch(self, type):
     station = self.validate_station()
     if not station.is_saved():
       station.put()
 
+    html = "/your-sites.html"
+    if (type == "old"):
+      html = "/your-stuff.html"
+      
     reply = {
-      'page': { 'html': server_url("/your-sites.html") },
+      'page': { 'html': server_url(html) },
         'info': {
           'instances': cap(instances_url(station.key())),
           'instanceBase': instance_url(station.key(), ''),
@@ -148,7 +159,7 @@ class BelayLaunchHandler(BaseHandler):
       }
     }
 
-    self.bcapResponse(reply)    
+    self.bcapResponse(reply)
 
 
 class InstanceHandler(BaseHandler):

@@ -40,9 +40,9 @@ function buildLauncher(openerCap) {
   }
 }
 
-function launchStation(launchCap, openerCap) {
+function launchStation(launchCap, launchParams, openerCap) {
   suggestions = Object.create(null);
-  launchCap.get(function(data) {
+  launchCap.post(launchParams, function(data) {
     var stationInstID = newUUIDv4();
     buildLauncher(openerCap)({
       url: data.page.html,
@@ -114,8 +114,7 @@ function makeHighlighting() {
   };
 }
 
-var stationLaunchHash;
-
+var stationDelayedLaunches = Object.create(null);
 var delayedLaunches = Object.create(null);
 
 function setDelayedLaunch(hash) {
@@ -185,16 +184,19 @@ self.addEventListener('connect', function(e) {
            function() { });
       });
     }
-    else if (location.hash === stationLaunchHash) {
+    else if (location.hash in stationDelayedLaunches) {
+      var stationLaunchParams = stationDelayedLaunches[location.hash];
+      //delete stationDelayedLaunches[location.hash];
+      
       outpost.localStorage.get(function(sto) {
         if (sto.stationLaunchCap) {
-          launchStation(sto.stationLaunchCap, outpost.windowLocation);
+          launchStation(sto.stationLaunchCap, stationLaunchParams, outpost.windowLocation);
         }
         else {
           stationGenerator.get(function(launchCap) {
             sto.stationLaunchCap = launchCap;
             outpost.localStorage.put(sto, function() {
-              launchStation(sto.stationLaunchCap, outpost.windowLocation);
+              launchStation(sto.stationLaunchCap, stationLaunchParams, outpost.windowLocation);
             });
           });
         }
@@ -221,10 +223,8 @@ self.addEventListener('connect', function(e) {
                           .grant(buildLauncher(outpost.windowLocation))
             });
           }),
-          setStationLaunchHash: workerServer.grant(function(hash) {
-            if (typeof stationLaunchHash === 'undefined') {
-              stationLaunchHash = hash;
-            }
+          setStationLaunchHash: workerServer.grant(function(args) {
+            stationDelayedLaunches[args.hash] = args.params;
           })
         }
       });

@@ -26,17 +26,25 @@ limitations under the License.
 
 <body>
 
-<a href="#" id="launch" target="_blank">Launch my station</a>
+<a href="#" id="launchNew" target="_blank">Launch my station</a><br />
+<a href="#" id="launchOld" target="_blank">Launch my <b>old</b> station</a>
 
 <script>
 belay.DEBUG = true;
-onBelayReady(function() {
-  var launchBtn = document.getElementById('launch');
+
+function setUpLaunchButton(id, params) {
+  var launchBtn = document.getElementById(id);
   var stationHash = '#' + newUUIDv4();
   launchBtn.setAttribute('href', 
     'http://localhost:9001/redirect.html' + stationHash);
-  belay.outpost.setStationLaunchHash.put(stationHash);
+  belay.outpost.setStationLaunchHash.put({ hash: stationHash, params: params });
+}
+
+onBelayReady(function() {
+  setUpLaunchButton('launchNew', { version: 'new' });
+  setUpLaunchButton('launchOld', { version: 'old' });
 });
+
 </script>
 
 </body>

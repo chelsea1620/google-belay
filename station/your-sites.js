@@ -344,20 +344,31 @@ var sections = {
     inst.rows = [];
   },
   newInstance: function(inst) {
+    var delayedLaunchUUID = '#' + newUUIDv4();
+    var delayedLaunchURL = 'redirect.html' + delayedLaunchUUID;
+
     var row = protoItemRow.clone();
 
     var icon = row.find('td.icon img');
     icon.attr('src', inst.state.icon || defaultIcon);
     row.find('td.name').text(inst.state.name || 'an item');
-    row.find('td.actions .open-page').click(function() {
-        launchInstance(inst, 'page', belayLaunch);
-      });
     row.find('td.actions .open-gadget').click(function() {
         launchInstance(inst, 'gadget');
       });
     row.find('td.actions .remove').click(function() {
         removeInstance(inst);
       });
+    
+    setDelayedLaunch.post(delayedLaunchUUID, function() {
+      var openPageBtn = row.find('td.actions .open-page');
+      openPageBtn.attr('href', delayedLaunchURL);
+      openPageBtn.click(function() {
+        launchInstance(inst, 'page', capServer.grant(function(arg, sk, fk) {
+          delayed.newDelayed(delayedLaunchUUID, arg);
+          sk(true);
+        }));
+      });
+    });
    
     row.draggable({ 
       handle: icon, 
@@ -572,6 +583,20 @@ var initialize = function(instanceCaps, defaultTools) {
   instanceCaps.forEach(addInstanceFromStorage);
 };
 
+var delayed = {
+  launchInfo: Object.create(null), // Map<UUID, launchInfo>
+  // Called by Belay when a delayed window is ready. Should return launch
+  // information to navigate to the actual instance.
+  readyHandler: function(hash) {
+    var info = delayed.launchInfo[hash];
+    delete (delayed.launchInfo)[hash];
+    return info;
+  },
+  newDelayed: function(hash, arg) {
+    delayed.launchInfo[hash] = arg;
+  }
+}
+
 // Called by Belay (the extension) when a user visits a Web page, P, that wants
 // to morph into an instance. The supplied launch cap has the same signature
 // as belayLaunch. Instead of creating a new tab, it reloads P's tab.
@@ -625,6 +650,7 @@ window.belay.portReady = function() {
 		capServer.setResolver(instanceResolver);
 
     outpost = capServer.dataPostProcess(outpost);
+    setDelayedLaunch = outpost.setDelayedLaunch;
     belayLaunch = outpost.launch;
     belayBrowser = outpost.services;
     belaySuggestInst = outpost.suggestInst;
@@ -636,7 +662,8 @@ window.belay.portReady = function() {
     }, function(err) { alert(err.message); });
     outpost.setStationCallbacks.put({
       newInstHandler: capServer.grant(newInstHandler),
-      closeInstHandler: capServer.grant(closeInstHandler)
+      closeInstHandler: capServer.grant(closeInstHandler),
+      delayedReadyHandler: capServer.grant(delayed.readyHandler),
     });
     ui = {
       resize: function() { /* do nothing in page mode */ },

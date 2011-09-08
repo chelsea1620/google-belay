@@ -53,6 +53,10 @@ body #aux {
   background: #f4f4f4;
 }
 
+.dropHover {
+  background: #f4f4f4;
+}
+
 div.section {
   margin-bottom: 3em;
 }

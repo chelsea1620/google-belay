@@ -71,7 +71,7 @@ var cmpInstByCreated = function(inst1, inst2) {
 };
 
 function recentInstances(instances, numRecent) {
-  
+
 }
 
 var dirtyInstances = [];
@@ -267,14 +267,14 @@ var removeInstance = function(inst) {
 var sections = {
   proto: null,
   defaultName: 'Uncategorized',
-  names: [ 'Uncategorized', 'Personal', 'Shopping', 'Games', 'Casual', 'Work' ],
+  names: ['Uncategorized', 'Personal', 'Shopping', 'Games', 'Casual', 'Work'],
   // Map<Name, { label: jQuery, list: jQuery, insts: inst }>
   byName: Object.create(null),
   sitesLabel: null, // jQuery
   visible: [],
   ready: false,
   instToAdd: [],
-  
+
   init: function(sectionCap) {
     sections.sitesLabel = $('#nav .selected').eq(0);
     sections.sitesLabel.click(sections.showSites);
@@ -299,10 +299,10 @@ var sections = {
   add: function(name, sectionInfo) {
     var label = $('<li>' + name + '</li>'); // todo: XSS
     $('#nav').append(label);
-  
+
 
     var makeDroppable = function(elt) {
-      elt.droppable({ 
+      elt.droppable({
         tolerance: 'pointer',
         over: function(evt) {
           elt.addClass('dropHover');
@@ -337,15 +337,15 @@ var sections = {
       list: section,
       attributes: { }
     };
-    
+
     attributes.setup(name, section, sectionInfo.attributes);
   },
   showSites: function() {
     sections.sitesLabel.addClass('selected');
     // all visible, except for Recent
-    sections.visible = 
+    sections.visible =
       Object.keys(sections.byName)
-      .map(function(k) { 
+      .map(function(k) {
         var sec = sections.byName[k];
         sec.label.removeClass('selected');
         sec.list.show();
@@ -357,7 +357,7 @@ var sections = {
     sections.sitesLabel.removeClass('selected');
     v.label.addClass('selected');
     v.list.show();
-    sections.visible.forEach(function(sec) { 
+    sections.visible.forEach(function(sec) {
       if (sec !== v) {
         sec.label.removeClass('selected');
         sec.list.hide();
@@ -366,7 +366,7 @@ var sections = {
     sections.visible = [v];
   },
   deleteInstance: function(inst) {
-    inst.rows.forEach(function(row) { 
+    inst.rows.forEach(function(row) {
       row.fadeOut(400, function() { row.remove(); });
     });
     inst.rows = [];
@@ -376,7 +376,7 @@ var sections = {
       sections.instToAdd.push(inst);
       return;
     }
-    
+
     var delayedLaunchUUID = '#' + newUUIDv4();
     var delayedLaunchURL = 'redirect.html' + delayedLaunchUUID;
     inst.delayedLaunchHash = delayedLaunchUUID;
@@ -392,27 +392,27 @@ var sections = {
     row.find('td.actions .remove').click(function() {
         removeInstance(inst);
       });
-    
+
     setDelayedLaunch.post(delayedLaunchUUID, function() {
       var openPageBtn = row.find('td.actions .open-page');
       openPageBtn.attr('href', delayedLaunchURL);
       openPageBtn.click(function(evt) {
         if (inst.state.opened !== 'closed' || !delayed.newDelayed(inst)) {
-          evt.preventDefault(); // do not re-open the window 
+          evt.preventDefault(); // do not re-open the window
         }
       });
     });
-   
-    row.draggable({ 
-      handle: icon, 
+
+    row.draggable({
+      handle: icon,
       revert: 'invalid',
       helper: function() {
         var cl = row.clone();
         cl.css('width', row.width());
         cl.css('background-color', 'white');
         return cl;
-      }, 
-      cursor: 'pointer' 
+      },
+      cursor: 'pointer'
     });
     row.data('belay-inst', inst);
 
@@ -424,7 +424,7 @@ var sections = {
     var list = sections.byName[inst.state.section].list;
     row.prependTo(list.find('table.items').eq(0));
   }
-}
+};
 
 var attributes = (function() {
   // list of attributes we support
@@ -441,9 +441,9 @@ var attributes = (function() {
       return this.fixed;
     },
     focus: function(td) {
-    },
+    }
   };
-  
+
   var TextAttribute = function() { };
   TextAttribute.prototype = {
     build: function(td, setter) {
@@ -460,9 +460,9 @@ var attributes = (function() {
     },
     focus: function(td) {
       td.find('input').focus();
-    },
+    }
   };
-  
+
   var ChoiceAttribute = function(choices) { this.choices = choices; }
   ChoiceAttribute.prototype = {
     build: function(td, setter) {
@@ -487,8 +487,8 @@ var attributes = (function() {
     focus: function(td) {
       td.find('select').focus();
     }
-  }
-  
+  };
+
   var knownAttributes = [
     { attr: 'name', en: 'Name', controller: new ChoiceAttribute(
       ['Betsy Ross', 'Betsy Asburn', 'Betsy Claypool', 'Bee Girl']) },
@@ -501,15 +501,15 @@ var attributes = (function() {
       ['besty@ross-upholstery.com', 'betsy@ralvery.com']
       ) },
     { attr: 'gender', en: 'Gender', controller: new FixedAttribute('Female') },
-    { attr: 'age', en: 'Age', controller: new FixedAttribute('34') },
+    { attr: 'age', en: 'Age', controller: new FixedAttribute('34') }
   ];
-  
-  
+
+
   return {
     setup: function(name, sectionElem, attributesCap) {
       attributesCap.get(function(data) {
         sections.byName[name].attributes = data;
-        
+
         var editData;
 
         var headerElem = sectionElem.find('.header');
@@ -517,7 +517,7 @@ var attributes = (function() {
         var attributesDiv = attributesElem.find('.box');
         var attributesTable = attributesDiv.find('table');
         var protoRow = attributesTable.find('tr').eq(0).detach();
-  
+
         sectionElem.find('.header .name').text(name);
 
         attributesTable.find('tr').remove();
@@ -533,14 +533,14 @@ var attributes = (function() {
 
         function resetAttributes(editable) {
           editData = { };
-  
+
           attributesTable.find('tr').each(function(i, tr) {
             var a = knownAttributes[i];
             var row = $(tr);
-    
+
             var includeInput = row.find('.include input');
             var valueTD = row.find('.value');
-            
+
             function enable() {
               editData[a.attr] = a.controller.value(valueTD, data[a.attr]);
               includeInput.attr('checked', 'checked');
@@ -549,7 +549,7 @@ var attributes = (function() {
             function disable() {
               delete editData[a.attr];
               includeInput.removeAttr('checked');
-              valueTD.children().hide()
+              valueTD.children().hide();
               valueTD.click(function() {
                 valueTD.unbind();
                 enable();
@@ -557,9 +557,9 @@ var attributes = (function() {
               });
             }
             function able(bool) { bool ? enable() : disable(); }
-            
+
             able(a.attr in data);
-            
+
             includeInput.change(function() {
               able(includeInput.attr('checked'));
             });
@@ -567,7 +567,7 @@ var attributes = (function() {
         }
         function showAttributes() {
           if (attributesElem.css('display') !== 'none') return;
-  
+
           resetAttributes();
           attributesDiv.hide();
           attributesElem.show();
@@ -580,7 +580,7 @@ var attributes = (function() {
           sections.byName[name].attributes = data = editData;
           console.log('data saved:', data);
           attributesCap.put(data, hideAttributes);
-          
+
           Object.keys(instances).forEach(function(instID) {
             var inst = instances[instID];
             if (inst.state.section === name) {
@@ -590,14 +590,14 @@ var attributes = (function() {
         }
         function cancelAttributes() {
           hideAttributes();
-        }        
-  
+        }
+
         headerElem.find('.settings').click(showAttributes);
         attributesDiv.find('.save').click(saveAttributes);
         attributesDiv.find('.cancel').click(cancelAttributes);
       });
     },
-    
+
     pushToInstance: function(inst) {
       if (inst.launch.attributes && inst.launch.attributes.set) {
         var data = sections.byName[inst.state.section].attributes;
@@ -607,13 +607,13 @@ var attributes = (function() {
           }
         });
       }
-    },
-  }
+    }
+  };
 })();
 
 var initialize = function(instanceCaps, defaultTools) {
   var top = topDiv;
-  
+
   $(document.body).find('.ex').remove(); // remove layout examples
 
   var itemsDiv = topDiv.find('#belay-items');
@@ -663,7 +663,7 @@ var initialize = function(instanceCaps, defaultTools) {
           storageCap: storageCap,
           state: instState
         };
-        inst.state.opened = 
+        inst.state.opened =
           inst.state.opened === 'gadget' ? 'gadget' : 'closed';
         loadedInstances.push(inst);
         if (loadedInstances.length === instanceCaps.length) {
@@ -678,7 +678,7 @@ var initialize = function(instanceCaps, defaultTools) {
 };
 
 var delayed = {
-  insts : Object.create(null), // Map<Hash, Info>
+  insts: Object.create(null), // Map<Hash, Info>
   // Called by Belay when a delayed window is ready. Should return launch
   // information to navigate to the actual instance.
   readyHandler: function(hash, sk, fk) {
@@ -698,7 +698,7 @@ var delayed = {
       return true;
     }
   }
-}
+};
 
 // Called by Belay (the extension) when a user visits a Web page, P, that wants
 // to morph into an instance. The supplied launch cap has the same signature
@@ -715,7 +715,7 @@ var newInstHandler = function(args) {
       icon: args.launchData.icon,
       created: (new Date()).valueOf(),
       section: sections.defaultName
-    },
+    }
   };
   addInstance(inst, 'page', args.relaunch);
 };
@@ -729,7 +729,7 @@ var closeInstHandler = function(instID) {
     inst.state.opened = 'closed';
     dirty(inst);
   }
-    
+
   // Re-prime the delayed URL for launching.
   setDelayedLaunch.post(inst.delayedLaunchHash);
 
@@ -750,10 +750,10 @@ window.belay.portReady = function() {
   belayBrowserTunnel = new CapTunnel(window.belay.port);
   belayBrowserTunnel.setLocalResolver(instanceResolver);
   belayBrowserTunnel.setOutpostHandler(function(outpost) {
-		var radishServer = new CapServer('radish');
-		var initData = radishServer.dataPostProcess(outpost);
-		capServer = new CapServer(initData.instanceID);
-		capServer.setResolver(instanceResolver);
+    var radishServer = new CapServer('radish');
+    var initData = radishServer.dataPostProcess(outpost);
+    capServer = new CapServer(initData.instanceID);
+    capServer.setResolver(instanceResolver);
 
     outpost = capServer.dataPostProcess(outpost);
     setDelayedLaunch = outpost.setDelayedLaunch;
@@ -769,7 +769,7 @@ window.belay.portReady = function() {
     outpost.setStationCallbacks.put({
       newInstHandler: capServer.grant(newInstHandler),
       closeInstHandler: capServer.grant(closeInstHandler),
-      delayedReadyHandler: capServer.grant(delayed.readyHandler),
+      delayedReadyHandler: capServer.grant(delayed.readyHandler)
     });
     ui = {
       resize: function() { /* do nothing in page mode */ },

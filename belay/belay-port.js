@@ -2,22 +2,22 @@
 // Invokes belay.portReady(), if the function is defined.
 
 if (!window.belay) {
-  window.belay = { 
-    DEBUG: false,
+  window.belay = {
+    DEBUG: false
   };
 }
 
 (function() {
 
   function onWindowLoaded() {
-  
-    var IFRAME_URL = "http://localhost:9000/belay-frame.html";
+
+    var IFRAME_URL = 'http://localhost:9000/belay-frame.html';
     var IFRAME_HEIGHT = window.belay.DEBUG ? '300px' : '40px';
     var IFRAME_NEG_HEIGHT = '-' + IFRAME_HEIGHT;
     var HIGHLIGHT_CLASS = 'belay-possible';
-  
-    var iframe = document.createElement("iframe");  
-    iframe.setAttribute("src", IFRAME_URL);
+
+    var iframe = document.createElement('iframe');
+    iframe.setAttribute('src', IFRAME_URL);
     iframe.style.zIndex = 2000; // high enough???
     iframe.style.position = 'absolute';
     iframe.style.top = IFRAME_NEG_HEIGHT;
@@ -30,11 +30,11 @@ if (!window.belay) {
       iframe.style.position = 'relative';
     }
     document.body.appendChild(iframe);
-   
+
     function toArray(v) {
       return Array.prototype.slice.call(v);
     }
-  
+
     function unhighlight() {
       var elts = window.document.getElementsByClassName(HIGHLIGHT_CLASS);
       toArray(elts).forEach(function(elt) {
@@ -42,7 +42,7 @@ if (!window.belay) {
                                               ' ');
       });
     }
-  
+
     function highlight(rc, className) {
       unhighlight();
       toArray(window.document.getElementsByClassName(className))
@@ -56,7 +56,7 @@ if (!window.belay) {
         elt.className = elt.className + ' ' + HIGHLIGHT_CLASS;
       });
     };
-   
+
     var connect = function() {
       var belayChan = new MessageChannel();
       // Certain window-manipulating actions cannot be performed by the cross-
@@ -64,13 +64,13 @@ if (!window.belay) {
       // introduce a dependency on caps.js; it's stupid and would be broken
       // by an adversarial container.
       var actionChan = new MessageChannel();
-      
+
       window.belay.port = belayChan.port1;
       window.belay.portReady();
-  
+
       iframe.removeEventListener('load', connect);
-  
-  
+
+
       actionChan.port1.onmessage = function(msg) {
         if (msg.data === 'close') {
           // This trick is all over the Web.
@@ -99,23 +99,23 @@ if (!window.belay) {
           console.log('unknown action', msg);
         }
       };
-      
+
       iframe.contentWindow.postMessage(
         // cross-domain <iframe> can set window.location but cannot read it
         { DEBUG: window.belay.DEBUG,
           // required on Chrome 14
-          clientLocation: JSON.parse(JSON.stringify(window.location)) }, 
+          clientLocation: JSON.parse(JSON.stringify(window.location)) },
         // two following args. backward for Chrome and Safari
-        [belayChan.port2, actionChan.port2], 
+        [belayChan.port2, actionChan.port2],
         '*');
-        
+
       var locClean = window.location.href.replace(/#.*/, '');
       //window.location.replace(locClean);
       history.replaceState(history.state, '', locClean);
     };
-  
+
     iframe.addEventListener('load', connect);
-  
+
   };
 
   if (window.document.body === null) {

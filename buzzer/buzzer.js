@@ -79,6 +79,6 @@ onBelayReady(function() {
   };
 
   reload();
-  
+
   belay.outpost.setRefresh.put(capServer.grant(reload));
 });

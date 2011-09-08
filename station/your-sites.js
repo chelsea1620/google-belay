@@ -364,11 +364,10 @@ var sections = {
     setDelayedLaunch.post(delayedLaunchUUID, function() {
       var openPageBtn = row.find('td.actions .open-page');
       openPageBtn.attr('href', delayedLaunchURL);
-      openPageBtn.click(function() {
-        launchInstance(inst, 'page', capServer.grant(function(arg, sk, fk) {
-          delayed.newDelayed(delayedLaunchUUID, arg);
-          sk(true);
-        }));
+      openPageBtn.click(function(evt) {
+        if (inst.state.opened !== 'closed' || !delayed.newDelayed(inst)) {
+          evt.preventDefault(); // do not re-open the window 
+        }
       });
     });
    
@@ -586,28 +585,24 @@ var initialize = function(instanceCaps, defaultTools) {
 };
 
 var delayed = {
-  launchInfo: Object.create(null), // Map<UUID, launchInfo>
-  readySKs: Object.create(null), // Map<UUID, SK>
+  insts : Object.create(null), // Map<Hash, Info>
   // Called by Belay when a delayed window is ready. Should return launch
   // information to navigate to the actual instance.
   readyHandler: function(hash, sk, fk) {
-    var info = delayed.launchInfo[hash];
-    if (info) {
-      delete (delayed.launchInfo)[hash];
-      sk(info);
-    }
-    else {
-      readySKs[hash] = sk;
-    }
+    var inst = delayed.insts[hash];
+    launchInstance(inst, 'page', capServer.grant(function(info, sk2, fk2) {
+      delete (delayed.insts)[hash];
+      sk(info); // return to worker
+      sk2(true); // succeed locally
+    }));
   },
-  newDelayed: function(hash, info) {
-    var sk = delayed.readySKs[hash];
-    if (sk) {
-      delete (delayed.readySKs)[hash];
-      return sk(info);
+  newDelayed: function(inst) {
+    if (delayed.insts[inst.delayedLaunchHash]) {
+      return false;
     }
     else {
-      delayed.launchInfo[hash] = info;
+      delayed.insts[inst.delayedLaunchHash] = inst;
+      return true;
     }
   }
 }

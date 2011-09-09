@@ -212,8 +212,8 @@ self.addEventListener('connect', function(e) {
         suggestions: suggestFor(outpost.clientLocation.href),
         clickSuggest: workerServer.grant(function(launchClicked) {
           launchClicked.post(workerServer.grant(function(args, sk, fk) {
-            buildLauncher(outpost.windowLocation);
-              ({ instID: args.instID,
+            buildLauncher(outpost.windowLocation)({
+                 instID: args.instID,
                  outpostData: args.outpostData,
                  isStation: false,
                  url: args.url }, sk, fk);

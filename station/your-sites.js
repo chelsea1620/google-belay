@@ -267,7 +267,7 @@ var removeInstance = function(inst) {
 var sections = {
   proto: null,
   defaultName: 'Uncategorized',
-  names: ['Uncategorized', 'Personal', 'Shopping', 'Games', 'Casual', 'Work'],
+  names: ['Uncategorized', 'Personal', 'Shopping', 'Games', 'Work'],
   // Map<Name, { label: jQuery, list: jQuery, insts: inst }>
   byName: Object.create(null),
   sitesLabel: null, // jQuery
@@ -297,7 +297,9 @@ var sections = {
     addNextSection(sections.names);
   },
   add: function(name, sectionInfo) {
-    var label = $('<li>' + name + '</li>'); // todo: XSS
+    var label = $('<li></li>');
+    label.text(name);
+    label.addClass('group');
     $('#nav').append(label);
 
 
@@ -463,7 +465,7 @@ var attributes = (function() {
     }
   };
 
-  var ChoiceAttribute = function(choices) { this.choices = choices; }
+  var ChoiceAttribute = function(choices) { this.choices = choices; };
   ChoiceAttribute.prototype = {
     build: function(td, setter) {
       var select = $('<select></select>');
@@ -486,6 +488,51 @@ var attributes = (function() {
     },
     focus: function(td) {
       td.find('select').focus();
+    }
+  };
+
+  var MultiChoiceAttribute = function(choices) { this.choices = choices; };
+  MultiChoiceAttribute.prototype = {
+    build: function(td, setter) {
+      td.empty();
+      this.choices.forEach(function(choice) {
+        var option = $('<input type="checkbox"/>');
+        option.attr('name', choice);
+        option.attr('value', choice);
+        option.change(function() {
+          var nv = [];
+          td.find('input').each(function(i, elem) {
+            var input = $(elem);
+            if (input.attr('checked')) {
+              nv.push(input.attr('name'));
+            }
+          });
+          setter(nv.join(','));
+        });
+        var span = $('<span></span>');
+        span.text(choice);
+        span.prepend(option);
+        td.append(span);
+      });
+    },
+    value: function(td, value) {
+      // TODO(mzero): should really split value on ',' to be safe
+      value = value || '';
+      var nv = [];
+      td.find('input').each(function(i, elem) {
+        var input = $(elem);
+        var name = input.attr('name');
+        if (value.indexOf(name) >= 0) {
+          input.attr('checked', 'checked');
+          nv.push(name);
+        }
+        else {
+          input.removeAttr('checked');
+        }
+      });
+      return nv.join(',');
+    },
+    focus: function(td) {
     }
   };
 

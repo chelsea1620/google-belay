@@ -33,32 +33,38 @@ body div.grey {
   right: 0;
 }
 
-body #nav li {
-  font-weight: normal;
-  font-style: normal;
+body #aux {
 }
 
-body #nav li.selected {
+body h1 i {
+  color: #c0c0c0;
+}
+/* @end */
+/* @group nav */
+#nav li {
+  font-weight: normal;
+  font-style: normal;
+  margin: 0 0 2px -5px;
+  padding: 5px 0 5px 5px;
+}
+
+#nav li.selected {
   color: #dd4b39;
   font-weight: bold;
 }
-
-body #aux {
+#nav li:hover {
+  background-color: #f4f4f4;
 }
 
 /* @end */
 
-
-#nav li:hover {
-  background: #f4f4f4;
-}
-
-.dropHover {
-  background: #f4f4f4;
+#nav li.dropHover,
+div.section.dropHover {
+  background-color: #f4f4f4;
 }
 
 div.section {
-  margin-bottom: 3em;
+  margin-bottom: 4em;
 }
 
 /* @group items */
@@ -132,7 +138,7 @@ tr.attributes {
 }
 
 .attributes td.tag {
-  width: 7em;
+  width: 8em;
   text-align: right;
   color: #888;
 }
@@ -140,7 +146,7 @@ tr.attributes {
 .attributes td.value {
   position: relative;
 }
-.attributes td.value input {
+.attributes td.value input[type=text] {
   width: 80%;
   position: absolute;
   left: 2px;
@@ -154,7 +160,9 @@ tr.attributes {
   position: absolute;
   left: 0;
 }
-
+.attributes td.value span {
+  padding-right: 1em;
+}
 .attributes .buttons {
   text-align: right;
 }

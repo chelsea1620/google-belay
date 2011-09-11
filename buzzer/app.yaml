@@ -32,7 +32,7 @@ handlers:
 - url: /view/.*
   script: buzzer.py
 
-- url: /data/.*
+- url: /cap/.*
   script: buzzer.py
 
 - url: /(.*\.(html|css|js|png))

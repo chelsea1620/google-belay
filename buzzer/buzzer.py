@@ -111,14 +111,14 @@ class LaunchHandler(BaseHandler):
         'scripts': [ server_url("/buzzer.js") ]
       },
       'info': {
-        'post_cap': server_cap('/data/post', feed_id),
+        'post_cap': belay.regrant(DataPostHandler, feed),
         'reader_gen_cap': server_cap("/belay/generateReader", feed_id),
         'editor_url': server_feed_url("/view/editor", feed_id),
         'readChitURL': server_url("/chit-24.png"),
         'postChitURL': server_url("/chit-25.png")
       },
       'attributes': {
-        'set': server_cap('/data/attributes', feed_id)
+        'set': belay.regrant(SetAttributesHandler, feed)
       }
     }
 
@@ -200,8 +200,8 @@ class ViewHandler(BaseHandler):
       { 'css_url': server_url('/buzzer.css'),
         'chit_read_url': server_url('/chit-24.png'),
         'chit_post_url': server_url('/chit-25.png'),
-        'post_url': server_feed_url('/data/post', feed_id),
-        'profile_url': server_feed_url('/data/profile', feed_id),
+        'post_url': belay.regrant(DataPostHandler, feed).serialize(),
+        'profile_url': belay.regrant(DataProfileHandler, feed).serialize(),
         'include_post': self.include_post(),
         'need_profile': need_profile,
         'feed': feed,
@@ -220,21 +220,19 @@ class ReaderViewHandler(ViewHandler):
   def include_post(self):
     return False
 
-class DataProfileHandler(BaseHandler):
+class DataProfileHandler(belay.CapHandler):
   def post(self):
-    feed_id = self.validate_feed()
-    feed = FeedData(key_name=feed_id)
+    feed = self.get_entity()
     
     request = self.bcapRequest()
     feed.title = request.get('title')
     feed.put()
 
-    self.xhr_response()
+    self.bcapNullResponse()
 
-class DataPostHandler(BaseHandler):
+class DataPostHandler(belay.CapHandler):
   def post(self):
-    feed_id = self.validate_feed()
-    feed = FeedData(key_name=feed_id)
+    feed = self.get_entity()
     
     request = self.bcapRequest()
     v = request.get('body', '')
@@ -251,35 +249,39 @@ class DataPostHandler(BaseHandler):
       item.via = v
     item.put()
 
-    self.xhr_response()
+    self.bcapNullResponse()
 
-class SetAttributesHandler(BaseHandler):
+class SetAttributesHandler(belay.CapHandler):
   def put(self):
-    feed_id = self.validate_feed()
-    feed = FeedData.get_by_key_name(feed_id)
-    assert feed is not None
+    feed = self.get_entity()
     request = self.bcapRequest()
     
     feed.name = request.get('name', '')
     feed.location = request.get('location', '')
     feed.put()
     
-    self.xhr_response()
+    self.bcapNullResponse()
 
 
 application = webapp.WSGIApplication(
-  [('/belay/launch', LaunchHandler),
+  [(r'/cap/.*', belay.ProxyHandler),
+  ('/belay/launch', LaunchHandler),
   ('/belay/launchReader', LaunchReaderHandler),
   ('/belay/generate', GenerateHandler),
   ('/belay/generateProfile', GenerateProfileHandler),
   ('/belay/generateReader', GenerateReaderHandler),
   ('/view/editor', EditorViewHandler),
   ('/view/reader', ReaderViewHandler),
-  ('/data/profile', DataProfileHandler),
-  ('/data/post', DataPostHandler),
-  ('/data/attributes', SetAttributesHandler),
   ],
   debug=True)
+  
+# Internal Cap Paths
+belay.set_handlers(
+  '/cap',
+  [ ('/data/profile', DataProfileHandler),
+    ('/data/post', DataPostHandler),
+    ('/data/attributes', SetAttributesHandler),
+  ])
 
 def main():
   logging.getLogger().setLevel(logging.DEBUG)

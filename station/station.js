@@ -263,6 +263,7 @@ var launchGadgetInstance = function(inst) {
     // windowed instances require onBelayReady; gadgets also have it for
     // uniformity
     onBelayReady: function(callback) { callback(); },
+    belay: { },
     capServer: inst.capServer,
     ui: {
       resize: function(minWidth, minHeight, resizable) {
@@ -361,15 +362,10 @@ var launchPageInstance = function(inst, launchCap) {
     outpostData: {
       info: inst.launch.info,
       instanceID: inst.state.id,
-      initialSnapshot: inst.state.capSnapshot ? inst.state.capSnapshot : false,
       services: belayBrowser,
       storage: capServer.grant({
         get: function() { return inst.state.data; },
         put: function(d) {inst.state.data = d; dirty(inst); }
-      }),
-      snapshot: capServer.grant({
-        get: function() { return inst.state.capSnapshot; },
-        put: function(snap) { inst.state.capSnapshot = snap; dirty(inst); }
       })
     }
   },

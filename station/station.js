@@ -286,10 +286,8 @@ var launchGadgetInstance = function(inst) {
           }
         }
       },
-      capDraggable: common.makeCapDraggable(inst.capServer,
-                      function() { dirty(inst); }),
-      capDroppable: common.makeCapDroppable(inst.capServer,
-                      function() { dirty(inst); })
+      capDraggable: common.makeCapDraggable(inst.capServer),
+      capDroppable: common.makeCapDroppable(inst.capServer)
     }
   };
 

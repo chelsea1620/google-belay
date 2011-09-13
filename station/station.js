@@ -179,7 +179,7 @@ var instanceResolver = function(id) {
 
 var setupCapServer = function(inst) {
   var capServer;
-  capServer = new CapServer(inst.state.id, inst.state.launch.info.snapshot);
+  capServer = new CapServer(inst.state.id);
   inst.capServer = capServer;
   capServer.setResolver(instanceResolver);
   capServer.setSyncNotifier(function() { dirty(inst); });

@@ -1,9 +1,0 @@
-Hello is a simple Belay application
-
-Its generate URL simply returns a constant url to its code URL.
-In this way, instances of Hello are only distinguished by the data that they
-store with the instance reference.
-
-Hello is free to update it's code at anytime, though it must be sure to remain
-compatible with any data that it ever stored at anytime in the past.
-

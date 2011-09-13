@@ -1,4 +1,3 @@
-
 # Copyright 2011 Google Inc. All Rights Reserved.
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,12 +12,5 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-#!/usr/bin/env python
-
-from lib.py.utils import *
-
-html = file("emote.html")
-content = html.read().format(url=server_url("/emote.css"))
-html.close()
-
-xhr_response(content, "text/html;charset=UTF-8")
+TEMPLATE_DIRS = ('.',)
+TEMPLATE_DEBUG = True

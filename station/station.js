@@ -114,7 +114,6 @@ var instances = {};
           gadget: { html: url, scripts: [url] },
           info: any
        },
-       capSnapshot: string,
        created: Int      -- time created (seconds since epoch)
        name: string,
        icon: url,
@@ -142,11 +141,6 @@ var dirtyProcess = function() {
     var instID = dirtyInstances.shift();
     inst = instances[instID];
   }
-  // TODO(arjun): who should do the saving? should windowed instances also
-  // have a capserver stored by station?
-  if (inst.capServer) {
-    inst.state.capSnapshot = inst.capServer.snapshot();
-  }
   inst.storageCap.post(inst.state, dirtyProcess);
 };
 var dirty = function(inst) {
@@ -161,7 +155,6 @@ var ensureSync = function(inst, k) {
   if (ix == -1) { k(); }
   else {
     dirtyInstances.splice(ix, 1);
-    inst.state.capSnapshot = inst.capServer.snapshot();
     inst.storageCap.post(inst.state, k);
   }
 };
@@ -186,12 +179,7 @@ var instanceResolver = function(id) {
 
 var setupCapServer = function(inst) {
   var capServer;
-  if ('capSnapshot' in inst.state) {
-    capServer = new CapServer(inst.state.id, inst.state.capSnapshot);
-  }
-  else {
-    capServer = new CapServer(inst.state.id);
-  }
+  capServer = new CapServer(inst.state.id, inst.state.launch.info.snapshot);
   inst.capServer = capServer;
   capServer.setResolver(instanceResolver);
   capServer.setSyncNotifier(function() { dirty(inst); });

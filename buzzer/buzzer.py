@@ -44,6 +44,11 @@ class FeedData(db.Model):
   title = db.StringProperty()
   name = db.StringProperty()
   location = db.StringProperty()
+
+
+class SnapshotData(db.Model):
+  snapshot = db.TextProperty()
+  
   
 class ItemData(db.Model):
   when = db.DateTimeProperty(auto_now_add=True);
@@ -100,6 +105,7 @@ class LaunchHandler(BaseHandler):
   def get(self):
     feed_id = self.validate_feed();
     feed = FeedData.get_by_key_name(feed_id);
+    snapshot = SnapshotData.all().ancestor(feed).get()
 
     response = {
       'page': {
@@ -112,6 +118,8 @@ class LaunchHandler(BaseHandler):
       },
       'info': {
         'post_cap': belay.regrant(DataPostHandler, feed),
+        'snapshot_cap': belay.regrant(SnapshotHandler, snapshot),
+        'snapshot': snapshot.snapshot,
         'reader_gen_cap': server_cap("/belay/generateReader", feed_id),
         'editor_url': server_feed_url("/view/editor", feed_id),
         'readChitURL': server_url("/chit-24.png"),
@@ -123,6 +131,18 @@ class LaunchHandler(BaseHandler):
     }
 
     self.bcapResponse(response)    
+
+
+class SnapshotHandler(belay.CapHandler):
+  def get(self):
+    self.bcapResponse(self.get_entity().snapshot)
+
+  def put(self):
+    v = self.bcapRequest()
+    snapshot = self.get_entity()
+    snapshot.snapshot = v
+    snapshot.put()
+    self.bcapNullResponse()
 
 
 class LaunchReaderHandler(BaseHandler):
@@ -153,16 +173,19 @@ class GenerateHandler(BaseHandler):
     feed_id = str(feed_uuid)
     feed = FeedData(key_name=feed_id)
     feed.put()
+    snapshot = SnapshotData(parent=feed)
+    snapshot.put()
     self.bcapResponse(server_cap("/belay/launch", feed_id))
 
 class GenerateProfileHandler(BaseHandler):
   def post(self):
     feed_uuid = uuid.uuid4()
     feed_id = str(feed_uuid)
-
     feed = FeedData(key_name=feed_id);
     feed.title = self.request.get('title')
     feed.put()
+    snapshot = SnapshotData(parent=feed)
+    snapshot.put()
     
     response = {
       'launch': server_cap("/belay/launch", feed_id),
@@ -279,6 +302,7 @@ application = webapp.WSGIApplication(
 belay.set_handlers(
   '/cap',
   [ ('/data/profile', DataProfileHandler),
+    ('/data/snapshot', SnapshotHandler),
     ('/data/post', DataPostHandler),
     ('/data/attributes', SetAttributesHandler),
   ])

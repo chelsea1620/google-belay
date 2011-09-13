@@ -151,6 +151,8 @@ class GenerateHandler(BaseHandler):
   def get(self):
     feed_uuid = uuid.uuid4()
     feed_id = str(feed_uuid)
+    feed = FeedData(key_name=feed_id)
+    feed.put()
     self.bcapResponse(server_cap("/belay/launch", feed_id))
 
 class GenerateProfileHandler(BaseHandler):
@@ -185,9 +187,7 @@ class ViewHandler(BaseHandler):
   def get(self):
     feed_id = self.validate_feed();
     feed = FeedData.get_by_key_name(feed_id);
-    need_profile = feed == None or feed.title == ''
-    if feed == None:
-      feed = FeedData(key_name=feed_id)
+    need_profile = feed.title is None
     has_name = feed.name and feed.name != ''
     has_location = feed.location and feed.location != ''
     

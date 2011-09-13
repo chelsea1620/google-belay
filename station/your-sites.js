@@ -39,7 +39,6 @@ var instances = Object.create(null);
      state: {
        id: uuid,
        belayInstance: cap(belay/instance),
-       capSnapshot: string,
        created: Int      -- time created (seconds since epoch)
        name: string,
        icon: url,
@@ -82,11 +81,6 @@ var dirtyProcess = function() {
     var instID = dirtyInstances.shift();
     inst = instances[instID];
   }
-  // TODO(arjun): who should do the saving? should windowed instances also
-  // have a capserver stored by station?
-  if (inst.capServer) {
-    inst.state.capSnapshot = inst.capServer.snapshot();
-  }
   inst.storageCap.post(inst.state, dirtyProcess);
 };
 var dirty = function(inst) {
@@ -101,7 +95,6 @@ var ensureSync = function(inst, k) {
   if (ix == -1) { k(); }
   else {
     dirtyInstances.splice(ix, 1);
-    inst.state.capSnapshot = inst.capServer.snapshot();
     inst.storageCap.post(inst.state, k);
   }
 };
@@ -121,20 +114,6 @@ var instanceResolver = function(id) {
     return capServer.publicInterface;
   }
   return belayBrowserTunnel.sendInterface;
-};
-
-
-var setupCapServer = function(inst) {
-  var capServer;
-  if ('capSnapshot' in inst.state) {
-    capServer = new CapServer(inst.state.id, inst.state.capSnapshot);
-  }
-  else {
-    capServer = new CapServer(inst.state.id);
-  }
-  inst.capServer = capServer;
-  capServer.setResolver(instanceResolver);
-  capServer.setSyncNotifier(function() { dirty(inst); });
 };
 
 
@@ -161,15 +140,10 @@ var launchPageInstance = function(inst, launchCap) {
     outpostData: {
       info: inst.launch.info,
       instanceID: inst.state.id,
-      initialSnapshot: inst.state.capSnapshot ? inst.state.capSnapshot : false,
       services: belayBrowser,
       storage: capServer.grant({
         get: function() { return inst.state.data; },
         put: function(d) {inst.state.data = d; dirty(inst); }
-      }),
-      snapshot: capServer.grant({
-        get: function() { return inst.state.capSnapshot; },
-        put: function(snap) { inst.state.capSnapshot = snap; dirty(inst); }
       }),
       setRefresh: capServer.grant(function(refreshCap) {
         inst.refreshCap = refreshCap;

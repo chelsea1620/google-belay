@@ -38,23 +38,21 @@ var showPanel = function(feedCap) {
 
 onBelayReady(function() {
   ui.resize(160, 90, false);
-
-
-  storage.get(function(feedCap) {
-
-    if (feedCap) {
-      showPanel(capServer.restore(feedCap));
-    }
-    else {
-      var invite = topDiv.find('.emote-invite');
-      invite.show();
-      ui.capDroppable(invite, rcPost, function(genCap, rc) {
-        genCap.post(rcPost, function(postCap) {
-          invite.hide();
-          showPanel(postCap);
-          storage.put(postCap.serialize());
-        });
+  
+  var feedCap = belay.outpost.info.post;
+  console.log(feedCap);
+  if (feedCap) {
+    showPanel(capServer.restore(feedCap));
+  }
+  else {
+    var invite = topDiv.find('.emote-invite');
+    invite.show();
+    ui.capDroppable(invite, rcPost, function(genCap, rc) {
+      genCap.post(rcPost, function(feedCap) {
+        invite.hide();
+        showPanel(feedCap);
+        belay.outpost.info.savePost.put(feedCap.serialize());
       });
-    }
-  });
+    });
+  }
 });

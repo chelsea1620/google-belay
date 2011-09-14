@@ -12,10 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// before this script, be sure that the following is set:
-//    topDiv -- a jQuery object for the top div
-//    storage.get & storage.put -- save and restore state
-
 var languageMap = {
   ar: 'مرحبا العالم!',
   cy: 'Helo byd!',

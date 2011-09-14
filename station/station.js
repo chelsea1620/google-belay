@@ -240,7 +240,6 @@ var launchGadgetInstance = function(inst) {
   var extras = {
     topDiv: topDiv,
     launchInfo: inst.launch.info,
-    },
     // windowed instances require onBelayReady; gadgets also have it for
     // uniformity
     onBelayReady: function(callback) { callback(); },

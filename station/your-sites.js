@@ -141,10 +141,6 @@ var launchPageInstance = function(inst, launchCap) {
       info: inst.launch.info,
       instanceID: inst.state.id,
       services: belayBrowser,
-      storage: capServer.grant({
-        get: function() { return inst.state.data; },
-        put: function(d) {inst.state.data = d; dirty(inst); }
-      }),
       setRefresh: capServer.grant(function(refreshCap) {
         inst.refreshCap = refreshCap;
       })

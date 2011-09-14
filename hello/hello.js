@@ -45,11 +45,7 @@ for (var l in languageMap) { languages.push(l); }
 
 var setLang = function(lang) {
   topDiv.find('p').text(languageMap[lang]);
-  storage.get(function(storedLang) {
-    if (storedLang != lang) {
-     storage.put(lang);
-    }
-  });
+  belay.outpost.info.setLang.put(lang);
 };
 
 onBelayReady(function() {
@@ -59,7 +55,5 @@ onBelayReady(function() {
     return false;
   });
 
-  storage.get(function(lang) {
-    setLang(lang || 'en');
-  });
+  setLang(belay.outpost.info.lang || 'en');
 });

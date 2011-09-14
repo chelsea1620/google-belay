@@ -19,17 +19,14 @@ api_version: 1
 
 handlers:
 
-- url: /belay/generate
-  script: generate-belay.py
+- url: /belay/.*
+  script: hello.py
 
-- url: /belay/generate-instance
-  script: generate-instance.py
+- url: /view/.*
+  script: hello.py
 
-- url: /belay/launch
-  script: launch-belay.py
-
-- url: /view/gadget
-  script: gadget.py
+- url: /cap/.*
+  script: hello.py
 
 - url: /(.*\.(html|css|js|png))
   script: lib/py/CORSstatic.py

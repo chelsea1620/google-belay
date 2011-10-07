@@ -33,9 +33,11 @@ from lib.py import belay
 def server_url(path):
   return belay.this_server_url_prefix() + path
 
+# to remove
 def server_feed_url(path, feed_id):
   return server_url(path + "?" + feed_id)
 
+# to remove
 def server_cap(path, feed_id):
   return { '@': server_feed_url(path, feed_id) }
 
@@ -75,7 +77,11 @@ class ItemData(db.Model):
     return date.strftime(format)
 
 
-
+def render_to_response(handler, tmpl_filename, dictionary):
+    """Note that this is different than Django's similarly named function"""
+    content = render_to_string(tmpl_filename, dictionary)
+    # django is misguided here - it doesn't read the file as UTF-8
+    handler.xhr_content(content, "text/html;charset=UTF-8")
 
 class BaseHandler(belay.BcapHandler):
   class InvalidFeed(Exception):
@@ -93,12 +99,6 @@ class BaseHandler(belay.BcapHandler):
       self.error(404)
     else:
       super(BaseHandler, self).handle_exception(exc, debug_mode)
-
-  def render_to_response(self, tmpl_filename, dictionary):
-    """Note that this is different than Django's similarly named function"""
-    content = render_to_string(tmpl_filename, dictionary)
-    # django is misguided here - it doesn't read the file as UTF-8
-    self.xhr_content(content, "text/html;charset=UTF-8")
     
 
 class LaunchHandler(BaseHandler):
@@ -219,7 +219,7 @@ class ViewHandler(BaseHandler):
     q.order('-when');
     items = q.fetch(10);
     
-    self.render_to_response('buzzer.tmpl',
+    render_to_response(self, 'buzzer.tmpl',
       { 'css_url': server_url('/buzzer.css'),
         'chit_read_url': server_url('/chit-24.png'),
         'chit_post_url': server_url('/chit-25.png'),

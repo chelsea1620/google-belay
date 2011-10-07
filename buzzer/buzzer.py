@@ -101,10 +101,10 @@ class BaseHandler(belay.BcapHandler):
       super(BaseHandler, self).handle_exception(exc, debug_mode)
     
 
-class LaunchHandler(BaseHandler):
+class LaunchHandler(belay.CapHandler):
   def get(self):
-    feed_id = self.validate_feed();
-    feed = FeedData.get_by_key_name(feed_id);
+    feed = self.get_entity()
+    feed_id = feed.key().name()
     snapshot = SnapshotData.all().ancestor(feed).get()
 
     response = {
@@ -166,17 +166,6 @@ class LaunchReaderHandler(BaseHandler):
 
     self.bcapResponse(response)    
 
-
-class GenerateHandler(BaseHandler):
-  def get(self):
-    feed_uuid = uuid.uuid4()
-    feed_id = str(feed_uuid)
-    feed = FeedData(key_name=feed_id)
-    feed.put()
-    snapshot = SnapshotData(parent=feed)
-    snapshot.put()
-    self.bcapResponse(server_cap("/belay/launch", feed_id))
-
 class GenerateProfileHandler(BaseHandler):
   def post(self):
     feed_uuid = uuid.uuid4()
@@ -188,7 +177,7 @@ class GenerateProfileHandler(BaseHandler):
     snapshot.put()
     
     response = {
-      'launch': server_cap("/belay/launch", feed_id),
+      'launch': belay.regrant(LaunchHandler, feed),
       'icon': server_url("/tool-buzzer.png"),
       'name': feed.title
     }
@@ -288,9 +277,7 @@ class SetAttributesHandler(belay.CapHandler):
 
 application = webapp.WSGIApplication(
   [(r'/cap/.*', belay.ProxyHandler),
-  ('/belay/launch', LaunchHandler),
   ('/belay/launchReader', LaunchReaderHandler),
-  ('/belay/generate', GenerateHandler),
   ('/belay/generateProfile', GenerateProfileHandler),
   ('/belay/generateReader', GenerateReaderHandler),
   ('/view/editor', EditorViewHandler),
@@ -301,7 +288,8 @@ application = webapp.WSGIApplication(
 # Internal Cap Paths
 belay.set_handlers(
   '/cap',
-  [ ('/data/profile', DataProfileHandler),
+  [ ('/belay/launch', LaunchHandler),
+    ('/data/profile', DataProfileHandler),
     ('/data/snapshot', SnapshotHandler),
     ('/data/post', DataPostHandler),
     ('/data/attributes', SetAttributesHandler),

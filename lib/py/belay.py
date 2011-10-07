@@ -34,6 +34,9 @@ def this_server_url_prefix():
   if server_port != 80: # TODO(mzero): different port if using https
     prefix += ":%d" % server_port
   return prefix
+
+def server_url(path):
+  return this_server_url_prefix() + path
   
   
 class BelayException(Exception):

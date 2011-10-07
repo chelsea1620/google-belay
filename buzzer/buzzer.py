@@ -63,6 +63,35 @@ class ItemData(db.Model):
     format += ' - %I:%M %p'
     return date.strftime(format)    
 
+
+class GenerateHandler(belay.BcapHandler):
+  def post(self):
+    feed = FeedData()
+    feed.title = self.request.get('title')
+    feed.put()
+    snapshot = SnapshotData(parent=feed)
+    snapshot.put()
+    
+    response = {
+      'launch': belay.regrant(LaunchHandler, feed),
+      'icon': belay.server_url("/tool-buzzer.png"),
+      'name': feed.title
+    }
+
+    self.bcapResponse(response)
+
+
+class GenerateReaderHandler(belay.CapHandler):
+  def get(self):
+    feed = self.get_entity()
+    response = {
+        'launch': belay.regrant(LaunchReaderHandler, feed),
+        'name': 'buzz about ' + feed.title,
+        'icon': belay.server_url('/tool-buzzer.png')
+    };
+    self.bcapResponse(response)
+
+
 class LaunchHandler(belay.CapHandler):
   def get(self):
     feed = self.get_entity()
@@ -74,7 +103,7 @@ class LaunchHandler(belay.CapHandler):
         'window': { 'width': 300, 'height': 400 } 
       },
       'gadget': {
-        'html': belay.regrant(EditorViewHandler, feed),
+        'html': belay.regrant(EditorViewHandler, feed).serialize(),
         'scripts': [ belay.server_url("/buzzer.js") ]
       },
       'info': {
@@ -94,18 +123,6 @@ class LaunchHandler(belay.CapHandler):
     self.bcapResponse(response)    
 
 
-class SnapshotHandler(belay.CapHandler):
-  def get(self):
-    self.bcapResponse(self.get_entity().snapshot)
-
-  def put(self):
-    v = self.bcapRequest()
-    snapshot = self.get_entity()
-    snapshot.snapshot = v
-    snapshot.put()
-    self.bcapNullResponse()
-
-
 class LaunchReaderHandler(belay.CapHandler):
   def get(self):
     feed = self.get_entity()
@@ -116,7 +133,7 @@ class LaunchReaderHandler(belay.CapHandler):
         'window': { 'width': 300, 'height': 400 } 
       },
       'gadget': {
-        'html': belay.regrant(ReaderViewHandler, feed),
+        'html': belay.regrant(ReaderViewHandler, feed).serialize(),
         'scripts': [ belay.server_url("/buzzer.js") ]
       },
       'info': {
@@ -124,33 +141,8 @@ class LaunchReaderHandler(belay.CapHandler):
       }
     }
 
-    self.bcapResponse(response)    
-
-class GenerateProfileHandler(belay.BcapHandler):
-  def post(self):
-    feed = FeedData()
-    feed.title = self.request.get('title')
-    feed.put()
-    snapshot = SnapshotData(parent=feed)
-    snapshot.put()
-    
-    response = {
-      'launch': belay.regrant(LaunchHandler, feed),
-      'icon': belay.server_url("/tool-buzzer.png"),
-      'name': feed.title
-    }
-
     self.bcapResponse(response)
 
-class GenerateReaderHandler(belay.CapHandler):
-  def get(self):
-    feed = self.get_entity()
-    response = {
-        'launch': belay.regrant(LaunchReaderHandler, feed),
-        'name': 'buzz about ' + feed.title,
-        'icon': belay.server_url('/tool-buzzer.png')
-    };
-    self.bcapResponse(response)
 
 class ViewHandler(belay.CapHandler):
   def get(self):
@@ -191,9 +183,11 @@ class EditorViewHandler(ViewHandler):
   def include_post(self):
     return True
 
+
 class ReaderViewHandler(ViewHandler):
   def include_post(self):
     return False
+
 
 class DataProfileHandler(belay.CapHandler):
   def post(self):
@@ -204,6 +198,7 @@ class DataProfileHandler(belay.CapHandler):
     feed.put()
 
     self.bcapNullResponse()
+
 
 class DataPostHandler(belay.CapHandler):
   def post(self):
@@ -226,6 +221,19 @@ class DataPostHandler(belay.CapHandler):
 
     self.bcapNullResponse()
 
+
+class SnapshotHandler(belay.CapHandler):
+  def get(self):
+    self.bcapResponse(self.get_entity().snapshot)
+
+  def put(self):
+    v = self.bcapRequest()
+    snapshot = self.get_entity()
+    snapshot.snapshot = v
+    snapshot.put()
+    self.bcapNullResponse()
+
+
 class SetAttributesHandler(belay.CapHandler):
   def put(self):
     feed = self.get_entity()
@@ -240,10 +248,11 @@ class SetAttributesHandler(belay.CapHandler):
 
 application = webapp.WSGIApplication(
   [(r'/cap/.*', belay.ProxyHandler),
-  ('/belay/generateProfile', GenerateProfileHandler),
+  ('/generate', GenerateHandler),
   ],
   debug=True)
-  
+
+
 # Internal Cap Paths
 belay.set_handlers(
   '/cap',
@@ -253,14 +262,16 @@ belay.set_handlers(
     ('/view/editor', EditorViewHandler),
     ('/view/reader', ReaderViewHandler),
     ('/data/profile', DataProfileHandler),
-    ('/data/snapshot', SnapshotHandler),
     ('/data/post', DataPostHandler),
+    ('/data/snapshot', SnapshotHandler),
     ('/data/attributes', SetAttributesHandler),
   ])
+
 
 def main():
   logging.getLogger().setLevel(logging.DEBUG)
   run_wsgi_app(application)
+
 
 if __name__ == "__main__":
   main()

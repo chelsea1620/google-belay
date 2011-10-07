@@ -17,7 +17,7 @@ onBelayReady(function() {
   form.submit(function(evt) {
     var title = form.find('[name="title"]').val();
     $.ajax({
-      url: '/belay/generateProfile',
+      url: '/generate',
       dataType: 'text',
       type: 'POST',
       data: {title: title},

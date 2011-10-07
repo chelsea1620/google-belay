@@ -113,7 +113,7 @@ class LaunchHandler(belay.CapHandler):
         'window': { 'width': 300, 'height': 400 } 
       },
       'gadget': {
-        'html': server_feed_url("/view/editor", feed_id),
+        'html': belay.regrant(EditorViewHandler, feed),
         'scripts': [ server_url("/buzzer.js") ]
       },
       'info': {
@@ -121,7 +121,7 @@ class LaunchHandler(belay.CapHandler):
         'snapshot_cap': belay.regrant(SnapshotHandler, snapshot),
         'snapshot': snapshot.snapshot,
         'reader_gen_cap': server_cap("/belay/generateReader", feed_id),
-        'editor_url': server_feed_url("/view/editor", feed_id),
+        'editor_cap': belay.regrant(EditorViewHandler, feed),
         'readChitURL': server_url("/chit-24.png"),
         'postChitURL': server_url("/chit-25.png")
       },
@@ -156,11 +156,11 @@ class LaunchReaderHandler(BaseHandler):
         'window': { 'width': 300, 'height': 400 } 
       },
       'gadget': {
-        'html': server_feed_url("/view/reader", feed_id),
+        'html': belay.regrant(ReaderViewHandler, feed),
         'scripts': [ server_url("/buzzer.js") ]
       },
       'info': {
-        'editor_url': server_feed_url("/view/reader", feed_id),
+        'editor_cap': belay.regrant(ReaderViewHandler, feed),
       }
     }
 
@@ -195,10 +195,9 @@ class GenerateReaderHandler(BaseHandler):
     };
     self.bcapResponse(response)
 
-class ViewHandler(BaseHandler):
+class ViewHandler(belay.CapHandler):
   def get(self):
-    feed_id = self.validate_feed();
-    feed = FeedData.get_by_key_name(feed_id);
+    feed = self.get_entity()
     need_profile = feed.title is None
     has_name = feed.name and feed.name != ''
     has_location = feed.location and feed.location != ''
@@ -280,8 +279,6 @@ application = webapp.WSGIApplication(
   ('/belay/launchReader', LaunchReaderHandler),
   ('/belay/generateProfile', GenerateProfileHandler),
   ('/belay/generateReader', GenerateReaderHandler),
-  ('/view/editor', EditorViewHandler),
-  ('/view/reader', ReaderViewHandler),
   ],
   debug=True)
   
@@ -289,6 +286,8 @@ application = webapp.WSGIApplication(
 belay.set_handlers(
   '/cap',
   [ ('/belay/launch', LaunchHandler),
+    ('/view/editor', EditorViewHandler),
+    ('/view/reader', ReaderViewHandler),
     ('/data/profile', DataProfileHandler),
     ('/data/snapshot', SnapshotHandler),
     ('/data/post', DataPostHandler),

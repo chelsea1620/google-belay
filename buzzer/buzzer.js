@@ -64,7 +64,7 @@ onBelayReady(function() {
   capServer.setReviver(capReviver);
 
   var reload = function() {
-    topDiv.load(launchInfo.editor_url, function() {
+    topDiv.load(launchInfo.editor_cap.serialize(), function() {
       var forms = topDiv.find('.buzzer-thing form');
       topDiv.find('.buzzer-thing form').submit(function(ev) {
         formAjax(ev.target, reload);

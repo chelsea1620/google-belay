@@ -33,15 +33,6 @@ from lib.py import belay
 def server_url(path):
   return belay.this_server_url_prefix() + path
 
-# to remove
-def server_feed_url(path, feed_id):
-  return server_url(path + "?" + feed_id)
-
-# to remove
-def server_cap(path, feed_id):
-  return { '@': server_feed_url(path, feed_id) }
-
-
 class FeedData(db.Model):
   title = db.StringProperty()
   name = db.StringProperty()
@@ -104,7 +95,6 @@ class BaseHandler(belay.BcapHandler):
 class LaunchHandler(belay.CapHandler):
   def get(self):
     feed = self.get_entity()
-    feed_id = feed.key().name()
     snapshot = SnapshotData.all().ancestor(feed).get()
 
     response = {
@@ -120,7 +110,7 @@ class LaunchHandler(belay.CapHandler):
         'post_cap': belay.regrant(DataPostHandler, feed),
         'snapshot_cap': belay.regrant(SnapshotHandler, snapshot),
         'snapshot': snapshot.snapshot,
-        'reader_gen_cap': server_cap("/belay/generateReader", feed_id),
+        'reader_gen_cap': belay.regrant(GenerateReaderHandler, feed),
         'editor_cap': belay.regrant(EditorViewHandler, feed),
         'readChitURL': server_url("/chit-24.png"),
         'postChitURL': server_url("/chit-25.png")
@@ -145,10 +135,9 @@ class SnapshotHandler(belay.CapHandler):
     self.bcapNullResponse()
 
 
-class LaunchReaderHandler(BaseHandler):
+class LaunchReaderHandler(belay.CapHandler):
   def get(self):
-    feed_id = self.validate_feed();
-    feed = FeedData.get_by_key_name(feed_id);
+    feed = self.get_entity()
 
     response = {
       'page': {
@@ -184,12 +173,11 @@ class GenerateProfileHandler(BaseHandler):
 
     self.bcapResponse(response)
 
-class GenerateReaderHandler(BaseHandler):
+class GenerateReaderHandler(belay.CapHandler):
   def get(self):
-    feed_id = self.validate_feed();
-    feed = FeedData.get_by_key_name(feed_id);
+    feed = self.get_entity()
     response = {
-        'launch': server_cap('/belay/launchReader', feed_id),
+        'launch': belay.regrant(LaunchReaderHandler, feed),
         'name': 'buzz about ' + feed.title,
         'icon': server_url('/tool-buzzer.png')
     };
@@ -276,9 +264,7 @@ class SetAttributesHandler(belay.CapHandler):
 
 application = webapp.WSGIApplication(
   [(r'/cap/.*', belay.ProxyHandler),
-  ('/belay/launchReader', LaunchReaderHandler),
   ('/belay/generateProfile', GenerateProfileHandler),
-  ('/belay/generateReader', GenerateReaderHandler),
   ],
   debug=True)
   
@@ -286,6 +272,8 @@ application = webapp.WSGIApplication(
 belay.set_handlers(
   '/cap',
   [ ('/belay/launch', LaunchHandler),
+    ('/belay/generateReader', GenerateReaderHandler),
+    ('/belay/launchReader', LaunchReaderHandler),
     ('/view/editor', EditorViewHandler),
     ('/view/reader', ReaderViewHandler),
     ('/data/profile', DataProfileHandler),

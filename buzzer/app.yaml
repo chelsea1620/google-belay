@@ -22,14 +22,8 @@ handlers:
 - url: /
   static_files: index.html
   upload: index.html
-  
-- url: /belay/launch
-  script: buzzer.py
 
-- url: /belay/.*
-  script: buzzer.py
-
-- url: /view/.*
+- url: /generate
   script: buzzer.py
 
 - url: /cap/.*

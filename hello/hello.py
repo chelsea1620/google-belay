@@ -28,8 +28,6 @@ from lib.py import belay
 os.environ['DJANGO_SETTINGS_MODULE'] = 'settings'
 from django.template.loader import render_to_string
 
-def server_url(path):
-  return belay.this_server_url_prefix() + path
 
 class HelloData(db.Model):
   lang = db.TextProperty()
@@ -38,7 +36,7 @@ class HelloData(db.Model):
 class ViewHandler(belay.BcapHandler):
   def get(self):
     content = \
-      render_to_string("hello-gadget.html", { 'url': server_url("/hello.css") })
+      render_to_string("hello-gadget.html", { 'url': belay.server_url("/hello.css") })
     self.xhr_content(content, "text/html;charset=UTF-8")
 
 
@@ -55,7 +53,7 @@ class GenerateInstanceHandler(belay.BcapHandler):
     hello.put()
     self.bcapResponse({
       'launch': belay.regrant(LaunchHandler, hello),
-      'icon': server_url("/tool-hello.png"), 
+      'icon': belay.server_url("/tool-hello.png"), 
       'name': 'Hello'
     })
 
@@ -64,12 +62,12 @@ class LaunchHandler(belay.CapHandler):
   def get(self):
     self.bcapResponse({
         'page': {
-          'html': server_url("/hello-belay.html"),
+          'html': belay.server_url("/hello-belay.html"),
           'window': { 'width': 300, 'height': 250 }
         },
         'gadget': {
-          'html': server_url("/view/gadget"),
-          'scripts': [ server_url("/hello.js") ]
+          'html': belay.server_url("/view/gadget"),
+          'scripts': [ belay.server_url("/hello.js") ]
         },
         'info': { 
           'lang': self.get_entity().lang,

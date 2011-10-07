@@ -26,10 +26,6 @@ from google.appengine.ext import db
 from google.appengine.ext import webapp
 from google.appengine.ext.webapp.util import run_wsgi_app
 
-
-def server_url(path):
-  return this_server_url_prefix() + path
-
 def keyName(key):
   if isinstance(key, str):
     return key

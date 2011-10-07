@@ -28,8 +28,6 @@ from lib.py import belay
 os.environ['DJANGO_SETTINGS_MODULE'] = 'settings'
 from django.template.loader import render_to_string
 
-def server_url(path):
-  return belay.this_server_url_prefix() + path
 
 class EmoteData(db.Model):
   postCap = db.TextProperty()
@@ -38,7 +36,7 @@ class EmoteData(db.Model):
 class ViewHandler(belay.BcapHandler):
   def get(self):
     content = \
-      render_to_string("emote.html", { 'url': server_url("/emote.css") })
+      render_to_string("emote.html", { 'url': belay.server_url("/emote.css") })
     self.xhr_content(content, "text/html;charset=UTF-8")
 
 
@@ -55,7 +53,7 @@ class GenerateInstanceHandler(belay.BcapHandler):
     emote.put()
     self.bcapResponse({
       'launch': belay.regrant(LaunchHandler, emote),
-      'icon': server_url("/tool-emote.png"), 
+      'icon': belay.server_url("/tool-emote.png"), 
       'name': 'Emote'
     })
 
@@ -64,12 +62,12 @@ class LaunchHandler(belay.CapHandler):
   def get(self):
     self.bcapResponse({
         'page': {
-          'html': server_url("/emote-belay.html"),
+          'html': belay.server_url("/emote-belay.html"),
           'window': { 'width': 300, 'height': 250 }
         },
         'gadget': {
-          'html': server_url("/view/gadget"),
-          'scripts': [ server_url("/emote.js") ]
+          'html': belay.server_url("/view/gadget"),
+          'scripts': [ belay.server_url("/emote.js") ]
         },
         'info': { 
           'post': self.get_entity().postCap,

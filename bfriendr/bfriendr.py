@@ -23,11 +23,6 @@ import lib.py.belay as CapServer
 from google.appengine.ext import db
 from google.appengine.ext import webapp
 from google.appengine.ext.webapp.util import run_wsgi_app
-
-
-
-def server_url(path):
-  return CapServer.this_server_url_prefix() + path
   
 def delete_entity(entity):
   CapServer.revokeEntity(entity)
@@ -154,7 +149,7 @@ class GenerateHandler(CapServer.BcapHandler):
     card.put()
     response = {
       'launch': CapServer.grant(LaunchHandler, account),
-      'icon': server_url('/person.png'),
+      'icon': CapServer.server_url('/person.png'),
       'name': 'bfriendr for ' + card.name
     }
     self.bcapResponse(response)
@@ -169,19 +164,19 @@ class LaunchHandler(CapServer.CapHandler):
     account = self.get_entity()
     response = {
       'page': {
-        'html': server_url('/bfriendr-belay.html'),
+        'html': CapServer.server_url('/bfriendr-belay.html'),
         'window': {'height': 800, 'width': 350}
       },
       'x-gadget': {
-        'html': server_url('/bfriendr.html'),
-        'scripts': [ server_url('/bfriendr.js') ]
+        'html': CapServer.server_url('/bfriendr.html'),
+        'scripts': [ CapServer.server_url('/bfriendr.js') ]
       },
       'info': {
         'friends':  CapServer.regrant(FriendsListHandler, account),
         'myCard':  CapServer.regrant(CardInfoHandler, account.my_card),
         'introduceYourself': CapServer.regrant(IntroduceYourselfHandler, account),
         'introduceMeTo': CapServer.regrant(IntroduceMeToHandler, account),
-        'chitURL': server_url('/chit.png'),
+        'chitURL': CapServer.server_url('/chit.png'),
         # TODO(mzero): or should this be just the following?
         'account':  CapServer.regrant(AccountInfoHandler, account),
       }

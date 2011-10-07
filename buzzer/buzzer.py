@@ -29,9 +29,6 @@ from django.template.loader import render_to_string
 
 from lib.py import belay
 
-def server_url(path):
-  return belay.this_server_url_prefix() + path
-
 class FeedData(db.Model):
   title = db.StringProperty()
   name = db.StringProperty()
@@ -73,12 +70,12 @@ class LaunchHandler(belay.CapHandler):
 
     response = {
       'page': {
-        'html': server_url('/buzzer-belay.html'),
+        'html': belay.server_url('/buzzer-belay.html'),
         'window': { 'width': 300, 'height': 400 } 
       },
       'gadget': {
         'html': belay.regrant(EditorViewHandler, feed),
-        'scripts': [ server_url("/buzzer.js") ]
+        'scripts': [ belay.server_url("/buzzer.js") ]
       },
       'info': {
         'post_cap': belay.regrant(DataPostHandler, feed),
@@ -86,8 +83,8 @@ class LaunchHandler(belay.CapHandler):
         'snapshot': snapshot.snapshot,
         'reader_gen_cap': belay.regrant(GenerateReaderHandler, feed),
         'editor_cap': belay.regrant(EditorViewHandler, feed),
-        'readChitURL': server_url("/chit-24.png"),
-        'postChitURL': server_url("/chit-25.png")
+        'readChitURL': belay.server_url("/chit-24.png"),
+        'postChitURL': belay.server_url("/chit-25.png")
       },
       'attributes': {
         'set': belay.regrant(SetAttributesHandler, feed)
@@ -115,12 +112,12 @@ class LaunchReaderHandler(belay.CapHandler):
 
     response = {
       'page': {
-        'html': server_url('/buzzer-belay.html'),
+        'html': belay.server_url('/buzzer-belay.html'),
         'window': { 'width': 300, 'height': 400 } 
       },
       'gadget': {
         'html': belay.regrant(ReaderViewHandler, feed),
-        'scripts': [ server_url("/buzzer.js") ]
+        'scripts': [ belay.server_url("/buzzer.js") ]
       },
       'info': {
         'editor_cap': belay.regrant(ReaderViewHandler, feed),
@@ -139,7 +136,7 @@ class GenerateProfileHandler(belay.BcapHandler):
     
     response = {
       'launch': belay.regrant(LaunchHandler, feed),
-      'icon': server_url("/tool-buzzer.png"),
+      'icon': belay.server_url("/tool-buzzer.png"),
       'name': feed.title
     }
 
@@ -151,7 +148,7 @@ class GenerateReaderHandler(belay.CapHandler):
     response = {
         'launch': belay.regrant(LaunchReaderHandler, feed),
         'name': 'buzz about ' + feed.title,
-        'icon': server_url('/tool-buzzer.png')
+        'icon': belay.server_url('/tool-buzzer.png')
     };
     self.bcapResponse(response)
 
@@ -168,9 +165,9 @@ class ViewHandler(belay.CapHandler):
     items = q.fetch(10);
     
     self.render_to_response('buzzer.tmpl',
-      { 'css_url': server_url('/buzzer.css'),
-        'chit_read_url': server_url('/chit-24.png'),
-        'chit_post_url': server_url('/chit-25.png'),
+      { 'css_url': belay.server_url('/buzzer.css'),
+        'chit_read_url': belay.server_url('/chit-24.png'),
+        'chit_post_url': belay.server_url('/chit-25.png'),
         'post_url': belay.regrant(DataPostHandler, feed).serialize(),
         'profile_url': belay.regrant(DataProfileHandler, feed).serialize(),
         'include_post': self.include_post(),

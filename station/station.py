@@ -61,10 +61,6 @@ def defaultTools():
       'icon': tool_url(9003, '/tool-stickies.png'),
       'generate': cap(tool_url(9003, '/belay/generate'))
     },
-    { 'name': 'Buzzer',
-      'icon': tool_url(9004, '/tool-buzzer.png'),
-      'generate': cap(tool_url(9004, '/belay/generate'))
-    },
     { 'name': 'Emote',
       'icon': tool_url(9005, '/tool-emote.png'),
       'generate': cap(tool_url(9005, '/belay/generate'))

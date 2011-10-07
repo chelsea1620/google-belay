@@ -18,7 +18,6 @@ import datetime
 import logging
 import os
 import sys
-import uuid
 
 from django.utils import simplejson as json
 from google.appengine.ext import db
@@ -65,15 +64,7 @@ class ItemData(db.Model):
     else:
       format = '%a, %b %d %Y'
     format += ' - %I:%M %p'
-    return date.strftime(format)
-
-
-def render_to_response(handler, tmpl_filename, dictionary):
-    """Note that this is different than Django's similarly named function"""
-    content = render_to_string(tmpl_filename, dictionary)
-    # django is misguided here - it doesn't read the file as UTF-8
-    handler.xhr_content(content, "text/html;charset=UTF-8")
-    
+    return date.strftime(format)    
 
 class LaunchHandler(belay.CapHandler):
   def get(self):
@@ -140,9 +131,7 @@ class LaunchReaderHandler(belay.CapHandler):
 
 class GenerateProfileHandler(belay.BcapHandler):
   def post(self):
-    feed_uuid = uuid.uuid4()
-    feed_id = str(feed_uuid)
-    feed = FeedData(key_name=feed_id);
+    feed = FeedData()
     feed.title = self.request.get('title')
     feed.put()
     snapshot = SnapshotData(parent=feed)
@@ -178,7 +167,7 @@ class ViewHandler(belay.CapHandler):
     q.order('-when');
     items = q.fetch(10);
     
-    render_to_response(self, 'buzzer.tmpl',
+    self.render_to_response('buzzer.tmpl',
       { 'css_url': server_url('/buzzer.css'),
         'chit_read_url': server_url('/chit-24.png'),
         'chit_post_url': server_url('/chit-25.png'),
@@ -193,6 +182,13 @@ class ViewHandler(belay.CapHandler):
         'has_subtitle': has_name or has_location
         
       })
+
+  def render_to_response(self, tmpl_filename, dictionary):
+    """Note that this is different than Django's similarly named function"""
+    content = render_to_string(tmpl_filename, dictionary)
+    # django is misguided here - it doesn't read the file as UTF-8
+    self.xhr_content(content, "text/html;charset=UTF-8")
+
 
 class EditorViewHandler(ViewHandler):
   def include_post(self):

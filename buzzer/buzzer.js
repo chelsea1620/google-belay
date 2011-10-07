@@ -38,7 +38,7 @@ onBelayReady(function() {
       form.method || 'GET',
       data,
       callback,
-      function() { alert('form update failed: ' + status); }
+      function(error) { alert('form update failed: ' + error.message + ' (' + error.status + ')'); }
       );
   };
 

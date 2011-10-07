@@ -73,23 +73,6 @@ def render_to_response(handler, tmpl_filename, dictionary):
     content = render_to_string(tmpl_filename, dictionary)
     # django is misguided here - it doesn't read the file as UTF-8
     handler.xhr_content(content, "text/html;charset=UTF-8")
-
-class BaseHandler(belay.BcapHandler):
-  class InvalidFeed(Exception):
-    pass
-
-  def validate_feed(self):
-    try:
-      feed_uuid = uuid.UUID(self.request.query_string)
-      return str(feed_uuid)
-    except:
-      raise BaseHandler.InvalidFeed()
-
-  def handle_exception(self, exc, debug_mode):
-    if isinstance(exc,BaseHandler.InvalidFeed):
-      self.error(404)
-    else:
-      super(BaseHandler, self).handle_exception(exc, debug_mode)
     
 
 class LaunchHandler(belay.CapHandler):
@@ -155,7 +138,7 @@ class LaunchReaderHandler(belay.CapHandler):
 
     self.bcapResponse(response)    
 
-class GenerateProfileHandler(BaseHandler):
+class GenerateProfileHandler(belay.BcapHandler):
   def post(self):
     feed_uuid = uuid.uuid4()
     feed_id = str(feed_uuid)

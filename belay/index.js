@@ -20,6 +20,7 @@
 function visible(n) { return n.css('display') != 'none'; };
 function enable(n) { n.removeAttr('disabled'); }
 function disable(n) { n.attr('disabled', 'disabled'); }
+function setEnabled(n, state) { state ? enable(n) : disable(n) }
 
 function setUpLaunchButton(elem, params) {
   var stationHash = '#' + newUUIDv4();
@@ -33,13 +34,30 @@ onBelayReady(function() {
   setUpLaunchButton($('#create-button a'), { version: 'new' });
 
   var belayData = capServer.dataPostProcess(localStorage['belay']);
-  var hasStation = belayData && 'stationLaunchCap' in belayData && belayData.stationLaunchCap;
+  var hasStation;
+  var stationCapString;
   
-  if (hasStation) {
-    $('#open-button').show();
+  function resetUI() {
+    hasStation = belayData && 'stationLaunchCap' in belayData && belayData.stationLaunchCap;
+    stationCapString = hasStation ? belayData.stationLaunchCap.serialize() : '';
+
+    if (hasStation) {
+      $('#open-button').show();
+      $('#create-button').hide();
+    } else {
+      $('#open-button').hide();
+      $('#create-button').show();
+    }
+
+    $('#station-cap').val(stationCapString);
+    disable($('#station-set'))
+    setEnabled($('#station-clear'), hasStation);
   }
-  else {
-    $('#create-button').show();
+
+  function setLaunchCap(cap) {
+    belayData.stationLaunchCap = cap;
+    localStorage['belay'] = capServer.dataPreProcess(belayData);
+    resetUI();
   }
 
   $('#advanced h2').click(function() { 
@@ -47,16 +65,22 @@ onBelayReady(function() {
       $('#advanced .control').text('▸');
       $('#advanced .content').slideUp();
     } else {
-      $('#station-cap').val(hasStation ? belayData.stationLaunchCap.serialize() : '');
-      disable($('#station-set'))
-      if (hasStation) {
-        enable($('#station-clear'));
-      }
-      else {
-        disable($('#station-clear'));
-      }
       $('#advanced .control').text('▾');
       $('#advanced .content').slideDown();
     }
-  })
+  });
+  
+  $('#station-clear').click(function() { setLaunchCap(null); });
+  $('#station-set').click(function() { 
+    var newVal = $('#station-cap').val().trim();
+    var cap = newVal != '' ? capServer.restore(newVal) : null;
+    setLaunchCap(cap);
+  });
+  
+  
+  $('#station-cap').bind('change keypress keyup keydown click', function () {
+    setEnabled($('#station-set'), $('#station-cap').val() != stationCapString);
+  });
+  
+  resetUI();
 })

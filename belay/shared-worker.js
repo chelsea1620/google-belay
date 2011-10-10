@@ -35,9 +35,6 @@ function resolver(instID) {
 
 workerServer.setResolver(resolver);
 
-var stationGenerator =
-  workerServer.restore('http://localhost:9001/belay/generate');
-
 var pendingLaunches = Object.create(null);
 
 function buildLauncher(openerCap) {
@@ -203,20 +200,24 @@ self.addEventListener('connect', function(e) {
     else if (location.hash in stationDelayedLaunches) {
       var stationLaunchParams = stationDelayedLaunches[location.hash];
       //delete stationDelayedLaunches[location.hash];
-
       outpost.localStorage.get(function(sto) {
         if (sto.stationLaunchCap) {
           launchStation(sto.stationLaunchCap, stationLaunchParams,
             outpost.windowLocation);
         }
         else {
-          stationGenerator.get(function(launchCap) {
-            sto.stationLaunchCap = launchCap;
-            outpost.localStorage.put(sto, function() {
-              launchStation(sto.stationLaunchCap, stationLaunchParams,
-                outpost.windowLocation);
+          if (sto.stationGenerateCap) {
+            sto.stationGenerateCap.get(function(launchCap) {
+              sto.stationLaunchCap = launchCap;
+              outpost.localStorage.put(sto, function() {
+                launchStation(sto.stationLaunchCap, stationLaunchParams,
+                  outpost.windowLocation);
+              });
             });
-          });
+          }
+          else {
+            // TODO(mzero): something awful: no way to generate a station
+          }
         }
       });
     }

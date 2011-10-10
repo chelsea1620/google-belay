@@ -57,9 +57,11 @@ limitations under the License.
 #advanced .section + .section {
   margin-left: 5%;
 }
-
 #advanced .section h3 {
   margin: 0;
+}
+#advanced .section * + * {
+  margin: 0.5em 0 0.5em 0.5em;
 }
 
 #advanced .input {
@@ -67,6 +69,23 @@ limitations under the License.
 }
 #station-cap {
   width: 98%;
+}
+
+.gen {
+  clear: both;;
+  text-align: left;
+}
+
+.gen .boilerplate {
+  color: #a49643;
+}
+
+.gen input {
+  width: 85%;
+}
+.gen button {
+  float: right;
+  margin: 0 0 0.5em 0;
 }
 
 #about {

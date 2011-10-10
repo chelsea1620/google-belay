@@ -17,6 +17,8 @@
     .stationLaunchCap -- cap to station to launch
 */
 
+var visible = function(n) { return n.css('display') != 'none'; };
+
 onBelayReady(function() {
   var belayData = capServer.dataPostProcess(localStorage['belay']);
   if (belayData && 'stationLaunchCap' in belayData && belayData.stationLaunchCap) {
@@ -26,6 +28,13 @@ onBelayReady(function() {
     $('#create-button').show();
   }
 
-  $('#advanced h2').click(function() { $('#advanced .content').slideToggle(); })
-
+  $('#advanced h2').click(function() { 
+    if(visible($('#advanced .content'))) {
+      $('#advanced .control').text('▸');
+      $('#advanced .content').slideUp();
+    } else {
+      $('#advanced .control').text('▾');
+      $('#advanced .content').slideDown();
+    }
+  })
 })

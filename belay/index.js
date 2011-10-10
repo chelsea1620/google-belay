@@ -18,6 +18,8 @@
 */
 
 function visible(n) { return n.css('display') != 'none'; };
+function enable(n) { n.removeAttr('disabled'); }
+function disable(n) { n.attr('disabled', 'disabled'); }
 
 function setUpLaunchButton(elem, params) {
   var stationHash = '#' + newUUIDv4();
@@ -31,7 +33,9 @@ onBelayReady(function() {
   setUpLaunchButton($('#create-button a'), { version: 'new' });
 
   var belayData = capServer.dataPostProcess(localStorage['belay']);
-  if (belayData && 'stationLaunchCap' in belayData && belayData.stationLaunchCap) {
+  var hasStation = belayData && 'stationLaunchCap' in belayData && belayData.stationLaunchCap;
+  
+  if (hasStation) {
     $('#open-button').show();
   }
   else {
@@ -43,6 +47,14 @@ onBelayReady(function() {
       $('#advanced .control').text('▸');
       $('#advanced .content').slideUp();
     } else {
+      $('#station-cap').val(hasStation ? belayData.stationLaunchCap.serialize() : '');
+      disable($('#station-set'))
+      if (hasStation) {
+        enable($('#station-clear'));
+      }
+      else {
+        disable($('#station-clear'));
+      }
       $('#advanced .control').text('▾');
       $('#advanced .content').slideDown();
     }

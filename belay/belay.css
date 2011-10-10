@@ -50,7 +50,7 @@ limitations under the License.
   width: 45%;
   background-color: #f4ebb8;
   padding: 0.5em;
-  height: 9.5em;
+  height: 13em;
   margin: 1em 0;
 }
 
@@ -62,6 +62,12 @@ limitations under the License.
   margin: 0;
 }
 
+#advanced .input {
+  text-align: right;
+}
+#station-cap {
+  width: 98%;
+}
 
 #about {
   clear: both;

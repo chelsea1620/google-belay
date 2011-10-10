@@ -17,9 +17,18 @@
     .stationLaunchCap -- cap to station to launch
 */
 
-var visible = function(n) { return n.css('display') != 'none'; };
+function visible(n) { return n.css('display') != 'none'; };
+
+function setUpLaunchButton(elem, params) {
+  var stationHash = '#' + newUUIDv4();
+  elem.attr('href', 'http://localhost:9001/redirect.html' + stationHash);
+  belay.outpost.setStationLaunchHash.put({ hash: stationHash, params: params });
+}
 
 onBelayReady(function() {
+  setUpLaunchButton($('#open-button a'), { version: 'new' });
+  setUpLaunchButton($('#create-button a'), { version: 'new' });
+
   var belayData = capServer.dataPostProcess(localStorage['belay']);
   if (belayData && 'stationLaunchCap' in belayData && belayData.stationLaunchCap) {
     $('#open-button').show();

@@ -20,16 +20,8 @@ api_version: 1
 handlers:
 
 - url: /
-  script: index.py
-  login: required
-
-- url: /manage
-  script: index.py
-  login: required
-
-- url: /subbelay
-  script: index.py
-  login: required
+  static_files: index.html
+  upload: index.html
 
 - url: /(.*\.(html|css|js))
   static_files: \1
@@ -39,7 +31,6 @@ handlers:
   static_dir: images
 
 builtins:
-- admin_redirect: on
 - datastore_admin: on
 - appstats: on
 

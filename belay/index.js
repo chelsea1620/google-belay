@@ -24,18 +24,27 @@ function setEnabled(n, state) { state ? enable(n) : disable(n) }
 
 function setUpLaunchButton(elem, params) {
   var stationHash = '#' + newUUIDv4();
-  elem.attr('href', 'http://localhost:9001/redirect.html' + stationHash);
+  elem.attr('href', 'redirect.html' + stationHash);
   elem.attr('target', '_blank')
   belay.outpost.setStationLaunchHash.put({ hash: stationHash, params: params });
 }
 
 onBelayReady(function() {
-  setUpLaunchButton($('#open-button a'), { version: 'new' });
-  setUpLaunchButton($('#create-button a'), { version: 'new' });
-
   var belayData = capServer.dataPostProcess(localStorage['belay']);
   var hasStation;
   var stationCapString;
+
+  setUpLaunchButton($('#open-button a'), { version: 'new' });
+  setUpLaunchButton($('#create-button a'), { version: 'new' });
+
+  $('#create-button a').click(function() {
+    belayData.stationGenerateCap =
+      capServer.restore($('#advanced .gen:eq(1) input').val());
+        // TODO(mzero): change to :first when appspot version is live
+    localStorage['belay'] = capServer.dataPreProcess(belayData);
+    setTimeout(resetUI, 1000); // TODO(mzero): should be a callback from worker
+    // now let the click go on
+  })
   
   function resetUI() {
     hasStation = belayData && 'stationLaunchCap' in belayData && belayData.stationLaunchCap;

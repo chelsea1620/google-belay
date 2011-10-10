@@ -82,5 +82,15 @@ onBelayReady(function() {
     setEnabled($('#station-set'), $('#station-cap').val() != stationCapString);
   });
   
+  $('#advanced .gen').each(function() {
+    var input = $(this).find('input');
+    $(this).find('button').click(function() {
+      var gen = capServer.restore(input.val());
+      gen.get(
+        function(newLaunch) { setLaunchCap(newLaunch); },
+        function(err) { alert("Generation failed."); });
+    });
+  });
+  
   resetUI();
 })

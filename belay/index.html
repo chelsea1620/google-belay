@@ -70,13 +70,12 @@ limitations under the License.
 
           <div class="section">
             <h3>Stored Station</h3>
-            <p>
             <div class="input">
               <input id="station-cap" value="http://xxx.yyy/cap/fe26e3b2-3c8e-405f-bf82-6b8391800a2e" />
               <button id="station-set">Set</button>
               <button id="station-clear">Clear</button>
             </div>
-            <br />
+            <p>
             This value is the Bcap of your station. Saving and restoring it on another
             browser will let you access it from elsewhere. Treat it like a password.
             </p>
@@ -84,11 +83,20 @@ limitations under the License.
       
           <div class="section">
             <h3>Generating a new Station</h3>
-            <table>
-              <tr><td><button>Generate</button></td><td>belay-station.appspot.com</td></tr>
-              <tr><td><button>Generate</button></td><td>localhost:9001</td></tr>
-              <tr><td><button>Generate</button></td><td><input value="localhost:9001"/></td></tr>
-            </table>
+            <div class="gen">
+              <input type="hidden" value="https://belay-station.appspot.com/belay/generate" />
+              <span class="boilerplate">https://</span>belay-station.appspot.com<span class="boilerplate">/belay/generate</span>
+              <button>Go</button>
+            </div>
+            <div class="gen">
+              <input type="hidden" value="http://localhost:9001/belay/generate" />
+              <span class="boilerplate">http://</span>localhost:9001<span class="boilerplate">/belay/generate</span>
+              <button>Go</button>
+            </div>
+            <div class="gen">
+              <input value="http://localhost:9001/belay/generate"/>
+              <button>Go</button>
+            </div>
           </div>
         </div>
         

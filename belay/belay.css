@@ -32,6 +32,7 @@ limitations under the License.
 
 #advanced h2 {
   color: #919191;
+  margin: 0;
 }
 #advanced h2:hover {
   text-decoration: underline;

@@ -25,4 +25,7 @@ onBelayReady(function() {
   else {
     $('#create-button').show();
   }
+
+  $('#advanced h2').click(function() { $('#advanced .content').slideToggle(); })
+
 })

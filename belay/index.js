@@ -22,6 +22,7 @@ function visible(n) { return n.css('display') != 'none'; };
 function setUpLaunchButton(elem, params) {
   var stationHash = '#' + newUUIDv4();
   elem.attr('href', 'http://localhost:9001/redirect.html' + stationHash);
+  elem.attr('target', '_blank')
   belay.outpost.setStationLaunchHash.put({ hash: stationHash, params: params });
 }
 

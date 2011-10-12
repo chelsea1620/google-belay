@@ -24,7 +24,7 @@ def server_url(path):
   
   prefix = 'http://'
   default_port = 80
-  if os.environ['HTTPS'] == 'on':
+  if os.environ.get('HTTPS', 'off') == 'on':
     prefix = 'https://'
     default_port = 443
     

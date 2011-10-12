@@ -14,9 +14,11 @@
 
 #!/usr/bin/env python
 
-import json
+#import json # TODO(mzero): add back for Python27
 import os
 import sys
+
+from django.utils import simplejson as json # TODO(mzero): remove for Python27
 
 def server_url(path):
   server_name = os.environ['SERVER_NAME']

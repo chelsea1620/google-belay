@@ -18,8 +18,10 @@ import logging
 import os
 import uuid
 import urlparse
-import json
+#import json # TODO(mzero): add back for Python27
 import re
+
+from django.utils import simplejson as json # TODO(mzero): remove for Python27
 
 from google.appengine.api import urlfetch
 from google.appengine.ext import db
@@ -138,8 +140,10 @@ def dataPreProcess(data):
 
   try:
     return json.dumps({'value': data}, cls=Decapitator)
-  except TypeError as exn:
-    logging.debug(str(exn))
+  # TODO(mzero): use better exception handler when on Python 2.7
+  #  except TypeError as exn:
+  #    logging.debug(str(exn))
+  except TypeError:
     logging.debug("Unserializable: " + str(data))
 
 def dataPostProcess(serialized):
@@ -150,8 +154,10 @@ def dataPostProcess(serialized):
       return obj
   try:
     return json.loads(serialized, object_hook=capitate)['value']
-  except ValueError as exn:
-    logging.debug(str(exn))
+  # TODO(mzero): use better exception handler when on Python 2.7
+  #  except ValueError as exn:
+  #    logging.debug(str(exn))
+  except ValueError:
     logging.debug("Unloadable: " + str(serialized))
       
 class BcapHandler(webapp.RequestHandler):  

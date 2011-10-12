@@ -36,8 +36,7 @@ belay.DEBUG = false;
 function setUpLaunchButton(id, params) {
   var launchBtn = document.getElementById(id);
   var stationHash = '#' + newUUIDv4();
-  launchBtn.setAttribute('href', 
-    'http://localhost:9001/redirect.html' + stationHash);
+  launchBtn.setAttribute('href', 'redirect.html' + stationHash);
   belay.outpost.setStationLaunchHash.put({ hash: stationHash, params: params });
 }
 

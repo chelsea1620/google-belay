@@ -1,0 +1,108 @@
+<!--
+Copyright 2011 Google Inc. All Rights Reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Belay Belay - Administration</title>
+  <link rel="stylesheet" href="http://www.google.com/css/go-x.css">
+  <link rel="stylesheet" href="belay.css">
+  <script src="lib/js/include-belay.js"></script>
+  <script src="lib/js/caps.js"></script>
+  <script src="lib/js/common.js"></script>
+  <script src="lib/js/belay-client.js"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.js"></script>
+  <script src="index.js"></script>
+</head>
+<body>
+  <h1><a href="/"><img src="http://www.google.com/images/logos/google_logo_41.png" alt="Google"></a> Belay Administration</h1>
+  <ul id="nav">
+    <li>Home</li>
+    <li><a href="help.html">Help</a></li>
+    <li><a href="api.html">API</a></li>
+  </ul>
+  <div id="aux">
+    <!-- Content -->
+      <div id="main-buttons">
+        <div id="create-button" class="x-button">
+          <div><span><span><a>Create &amp; Open</a></span></span></div>
+          <p>The Belay project runs a station provider that you can use. This
+            button will create a new station for you using it.</p>
+        </div>
+
+        <div id="open-button" class="x-button">
+          <div><span><span><a>Open Your Station</a></span></span></div>
+          <p>You have a station set up on this machine.</p>
+        </div>
+      </div>
+      
+      <h2>About Belay</h2>
+      <p>Belay is a project at Google to investigate and develop new approaches
+        of cloud authorization. The project is currently exploring ways for
+        users to manager their relationships with web sites, and how users
+        might grant one site access to another.</p>
+      
+      <h2>Your Station</h2>
+      <p>In Belay, a "station" is an account with a provider you trust that
+        will hold on to, and manage your relationships.</p>
+      
+      
+      <div id="advanced">
+      <h2><span class="control">▸</span> Advanced Administration</h2>
+        <div class="content">
+          <p>The link to your station is stored in local storage in this browser.
+            These options let you manage that storage, and work with other
+            station providers</p>
+
+          <div class="section">
+            <h3>Stored Station</h3>
+            <div class="input">
+              <input id="station-cap" value="http://xxx.yyy/cap/fe26e3b2-3c8e-405f-bf82-6b8391800a2e" />
+              <button id="station-set">Set</button>
+              <button id="station-clear">Clear</button>
+            </div>
+            <p>
+            This value is the Bcap of your station. Saving and restoring it on another
+            browser will let you access it from elsewhere. Treat it like a password.
+            </p>
+          </div>
+      
+          <div class="section">
+            <h3>Generating a new Station</h3>
+            <div class="gen">
+              <input type="hidden" value="https://belay-station.appspot.com/belay/generate" />
+              <span class="boilerplate">https://</span>belay-station.appspot.com<span class="boilerplate">/belay/generate</span>
+              <button>Go</button>
+            </div>
+            <div class="gen">
+              <input type="hidden" value="http://localhost:9001/belay/generate" />
+              <span class="boilerplate">http://</span>localhost:9001<span class="boilerplate">/belay/generate</span>
+              <button>Go</button>
+            </div>
+            <div class="gen">
+              <input value="http://localhost:9001/belay/generate"/>
+              <button>Go</button>
+            </div>
+          </div>
+        </div>
+        
+        <div class="clear"></div>
+      </div>
+      
+      <div id="about">©2011 Google</div>
+  </div>
+</body>

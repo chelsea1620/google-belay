@@ -1,0 +1,111 @@
+<!--
+Copyright 2011 Google Inc. All Rights Reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Belay Station</title>
+  <link rel="stylesheet" href="lib/css/base.css">
+  <link rel="stylesheet" href="station.css">
+  <script src="lib/js/include-belay.js"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.js"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.14/jquery-ui.js"></script>
+  <script src="lib/js/jquery.parsequery.js"></script>
+  <script src="lib/ses/whitelist.js"></script>
+  <script src="lib/ses/atLeastFreeVarNames.js"></script>
+  <script src="lib/ses/WeakMap.js"></script>
+  <script src="lib/ses/startSES.js"></script>
+  <script src="lib/js/caps.js"></script>
+  <script src="lib/js/kickoff.js"></script>
+  <script src="lib/js/common.js"></script>
+  <script src="station.js"></script>
+</head>
+<body>
+  <h1><a href="/"><img src="http://www.google.com/intl/en/images/logo_sm.gif" alt="Google"></a> Belay Station</h1>
+  <ul id="nav" class="belay-nav">
+    <li id="belay-nav-toolbar">Tools</li>
+    <li id="belay-nav-items">Items</li>
+    <li id="belay-nav-desk">Gadgets</li>
+  </ul>
+  <div id="aux">
+    <div>
+      <div id="belay-station-outer">
+        <div id="belay-station-inner">
+          <div id="belay-toolbar">
+            <div class="belay-tool">
+              <img src="tool.png" />
+              <p>Hello World</p>
+            </div>
+            <div class="belay-tool">
+              <img src="tool.png" />
+              <p>Counter</p>
+            </div>
+          </div>
+          <div id="belay-items">
+            <div class="belay-inner">
+              <table>
+                <tr>
+                  <td class="icon"><img src="/tool.png" /></td>
+                  <td class="name">one</td>
+                  <td class="actions"><span class="open-page">open</span>
+                    • <span class="open-gadget">embed</span>
+                    • <span class="remove">×</span></td>
+                </tr>
+                <tr>
+                  <td class="icon"><img src="/tool.png" /></td>
+                  <td class="name">two</td>
+                  <td class="actions"><span class="open-page">open</span>
+                    • <span class="open-gadget">embed</span>
+                    • <span class="remove">×</span></td>
+                </tr>
+                <tr>
+                  <td class="icon"><img src="/tool.png" /></td>
+                  <td class="name">three</td>
+                  <td class="actions"><span class="open-page">open</span>
+                    • <span class="open-gadget">embed</span>
+                    • <span class="remove">×</span></td>
+                </tr>
+              </table>
+            </div>
+            <div class="belay-drop-icon"></div>
+          </div>
+          <div id="belay-desk">
+            <div id="belay-controls"></div>
+            <div class="belay-container">
+              <div class="belay-container-header"></div>
+              <div class="belay-container-holder">
+                <div class="belay-example-thing">
+                  <p>Yo, dawg…</p>
+                </div>
+              </div>
+            </div>
+            <div class="belay-drop-icon"></div>
+            <div class="belay-container" id="belay-example-001">
+              <div class="belay-container-header"></div>
+              <div class="belay-container-holder">
+                <div class="belay-example-thing">
+                  <p>Yo, dawg…</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="about">©2011 Google</div>
+  </div>
+</body>

@@ -1,0 +1,43 @@
+
+<!--
+Copyright 2011 Google Inc. All Rights Reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+<!DOCTYPE html>
+
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Belay Buzzer</title>
+  <link rel="stylesheet" href="buzzer.css">
+  <link rel="stylesheet" href="lib/css/belay.css">
+  <script src="lib/js/include-belay.js"></script>
+  <script src="/lib/js/common.js"></script>
+  <script src="/lib/js/belay-client.js"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.js"></script>
+  <script src="/lib/js/caps.js"></script>
+  <script src="/index.js"></script>
+</head>
+<body id="buzzer-page">
+  <h1><img src="tool-buzzer.png" />Be a busy blogger with Buzzer!</h1>
+  <div class="buzzer-profile">
+    <h2>Start your own buzzer:</h2>
+    <form id="profileForm" action="/generate" method="POST">
+      <p>Just pick a name for your buzzer:</p>
+      <p><input type="text" name="title" /></p>
+      <p><input type="submit" value="Submit" /></p>
+    </form>
+  </div>
+</body>
+</html>

@@ -30,7 +30,7 @@ function setUpLaunchButton(elem, params) {
 }
 
 onBelayReady(function() {
-  var belayData = capServer.dataPostProcess(localStorage['belay']);
+  var belayData = capServer.dataPostProcess(localStorage['belay']) || { };
   var hasStation;
   var stationCapString;
 
@@ -39,7 +39,7 @@ onBelayReady(function() {
 
   $('#create-button a').click(function() {
     belayData.stationGenerateCap =
-      capServer.restore($('#advanced .gen:eq(1) input').val());
+      capServer.restore($('#advanced .gen:eq(0) input').val());
         // TODO(mzero): change to :first when appspot version is live
     localStorage['belay'] = capServer.dataPreProcess(belayData);
     setTimeout(resetUI, 1000); // TODO(mzero): should be a callback from worker

@@ -15,12 +15,14 @@
 #!/usr/bin/env python
 
 import datetime
-import json
+#import json # TODO(mzero): add back for Python27
 import logging
 import os
 import sys
 import uuid
 from lib.py.belay import *
+
+from django.utils import simplejson as json # TODO(mzero): remove for Python27
 
 from google.appengine.ext import db
 from google.appengine.ext import webapp

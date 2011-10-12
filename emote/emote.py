@@ -33,22 +33,8 @@ class EmoteData(db.Model):
   postCap = db.TextProperty()
 
 
-class ViewHandler(belay.BcapHandler):
-  def get(self):
-    content = \
-      render_to_string("emote.html", { 'url': belay.server_url("/emote.css") })
-    self.xhr_content(content, "text/html;charset=UTF-8")
-
-
 class GenerateHandler(belay.BcapHandler):
-  def get(self):
-    emote = EmoteData()
-    emote.put()
-    self.bcapResponse(belay.regrant(LaunchHandler, emote))
-
-
-class GenerateInstanceHandler(belay.BcapHandler):
-  def get(self):
+  def post(self):
     emote = EmoteData()
     emote.put()
     self.bcapResponse({
@@ -84,9 +70,7 @@ class LaunchHandler(belay.CapHandler):
 
 application = webapp.WSGIApplication(
   [(r'/cap/.*', belay.ProxyHandler),
-  ('/belay/generate', GenerateHandler),
-  ('/belay/generate-instance', GenerateInstanceHandler),
-  ('/view/gadget', ViewHandler),
+  ('/generate', GenerateHandler),
   ],
   debug=True)
   
@@ -96,9 +80,11 @@ belay.set_handlers(
   [ ('/belay/launch', LaunchHandler),
   ])
 
+
 def main():
   logging.getLogger().setLevel(logging.DEBUG)
   run_wsgi_app(application)
+
 
 if __name__ == "__main__":
   main()

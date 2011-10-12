@@ -22,12 +22,16 @@ handlers:
 - url: /
   static_files: index.html
   upload: index.html
+  secure: always
 
 - url: /generate
   script: buzzer.py
+  secure: always
 
 - url: /cap/.*
   script: buzzer.py
+  secure: always
 
 - url: /(.*\.(html|css|js|png))
   script: lib/py/CORSstatic.py
+  secure: always

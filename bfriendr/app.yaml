@@ -22,15 +22,20 @@ handlers:
 - url: /
   static_files: index.html
   upload: index.html
+  secure: always
   
 - url: /belay/generate
   script: bfriendr.py
+  secure: always
 
 - url: /generate-account
   script: bfriendr.py
+  secure: always
 
 - url: /cap/.*
   script: bfriendr.py
+  secure: always
 
 - url: /(.*\.(html|css|js|png))
   script: lib/py/CORSstatic.py
+  secure: always

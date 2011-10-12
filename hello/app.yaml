@@ -21,12 +21,16 @@ handlers:
 
 - url: /belay/.*
   script: hello.py
+  secure: always
 
 - url: /view/.*
   script: hello.py
+  secure: always
 
 - url: /cap/.*
   script: hello.py
+  secure: always
 
 - url: /(.*\.(html|css|js|png))
   script: lib/py/CORSstatic.py
+  secure: always

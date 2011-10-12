@@ -21,22 +21,29 @@ handlers:
 
 - url: /belay/generate
   script: station.py
+  secure: always
 
 - url: /belay/launch
   script: station.py
+  secure: always
 
 - url: /instances
   script: station.py
+  secure: always
 
 - url: /instance
   script: station.py
+  secure: always
 
 - url: /cap/.*
   script: station.py
+  secure: always
 
 - url: /(.*\.(html|css|js|png))
   script: lib/py/CORSstatic.py
+  secure: always
 
 - url: /test
   script: lib/py/test.py
+  secure: optional
 

@@ -21,11 +21,18 @@ import sys
 def server_url(path):
   server_name = os.environ['SERVER_NAME']
   server_port = int(os.environ['SERVER_PORT'])
-  prefix = 'http://' # TODO(mzero): need to detect if using https
+  
+  prefix = 'http://'
+  default_port = 80
+  if os.environ['HTTPS'] == 'on':
+    prefix = 'https://'
+    default_port = 443
+    
   prefix += server_name
-  if server_port != 80: # TODO(mzero): different port if using https
+  if server_port != default_port:
     prefix += ":%d" % server_port
-  return prefix + path
+    
+  return prefix
 
 def xhr_response(content, content_type):
   content_length = len(content)

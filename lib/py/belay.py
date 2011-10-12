@@ -29,10 +29,17 @@ from google.appengine.ext import webapp
 def this_server_url_prefix():
   server_name = os.environ['SERVER_NAME']
   server_port = int(os.environ['SERVER_PORT'])
-  prefix = 'http://' # TODO(mzero): need to detect if using https
+  
+  prefix = 'http://'
+  default_port = 80
+  if os.environ['HTTPS'] == 'on':
+    prefix = 'https://'
+    default_port = 443
+    
   prefix += server_name
-  if server_port != 80: # TODO(mzero): different port if using https
+  if server_port != default_port:
     prefix += ":%d" % server_port
+    
   return prefix
 
 def server_url(path):

@@ -25,7 +25,8 @@ if (!window.belay) {
 
   function onWindowLoaded() {
 
-    var IFRAME_URL = 'http://localhost:9000/belay-frame.html';
+    var IFRAME_BASE = window.belay.BASE || 'https://belay-belay.appspot.com';
+    var IFRAME_URL = IFRAME_BASE + '/belay-frame.html';
     var IFRAME_HEIGHT = window.belay.DEBUG ? '300px' : '40px';
     var IFRAME_NEG_HEIGHT = '-' + IFRAME_HEIGHT;
     var HIGHLIGHT_CLASS = 'belay-possible';

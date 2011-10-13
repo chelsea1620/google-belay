@@ -37,7 +37,6 @@ class EmoteData(db.Model):
 class GenerateHandler(belay.BcapHandler):
   def post(self):
     bzrInfo = self.bcapRequest()
-    logging.getLogger().info('provided name: ' + bzrInfo['name']);
     emote = EmoteData()
     emote.postCap = bzrInfo['postCap'].serialize()
     emote.nameCap = bzrInfo['nameCap'].serialize()

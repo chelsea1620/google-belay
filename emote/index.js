@@ -20,7 +20,7 @@ var postComplete = function(succeeded) {
   setTimeout(function() { m.fadeOut('slow'); }, 3000);
 };
 
-var rcPost = 'urn:x-belay://resouce-class/social-feed/post';
+var rcPost = 'urn:x-belay://resouce-class/social-feed/postable';
 var showPanel = function(postCap, nameCap) {
   nameCap.get(function(name) {
     $('#emote-target').text('to ' + name);
@@ -39,7 +39,6 @@ var showPanel = function(postCap, nameCap) {
 };
 
 onBelayReady(function() {
-  ui.resize(160, 90, false);
   
   if(belay.outpost.instanceID) {
     // we are a configured instance of emote, configure the
@@ -48,16 +47,16 @@ onBelayReady(function() {
               capServer.restore(belay.outpost.info.name));
   } else {
     // the user has just opened this page directly.
-    // ask the user to drag-drop the capability from buzzer.
+    // ask the user to drag-drop the postable capability from buzzer.
     var invite = $('#emote-invite');
     invite.show();
-    ui.capDroppable(invite, rcPost, function(genCap, rc) {
-      genCap.post(rcPost, function(buzzerCaps) {
-        var feedCap = buzzerCaps.post;
+    ui.capDroppable(invite, rcPost, function(postableCap, rc) {
+      postableCap.post(rcPost, function(buzzerCaps) {
+        var postCap = buzzerCaps.post;
         var nameCap = buzzerCaps.name;
         nameCap.get(function(name) {
           var emoteInstanceCap = capServer.restore(window.location.origin + '/generate');
-          emoteInstanceCap.post({ postCap: feedCap, nameCap: nameCap, name: name }, 
+          emoteInstanceCap.post({ postCap: postCap, nameCap: nameCap, name: name }, 
             function(response) { belay.outpost.becomeInstance.put(response); }, 
             function() { alert('failed to generate :-('); });
         });

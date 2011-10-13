@@ -14,21 +14,19 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-.emote-thing {
-  width: 100%;
-  height: 100%;
-  text-align: center;
-  margin: 0;
-  position: absolute;
-  top: 0;
-  left: 0;
+body {
   background-color: #dceafe;
+}
+
+.emote-thing {
+  text-align: center;
+  margin: 3em auto;
 }
 
 .emote-thing p {
   margin: 0;
 }
-.emote-invite {
+#emote-invite {
   color: #a9a9a9;
   text-shadow: #c0c0c0 0 1px 1px;
   font-size: 136%;

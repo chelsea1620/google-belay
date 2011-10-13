@@ -21,11 +21,14 @@ var postComplete = function(succeeded) {
 };
 
 var rcPost = 'urn:x-belay://resouce-class/social-feed/post';
-var showPanel = function(feedCap) {
+var showPanel = function(postCap, nameCap) {
+  nameCap.get(function(name) {
+    $('#emote-target').text('to ' + name);
+  });
   $('#emote-panel').show();
   $('.emote-post').click(function(ev) {
     $('#emote-message-posting').show();
-    feedCap.post(
+    postCap.post(
       { body: ev.target.innerText, via: 'emote' },
       function() { postComplete(true); },
       function() { postComplete(false); }
@@ -41,19 +44,23 @@ onBelayReady(function() {
   if(belay.outpost.instanceID) {
     // we are a configured instance of emote, configure the
     // post panel.
-    showPanel(capServer.restore(belay.outpost.info.post));
+    showPanel(capServer.restore(belay.outpost.info.post),
+              capServer.restore(belay.outpost.info.name));
   } else {
     // the user has just opened this page directly.
     // ask the user to drag-drop the capability from buzzer.
     var invite = $('#emote-invite');
     invite.show();
     ui.capDroppable(invite, rcPost, function(genCap, rc) {
-      genCap.post(rcPost, function(feedCap) {
-        var emoteInstanceCap = capServer.restore(window.location.origin + '/generate');
-        console.log(emoteInstanceCap);
-        emoteInstanceCap.post(feedCap, function(response) {
-              belay.outpost.becomeInstance.put(response);
-          }, function() { alert('failed to generate :-('); });
+      genCap.post(rcPost, function(buzzerCaps) {
+        var feedCap = buzzerCaps.post;
+        var nameCap = buzzerCaps.name;
+        nameCap.get(function(name) {
+          var emoteInstanceCap = capServer.restore(window.location.origin + '/generate');
+          emoteInstanceCap.post({ postCap: feedCap, nameCap: nameCap, name: name }, 
+            function(response) { belay.outpost.becomeInstance.put(response); }, 
+            function() { alert('failed to generate :-('); });
+        });
       });
     });
   }

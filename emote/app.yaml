@@ -24,10 +24,6 @@ handlers:
   upload: index.html
   secure: always
 
-- url: /belay/.*
-  script: emote.py
-  secure: always
-
 - url: /generate
   script: emote.py
   secure: always

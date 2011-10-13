@@ -244,7 +244,8 @@ self.addEventListener('connect', function(e) {
           }),
           setStationLaunchHash: workerServer.grant(function(args) {
             stationDelayedLaunches[args.hash] = args.params;
-          })
+          }),
+          services: makeHighlighting()
         }
       });
     }

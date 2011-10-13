@@ -35,7 +35,9 @@ class EmoteData(db.Model):
 
 class GenerateHandler(belay.BcapHandler):
   def post(self):
+    feedCap = self.bcapRequest()
     emote = EmoteData()
+    emote.postCap = feedCap.serialize()
     emote.put()
     self.bcapResponse({
       'launch': belay.regrant(LaunchHandler, emote),
@@ -48,7 +50,7 @@ class LaunchHandler(belay.CapHandler):
   def get(self):
     self.bcapResponse({
         'page': {
-          'html': belay.server_url("/emote-belay.html"),
+          'html': belay.server_url("/"),
           'window': { 'width': 300, 'height': 250 }
         },
         'gadget': {
@@ -56,16 +58,9 @@ class LaunchHandler(belay.CapHandler):
           'scripts': [ belay.server_url("/emote.js") ]
         },
         'info': { 
-          'post': self.get_entity().postCap,
-          'savePost': belay.regrant(LaunchHandler, self.get_entity())
+          'post': self.get_entity().postCap
         }
       })
-
-  def put(self):
-    emote = self.get_entity()
-    emote.postCap = self.bcapRequest()
-    emote.put()
-    self.bcapNullResponse()
 
 
 application = webapp.WSGIApplication(

@@ -35,9 +35,10 @@ belay.DEBUG = false;
 
 function setUpLaunchButton(id, params) {
   var launchBtn = document.getElementById(id);
-  var stationHash = '#' + newUUIDv4();
-  launchBtn.setAttribute('href', 'redirect.html' + stationHash);
-  belay.outpost.setStationLaunchHash.put({ hash: stationHash, params: params });
+  var startId = newUUIDv4();
+  launchBtn.setAttribute('href', 'redirect.html');
+  launchBtn.setAttribute('target', startId);
+  belay.outpost.setStationStartId.put({ id: startId, params: params });
 }
 
 onBelayReady(function() {

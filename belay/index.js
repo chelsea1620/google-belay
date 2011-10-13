@@ -23,10 +23,10 @@ function disable(n) { n.attr('disabled', 'disabled'); }
 function setEnabled(n, state) { state ? enable(n) : disable(n) }
 
 function setUpLaunchButton(elem, params) {
-  var stationHash = '#' + newUUIDv4();
-  elem.attr('href', 'redirect.html' + stationHash);
-  elem.attr('target', '_blank')
-  belay.outpost.setStationLaunchHash.put({ hash: stationHash, params: params });
+  var startId = newUUIDv4();
+  elem.attr('href', 'redirect.html');
+  elem.attr('target', startId);
+  belay.outpost.setStationStartId.put({ id: startId, params: params });
 }
 
 onBelayReady(function() {

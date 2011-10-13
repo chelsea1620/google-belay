@@ -31,30 +31,20 @@ from django.template.loader import render_to_string
 
 class EmoteData(db.Model):
   postCap = db.TextProperty()
-
-
-class ViewHandler(belay.BcapHandler):
-  def get(self):
-    content = \
-      render_to_string("emote.html", { 'url': belay.server_url("/emote.css") })
-    self.xhr_content(content, "text/html;charset=UTF-8")
+  nameCap = db.TextProperty()
 
 
 class GenerateHandler(belay.BcapHandler):
-  def get(self):
+  def post(self):
+    bzrInfo = self.bcapRequest()
     emote = EmoteData()
-    emote.put()
-    self.bcapResponse(belay.regrant(LaunchHandler, emote))
-
-
-class GenerateInstanceHandler(belay.BcapHandler):
-  def get(self):
-    emote = EmoteData()
+    emote.postCap = bzrInfo['postCap'].serialize()
+    emote.nameCap = bzrInfo['nameCap'].serialize()
     emote.put()
     self.bcapResponse({
       'launch': belay.regrant(LaunchHandler, emote),
       'icon': belay.server_url("/tool-emote.png"), 
-      'name': 'Emote'
+      'name': 'Emote to ' + bzrInfo['name']
     })
 
 
@@ -62,7 +52,7 @@ class LaunchHandler(belay.CapHandler):
   def get(self):
     self.bcapResponse({
         'page': {
-          'html': belay.server_url("/emote-belay.html"),
+          'html': belay.server_url("/"),
           'window': { 'width': 300, 'height': 250 }
         },
         'gadget': {
@@ -71,22 +61,14 @@ class LaunchHandler(belay.CapHandler):
         },
         'info': { 
           'post': self.get_entity().postCap,
-          'savePost': belay.regrant(LaunchHandler, self.get_entity())
+          'name': self.get_entity().nameCap,
         }
       })
-
-  def put(self):
-    emote = self.get_entity()
-    emote.postCap = self.bcapRequest()
-    emote.put()
-    self.bcapNullResponse()
 
 
 application = webapp.WSGIApplication(
   [(r'/cap/.*', belay.ProxyHandler),
-  ('/belay/generate', GenerateHandler),
-  ('/belay/generate-instance', GenerateInstanceHandler),
-  ('/view/gadget', ViewHandler),
+  ('/generate', GenerateHandler),
   ],
   debug=True)
   
@@ -96,9 +78,11 @@ belay.set_handlers(
   [ ('/belay/launch', LaunchHandler),
   ])
 
+
 def main():
   logging.getLogger().setLevel(logging.DEBUG)
   run_wsgi_app(application)
+
 
 if __name__ == "__main__":
   main()

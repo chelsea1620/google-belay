@@ -45,9 +45,9 @@ function buildLauncher(openerCap) {
       isStation: args.isStation || false,
       launchClosures: { sk: sk, fk: fk }
     };
-    var hash = '#' + newUUIDv4();
-    pendingLaunches[hash] = pending;
-    openerCap.post(args.url + hash);
+    var startId = newUUIDv4();
+    pendingLaunches[startId] = pending;
+    openerCap.post({url: args.url, hash: startId});
   }
 }
 
@@ -128,8 +128,8 @@ function makeHighlighting() {
 var stationDelayedLaunches = Object.create(null);
 var delayedLaunches = Object.create(null);
 
-function setDelayedLaunch(hash) {
-  delayedLaunches[hash] = true;
+function setDelayedLaunch(startId) {
+  delayedLaunches[startId] = true;
 }
 
 self.addEventListener('connect', function(e) {
@@ -146,10 +146,11 @@ self.addEventListener('connect', function(e) {
     };
 
     var location = outpost.clientLocation;
-    if (location.hash in pendingLaunches) {
+    var startId = outpost.clientStartId;
+    if (startId in pendingLaunches) {
       // client is an instance we are expecting
-      var pending = pendingLaunches[location.hash];
-      delete pendingLaunches[location.hash];
+      var pending = pendingLaunches[startId];
+      delete pendingLaunches[startId];
       if (pending.isStation) {
         pending.outpost.launch =
           workerServer.grant(buildLauncher(outpost.windowOpen));
@@ -183,10 +184,10 @@ self.addEventListener('connect', function(e) {
 
       outpost.setUpClient.post(pending);
     }
-    else if (location.hash in delayedLaunches) {
+    else if (startId in delayedLaunches) {
       // station opened this page for an instance
-      delete delayedLaunches[location.hash];
-      stationCaps.delayedReadyHandler.post(location.hash, function(arg) {
+      delete delayedLaunches[startId];
+      stationCaps.delayedReadyHandler.post(startId, function(arg) {
         buildLauncher(outpost.windowLocation)(
           { url: arg.url,
              instID: arg.instID,
@@ -197,9 +198,8 @@ self.addEventListener('connect', function(e) {
         );
       });
     }
-    else if (location.hash in stationDelayedLaunches) {
-      var stationLaunchParams = stationDelayedLaunches[location.hash];
-      //delete stationDelayedLaunches[location.hash];
+    else if (startId in stationDelayedLaunches) {
+      var stationLaunchParams = stationDelayedLaunches[startId];
       outpost.localStorage.get(function(sto) {
         if (sto.stationLaunchCap) {
           launchStation(sto.stationLaunchCap, stationLaunchParams,
@@ -224,7 +224,7 @@ self.addEventListener('connect', function(e) {
     else {
       // client might want to become an instance or the station
       outpost.setUpClient.post({
-        suggestions: suggestFor(outpost.clientLocation.href),
+        suggestions: suggestFor(location),
         clickSuggest: workerServer.grant(function(launchClicked) {
           launchClicked.post(workerServer.grant(function(args, sk, fk) {
             buildLauncher(outpost.windowLocation)({
@@ -242,9 +242,10 @@ self.addEventListener('connect', function(e) {
                           .grant(buildLauncher(outpost.windowLocation))
             });
           }),
-          setStationLaunchHash: workerServer.grant(function(args) {
-            stationDelayedLaunches[args.hash] = args.params;
-          })
+          setStationStartId: workerServer.grant(function(args) {
+            stationDelayedLaunches[args.id] = args.params;
+          }),
+          services: makeHighlighting()
         }
       });
     }

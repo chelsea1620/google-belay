@@ -19,11 +19,12 @@ api_version: 1
 
 handlers:
 
-- url: /belay/.*
-  script: emote.py
+- url: /
+  static_files: index.html
+  upload: index.html
   secure: always
 
-- url: /view/.*
+- url: /generate
   script: emote.py
   secure: always
 

@@ -42,7 +42,7 @@ onBelayReady(function() {
       );
   };
 
-  var rcPost = 'urn:x-belay://resouce-class/social-feed/post';
+  var rcPost = 'urn:x-belay://resouce-class/social-feed/postable';
   var rcBelayGen = 'belay/generate';
 
   var capReviver = function(resClass) {

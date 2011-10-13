@@ -22,6 +22,9 @@ if (!window.belay) {
 }
 
 (function() {
+  // get the start id and hide it as soon as possible
+  var startId = window.name;
+  window.name = '';
 
   function onWindowLoaded() {
 
@@ -90,12 +93,10 @@ if (!window.belay) {
         if (msg.data === 'close') {
           // This trick is all over the Web.
           window.open('', '_self').close();
-        }
-        else if (msg.data === 'showButterBar') {
+        } else if (msg.data === 'showButterBar') {
           iframe.style.webkitTransition = 'all 0.5s ease-in';
           iframe.style.top = '0px';
-        }
-        else if (msg.data === 'hideButterBar') {
+        } else if (msg.data === 'hideButterBar') {
           if (window.belay.DEBUG) {
             // .top doesn't work because it is relative
             iframe.style.display = 'none';
@@ -103,14 +104,14 @@ if (!window.belay) {
           else {
             iframe.style.top = IFRAME_NEG_HEIGHT;
           }
-        }
-        else if (msg.data === 'unhighlight') {
+        } else if (msg.data === 'unhighlight') {
           unhighlight();
-        }
-        else if (msg.data.op === 'highlight') {
+        } else if (msg.data.op === 'highlight') {
           highlight.apply(null, msg.data.args);
-        }
-        else {
+        } else if (msg.data.op === 'redirect') {
+          window.location = msg.data.url;
+          window.name = msg.data.startId;
+        } else {
           console.log('unknown action', msg);
         }
       };
@@ -119,14 +120,11 @@ if (!window.belay) {
         // cross-domain <iframe> can set window.location but cannot read it
         { DEBUG: window.belay.DEBUG,
           // required on Chrome 14
-          clientLocation: JSON.parse(JSON.stringify(window.location)) },
+          clientLocation: window.location.href,
+          clientStartId: startId },
         // two following args. backward for Chrome and Safari
         [belayChan.port2, actionChan.port2],
         '*');
-
-      var locClean = window.location.href.replace(/#.*/, '');
-      //window.location.replace(locClean);
-      history.replaceState(history.state, '', locClean);
     };
 
     iframe.addEventListener('load', connect);

@@ -33,7 +33,7 @@ limitations under the License.
         <div class="buzzer-chit buzzer-post-chit" title="post to this buzzer"
           style="width:26px;height:24px;background:url({{ chit_post_url }}) no-repeat 0 0;"></div>
       {% endif %}
-      <p>{{feed.title}}
+      <p id="buzzer-name">{{feed.title}}
       {% if has_subtitle %}
         <br /><small>—
           {% if has_name %} by <i>{{ feed.name }}</i> {% endif %}

@@ -72,6 +72,7 @@ var iframeServer = new CapServer(iframeInstID);
 var clientInstID;
 var clientTunnel;
 var clientLocation;
+var clientStartId;
 var actionPort;
 
 var workerTunnel;
@@ -101,6 +102,7 @@ function setUpClient(e) {
   actionPort = e.ports[1];
   clientTunnel.setLocalResolver(resolver);
   clientLocation = e.data.clientLocation;
+  clientStartId = e.data.clientStartId;
   window.DEBUG = e.data.DEBUG;
   if (window.DEBUG) {
     actionPort.postMessage('showButterBar'); 
@@ -118,6 +120,7 @@ function startIfReady() {
   var outpostMsg = {
     iframeInstID: iframeInstID,
     clientLocation: clientLocation,
+    clientStartId: clientStartId,
     log: iframeServer.grant(log),
     localStorage: iframeServer.grant({
         get: function() { 
@@ -134,8 +137,8 @@ function startIfReady() {
     windowClose: iframeServer.grant(function() {
       actionPort.postMessage('close');
     }),
-    windowLocation: iframeServer.grant(function(url) { 
-      window.top.location = url; 
+    windowLocation: iframeServer.grant(function(args) { 
+      actionPort.postMessage({ op: 'redirect', url: args.url, startId: args.hash });
     }),
     unhighlight: iframeServer.grant(function() {
       actionPort.postMessage('unhighlight');

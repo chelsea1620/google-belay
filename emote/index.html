@@ -29,6 +29,23 @@ limitations under the License.
   <script src="index.js"></script>
 </head>
 <body>
-  <button id="new-emote">Make a New Emote!</button>
+  <div class="emote-thing">
+    <h1>Emote <span id="emote-target"></span>!</h1>
+    <style scoped="scoped">@import url(/emote.css);</style>
+    <div id="emote-invite" style="display: none;">
+      <p>Drag a social feed here</p>
+    </div>
+    <div id="emote-panel" style="display: none;">
+      <p class="emote-posters">
+        <a href="#" class="emote-post">:-(</a>
+        <a href="#" class="emote-post">:-O</a>
+        <a href="#" class="emote-post">:-|</a>
+        <a href="#" class="emote-post">:-)</a>
+        <a href="#" class="emote-post">;-)</a>
+      </p>
+      <p id="emote-message-posting" class="emote-message" style="display: none;">posting…</p>
+      <p id="emote-message-posted"  class="emote-message" style="display: none;">Posted!</p>
+      <p id="emote-message-failed"  class="emote-message" style="display: none;">FAILED!</p>
+    </div>
+  </div>
 </body>
-</html>

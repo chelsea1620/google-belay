@@ -42,7 +42,7 @@ onBelayReady(function() {
       );
   };
 
-  var rcPost = 'urn:x-belay://resouce-class/social-feed/post';
+  var rcPost = 'urn:x-belay://resouce-class/social-feed/postable';
   var rcBelayGen = 'belay/generate';
 
   var capReviver = function(resClass) {
@@ -76,7 +76,10 @@ onBelayReady(function() {
           launchInfo.readChitURL);
       ui.capDraggable(topDiv.find('.buzzer-post-chit'), rcPost,
           capServer.grant(function(selectedRC) {
-              return capServer.grantKey(selectedRC);
+              return { 
+                post: capServer.grantKey(selectedRC), 
+                name: capServer.grant(function() { return $('#buzzer-name').text().trim(); }) 
+              };
           }),
           launchInfo.postChitURL);
     });

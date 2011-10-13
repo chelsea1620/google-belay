@@ -224,7 +224,7 @@ self.addEventListener('connect', function(e) {
     else {
       // client might want to become an instance or the station
       outpost.setUpClient.post({
-        suggestions: suggestFor(outpost.clientLocation.href),
+        suggestions: suggestFor(location),
         clickSuggest: workerServer.grant(function(launchClicked) {
           launchClicked.post(workerServer.grant(function(args, sk, fk) {
             buildLauncher(outpost.windowLocation)({

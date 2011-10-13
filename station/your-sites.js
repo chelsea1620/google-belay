@@ -349,8 +349,8 @@ var sections = {
       return;
     }
 
-    var delayedLaunchUUID = '#' + newUUIDv4();
-    var delayedLaunchURL = 'redirect.html' + delayedLaunchUUID;
+    var delayedLaunchUUID = newUUIDv4();
+    var delayedLaunchURL = 'redirect.html';
     inst.delayedLaunchHash = delayedLaunchUUID;
 
     var row = protoItemRow.clone();
@@ -368,6 +368,7 @@ var sections = {
     setDelayedLaunch.post(delayedLaunchUUID, function() {
       var openPageBtn = row.find('td.actions .open-page');
       openPageBtn.attr('href', delayedLaunchURL);
+      openPageBtn.attr('target', delayedLaunchUUID);
       openPageBtn.click(function(evt) {
         if (inst.state.opened !== 'closed' || !delayed.newDelayed(inst)) {
           evt.preventDefault(); // do not re-open the window
@@ -697,10 +698,10 @@ var delayed = {
   insts: Object.create(null), // Map<Hash, Info>
   // Called by Belay when a delayed window is ready. Should return launch
   // information to navigate to the actual instance.
-  readyHandler: function(hash, sk, fk) {
-    var inst = delayed.insts[hash];
+  readyHandler: function(startId, sk, fk) {
+    var inst = delayed.insts[startId];
     launchInstance(inst, 'page', capServer.grant(function(info, sk2, fk2) {
-      delete (delayed.insts)[hash];
+      delete (delayed.insts)[startId];
       sk(info); // return to worker
       sk2(true); // succeed locally
     }));

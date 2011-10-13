@@ -22,6 +22,9 @@ if (!window.belay) {
 }
 
 (function() {
+  // get the start id and hide it as soon as possible
+  var startId = window.name;
+  window.name = '';
 
   function onWindowLoaded() {
 
@@ -105,19 +108,9 @@ if (!window.belay) {
           unhighlight();
         } else if (msg.data.op === 'highlight') {
           highlight.apply(null, msg.data.args);
-        } else if (msg.data.op === 'reload') {
-          var oldOrigin = window.location.origin;
-          var oldPathname = window.location.pathname;
-          var oldHash = window.location.hash;
+        } else if (msg.data.op === 'redirect') {
           window.location = msg.data.url;
-          if(oldOrigin == window.location.origin
-            && oldPathname == window.location.pathname
-            && oldHash != window.location.hash) {
-            // if the only thing that changes is the hash, then
-            // the browser won't actually reload the page. We
-            // need it to do this
-            window.location.reload(true);
-          }
+          window.name = msg.data.startId;
         } else {
           console.log('unknown action', msg);
         }
@@ -127,14 +120,11 @@ if (!window.belay) {
         // cross-domain <iframe> can set window.location but cannot read it
         { DEBUG: window.belay.DEBUG,
           // required on Chrome 14
-          clientLocation: JSON.parse(JSON.stringify(window.location)) },
+          clientLocation: JSON.parse(JSON.stringify(window.location)),
+          clientStartId: startId },
         // two following args. backward for Chrome and Safari
         [belayChan.port2, actionChan.port2],
         '*');
-
-      var locClean = window.location.href.replace(/#.*/, '');
-      //window.location.replace(locClean);
-      history.replaceState(history.state, '', locClean);
     };
 
     iframe.addEventListener('load', connect);

@@ -90,12 +90,10 @@ if (!window.belay) {
         if (msg.data === 'close') {
           // This trick is all over the Web.
           window.open('', '_self').close();
-        }
-        else if (msg.data === 'showButterBar') {
+        } else if (msg.data === 'showButterBar') {
           iframe.style.webkitTransition = 'all 0.5s ease-in';
           iframe.style.top = '0px';
-        }
-        else if (msg.data === 'hideButterBar') {
+        } else if (msg.data === 'hideButterBar') {
           if (window.belay.DEBUG) {
             // .top doesn't work because it is relative
             iframe.style.display = 'none';
@@ -103,14 +101,24 @@ if (!window.belay) {
           else {
             iframe.style.top = IFRAME_NEG_HEIGHT;
           }
-        }
-        else if (msg.data === 'unhighlight') {
+        } else if (msg.data === 'unhighlight') {
           unhighlight();
-        }
-        else if (msg.data.op === 'highlight') {
+        } else if (msg.data.op === 'highlight') {
           highlight.apply(null, msg.data.args);
-        }
-        else {
+        } else if (msg.data.op === 'reload') {
+          var oldOrigin = window.location.origin;
+          var oldPathname = window.location.pathname;
+          var oldHash = window.location.hash;
+          window.location = msg.data.url;
+          if(oldOrigin == window.location.origin
+            && oldPathname == window.location.pathname
+            && oldHash != window.location.hash) {
+            // if the only thing that changes is the hash, then
+            // the browser won't actually reload the page. We
+            // need it to do this
+            window.location.reload(true);
+          }
+        } else {
           console.log('unknown action', msg);
         }
       };

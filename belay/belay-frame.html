@@ -135,7 +135,8 @@ function startIfReady() {
       actionPort.postMessage('close');
     }),
     windowLocation: iframeServer.grant(function(url) { 
-      window.top.location = url;
+      // window.top.location = url;
+      actionPort.postMessage({ op: 'reload', url: url });
     }),
     unhighlight: iframeServer.grant(function() {
       actionPort.postMessage('unhighlight');

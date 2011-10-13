@@ -76,7 +76,10 @@ onBelayReady(function() {
           launchInfo.readChitURL);
       ui.capDraggable(topDiv.find('.buzzer-post-chit'), rcPost,
           capServer.grant(function(selectedRC) {
-              return capServer.grantKey(selectedRC);
+              return { 
+                post: capServer.grantKey(selectedRC), 
+                name: capServer.grant(function() { return $('#buzzer-name').text().trim(); }) 
+              };
           }),
           launchInfo.postChitURL);
     });

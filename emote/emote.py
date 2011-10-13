@@ -31,18 +31,21 @@ from django.template.loader import render_to_string
 
 class EmoteData(db.Model):
   postCap = db.TextProperty()
+  nameCap = db.TextProperty()
 
 
 class GenerateHandler(belay.BcapHandler):
   def post(self):
-    feedCap = self.bcapRequest()
+    bzrInfo = self.bcapRequest()
+    logging.getLogger().info('provided name: ' + bzrInfo['name']);
     emote = EmoteData()
-    emote.postCap = feedCap.serialize()
+    emote.postCap = bzrInfo['postCap'].serialize()
+    emote.nameCap = bzrInfo['nameCap'].serialize()
     emote.put()
     self.bcapResponse({
       'launch': belay.regrant(LaunchHandler, emote),
       'icon': belay.server_url("/tool-emote.png"), 
-      'name': 'Emote'
+      'name': 'Emote to ' + bzrInfo['name']
     })
 
 
@@ -58,7 +61,8 @@ class LaunchHandler(belay.CapHandler):
           'scripts': [ belay.server_url("/emote.js") ]
         },
         'info': { 
-          'post': self.get_entity().postCap
+          'post': self.get_entity().postCap,
+          'name': self.get_entity().nameCap,
         }
       })
 

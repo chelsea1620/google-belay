@@ -120,7 +120,7 @@ if (!window.belay) {
         // cross-domain <iframe> can set window.location but cannot read it
         { DEBUG: window.belay.DEBUG,
           // required on Chrome 14
-          clientLocation: JSON.parse(JSON.stringify(window.location)),
+          clientLocation: window.location.href,
           clientStartId: startId },
         // two following args. backward for Chrome and Safari
         [belayChan.port2, actionChan.port2],

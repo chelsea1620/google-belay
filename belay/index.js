@@ -42,12 +42,11 @@ onBelayReady(function() {
       capServer.restore($('#advanced .gen:eq(0) input').val());
         // TODO(mzero): change to :first when appspot version is live
     localStorage['belay'] = capServer.dataPreProcess(belayData);
-    setTimeout(resetUI, 1000); // TODO(mzero): should be a callback from worker
     // now let the click go on
   })
   
   function resetUI() {
-    hasStation = belayData && 'stationLaunchCap' in belayData && belayData.stationLaunchCap;
+    hasStation = belayData && 'stationLaunchCap' in belayData && belayData.stationLaunchCap != null;
     stationCapString = hasStation ? belayData.stationLaunchCap.serialize() : '';
 
     if (hasStation) {
@@ -99,6 +98,13 @@ onBelayReady(function() {
         function(newLaunch) { setLaunchCap(newLaunch); },
         function(err) { alert("Generation failed."); });
     });
+  });
+
+  window.addEventListener('storage', function(ev) {
+    if(ev.storageArea === localStorage && ev.key == 'belay') {
+      belayData = capServer.dataPostProcess(localStorage['belay']);
+      resetUI();
+    }
   });
   
   resetUI();

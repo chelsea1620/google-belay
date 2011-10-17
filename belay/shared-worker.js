@@ -152,16 +152,11 @@ self.addEventListener('connect', function(e) {
       var pending = pendingLaunches[startId];
       delete pendingLaunches[startId];
       if (pending.isStation) {
-        pending.outpost.launch =
-          workerServer.grant(buildLauncher(outpost.windowOpen));
         pending.outpost.setStationCallbacks = makeSetStationCallbacks();
         pending.outpost.suggestInst = makeSuggestInst();
         pending.outpost.removeSuggestInst = makeRemoveSuggestInst();
         pending.outpost.services = makeHighlighting();
         pending.outpost.setDelayedLaunch = workerServer.grant(setDelayedLaunch);
-        // note that this is the station
-        // add a cap for launching from the station,
-        // closing over outpost.windowOpen
       }
       if (pending.launchClosures) {
         pending.launchClosures.sk(workerServer.grant(outpost.windowClose));

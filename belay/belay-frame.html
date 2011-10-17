@@ -131,9 +131,6 @@ function startIfReady() {
           localStorage['belay'] = iframeServer.dataPreProcess(v);
         }
       }),
-    windowOpen: iframeServer.grant(function(url) { 
-      window.open(url);
-    }),
     windowClose: iframeServer.grant(function() {
       actionPort.postMessage('close');
     }),

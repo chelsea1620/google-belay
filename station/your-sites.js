@@ -24,6 +24,12 @@ var belayRemoveSuggestInst;
 
 var defaultIcon = '/tool.png';
 
+function detachProto(elem) {
+  var proto = elem.eq(0).detach();
+  proto.removeClass('proto');
+  return proto;
+}
+
 function domainOfInst(inst) {
   return inst.state.belayInstance.serialize().match('https?://[^/]*')[0];
 }
@@ -246,18 +252,22 @@ var sections = {
   instToAdd: [],
 
   init: function(sectionCap) {
-    sections.sitesLabel = $('#nav .selected').eq(0);
+    sections.sitesLabel = $('#nav .selected').eq(0).removeClass('proto');
     sections.sitesLabel.click(sections.showSites);
 
+    var fetched = [];
     function addNextSection(names) {
       if (names.length) {
         var name = names.shift();
         sectionCap.post(name, function(sectionInfo) {
-          sections.add(name, sectionInfo);
+          fetched.push({name: name, sectionInfo: sectionInfo});
           addNextSection(names);
         });
       }
       else {
+        for (var i in fetched) {
+          sections.add(fetched[i].name, fetched[i].sectionInfo);
+        }
         sections.showSites();
         sections.ready = true;
         sections.instToAdd.forEach(sections.newInstance);
@@ -534,7 +544,7 @@ var attributes = (function() {
         var attributesElem = sectionElem.find('.attributes');
         var attributesDiv = attributesElem.find('.box');
         var attributesTable = attributesDiv.find('table');
-        var protoRow = attributesTable.find('tr').eq(0).detach();
+        var protoRow = detachProto(attributesTable.find('tr'));
 
         sectionElem.find('.header .name').text(name);
 
@@ -636,8 +646,8 @@ var initialize = function(instanceCaps, defaultTools) {
 
   var itemsDiv = topDiv.find('#belay-items');
 
-  sections.proto = topDiv.find('.section').eq(0).detach();
-  protoItemRow = sections.proto.find('table.items tr').eq(0).detach();
+  sections.proto = detachProto(topDiv.find('.section'));
+  protoItemRow = detachProto(sections.proto.find('table.items tr'));
 
   sections.init(instanceInfo.section);
 
@@ -789,7 +799,6 @@ window.belay.portReady = function() {
       delayedReadyHandler: capServer.grant(delayed.readyHandler)
     });
     ui = {
-      resize: function() { /* do nothing in page mode */ },
       capDraggable: common.makeCapDraggable(capServer, function() {}),
       capDroppable: common.makeCapDroppable(capServer, function() {})
     };

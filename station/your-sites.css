@@ -40,6 +40,11 @@ body h1 i {
   color: #c0c0c0;
 }
 /* @end */
+
+.ex, .proto {
+  display: none;
+}
+
 /* @group nav */
 #nav li {
   font-weight: normal;
@@ -55,13 +60,12 @@ body h1 i {
 #nav li:hover {
   background-color: #f4f4f4;
 }
-
-/* @end */
-
 #nav li.dropHover,
 div.section.dropHover {
   background-color: #f4f4f4;
 }
+
+/* @end */
 
 div.section {
   margin-bottom: 4em;

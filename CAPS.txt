@@ -1,0 +1,245 @@
+THOGUHTS ON CAPABILITIES
+------------------------
+
+* A resource class indicates the protocol of the cap
+* both the target of the cap, and the receiver of the cap can (should)
+  identify, with a name, the role the cap is to play
+  - this is essential since an instance may offer, use more than one cap of the
+  - the same resource class
+* identifiers need english equivalents
+ 
+Instances need to be able to
+  - declare what resource class(es) they accept when dropped
+  - declare what resource class(es) they offer when picked
+  - initiate a drag, offering a cap of some resource class(es)
+  - request a pick, accepting a cap of some resource class(es)
+
+
+Cap use cases:
+  - post to social feed [-O,P,S,T-]
+    - both on-line / off-line uses
+    - both from user's machine [-S,T-], and from remote service [-O,P-]
+  - access to data file (i.e. image editor access to image) [-I,S-]
+    - target is on-line
+    - holder is on-line, but wants to persist
+  - one shot directed action (give conf. ability to populate calendar)
+    - target is on-line
+    - holder is on-line, needn't persist
+  - access to local resource, revokable and potentially filtered [-W-]
+    - target is on-line
+    - holder is on-line, needs to persist
+
+What does this tell us? we want three kinds of caps
+  - local, non-persist
+  - local, persistable
+  - remote, persistable
+    -- but in the local case, the persistence seems like the norm, and non-
+     persistence is really a form of revocation
+  - all of these should be revocable - which means the are ALL proxied, but
+    the question is by whom? The target's instance, or the container?
+
+Another principle: Given that we are expecting this to be cloud computing,
+running/dormant and local/remote differences should be removed as much as
+practical. For example, we shouldn't disallow a holder to store a cap in any
+form, because a dormant/vivify cycle should be a no-op. If want the issuer is
+worried about is long-term use, then the issuer should revoke it after some
+time. If the issuer is worried about unfettered passing it on, then either
+seal the cap to the holder, or better - just hold the holder accountbale for
+all use.
+
+SO - let's see if we can keep it simple:
+
+
+Caps are a reference to some resource.
+Caps can be invoked, either async (AJAX) style calls, or sync with native
+  function calls
+Caps can be revoked at any time (by anyone with the cap!)
+  - in which case invocations will fail
+  - attempts to restore them may fail (will result in a dead cap)
+A "dead" cap is either a revoked cap, or one that was never valid.
+Caps can always be stored.
+  - They are stored in a textual form
+  - Operations with os.data automatically convert to/from caps and stored form
+    (you can just put the caps in your data)
+  - Operations with os.JSON can optionally convert to/from caps and stored form
+  - Caps can be explicitly converted to/from stored form, but the later may
+    result in a dead cap.
+Caps can be built from
+  1) a function -- in which case, the target may need to be able to recreate it
+  2) a URL
+  3) a cap -- the new cap will be "chained" off the provided cap: that is,
+    revoking the original cap, will effectively revoke the new cap as well
+Caps may be resolvable to a URL
+  - they are only resolvable when the issuer allows, and the cap was either
+    built from a URL, or from a cap that is resolvable.
+
+
+This structure is visible to both sides:
+
+cap :: { !immutable
+  resourceClass       :: URI
+  targetRole          :: String
+  targetDescription   :: String
+  holderRole          :: String
+  holderDescription   :: String
+
+  ajax   :: function({::ajax options}, callback(data,status,xhr--))
+  get    :: function() -> Json
+  set    :: function(Json)
+  invoke :: function(Json) -> Json
+    -- need a way to know which strings in the returned Json are caps!
+
+  serialize :: function() -> String
+  resolveToURL :: function() -> String/null
+}
+
+os.cap.grant(impl) -> cap
+  function -> local cap
+  url      -> remote cap
+
+  -- granting a cap means:
+    -- create a cap that can access the indicated function or URL
+    -- the cap is unique to this grant: calling makeCap a second time on the
+        same function or URL will result in a *different*, independently revokable
+        cap
+    -- caps can be revoked at ANY time
+    -- if the implementation is a function, the cap is local, and access will
+        result in calling the function.
+   -- if the implementation is a URL, then the cap is remote, and access will
+        result in an HTTP request
+   -- caps are revoked when the target is no longer live (see persist)
+   -- caps can be persisted via os.data, or cap.serialize
+   -- the cap may be resolvable, if resolvable is true (defaults to false)
+
+os.cap.revoke(cap)
+os.cap.wrap(cap, resolvable) -> cap
+os.cap.restore(serialization) -> cap
+
+os.cap.genKey() -> string
+  -- generates a uuid suitable for use as a local cap key
+
+
+os.cap.setResolver(function(key, resourceClass, role)->cap)
+
+
+MEDIATION OF CAPS
+=================
+
+capDesc :: {
+  resourceClass: URI,
+  role: string,
+  description: string
+  q: float (???)
+}
+
+
+os.ui.capOffer([capDesc], function(capDesc):cap)
+os.ui.capPick([capDesc], function(cap):bool)
+
+os.ui.capDroppable(node, [capDesc], function(cap):bool)
+os.ui.capDraggable(node, [capDesc], function(capDesc):cap )
+
+NOTE: Implicit in Pick mechanism is the promise that the ui will only call the
+  cap creation function upon explicit designation by the user.
+  Similarly in the Drag-n-Drop mechanism is the promise that the ui will only
+  call the cap creation function if the user performs the drop.
+  (These constraints seems awkward to me, but I don't see a way around them.)
+
+
+
+
+QUESTIONS
+---------
+Should caps support a isDead() function?
+
+
+
+
+
+CROSS FRAME/WINDOW CAPS
+-----------------------
+to "foop" an object in its own window or iframe:
+[] design option 1: the stuff in the remote window/iframe is totally untrusted
+  + easier to debug app
+  -/+ app can have cookies
+  - protocol at lower layer
+
+[] design option 2: there is a container stub in the remote window/iframe and the
+  contained thing is just as it would have been in the contained case
+  + same API for instance
+  - can't develope and debug in a more web like environment
+  
+in any event, protocol to remote window would have to look like:
+M: Main container window
+R: Remote container window/iframe
+
+R->M: Invoke(cap.ser, request, id#)
+M->R: Result(response, id#)
+
+we need to reify CapResolver
+
+CapResolver
+.invoke(cap.ser, request, callbacks)
+.invokeSync(cap.ser, request)
+.restore(cap.ser) --> a Capabilty object that has .invoke and .invokeSync... a utility
+
+private:
+  .instIDToIface map
+  .upstreamResolver
+
+CapInterface
+
+A CapServer build restored caps that either
+  have a local interface if the cap is for itself
+  have an http interface if it has an xhr ability
+  have a remote interface if we have it
+  have a proxy to get the remote interface once we get it
+  
+A CapServer provides an external interface that
+  handles all caps for itself
+  but refuses all others (doesn't proxy)
+
+An InstanceRouter provides a cap interface that
+  accepts and proxies all caps for instances it knows about
+  refuses all others
+
+A RemoteInstance is an interface that
+  handles invokes by ferrying over a port
+  refuses all others
+
+An OutpostInterface is an interface that
+  knows on loca instance that it can route to
+  defers all other requests by ferrying over a port
+  
+
+
+
+interface CapInterface {
+  invoke: function(ser, req, callback),
+  invokeSync: function(ser, req)->resp,
+}
+
+    // for public interface to caps - all else dropped
+    this.externalInterface = (function(me) {
+      return {
+        invoke: function(capID, opts) { me._getImpl(capID).invoke(opts); },
+        invokeSync: function(capID, v) { return me._getImpl(capID).invokeSync(v); },
+      };
+    })(this);
+
+    // for internalInterface to a module
+    this.internalInterface = (function(me) {
+      return {
+        invoke: function(capID, opts) { me._getImplOrDefault(capID).invoke(opts); },
+        invokeSync: function(capID, v) { return me._getImplOrDefault(capID).invokeSync(v); },
+      };
+    })(this);
+
+    this.routingInterface = (function(me) {
+      return {
+        invoke: function(capID, opts) { me.}
+      }
+    })
+
+
+

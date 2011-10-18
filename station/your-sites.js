@@ -117,7 +117,7 @@ var instanceResolver = function(id) {
 };
 
 
-var launchPageInstance = function(inst, launchCap) {
+var launchPageInstance = function(inst, launcher) {
   if (inst.pageWindow) return;
   inst.pageWindow = true;
   inst.state.opened = 'page';
@@ -132,7 +132,7 @@ var launchPageInstance = function(inst, launchCap) {
   inst.capServer = undefined;
   inst.windowedInstance = true;
 
-  launchCap.post({
+  launcher.post({
     instID: inst.state.id,
     url: inst.launch.page.html,
     height: inst.launch.page.window.height,
@@ -159,7 +159,7 @@ var launchPageInstance = function(inst, launchCap) {
   });
 };
 
-var launchInstance = function(inst, openType, launchCap) {
+var launchInstance = function(inst, openType, launcher) {
   var instState = inst.state;
 
   // TODO(mzero) create cap for storage to station
@@ -189,7 +189,7 @@ var launchInstance = function(inst, openType, launchCap) {
       // leave closed!
     }
     else if (openType == 'page' && canPage) {
-      launchPageInstance(inst, launchCap);
+      launchPageInstance(inst, launcher);
     }
     else if (openType === 'gadget') {
       // ignore
@@ -202,12 +202,12 @@ var launchInstance = function(inst, openType, launchCap) {
 
 
 var protoItemRow; // TODO(jpolitz): factor this differently?
-var addInstance = function(inst, openType, launchCap) {
+var addInstance = function(inst, openType, launcher) {
   instances[inst.state.id] = inst;
 
   sections.newInstance(inst);
 
-  launchInstance(inst, openType, launchCap);
+  launchInstance(inst, openType, launcher);
 
   belaySuggestInst.put({
     instID: inst.state.id,

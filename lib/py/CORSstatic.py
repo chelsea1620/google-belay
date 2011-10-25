@@ -35,6 +35,7 @@ mimeTypeMap = {
   '.css':   'text/css;charset=UTF-8',
 
   '.png':   'image/png',
+  '.gif':	'image/gif'
 }
 
 if extension not in mimeTypeMap:

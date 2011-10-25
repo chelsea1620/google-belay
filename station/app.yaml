@@ -39,7 +39,7 @@ handlers:
   script: station.py
   secure: always
 
-- url: /(.*\.(html|css|js|png))
+- url: /(.*\.(html|css|js|png|gif))
   script: lib/py/CORSstatic.py
   secure: always
 

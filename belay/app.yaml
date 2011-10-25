@@ -24,9 +24,9 @@ handlers:
   upload: index.html
   secure: always
 
-- url: /(.*\.(html|css|js))
+- url: /(.*\.(html|css|js|gif))
   static_files: \1
-  upload: (.*\.(html|css|js))
+  upload: (.*\.(html|css|js|gif))
   secure: always
 
 - url: /images

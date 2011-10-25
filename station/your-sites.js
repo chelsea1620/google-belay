@@ -210,12 +210,10 @@ var launchInstance = function(inst, openType, launcher) {
 
 
 var protoItemRow; // TODO(jpolitz): factor this differently?
-var addInstance = function(inst, openType, launcher) {
+var addInstance = function(inst) {
   instances[inst.state.id] = inst;
 
   sections.newInstance(inst);
-
-  launchInstance(inst, openType, launcher);
 
   belaySuggestInst.put({
     instID: inst.state.id,
@@ -672,7 +670,7 @@ var initialize = function(instanceCaps, defaultTools) {
             created: (new Date()).valueOf()
           }
         };
-        addInstance(inst, 'openAny', belayLaunch);
+        addInstance(inst);
         dirty(inst);
       },
       function(error) {
@@ -686,7 +684,7 @@ var initialize = function(instanceCaps, defaultTools) {
 
   var loadInsts = function() {
     loadedInstances.sort(cmpInstByCreated).forEach(function(inst) {
-      addInstance(inst, 'restore', belayLaunch);
+      addInstance(inst);
     });
   };
 
@@ -726,7 +724,8 @@ var newInstHandler = function(args) {
       section: sections.defaultName
     }
   };
-  addInstance(inst, 'page', args.relaunch);
+  addInstance(inst);
+  launchInstance(inst, 'page', args.relaunch);
 };
 
 var closeInstHandler = function(instID) {

@@ -246,11 +246,10 @@ self.addEventListener('connect', function(e) {
         outpost: {
           instanceID: tempInstanceId,
           temporaryInstance: true,
-          becomeInstance: workerServer.grant(function(launchCap) {
+          becomeInstance: workerServer.grant(function(instanceDescription) {
             stationCaps.newInstHandler.post({
-              launchData: launchCap, // TODO(mzero): name?
-              relaunch: workerServer
-                          .grant(buildLauncher(outpost.windowLocation))
+              instanceDescription: instanceDescription,
+              activate: buildActivateCap(outpost.navigate)
             });
           }),
           expectPage: makeExpectPage(),

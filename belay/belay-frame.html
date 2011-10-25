@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <script src="lib/js/caps.js"></script>
+<style type='text/css'>
+
+#log {
+ font-family: Consolas; fixed;
+ font-size: 10pt;
+ background-color: black;
+ color: white;
+ max-height: 200px;
+ overflow-y: scroll;
+}
+
+#log div {
+  border-bottom: 1px solid gray;
+}
+
+.suggestButton {
+  padding-left: 0.5em;
+  padding-right: 0.5em;
+  -webkit-appearance: square-button;
+}
+
+#closeButton {
+  float: right;
+  font-size: larger;
+}
+
+body {
+  backgroundColor: #ffffcc;
+}
+
+</style>
+</head>
+
+<body>
+<span id="closeButton">&otimes;</span>
+<div id="suggestButtons"></div>
+<div id="debug" style="display: none">
+  <button id="clearButton">Clear localStorage</button>
+  <div id="log"></div>
+</div>
+<script>
+
+function log(args) {
+  if (!(args instanceof Array)) {
+    args = [args];
+  }
+
+  var arr = [];
+
+  for (var i = 0; i < args.length; i++) {
+    arr.push(typeof args[i] === 'string' ? args[i] 
+                                        : JSON.stringify(args[i]));
+  }
+
+  var txt = document.createTextNode(arr.join(' '));
+  var li = document.createElement('div');
+  li.appendChild(txt);
+  var logElt = document.getElementById('log');
+  logElt.appendChild(li);
+  console.log.apply(console, args);
+  logElt.scrollTop = logElt.scrollHeight;
+}
+
+
+var iframeInstID = newUUIDv4();
+var iframeServer = new CapServer(iframeInstID);
+
+var clientInstID;
+var clientTunnel;
+var clientLocation;
+var clientStartId;
+var actionPort;
+
+var workerTunnel;
+
+function resolver(instID) {
+  if (instID === iframeInstID) { return iframeServer.publicInterface; }
+  if (instID === clientInstID) { return clientTunnel.sendInterface; }
+  return workerTunnel.sendInterface;
+}
+
+iframeServer.setResolver(resolver);
+
+var worker = new SharedWorker('shared-worker.js');
+function setUpWorker(e) {
+  worker.port.removeEventListener('message', setUpWorker);
+  workerTunnel = new CapTunnel(worker.port);
+  workerTunnel.setLocalResolver(resolver);
+  startIfReady();
+  log('worker tunnel ready');
+}
+worker.port.addEventListener('message', setUpWorker);
+worker.port.start();
+
+function setUpClient(e) {
+  window.removeEventListener(setUpClient);
+  clientTunnel = new CapTunnel(e.ports[0]);
+  actionPort = e.ports[1];
+  clientTunnel.setLocalResolver(resolver);
+  clientLocation = e.data.clientLocation;
+  clientStartId = e.data.clientStartId;
+  window.DEBUG = e.data.DEBUG;
+  if (window.DEBUG) {
+    actionPort.postMessage('showButterBar'); 
+    document.getElementById('debug').style.display = 'block';
+  }
+  startIfReady();
+  log('client tunnel ready');
+}
+window.addEventListener('message', setUpClient);
+
+function startIfReady() {
+  if (!workerTunnel || !clientTunnel) return;
+  log("frame: " + iframeInstID);
+  
+  var outpostMsg = {
+    iframeInstID: iframeInstID,
+    clientLocation: clientLocation,
+    clientStartId: clientStartId,
+    log: iframeServer.grant(log),
+    localStorage: iframeServer.grant({
+        get: function() { 
+          return iframeServer.dataPostProcess(localStorage['belay'] ||
+                                              '{ "value": { } }');
+        },
+        put: function(v) { 
+          localStorage['belay'] = iframeServer.dataPreProcess(v);
+        }
+      }),
+    windowClose: iframeServer.grant(function() {
+      actionPort.postMessage('close');
+    }),
+    windowLocation: iframeServer.grant(function(args) { 
+      actionPort.postMessage({ op: 'redirect', url: args.url, startId: args.hash });
+    }),
+    unhighlight: iframeServer.grant(function() {
+      actionPort.postMessage('unhighlight');
+    }),
+    highlight: iframeServer.grant(function(args) {
+      actionPort.postMessage({ op: 'highlight', args: args });
+    }),
+    setUpClient: iframeServer.grant(function(v) {
+      clientInstID = v.instID;
+      log("client: " + clientInstID);
+      if (v.suggestions && Object.keys(v.suggestions).length > 0) {
+        showButterBar(v.suggestions, v.clickSuggest);
+      }
+      console.log(v);
+      clientTunnel.sendOutpost(iframeServer.dataPreProcess(v.outpost));
+    })
+  };
+  workerTunnel.sendOutpost(iframeServer.dataPreProcess(outpostMsg));
+}
+
+function showButterBar(suggests, clickSuggest) {
+  var buttonContainer = document.getElementById('suggestButtons');
+  Object.keys(suggests).forEach(function(instID) {
+    var btn = document.createElement('button');
+    btn.className = 'suggestButton';
+    btn.innerText = suggests[instID].name;
+    buttonContainer.appendChild(btn);
+    btn.addEventListener('click', function() {
+      clickSuggest.put(suggests[instID].launchClicked);
+    });
+  });
+  actionPort.postMessage('showButterBar');
+}
+
+document.getElementById('closeButton').addEventListener('click',
+  function() { actionPort.postMessage('hideButterBar'); });
+document.getElementById('clearButton').addEventListener('click',
+  function() { 
+    delete localStorage['belay']; 
+    log('localStorage cleared; refresh for consistency');
+  });
+
+</script>
+</body>
+
+</html>

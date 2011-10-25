@@ -135,10 +135,11 @@ function makeHighlighting() {
   };
 }
 
-var delayedLaunches = Object.create(null);
-
-function setDelayedLaunch(startId) {
-  delayedLaunches[startId] = true;
+function makeExpectPage() {
+  return workerServer.grant(function(expect) {
+    // TODO(mzero): should validate the startId
+    expectedPages[expect.startId] = expect.ready;  
+  })
 }
 
 self.addEventListener('connect', function(e) {
@@ -165,7 +166,6 @@ self.addEventListener('connect', function(e) {
         pending.outpost.suggestInst = makeSuggestInst();
         pending.outpost.removeSuggestInst = makeRemoveSuggestInst();
         pending.outpost.services = makeHighlighting();
-        pending.outpost.setDelayedLaunch = workerServer.grant(setDelayedLaunch);
       }
       if (pending.launchClosures) {
         pending.launchClosures.sk(workerServer.grant(outpost.windowClose));
@@ -188,21 +188,6 @@ self.addEventListener('connect', function(e) {
 
       outpost.setUpClient.post(pending);
     }
-    else if (startId in delayedLaunches) {
-      // station opened this page for an instance
-      delete delayedLaunches[startId];
-      stationCaps.delayedReadyHandler.post(startId, function(arg) {
-        buildLauncher(outpost.windowLocation)(
-          { url: arg.url,
-             instID: arg.instID,
-             temporaryInstance: false,
-             outpostData: arg.outpostData,
-             isStation: false },
-           function() { },
-           function() { }
-        );
-      });
-    }
     else if (startId in expectedPages) {
       var ready = expectedPages[startId];
       delete expectedPages[startId];
@@ -217,8 +202,9 @@ self.addEventListener('connect', function(e) {
         pending.outpost.suggestInst = makeSuggestInst();
         pending.outpost.removeSuggestInst = makeRemoveSuggestInst();
         pending.outpost.services = makeHighlighting();
-        pending.outpost.setDelayedLaunch = workerServer.grant(setDelayedLaunch);
       }
+
+      pending.outpost.expectPage = makeExpectPage();
 
       if (pending.activateContinuations) {
         pending.activateContinuations.sk(workerServer.grant(outpost.windowClose));
@@ -267,10 +253,7 @@ self.addEventListener('connect', function(e) {
                           .grant(buildLauncher(outpost.windowLocation))
             });
           }),
-          expectPage: workerServer.grant(function(expect) {
-            // TODO(mzero): should validate the startId
-            expectedPages[expect.startId] = expect.ready;
-          }),
+          expectPage: makeExpectPage(),
           services: makeHighlighting()
         }
       });

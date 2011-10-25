@@ -40,7 +40,7 @@ var showPanel = function(postCap, nameCap) {
 
 onBelayReady(function() {
   
-  if(belay.outpost.instanceID) {
+  if(!belay.outpost.temporaryInstance) {
     // we are a configured instance of emote, configure the
     // post panel.
     showPanel(capServer.restore(belay.outpost.info.post),

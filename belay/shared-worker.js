@@ -41,6 +41,7 @@ function buildLauncher(openerCap) {
   return function(args, sk, fk) {
     var pending = {
       instID: args.instID,
+      temporaryInstance: false,
       outpost: args.outpostData,
       isStation: args.isStation || false,
       launchClosures: { sk: sk, fk: fk }
@@ -51,16 +52,25 @@ function buildLauncher(openerCap) {
   }
 }
 
-function launchStation(launchCap, launchParams, openerCap) {
-  suggestions = Object.create(null);
-  launchCap.post(launchParams, function(data) {
-    var stationInstID = newUUIDv4();
-    buildLauncher(openerCap)({
-      url: data.page.html,
-      instID: stationInstID,
-      outpostData: { instanceID: stationInstID, info: data.info },
-      isStation: true
-    }, function(_) { }, function(_) { });
+var expectedPages = Object.create(null);
+var pendingActivates = Object.create(null);
+
+function buildActivateCap(navigateCap) {
+  return workerServer.grant(function(args, sk, fk) {
+    var pending = {
+      instID: args.instanceId,
+        // TODO(iainmcgin): backwards compatibility, remove once all
+        // instID / instanceID / instanceId variations are cleaned up
+      instanceId: args.instanceId,
+      temporaryInstance: false,
+      outpost: args.outpostData,
+      isStation: args.isStation || false,
+      activateContinuations: { sk: sk, fk: fk }
+    };
+    
+    var startId = newUUIDv4();
+    pendingActivates[startId] = pending;
+    navigateCap.post({url: args.pageUrl, startId: startId});
   });
 }
 
@@ -125,7 +135,6 @@ function makeHighlighting() {
   };
 }
 
-var stationDelayedLaunches = Object.create(null);
 var delayedLaunches = Object.create(null);
 
 function setDelayedLaunch(startId) {
@@ -186,6 +195,7 @@ self.addEventListener('connect', function(e) {
         buildLauncher(outpost.windowLocation)(
           { url: arg.url,
              instID: arg.instID,
+             temporaryInstance: false,
              outpostData: arg.outpostData,
              isStation: false },
            function() { },
@@ -193,32 +203,50 @@ self.addEventListener('connect', function(e) {
         );
       });
     }
-    else if (startId in stationDelayedLaunches) {
-      var stationLaunchParams = stationDelayedLaunches[startId];
-      outpost.localStorage.get(function(sto) {
-        if (sto.stationLaunchCap) {
-          launchStation(sto.stationLaunchCap, stationLaunchParams,
-            outpost.windowLocation);
-        }
-        else {
-          if (sto.stationGenerateCap) {
-            sto.stationGenerateCap.get(function(launchCap) {
-              sto.stationLaunchCap = launchCap;
-              outpost.localStorage.put(sto, function() {
-                launchStation(sto.stationLaunchCap, stationLaunchParams,
-                  outpost.windowLocation);
-              });
-            });
-          }
-          else {
-            // TODO(mzero): something awful: no way to generate a station
-          }
-        }
-      });
+    else if (startId in expectedPages) {
+      var ready = expectedPages[startId];
+      delete expectedPages[startId];
+      ready.post(buildActivateCap(outpost.navigate));
     }
-    else {
+    else if (startId in pendingActivates) {
+      // client is an instance we are expecting
+      var pending = pendingActivates[startId];
+      delete pendingActivates[startId];
+      if (pending.isStation) {
+        pending.outpost.setStationCallbacks = makeSetStationCallbacks();
+        pending.outpost.suggestInst = makeSuggestInst();
+        pending.outpost.removeSuggestInst = makeRemoveSuggestInst();
+        pending.outpost.services = makeHighlighting();
+        pending.outpost.setDelayedLaunch = workerServer.grant(setDelayedLaunch);
+      }
+
+      if (pending.activateContinuations) {
+        pending.activateContinuations.sk(workerServer.grant(outpost.windowClose));
+        delete pending.activateContinuations;
+      }
+      instToTunnel[pending.instanceId] = iframeTunnel;
+      highlighters[outpost.iframeInstID] = {
+        highlight: outpost.highlight,
+        unhighlight: outpost.unhighlight
+      };
+
+      iframeTunnel.onclosed = function() {
+        delete instToTunnel[outpost.iframeInstID];
+        delete instToTunnel[pending.instanceId];
+        delete highlighters[outpost.iframeInstID];
+        if (!pending.isStation) {
+          stationCaps.closeInstHandler.put(pending.instanceId);
+        }
+      };
+
+      outpost.setUpClient.post(pending);
+    } else {
       // client might want to become an instance or the station
+      var tempInstanceId = newUUIDv4();
+      instToTunnel[tempInstanceId] = iframeTunnel; // TODO(mzero): need to clean out
       outpost.setUpClient.post({
+        instID: tempInstanceId,
+        temporaryInstance: true,
         suggestions: suggestFor(location),
         clickSuggest: workerServer.grant(function(launchClicked) {
           launchClicked.post(workerServer.grant(function(args, sk, fk) {
@@ -230,6 +258,8 @@ self.addEventListener('connect', function(e) {
           }));
         }),
         outpost: {
+          instanceID: tempInstanceId,
+          temporaryInstance: true,
           becomeInstance: workerServer.grant(function(launchCap) {
             stationCaps.newInstHandler.post({
               launchData: launchCap, // TODO(mzero): name?
@@ -237,8 +267,9 @@ self.addEventListener('connect', function(e) {
                           .grant(buildLauncher(outpost.windowLocation))
             });
           }),
-          setStationStartId: workerServer.grant(function(args) {
-            stationDelayedLaunches[args.id] = args.params;
+          expectPage: workerServer.grant(function(expect) {
+            // TODO(mzero): should validate the startId
+            expectedPages[expect.startId] = expect.ready;
           }),
           services: makeHighlighting()
         }

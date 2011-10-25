@@ -114,6 +114,12 @@ if (!window.belay) {
             // TODO(iainmcgin): exposing the start ID to a potentially untrusted
             // outer window may give it a way to hijack the launch of an
             // instance. The implications of this need investigation.
+        } else if (msg.data.op === 'navigate') {
+          window.location = msg.data.args.url;
+          window.name = msg.data.args.startId;
+            // TODO(iainmcgin): exposing the start ID to a potentially untrusted
+            // outer window may give it a way to hijack the launch of an
+            // instance. The implications of this need investigation.
         } else {
           console.log('unknown action', msg);
         }

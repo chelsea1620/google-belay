@@ -137,6 +137,9 @@ function startIfReady() {
     windowLocation: iframeServer.grant(function(args) { 
       actionPort.postMessage({ op: 'redirect', url: args.url, startId: args.hash });
     }),
+    navigate: iframeServer.grant(function(args) { 
+      actionPort.postMessage({ op: 'navigate', args: args });
+    }),
     unhighlight: iframeServer.grant(function() {
       actionPort.postMessage('unhighlight');
     }),

@@ -17,16 +17,19 @@
     .stationLaunchCap -- cap to station to launch
 */
 
+"use strict";
+
 function visible(n) { return n.css('display') != 'none'; };
 function enable(n) { n.removeAttr('disabled'); }
 function disable(n) { n.attr('disabled', 'disabled'); }
 function setEnabled(n, state) { state ? enable(n) : disable(n) }
 
-function setUpLaunchButton(elem, params) {
+function setUpLaunchButton(elem, action) {
   var startId = newUUIDv4();
   elem.attr('href', 'redirect.html');
   elem.attr('target', startId);
-  belay.outpost.setStationStartId.put({ id: startId, params: params });
+  belay.outpost.expectPage.post(
+    { startId: startId, ready: capServer.grant(action) });
 }
 
 onBelayReady(function() {
@@ -34,14 +37,41 @@ onBelayReady(function() {
   var hasStation;
   var stationCapString;
 
-  setUpLaunchButton($('#open-button a'), { version: 'new' });
-  setUpLaunchButton($('#create-button a'), { version: 'new' });
+  function openStation(activate) {
+    belayData.stationLaunchCap.post({ version: 'new' },
+      function(launchDescriptor) {
+        var instanceId = newUUIDv4();
+        
+        activate.post({
+          instanceId: instanceId,
+          isStation: true,
+          pageUrl: launchDescriptor.pageUrl || launchDescriptor.page.html,
+          outpostData: {
+            info: launchDescriptor.info,
+            instanceId: instanceId,
+            instanceID: instanceId // TODO(mzero): remove in the future
+          }
+        });
+      },
+      function(err) { alert("Your station isn't on-line."); });
+  }
 
-  $('#create-button a').click(function() {
-    belayData.stationGenerateCap =
-      capServer.restore($('#advanced .gen:eq(0) input').val());
-    localStorage['belay'] = capServer.dataPreProcess(belayData);
-    // now let the click go on
+  function createAndOpenStation(activate) {
+    var genCap = capServer.restore($('#advanced .gen:eq(0) input').val());
+    genCap.get(function(launchCap){
+      setLaunchCap(launchCap);
+      openStation(activate);
+    })
+  }
+
+  setUpLaunchButton($('#open-button a'), openStation);
+  setUpLaunchButton($('#create-button a'), createAndOpenStation);
+
+  $('#open-button a').click(function() {
+    // if the user clicks the launch button, we need to reinitialise
+    // it so that it can be used again, as the belay infrastructure
+    // will forget the startId allocated after the first use.
+    setUpLaunchButton($('#open-button a'), openStation);
   });
 
   function resetUI() {

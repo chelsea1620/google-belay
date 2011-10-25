@@ -717,15 +717,15 @@ var newInstHandler = function(args) {
     // TODO(arjun) still a hack. Should we be concatenaing URLs here?
     state: {
       id: instID,
-      belayInstance: args.launchData.launch,
-      name: args.launchData.name,
-      icon: args.launchData.icon,
+      belayInstance: args.instanceDescription.launch,
+      name: args.instanceDescription.name,
+      icon: args.instanceDescription.icon,
       created: (new Date()).valueOf(),
       section: sections.defaultName
     }
   };
   addInstance(inst);
-  launchInstance(inst, 'page', args.relaunch);
+  launchInstance(inst, 'page', args.activate);
 };
 
 var closeInstHandler = function(instID) {

@@ -12,61 +12,93 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-var MockAjax = function() {
+var MockWebServer = function() {
   this.urlMap = {};
   this.speed = 50;
   this.server = null;
 };
-MockAjax.prototype.clear = function() { this.urlMap = {}; };
-MockAjax.prototype.setServer = function(server) { this.server = server; };
-MockAjax.prototype.handle = function(url, func) { this.urlMap[url] = func; };
-MockAjax.prototype.makeAjax = function() {
-  var me = this;
-
-  var reportResult = function(opts, response) {
-    var f = function() {
-      if (opts.success) opts.success(response, 'success', {});
-      if (opts.complete) opts.complete({}, 'success');
-    };
-
-    if (opts.async) setTimeout(f, me.speed);
-    else f();
-  };
-  var reportError = function(opts) {
-    var f = function() {
-      if (opts.error) opts.error({},'error', undefined);
-      if (opts.complete) opts.complete({}, 'error');
-    };
-
-    if (opts.async) setTimeout(f, me.speed);
-    else f();
-  };
-
-  return function(opts) {
-    var url = opts.url;
-    if (!(url in me.urlMap)) {
-      return reportError(opts);
+MockWebServer.prototype.clear = function() { this.urlMap = {}; };
+MockWebServer.prototype.setServer = function(server) { this.server = server; };
+MockWebServer.prototype.handle = function(url, func) { this.urlMap[url] = func; };
+MockWebServer.prototype.process = function(method, url, data, success, failure) {
+    if (!(url in this.urlMap)) {
+      return failure();
     }
-    var f = me.urlMap[url];
-    var t = opts.type || 'GET';
-    var pre = me.server.dataPreProcess.bind(me.server);
-    var post = me.server.dataPostProcess.bind(me.server);
+    var f = this.urlMap[url];
+    var t = method || 'GET';
+    var pre = this.server.dataPreProcess.bind(this.server);
+    var post = this.server.dataPostProcess.bind(this.server);
     var response;
 
     if (t == 'GET') response = pre(f());
-    else if (t == 'POST') response = pre(f(post(opts.data)));
-    else if (t == 'PUT') f(post(opts.data));
-    else return reportError(opts);
+    else if (t == 'POST') response = pre(f(post(data)));
+    else if (t == 'PUT') f(post(data));
+    else return failure();
 
-    return reportResult(opts, response);
+    return success(response);
+}
+MockWebServer.prototype.makeAjax = function() {
+  var server = this;
+
+  return function(opts) {
+    server.process(opts.type, opts.url, opts.data,
+      function(result) {
+        var f = function() {
+          if (opts.success) opts.success(result, 'success', {});
+          if (opts.complete) opts.complete({}, 'success');
+        };
+
+        if (opts.async) setTimeout(f, server.speed);
+        else f();
+      },
+      function() {
+        var f = function() {
+          if (opts.error) opts.error({},'error', undefined);
+          if (opts.complete) opts.complete({}, 'error');
+        };
+
+        if (opts.async) setTimeout(f, server.speed);
+        else f();
+      }
+    );
   };
 };
-var mockAjax = new MockAjax();
+MockWebServer.prototype.makeXhr = function() {
+  var server = this;
 
+  var mockXhr = function() {
+    this.onreadystatechange = function() { };
+  };
+  mockXhr.prototype.open = function(method, url) {
+    this.method = method;
+    this.url = url;
+  };
+  mockXhr.prototype.send = function(data) {
+    var xhr = this;
+    server.process(this.method, this.url, data,
+      function(result) {
+        xhr.readyState = 4;
+        xhr.status = 200;
+        xhr.responseText = result;
+        xhr.onreadystatechange();
+      },
+      function() {
+        xhr.readyState = 4;
+        xhr.status = 400;
+        xhr.statusText = "MockWebServer failure";
+        xhr.onreadystatechange();
+      }
+    );
+  };
+  return mockXhr;
+};
+
+var mockWebServer = new MockWebServer();
 
 jQuery = {};
-jQuery.ajax = mockAjax.makeAjax();
+jQuery.ajax = mockWebServer.makeAjax();
 
+XMLHttpRequest = mockWebServer.makeXhr();
 
 
 describe('CapServer', function() {
@@ -75,11 +107,11 @@ describe('CapServer', function() {
   var capServer3;
 
   beforeEach(function() {
-    mockAjax.clear();
+    mockWebServer.clear();
     capServer1 = new CapServer(newUUIDv4());
     capServer2 = new CapServer(newUUIDv4());
     capServer3 = new CapServer(newUUIDv4());
-    mockAjax.setServer(capServer3);
+    mockWebServer.setServer(capServer3);
   });
 
   it('should have built cap servers', function() {
@@ -361,7 +393,7 @@ describe('CapServer', function() {
         return '#' + d;
       };
       invocableURL = 'http://example.com/noodle';
-      mockAjax.handle(invocableURL, invocableFunc);
+      mockWebServer.handle(invocableURL, invocableFunc);
       invocableWrappedFunc = capServer2.grant(invocableFunc);
       invocableWrappedURL = capServer2.grant(invocableURL);
       invocableAsyncFunc = function(v, sk, fk) {
@@ -568,7 +600,7 @@ describe('CapServer', function() {
           servers[i].setResolver(instanceResolver);
         }
 
-        mockAjax.handle(f400URL, f400);
+        mockWebServer.handle(f400URL, f400);
 
       });
 
@@ -583,7 +615,7 @@ describe('CapServer', function() {
         });
 
         it('should restore a URL cap', function() {
-          var c2 = capServer1.grant(f400URL);
+          var c2 = capServer1.restore(f400URL);
           var s2 = c2.serialize();
 
           var c3 = capServer2.restore(s2);

@@ -35,22 +35,6 @@ function resolver(instID) {
 
 workerServer.setResolver(resolver);
 
-var pendingLaunches = Object.create(null);
-
-function buildLauncher(openerCap) {
-  return function(args, sk, fk) {
-    var pending = {
-      instID: args.instID,
-      temporaryInstance: false,
-      outpost: args.outpostData,
-      isStation: args.isStation || false,
-      launchClosures: { sk: sk, fk: fk }
-    };
-    var startId = newUUIDv4();
-    pendingLaunches[startId] = pending;
-    openerCap.post({url: args.url, hash: startId});
-  }
-}
 
 var expectedPages = Object.create(null);
 var pendingActivates = Object.create(null);
@@ -156,43 +140,15 @@ self.addEventListener('connect', function(e) {
 
     var location = outpost.clientLocation;
     var startId = outpost.clientStartId;
-    if (startId in pendingLaunches) {
-      // client is an instance we are expecting
-      var pending = pendingLaunches[startId];
-      delete pendingLaunches[startId];
-      if (pending.isStation) {
-        pending.outpost.setStationCallbacks = makeSetStationCallbacks();
-        pending.outpost.suggestInst = makeSuggestInst();
-        pending.outpost.removeSuggestInst = makeRemoveSuggestInst();
-        pending.outpost.services = makeHighlighting();
-      }
-      if (pending.launchClosures) {
-        pending.launchClosures.sk(workerServer.grant(outpost.windowClose));
-        delete pending.launchClosures;
-      }
-      instToTunnel[pending.instID] = iframeTunnel;
-      highlighters[outpost.iframeInstID] = {
-        highlight: outpost.highlight,
-        unhighlight: outpost.unhighlight
-      };
-
-      iframeTunnel.onclosed = function() {
-        delete instToTunnel[outpost.iframeInstID];
-        delete instToTunnel[pending.instID];
-        delete highlighters[outpost.iframeInstID];
-        if (!pending.isStation) {
-          stationCaps.closeInstHandler.put(pending.instID);
-        }
-      };
-
-      outpost.setUpClient.post(pending);
-    }
-    else if (startId in expectedPages) {
+    
+    if (startId in expectedPages) {
+      //log('expected page');
       var ready = expectedPages[startId];
       delete expectedPages[startId];
       ready.post(buildActivateCap(outpost.navigate));
     }
     else if (startId in pendingActivates) {
+      //log('pending activate');
       // client is an instance we are expecting
       var pending = pendingActivates[startId];
       delete pendingActivates[startId];

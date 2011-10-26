@@ -167,7 +167,7 @@ function showButterBar(suggests, clickSuggest) {
     btn.innerText = suggests[instID].name;
     buttonContainer.appendChild(btn);
     btn.addEventListener('click', function() {
-      clickSuggest.put(suggests[instID].launchClicked);
+      clickSuggest.put(suggests[instID].doLaunch);
     });
   });
   actionPort.postMessage('showButterBar');

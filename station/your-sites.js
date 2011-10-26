@@ -214,7 +214,7 @@ var addSuggestion = function(inst) {
     domain: domainOfInst(inst),
     name: inst.state.name,
     doLaunch: capServer.grant(function(activate) {
-      launchPageInstance(inst, activate);
+      launchInstance(inst, 'page', activate);
     })
   });
 };
@@ -386,7 +386,7 @@ var sections = {
     expectPage.post({
       startId: startId,
       ready: capServer.grant(function(activate) {
-        launchPageInstance(inst, activate);
+        launchInstance(inst, 'page', activate);
       })
     });
 
@@ -745,7 +745,7 @@ var closeInstHandler = function(instID) {
   expectPage.post({
     startId: newStartId,
     ready: capServer.grant(function(activate) {
-      launchPageInstance(inst, activate);
+      launchInstance(inst, 'page', activate);
     })
   });
 

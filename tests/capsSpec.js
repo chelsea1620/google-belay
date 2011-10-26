@@ -786,7 +786,7 @@ describe('CapServer', function() {
         expectRT({a: ['one', 'two'], b: {q: true, p: false}});
       });
 
-      it('should throw when processing non-POD data', function() {
+      it('should throw when processing circular data', function() {
         var expectInvalid = function(v) {
           expect(function() {capServer1.dataPreProcess(v);}).toThrow();
         };
@@ -797,11 +797,8 @@ describe('CapServer', function() {
           this.a.toB = this.b;
         }
 
-        expectInvalid(/abc/);
         expectInvalid(new CircularThing());
-        expectInvalid({a: /abc/});
         expectInvalid({a: new CircularThing()});
-        expectInvalid([/abc/]);
         expectInvalid([new CircularThing()]);
       });
 

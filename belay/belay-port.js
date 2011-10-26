@@ -108,12 +108,6 @@ if (!window.belay) {
           unhighlight();
         } else if (msg.data.op === 'highlight') {
           highlight.apply(null, msg.data.args);
-        } else if (msg.data.op === 'redirect') {
-          window.location = msg.data.url;
-          window.name = msg.data.startId;
-            // TODO(iainmcgin): exposing the start ID to a potentially untrusted
-            // outer window may give it a way to hijack the launch of an
-            // instance. The implications of this need investigation.
         } else if (msg.data.op === 'navigate') {
           window.location = msg.data.args.url;
           window.name = msg.data.args.startId;

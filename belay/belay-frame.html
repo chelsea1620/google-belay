@@ -134,9 +134,6 @@ function startIfReady() {
     windowClose: iframeServer.grant(function() {
       actionPort.postMessage('close');
     }),
-    windowLocation: iframeServer.grant(function(args) { 
-      actionPort.postMessage({ op: 'redirect', url: args.url, startId: args.hash });
-    }),
     navigate: iframeServer.grant(function(args) { 
       actionPort.postMessage({ op: 'navigate', args: args });
     }),

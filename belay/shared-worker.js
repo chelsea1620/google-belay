@@ -90,9 +90,8 @@ function makeSuggestInst() {
       suggestions[args.domain] = Object.create(null);
     }
     suggestions[args.domain][args.instID] = {
-      station: station,
       name: args.name,
-      launchClicked: args.launchClicked
+      doLaunch: args.doLaunch
     };
   });
 }
@@ -234,14 +233,8 @@ self.addEventListener('connect', function(e) {
         instID: tempInstanceId,
         temporaryInstance: true,
         suggestions: suggestFor(location),
-        clickSuggest: workerServer.grant(function(launchClicked) {
-          launchClicked.post(workerServer.grant(function(args, sk, fk) {
-            buildLauncher(outpost.windowLocation)({
-                 instID: args.instID,
-                 outpostData: args.outpostData,
-                 isStation: false,
-                 url: args.url }, sk, fk);
-          }));
+        clickSuggest: workerServer.grant(function(doLaunch) {
+          doLaunch.post(buildActivateCap(outpost.navigate));
         }),
         outpost: {
           instanceID: tempInstanceId,

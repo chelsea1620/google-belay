@@ -208,21 +208,22 @@ var launchInstance = function(inst, openType, launcher) {
   });
 };
 
-
-var protoItemRow; // TODO(jpolitz): factor this differently?
-var addInstance = function(inst) {
-  instances[inst.state.id] = inst;
-
-  sections.newInstance(inst);
-
+var addSuggestion = function(inst) {
   belaySuggestInst.put({
     instID: inst.state.id,
     domain: domainOfInst(inst),
     name: inst.state.name,
-    launchClicked: capServer.grant(function(launch) {
-      launchPageInstance(inst, launch);
+    doLaunch: capServer.grant(function(activate) {
+      launchPageInstance(inst, activate);
     })
   });
+};
+
+var protoItemRow; // TODO(jpolitz): factor this differently?
+var addInstance = function(inst) {
+  instances[inst.state.id] = inst;
+  sections.newInstance(inst);
+  addSuggestion(inst);
 };
 
 var removeInstance = function(inst) {
@@ -749,14 +750,7 @@ var closeInstHandler = function(instID) {
   });
 
   // Instace closed, so let it re-appear as a suggestion
-  belaySuggestInst.put({
-    instID: inst.state.id,
-    domain: domainOfInst(inst),
-    name: inst.state.name,
-    launchClicked: capServer.grant(function(launch) {
-      launchPageInstance(inst, launch);
-    })
-  });
+  addSuggestion(inst);
 };
 
 window.belay.portReady = function() {

@@ -150,10 +150,10 @@ function startIfReady() {
         showButterBar(v.suggestions, v.clickSuggest);
       }
       console.log(v);
-      clientTunnel.sendOutpost(iframeServer.dataPreProcess(v.outpost));
+      clientTunnel.sendOutpost(v.outpost);
     })
   };
-  workerTunnel.sendOutpost(iframeServer.dataPreProcess(outpostMsg));
+  workerTunnel.sendOutpost(outpostMsg);
 }
 
 function showButterBar(suggests, clickSuggest) {

@@ -37,13 +37,13 @@ function createRemoteEnd(port) {
     return undefined;
   });
 
-  var outpostData = server.dataPreProcess({
+  var outpost = {
       instID: server.instanceID,
-      seedSers: [ seedCap ]
-  }); 
+      seeds: [ seedCap ]
+  };
 
   setTimeout(function() {
-    tunnel.sendOutpost(outpostData);
+    tunnel.sendOutpost(outpost);
   }, 10);
 }
 
@@ -63,21 +63,19 @@ describe('CapTunnels', function() {
   describe('with local capservers', function() {
     var localServer1;
 
-    var outpostMessage, outpostData;
+    var outpostData;
     beforeEach(function() {
-      outpostMessage = false;
-      tunnel.setOutpostHandler(function(msg) { outpostMessage = msg; });
-      waitsFor(function() { return outpostMessage; },
+      outpostData = false;
+      tunnel.setOutpostHandler(function(msg) { outpostData = msg; });
+      waitsFor(function() { return outpostData; },
           'outpost read timeout', 1000);
 
       runs(function() {
         localServer1 = new CapServer(newUUIDv4());
 
-        outpostData = localServer1.dataPostProcess(outpostMessage);
-
         expect(typeof outpostData.instID).toEqual('string');
-        expect(outpostData.seedSers.length).toEqual(1);
-        expect(typeof outpostData.seedSers[0]).toEqual('object');
+        expect(outpostData.seeds.length).toEqual(1);
+        expect(typeof outpostData.seeds[0]).toEqual('object');
 
         var ifaceMap = {};
         ifaceMap[outpostData.instID] = tunnel.sendInterface;
@@ -93,7 +91,7 @@ describe('CapTunnels', function() {
       var result;
       var done = false;
       runs(function() {
-        var remoteSeedCap = outpostData.seedSers[0];
+        var remoteSeedCap = outpostData.seeds[0];
         remoteSeedCap.post('answer',
           function(data) { result = data; done = true; },
           function(err) { done = true; });
@@ -105,7 +103,7 @@ describe('CapTunnels', function() {
     it('should be able to invoke a local cap from the remote side', function() {
       var invokeWithThreeCap;
       runs(function() {
-        var remoteSeedCap = outpostData.seedSers[0];
+        var remoteSeedCap = outpostData.seeds[0];
         remoteSeedCap.post('invokeWithThree',
           function(data) { invokeWithThreeCap = data; },
           function(err) { });
@@ -151,7 +149,7 @@ describe('CapTunnels', function() {
 
       var remoteAsyncCap;
       runs(function() {
-        var remoteSeedCap = outpostData.seedSers[0];
+        var remoteSeedCap = outpostData.seeds[0];
         remoteSeedCap.post('remoteAsync',
           function(data) { remoteAsyncCap = data; },
           function(err) { });

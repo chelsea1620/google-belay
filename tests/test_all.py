@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python
 import unittest
 from test_js import *
 from functional.belay_admin_tests import *

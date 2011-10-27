@@ -130,7 +130,6 @@ self.addEventListener('connect', function(e) {
   var iframeTunnel = new CapTunnel(port);
   iframeTunnel.setLocalResolver(resolver);
   iframeTunnel.setOutpostHandler(function(outpost) {
-    outpost = workerServer.dataPostProcess(outpost);
     if (!logCap) { logCap = outpost.log; }
     instToTunnel[outpost.iframeInstID] = iframeTunnel;
 

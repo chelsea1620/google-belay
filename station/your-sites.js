@@ -773,12 +773,9 @@ window.belay.portReady = function() {
   belayBrowserTunnel = new CapTunnel(window.belay.port);
   belayBrowserTunnel.setLocalResolver(instanceResolver);
   belayBrowserTunnel.setOutpostHandler(function(outpost) {
-    var radishServer = new CapServer('radish');
-    var initData = radishServer.dataPostProcess(outpost);
-    capServer = new CapServer(initData.instanceID);
+    capServer = new CapServer(outpost.instanceID);
     capServer.setResolver(instanceResolver);
 
-    outpost = capServer.dataPostProcess(outpost);
     expectPage = outpost.expectPage;
     belayLaunch = outpost.launch;
     belayBrowser = outpost.services;

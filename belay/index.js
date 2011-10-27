@@ -137,4 +137,5 @@ onBelayReady(function() {
   });
   
   resetUI();
+  window.belaytest.ready = true;
 })

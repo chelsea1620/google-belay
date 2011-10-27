@@ -12,100 +12,51 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-describe('WindowManager', function() {
-  var remotePort;
-  var receivedMessages;
-  var onmessage = function(e) { receivedMessages.push(e.data); };
-
-  beforeEach(function() {
-    remotePort = undefined;
-    receivedMessages = [];
+function createRemoteEnd(port) {
+  var tunnel = new CapTunnel(port);
+  var server = new CapServer(newUUIDv4());
+  tunnel.setLocalResolver(function(instID) {
+    return server.publicInterface;
+  });
+  server.setResolver(tunnel.remoteResolverProxy);
+  
+  var invokeWithThreeCap = server.grant(function(v) {
+    v.post(3);
+    return 32;
   });
 
-  afterEach(function() {
-    windowManager.closeAll();
+  var invokeMyAsync = 
+    server.grant(function(remoteReceiveCap, sk, fk) {
+      setTimeout(function() { remoteReceiveCap.post(999, sk, fk); }, 0);
+    });
+  
+  var seedCap = server.grant(function(v) { 
+    if (v == "answer") { return 42; }
+    if (v == "invokeWithThree") { return invokeWithThreeCap; }
+    if (v == "remoteAsync") { return invokeMyAsync; }
+    return undefined;
   });
 
-  var runsTestWindow = function(localVariant, q) {
-    runs(function() {
-      remotePort = windowManager.open('testWindow.html?' + q, 'test_window');
-      remotePort.onmessage = onmessage;
-    });
-  };
+  var outpostData = server.dataPreProcess({
+      instID: server.instanceID,
+      seedSers: [ seedCap ]
+  }); 
 
-  var runsExpectReceive = function(r) {
-    waitsFor(function() { return receivedMessages.length >= r.length; },
-      'receive ' + r.length + ' messages', 250);
-    runs(function() {
-      expect(receivedMessages.length).toEqual(r.length);
-      expect(receivedMessages).toEqual(r);
-    });
-  }
-
-  it('should launch a new window', function() {
-    runsTestWindow('', '');
-  });
-
-  var testExchange = function(localVariant, remoteVariant) {
-    describe('Communication pattern ' + localVariant + '/' + remoteVariant,
-      function() {
-        it('should L->R, R->L (1 roundtrip)', function() {
-          runsTestWindow(localVariant, remoteVariant);
-          runs(function() { remotePort.postMessage('alpha'); });
-          runsExpectReceive(['got alpha']);
-        });
-
-        it('should R->L, L->R, R->L', function() {
-          runsTestWindow(localVariant, 'sendFirst;' + remoteVariant);
-          runsExpectReceive(['hello']);
-          runs(function() { remotePort.postMessage('alpha'); });
-          runsExpectReceive(['hello', 'got alpha']);
-        });
-
-        // The tests below are really just paranoid testing of the browser
-        // implementation of ports. There is no point to running these all
-        // the time.
-        xit('should L->R, R->L, L->R, R->L (2 roundtrips)', function() {
-          runsTestWindow(localVariant, remoteVariant);
-          runs(function() { remotePort.postMessage('alpha'); });
-          runsExpectReceive(['got alpha']);
-          runs(function() { remotePort.postMessage('beta'); });
-          runsExpectReceive(['got alpha', 'got beta']);
-        });
-
-        xit('should R->L, (L->R, R->L)x2', function() {
-          runsTestWindow(localVariant, 'sendFirst;' + remoteVariant);
-          runsExpectReceive(['hello']);
-          runs(function() { remotePort.postMessage('alpha'); });
-          runsExpectReceive(['hello', 'got alpha']);
-          runs(function() { remotePort.postMessage('beta'); });
-          runsExpectReceive(['hello', 'got alpha', 'got beta']);
-        });
-
-        xit('should L->R, R->L (1 roundtrip)', function() {
-          runsTestWindow(localVariant, remoteVariant);
-          runs(function() { remotePort.postMessage({a: 42, b: 3}); });
-          runsExpectReceive(['got [object Object]']);
-        });
-
-    });
-  };
-
-  testExchange('localImmediate', 'remoteImmediate');
-  testExchange('localImmediate', 'remoteDelayed');
-});
-
+  setTimeout(function() {
+    tunnel.sendOutpost(outpostData);
+  }, 10);
+}
 
 describe('CapTunnels', function() {
   var tunnel;
 
   beforeEach(function() {
-    var remotePort = windowManager.open('testInstance.html', 'test_window');
-    tunnel = new CapTunnel(remotePort);
+    var channel = new MessageChannel();
+    createRemoteEnd(channel.port1)
+    tunnel = new CapTunnel(channel.port2);
   });
 
   afterEach(function() {
-    windowManager.closeAll();
     tunnel = null;
   });
 

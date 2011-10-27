@@ -12,6 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// used for selenium testing - ready is set to true when
+// the station is fully initialised
+if (!window.belaytest) {
+  window.belaytest = {
+    ready: false
+  }
+}
 
 var topDiv;
 var ui;
@@ -252,7 +259,7 @@ var sections = {
   ready: false,
   instToAdd: [],
 
-  init: function(sectionCap) {
+  init: function(sectionCap, continuation) {
     sections.sitesLabel = $('#nav .selected').eq(0).removeClass('proto');
     sections.sitesLabel.click(sections.showSites);
 
@@ -272,6 +279,7 @@ var sections = {
         sections.showSites();
         sections.ready = true;
         sections.instToAdd.forEach(sections.newInstance);
+        continuation();
       }
     }
 
@@ -653,59 +661,65 @@ var initialize = function(instanceCaps, defaultTools) {
   sections.proto = detachProto(topDiv.find('.section'));
   protoItemRow = detachProto(sections.proto.find('table.items tr'));
 
-  sections.init(instanceInfo.section);
+  sections.init(instanceInfo.section, function() {
 
-  // TODO(mzero): refactor the two addInstance functions and the newInstHandler
-  var addInstanceFromGenerate = function(genCap) {
-    genCap.get(function(data) {
-        var newID = newUUIDv4();
-        var inst = {
-          storageCap: capServer.grant(instanceInfo.instanceBase + newID),
-            // TODO(arjun) still a hack. Should we be concatenaing URLs here?
-          state: {
-            id: newID,
-            belayInstance: data.launch,
-            name: data.name,
-            icon: data.icon,
-            info: undefined,
-            created: (new Date()).valueOf()
-          }
-        };
-        addInstance(inst);
-        dirty(inst);
-      },
-      function(error) {
-        alert('Failed to addInstanceFromGenerate, error = ' + error);
-      }
-    );
-  };
-  ui.capDroppable(itemsDiv, 'belay/generate', addInstanceFromGenerate);
-
-  var loadedInstances = [];
-
-  var loadInsts = function() {
-    loadedInstances.sort(cmpInstByCreated).forEach(function(inst) {
-      addInstance(inst);
-    });
-  };
-
-  var addInstanceFromStorage = function(storageCap) {
-    storageCap.get(function(instState) {
-        var inst = {
-          storageCap: storageCap,
-          state: instState
-        };
-        inst.state.opened = 'closed';
-        loadedInstances.push(inst);
-        if (loadedInstances.length === instanceCaps.length) {
-          loadInsts();
+    // TODO(mzero): refactor the two addInstance functions and the newInstHandler
+    var addInstanceFromGenerate = function(genCap) {
+      genCap.get(function(data) {
+          var newID = newUUIDv4();
+          var inst = {
+            storageCap: capServer.grant(instanceInfo.instanceBase + newID),
+              // TODO(arjun) still a hack. Should we be concatenaing URLs here?
+            state: {
+              id: newID,
+              belayInstance: data.launch,
+              name: data.name,
+              icon: data.icon,
+              info: undefined,
+              created: (new Date()).valueOf()
+            }
+          };
+          addInstance(inst);
+          dirty(inst);
+        },
+        function(error) {
+          alert('Failed to addInstanceFromGenerate, error = ' + error);
         }
-      },
-      function(status) { alert('Failed to load instance: ' + status); }
-    );
-  };
+      );
+    };
+    ui.capDroppable(itemsDiv, 'belay/generate', addInstanceFromGenerate);
 
-  instanceCaps.forEach(addInstanceFromStorage);
+    var loadedInstances = [];
+
+    var loadInsts = function() {
+      loadedInstances.sort(cmpInstByCreated).forEach(function(inst) {
+        addInstance(inst);
+      });
+      window.belaytest.ready = true;
+    };
+
+    var addInstanceFromStorage = function(storageCap) {
+      storageCap.get(function(instState) {
+          var inst = {
+            storageCap: storageCap,
+            state: instState
+          };
+          inst.state.opened = 'closed';
+          loadedInstances.push(inst);
+          if (loadedInstances.length === instanceCaps.length) {
+            loadInsts();
+          }
+        },
+        function(status) { alert('Failed to load instance: ' + status); }
+      );
+    };
+
+    if(instanceCaps.length > 0) {
+      instanceCaps.forEach(addInstanceFromStorage);
+    } else {
+      window.belaytest.ready = true;
+    }
+  });
 };
 
 // Called by Belay (the extension) when a user visits a Web page, P, that wants

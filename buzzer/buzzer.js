@@ -82,6 +82,7 @@ onBelayReady(function() {
               };
           }),
           launchInfo.postChitURL);
+      window.belaytest.ready = true;
     });
   };
 

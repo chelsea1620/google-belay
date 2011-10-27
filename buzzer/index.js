@@ -32,4 +32,5 @@ onBelayReady(function() {
     evt.preventDefault();
     return false;
   });
+  window.belaytest.ready = true;
 });

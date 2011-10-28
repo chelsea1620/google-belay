@@ -156,6 +156,54 @@ describe('CapServer', function() {
       i2.runsGetAndExpect(42);
     });
   });
+  
+  describe('Radish servers (no instanceID)', function() {
+    var radishServer;
+    beforeEach(function() {
+      radishServer = new CapServer();
+      radishServer.setResolver(function(i) { return capServer1.publicInterface; });
+    });
+    
+    it('should throw on bad instanceIDs', function() {
+      expect(function() { new CapServer(42); }).toThrow();
+      expect(function() { new CapServer("bob"); }).toThrow();
+      expect(function() { new CapServer(""); }).toThrow();
+    });
+    
+    it('should create a server with no instanceID', function() {
+      expect(function() { new CapServer(); }).not.toThrow();
+    });
+    
+    it('should not grant caps', function() {
+      var f = function() { return 42; };
+      expect(function() { radishServer.grant(f); }).toThrow();
+    });
+
+    it('should restore a working cap', function() {
+      var f = function() { return 42; };
+      var c1 = capServer1.grant(f);
+      
+      var c2 = radishServer.restore(c1.serialize());
+      var ir = new InvokeRunner(c2);
+      ir.runsGetAndExpect(42);
+    });
+
+    it('should dataPostProcess a working cap', function() {
+      var f = function() { return 42; };
+      var c1 = capServer1.grant(f);
+      var d1 = { name: 'bob', age: 12, cap: c1 }
+      var s1 = capServer1.dataPreProcess(d1);
+      
+      var d2 = radishServer.dataPostProcess(s1);
+      expect(d2['name']).toEqual(d1['name']);
+      expect(d2['age']).toEqual(d1['age']);
+      expect(typeof d2['cap']).toEqual(typeof d1['cap']);
+      
+      var c2 = d2.cap;
+      var ir = new InvokeRunner(c2);
+      ir.runsGetAndExpect(42);
+    });
+  });
 
   describe('PublicInterface', function() {
     it('should support invoke', function() {

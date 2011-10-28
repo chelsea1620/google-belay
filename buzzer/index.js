@@ -24,9 +24,6 @@ onBelayReady(function() {
       success: function(data, status, xhr) {
         data = capServer.dataPostProcess(data);
         belay.outpost.becomeInstance.put(data);
-      },
-      failure: function() {
-        console.log('JSON failed');
       }
     });
     evt.preventDefault();

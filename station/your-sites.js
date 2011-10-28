@@ -618,7 +618,6 @@ var attributes = (function() {
         }
         function saveAttributes() {
           sections.byName[name].attributes = data = editData;
-          console.log('data saved:', data);
           attributesCap.put(data, hideAttributes);
 
           Object.keys(instances).forEach(function(instID) {

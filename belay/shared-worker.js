@@ -141,13 +141,11 @@ self.addEventListener('connect', function(e) {
     var startId = outpost.clientStartId;
     
     if (startId in expectedPages) {
-      //log('expected page');
       var ready = expectedPages[startId];
       delete expectedPages[startId];
       ready.post(buildActivateCap(outpost.navigate));
     }
     else if (startId in pendingActivates) {
-      //log('pending activate');
       // client is an instance we are expecting
       var pending = pendingActivates[startId];
       delete pendingActivates[startId];

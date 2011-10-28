@@ -91,7 +91,6 @@ function setUpWorker(e) {
   workerTunnel = new CapTunnel(worker.port);
   workerTunnel.setLocalResolver(resolver);
   startIfReady();
-  log('worker tunnel ready');
 }
 worker.port.addEventListener('message', setUpWorker);
 worker.port.start();
@@ -109,13 +108,11 @@ function setUpClient(e) {
     document.getElementById('debug').style.display = 'block';
   }
   startIfReady();
-  log('client tunnel ready');
 }
 window.addEventListener('message', setUpClient);
 
 function startIfReady() {
   if (!workerTunnel || !clientTunnel) return;
-  log("frame: " + iframeInstID);
   
   var outpostMsg = {
     iframeInstID: iframeInstID,
@@ -145,11 +142,9 @@ function startIfReady() {
     }),
     setUpClient: iframeServer.grant(function(v) {
       clientInstID = v.instID;
-      log("client: " + clientInstID);
       if (v.suggestions && Object.keys(v.suggestions).length > 0) {
         showButterBar(v.suggestions, v.clickSuggest);
       }
-      console.log(v);
       clientTunnel.sendOutpost(v.outpost);
     })
   };
@@ -174,8 +169,7 @@ document.getElementById('closeButton').addEventListener('click',
   function() { actionPort.postMessage('hideButterBar'); });
 document.getElementById('clearButton').addEventListener('click',
   function() { 
-    delete localStorage['belay']; 
-    log('localStorage cleared; refresh for consistency');
+    delete localStorage['belay'];
   });
 
 </script>

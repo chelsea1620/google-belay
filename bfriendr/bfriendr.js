@@ -135,15 +135,10 @@ var initCardUI = function(friendsCap, container, messageUI) {
       nameElt.text(friendInfo.card.name || 'No Name');
       infoElt.text(friendInfo.card.notes || 'No Notes');
       messagesElt.click(function() {
-        try {
-          ui.addClass('bfriendr-card-active');
-          messageUI.refresh(friendInfo.card.name || 'No Name',
-                            friendInfo.readConversation,
-                            friendInfo.postToMyStream);
-        }
-        catch (e) {
-          console.log('exception', e);
-        }
+        ui.addClass('bfriendr-card-active');
+        messageUI.refresh(friendInfo.card.name || 'No Name',
+                          friendInfo.readConversation,
+                          friendInfo.postToMyStream);
         return false;
       });
 

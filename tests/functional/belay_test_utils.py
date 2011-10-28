@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 import unittest
-from page_models import *
 from selenium import webdriver
 from selenium.webdriver.support.ui import WebDriverWait
 
@@ -12,21 +11,32 @@ class BelayTest(unittest.TestCase):
 
     def tearDown(self):
         self.driver.quit()
-
+    
     def wait_for(self, p, timeout=5):
-        WebDriverWait(self.driver, timeout).until(p)
+        wait_for(self.driver, p, timeout)
     
     def open_new_window(self, url):
-        current_windows = list(self.driver.window_handles)
-        
-        self.driver.execute_script("window.open('" + url + "')");
+        def open_action():
+            self.driver.execute_script("window.open('" + url + "')");
+        find_new_window(self.driver, open_action)
 
-        def new_page_opened(driver):
-            return (len(driver.window_handles) > len(current_windows))
+def wait_for(driver, p, timeout=5):
+    WebDriverWait(driver, timeout).until(p)
 
-        self.wait_for(new_page_opened)
-        other_windows = list(self.driver.window_handles)
-        for window in current_windows:
-            other_windows.remove(window)
-        new_window = other_windows[0]
-        self.driver.switch_to_window(new_window)
+def find_new_window(driver, open_fn):
+    """ 
+    triggers open_fn with the expectation that a new window will be created,
+    and will return with this new window focused
+    """
+    current_windows = list(driver.window_handles)
+    open_fn()
+
+    def new_page_opened(driver):
+        return (len(driver.window_handles) > len(current_windows))
+
+    wait_for(driver, new_page_opened)
+    other_windows = list(driver.window_handles)
+    for window in current_windows:
+        other_windows.remove(window)
+    new_window = other_windows[0]
+    driver.switch_to_window(new_window)

@@ -1,6 +1,7 @@
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
+from belay_test_utils import *
 
 class BelayEnabledPage(object):
     """ Common utilities for belay enabled pages. """
@@ -10,19 +11,23 @@ class BelayEnabledPage(object):
         self.window = driver.current_window_handle
         self.wait_for_ready()
 
-    def wait_for(self, p):
-        WebDriverWait(self.driver, 5).until(p)
-
     def page_ready(self, driver=None):
         driver = self.driver if driver == None else driver
         return driver.execute_script("return window.belaytest && window.belaytest.ready")
     
+    def wait_for(self, p, timeout=5):
+        wait_for(self.driver, p, timeout)
+
     def wait_for_ready(self):
-        self.wait_for(lambda drv: self.page_ready(drv))
+        self.wait_for(self.page_ready)
     
     def focus(self):
         self.driver.switch_to_window(self.window)
         self.driver.execute_script("window.focus()")
+    
+    def close(self):
+        self.driver.switch_to_window(self.window)
+        self.driver.close()
     
     def is_open(self):
         found = false
@@ -103,19 +108,11 @@ class BelayAdminPage(BelayEnabledPage):
         if self.get_current_station() == "":
             self.generate_new_local_station()
         
-        current_windows = list(self.driver.window_handles)
-        self.wait_for(lambda x: self.get_open_link().is_displayed())
-        self.get_open_link().click()
+        def open_action():
+            self.wait_for(lambda x: self.get_open_link().is_displayed())
+            self.get_open_link().click()
 
-        def new_page_opened(driver):
-            return (len(driver.window_handles) > len(current_windows))
-
-        self.wait_for(new_page_opened)
-        other_windows = list(self.driver.window_handles)
-        for window in current_windows:
-            other_windows.remove(window)
-        station_window = other_windows[0]
-        self.driver.switch_to_window(station_window)
+        find_new_window(self.driver, open_action)
         return BelayStationPage(self.driver)
 
 class BelayStationInstance(object):
@@ -126,6 +123,13 @@ class BelayStationInstance(object):
 
     def name(self):
         return self.row.find_element_by_xpath("td[@class='name']").text
+
+    def open(self, driver):
+        find_new_window(driver, lambda: self.row.find_element_by_tag_name("a").click())
+    
+    def get_drag_source(self):
+        return self.row.find_element_by_class_name("icon")
+
 
 class BelayStationSection(object):
 
@@ -143,6 +147,57 @@ class BelayStationSection(object):
     def instances(self):
         rows = self.elem.find_elements_by_xpath("table[@class='items']//tr")
         return [BelayStationInstance(self, row) for row in rows]
+    
+    def get_drop_target(self):
+        return self.elem
+
+    def set_attributes(self, attrs):
+        driver = self.station.driver
+        self.open_attributes()
+        
+        attribute_rows = self.elem.find_elements_by_xpath("table//table//tr")
+        for row in attribute_rows:
+            attr_name = row.find_element_by_class_name("tag").text
+            if attr_name in attrs:
+                row.find_element_by_tag_name("input").click()
+                select_group = row.find_element_by_tag_name("select")
+                wait_for(driver, lambda drv: select_group.is_displayed())
+                
+                found = False
+                selections = select_group.find_elements_by_tag_name("option")
+                for selection in selections:
+                    if selection.text == attrs[attr_name]:
+                        found = True
+                        selection.click()
+
+                if not found:
+                    raise ("Attribute value " +
+                            attrs[attr_name] +
+                            "not a valid option")
+        
+        self.save_attributes()
+    
+    def open_attributes(self):
+        driver = self.station.driver
+        cls_finder = self.elem.find_element_by_class_name
+
+        if cls_finder("attributes").is_displayed():
+            return
+        
+        settings_link = cls_finder("settings")
+        settings_link.click()
+        wait_for(driver, lambda drv: cls_finder("attributes").is_displayed())
+
+    def save_attributes(self):
+        self.elem.find_element_by_class_name("save").click()
+        attributes = self.elem.find_element_by_class_name("attributes")
+        wait_for(self.station.driver, lambda drv: not attributes.is_displayed())
+    
+    def cancel_attributes(self):
+        self.elem.find_element_by_class_name("cancel").click()
+        attributes = self.elem.find_element_by_class_name("attributes")
+        wait_for(self.station.driver, lambda drv: not attributes.is_displayed())
+
 
 class BelayStationPage(BelayEnabledPage):
     """ Representation of the contents of the belay-station page. """
@@ -161,6 +216,9 @@ class BelayStationPage(BelayEnabledPage):
 
     def uncategorized(self):
         return self.categories()[0]
+    
+    def personal(self):
+        return self.categories()[1]
 
     def is_empty(self):
         """ determines whether any instances exist in the station. """
@@ -168,6 +226,17 @@ class BelayStationPage(BelayEnabledPage):
         for category in self.categories():
             empty = empty and category.is_empty()
         return empty
+    
+    def find_instances_by_name(self, name):
+        cats = self.categories()
+        instances = list()
+        for cat in cats:
+            for inst in cat.instances():
+                if inst.name() == name:
+                    instances.append(inst)
+        
+        return instances
+
 
 class BuzzerLandingPage(BelayEnabledPage):
     def __init__(self, driver):
@@ -176,10 +245,7 @@ class BuzzerLandingPage(BelayEnabledPage):
     def create_new_instance(self, title):
         self.get_title_field().send_keys(title)
         self.driver.find_element_by_xpath("//form//input[@type='submit']").submit()
-        def check_url(driver):
-            return driver.current_url == "http://localhost:9004/buzzer-belay.html"
-
-        self.wait_for(check_url)
+        self.wait_for(lambda drv: drv.current_url == "http://localhost:9004/buzzer-belay.html")
         return BuzzerInstancePage(self.driver)
 
     def get_title_field(self):
@@ -188,11 +254,64 @@ class BuzzerLandingPage(BelayEnabledPage):
     def get_form(self):
         return self.driver.find_element_by_xpath("//form")
 
+class BuzzerPost(object):
+    def __init__(self, instance, post_div):
+        self.instance = instance
+        self.post_div = post_div
+
+    def get_content(self):
+        content_div = self.post_div.find_element_by_class_name("buzzer-body")
+        return content_div.text
 
 class BuzzerInstancePage(BelayEnabledPage):
     def __init__(self, driver):
         super(BuzzerInstancePage,self).__init__(driver)
-        self.name = self.driver.find_element_by_id("buzzer-name").text
+
+    def post(self, postText):
+        num_posts = len(self.get_posts())
+        self.get_post_field().clear()
+        self.get_post_field().send_keys(postText)
+        self.get_post_button().click()
+        self.wait_for(lambda drv: len(self.get_posts()) > num_posts)
+
+    def get_name(self):
+        return self.driver.find_element_by_id("buzzer-name").text
+
+    def get_post_field(self):
+        return self.driver.find_element_by_id("body")
+
+    def get_post_button(self):
+        return self.driver.find_element_by_tag_name("input")
+
+    def get_posts(self):
+        item_xpath = "//div[@class='buzzer-item']"
+        items = self.driver.find_elements_by_xpath(item_xpath)
+        return [ BuzzerPost(self, item) for item in items ]
+
+    def get_last_post(self):
+        return self.get_posts()[0]
+    
+    def get_read_only_chit(self):
+        return self.driver.find_element_by_class_name("buzzer-reader-chit")
+    
+    def get_poster_name_attribute(self):
+        inst_name_area = self.driver.find_element_by_id("buzzer-name")
+        xpath_find = inst_name_area.find_elements_by_xpath
+        name = xpath_find("small[@class='poster-name']")
+        if name:
+            return name[0].text
+        
+        return None
+    
+    def get_poster_location_attribute(self):
+        inst_name_area = self.driver.find_element_by_id("buzzer-name")
+        xpath_find = inst_name_area.find_elements_by_xpath
+        location = xpath_find("small[@class='poster-location']")
+        if location:
+            return location[0].text
+        
+        return None
+        
 
 
 def open_belay_admin(driver):

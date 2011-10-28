@@ -33,7 +33,7 @@ class BelayAdminTests(BelayTest):
     def test_generate_stations(self):
         ba = self.ba
         ba.open_advanced_content()
-        
+
         def check_generate(url_prefix):
             self.wait_for(lambda x: ba.get_station_cap_field().get_attribute("value").startswith(url_prefix))
             self.assertTrue(ba.get_open_link().is_displayed())

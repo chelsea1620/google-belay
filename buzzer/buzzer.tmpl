@@ -36,8 +36,8 @@ limitations under the License.
       <p id="buzzer-name">{{feed.title}}
       {% if has_subtitle %}
         <br /><small>—
-          {% if has_name %} by <i>{{ feed.name }}</i> {% endif %}
-          {% if has_location %} from <i>{{ feed.location }}</i> {% endif %}
+          {% if has_name %} by <i class="poster-name">{{ feed.name }}</i> {% endif %}
+          {% if has_location %} from <i class="poster-location">{{ feed.location }}</i> {% endif %}
         </small>
       {% endif %}
       </p>

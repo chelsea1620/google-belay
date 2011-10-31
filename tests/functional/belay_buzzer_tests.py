@@ -36,6 +36,12 @@ class BelayBuzzerTests(BelayTest):
     def test_multiple_instances(self):
         a = self.bzr.create_new_instance("A")
         
+        # annoyingly, our current window opening method will result in the
+        # same session storage object being shared between two windows
+        # if they are on the same domain. So here we open the new belay
+        # instance while the station is focused, to force a separate
+        # session storage.
+        self.st.focus()
         self.open_new_window("http://localhost:9004")
         b_start = BuzzerLandingPage(self.driver)
         b = b_start.create_new_instance("B")
@@ -95,6 +101,16 @@ class BelayBuzzerTests(BelayTest):
         reopenedInstance = BuzzerInstancePage(self.driver)
         self.assertEquals("Testing", reopenedInstance.get_name())
         self.assertEquals("test post", reopenedInstance.get_last_post().get_content())
+
+    def test_relaunch(self):
+        instance = self.bzr.create_new_instance("Testing")
+        instance.post("hello world")
+
+        self.driver.refresh()
+        instance.wait_for_ready()
+
+        self.assertEquals("Testing", instance.get_name())
+        self.assertEquals("hello world", instance.get_last_post().get_content())
 
     
 

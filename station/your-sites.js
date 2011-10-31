@@ -130,7 +130,6 @@ var instanceResolver = function(id) {
 
 
 var launchPageInstance = function(inst, launcher) {
-  if (inst.pageWindow) return;
   inst.pageWindow = true;
   inst.state.opened = 'page';
   dirty(inst);
@@ -149,6 +148,9 @@ var launchPageInstance = function(inst, launcher) {
     instanceId: inst.state.id,
     url: inst.launch.page.html, // TODO(iainmcgin): remove
     pageUrl: inst.launch.page.html,
+    relaunch: capServer.grant(function(activate) {
+      launchInstance(inst, 'relaunchpage', activate);
+    }),
     height: inst.launch.page.window.height,
     width: inst.launch.page.window.width,
     outpostData: {
@@ -204,6 +206,9 @@ var launchInstance = function(inst, openType, launcher) {
       // leave closed!
     }
     else if (openType == 'page' && canPage) {
+      if (inst.pageWindow) return;
+      launchPageInstance(inst, launcher);
+    } else if (openType == 'relaunchpage' && canPage) {
       launchPageInstance(inst, launcher);
     }
     else if (openType === 'gadget') {

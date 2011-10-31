@@ -51,9 +51,17 @@ function buildActivateCap(navigateCap) {
       isStation: args.isStation || false,
       activateContinuations: { sk: sk, fk: fk }
     };
+
+    if('relaunch' in args) {
+      relaunch = args.relaunch;
+      pending.relaunch = workerServer.grant(function(navigateCap) {
+        relaunch.post(buildActivateCap(navigateCap));
+      });
+    }
     
     var startId = newUUIDv4();
     pendingActivates[startId] = pending;
+
     navigateCap.post({url: args.pageUrl, startId: startId});
   });
 }

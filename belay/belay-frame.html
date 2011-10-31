@@ -145,9 +145,21 @@ function startIfReady() {
       if (v.suggestions && Object.keys(v.suggestions).length > 0) {
         showButterBar(v.suggestions, v.clickSuggest);
       }
+
+      if('relaunch' in v) {
+        window.sessionStorage['relaunch'] = v.relaunch.serialize();
+      }
+
       clientTunnel.sendOutpost(v.outpost);
     })
   };
+
+  if('relaunch' in window.sessionStorage) {
+    var relaunch = iframeServer.restore(window.sessionStorage['relaunch']);
+    delete (window.sessionStorage)['relaunch']
+    relaunch.post(outpostMsg.navigate);
+  }
+
   workerTunnel.sendOutpost(outpostMsg);
 }
 

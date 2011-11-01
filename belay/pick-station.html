@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<!--
+Copyright 2011 Google Inc. All Rights Reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+<head>
+<script src="lib/js/include-belay.js"></script>
+<script src="lib/js/caps.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.js">
+</script>
+<script src="lib/js/common.js"></script>
+<script src="lib/js/belay-client.js"></script>
+</head>
+
+<body>
+
+<p><a href="#" id="launchNew" target="_blank">Launch my station</a></p>
+<p><small><a href="#" id="launchOld" target="_blank">Launch my <b>old</b> station</a></small></p>
+
+
+<script>
+belay.DEBUG = false;
+
+function setUpLaunchButton(id, params) {
+  var launchBtn = document.getElementById(id);
+  var startId = newUUIDv4();
+  launchBtn.setAttribute('href', 'redirect.html');
+  launchBtn.setAttribute('target', startId);
+  belay.outpost.setStationStartId.put({ id: startId, params: params });
+}
+
+onBelayReady(function() {
+  setUpLaunchButton('launchNew', { version: 'new' });
+  setUpLaunchButton('launchOld', { version: 'old' });
+});
+
+</script>
+
+</body>
+
+</html>

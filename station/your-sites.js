@@ -55,24 +55,17 @@ var instances = Object.create(null);
        created: Int      -- time created (seconds since epoch)
        name: string,
        icon: url,
-       opened: string, -- 'page', 'gadget', or 'closed'
-       window: {     -- info on gadget location
-         top: int, left: int, width: int, height: int,
-       },
+       opened: boolean, -- whether the instance is open or not
        data: string  -- stored data for the instance
        section: string -- the section the instance belongs to
      },
      launch: {
-        page: { html: url, window: { width: int, height: int } },
-        gadget: { html: url, scripts: [url] },
+        page: { html: url },
         info: any
         attributes: { set: cap }
      },
      capServer: caps -- the cap server for this instance (if !state.remote)
-     windowedInstance: bool -- if true, in a window (route via extension)
      rows: [node] -- nodes in the item list
-     pageWindow: window -- if open in page view, the window it is in
-     gadgetNode: node -- if open in gadget view, the container node it is in
      closeCap : cap -- present for windowed instances
    }
 */
@@ -80,10 +73,6 @@ var instances = Object.create(null);
 var cmpInstByCreated = function(inst1, inst2) {
   return inst1.state.created - inst2.state.created;
 };
-
-function recentInstances(instances, numRecent) {
-
-}
 
 var dirtyInstances = [];
 var dirtyProcess = function() {
@@ -118,8 +107,7 @@ var instanceResolver = function(id) {
   if (instances[id] && instances[id].capServer) {
     return instances[id].capServer.publicInterface;
   }
-  if (instances[id] && instances[id].windowedInstance &&
-      instances[id].opened !== 'closed') {
+  if (instances[id] && instances[id].state.opened) {
     return belayBrowserTunnel.sendInterface;
   }
   if (id === capServer.instanceID) {
@@ -130,18 +118,10 @@ var instanceResolver = function(id) {
 
 
 var launchPageInstance = function(inst, launcher) {
-  inst.pageWindow = true;
-  inst.state.opened = 'page';
+  inst.state.opened = true;
   dirty(inst);
 
-  var features = [];
-  if ('width' in inst.launch.page.window)
-    features.push('width=' + Number(inst.launch.page.window.width));
-  if ('height' in inst.launch.page.window)
-    features.push('height=' + Number(inst.launch.page.window.height));
-
   inst.capServer = undefined;
-  inst.windowedInstance = true;
 
   launcher.post({
     instID: inst.state.id, // TODO(iainmcgin): remove
@@ -151,8 +131,6 @@ var launchPageInstance = function(inst, launcher) {
     relaunch: capServer.grant(function(activate) {
       launchInstance(inst, 'relaunchpage', activate);
     }),
-    height: inst.launch.page.window.height,
-    width: inst.launch.page.window.width,
     outpostData: {
       info: inst.launch.info,
       instanceID: inst.state.id, // TODO(iainmcgin): remove
@@ -191,11 +169,10 @@ var launchInstance = function(inst, openType, launcher) {
     var preferred = canPage ? 'page' : 'none';
 
     if (openType == 'restore') {
-      if (instState.opened === 'page') {
+      if (instState.opened) {
         openType = 'none';
-      }
-      else {
-        openType = ('opened' in instState) ? instState.opened : preferred;
+      } else {
+        openType = preferred;
       }
     }
     else if (openType == 'openAny') {
@@ -206,13 +183,10 @@ var launchInstance = function(inst, openType, launcher) {
       // leave closed!
     }
     else if (openType == 'page' && canPage) {
-      if (inst.pageWindow) return;
+      if (instState.opened) return;
       launchPageInstance(inst, launcher);
     } else if (openType == 'relaunchpage' && canPage) {
       launchPageInstance(inst, launcher);
-    }
-    else if (openType === 'gadget') {
-      // ignore
     }
     else {
       alert('launchInstance: this instance cannot open as a ' + openType);
@@ -239,7 +213,7 @@ var addInstance = function(inst) {
 };
 
 var removeInstance = function(inst) {
-  if (inst.pageWindow) {
+  if (inst.state.opened) {
     inst.closeCap.put();
   }
   sections.deleteInstance(inst);
@@ -380,9 +354,6 @@ var sections = {
     var icon = row.find('td.icon img');
     icon.attr('src', inst.state.icon || defaultIcon);
     row.find('td.name').text(inst.state.name || 'an item');
-    row.find('td.actions .open-gadget').click(function() {
-        launchInstance(inst, 'gadget');
-      });
     row.find('td.actions .remove').click(function() {
         removeInstance(inst);
       });
@@ -391,7 +362,7 @@ var sections = {
     openPageBtn.attr('href', 'redirect.html');
     openPageBtn.attr('target', startId);
     openPageBtn.click(function(evt) {
-      if (inst.state.opened !== 'closed') {
+      if (inst.state.opened) {
         evt.preventDefault(); // do not re-open the window
       }
     });
@@ -708,7 +679,7 @@ var initialize = function(instanceCaps, defaultTools) {
             storageCap: storageCap,
             state: instState
           };
-          inst.state.opened = 'closed';
+          inst.state.opened = false;
           loadedInstances.push(inst);
           if (loadedInstances.length === instanceCaps.length) {
             loadInsts();
@@ -751,9 +722,8 @@ var closeInstHandler = function(instID) {
   if (!(instID in instances)) return;
 
   var inst = instances[instID];
-  if (inst.pageWindow) {
-    inst.pageWindow = undefined;
-    inst.state.opened = 'closed';
+  if (inst.state.opened) {
+    inst.state.opened = false;
     dirty(inst);
   }
 

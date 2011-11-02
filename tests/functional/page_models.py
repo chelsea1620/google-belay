@@ -1,7 +1,11 @@
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.common.action_chains import *
 from belay_test_utils import *
+from time import *
+import random
+import os
 
 class BelayEnabledPage(object):
     """ Common utilities for belay enabled pages. """
@@ -10,6 +14,36 @@ class BelayEnabledPage(object):
         self.driver = driver
         self.window = driver.current_window_handle
         self.wait_for_ready()
+    
+    def drag_cap_out(self, source_jq_matcher):
+        driver = self.driver
+        driver.execute_script("""
+            var fakeDragEvt = document.createEvent('UIEvents');
+            fakeDragEvt.initEvent('dragstart', true, true);
+            fakeDragEvt.dataTransfer = {
+                setDragImage: function(x, y, z) {},
+                setData: function(mime, data) {
+                    belaytest.dropped_data = data;
+                }
+            };
+            $('""" + source_jq_matcher + """')[0].dispatchEvent(fakeDragEvt);
+        """)
+        data = driver.execute_script("return belaytest.dropped_data")
+        driver.execute_script("delete belaytest.dropped_data")
+        return data
+
+    def drag_cap_in(self, cap_data, target_jq_matcher):
+        temp_source_id = "belaytest_ddsource_" + str(random.randint(0, 2 ** 64))
+        self.driver.execute_script("""
+            var fakeDropEvt = document.createEvent('UIEvents');
+            fakeDropEvt.initEvent('drop', true, true);
+            fakeDropEvt.dataTransfer = {
+                getData: function(mime) {
+                    return '""" + cap_data +"""';
+                }
+            };
+            $('""" + target_jq_matcher + """')[0].dispatchEvent(fakeDropEvt);
+        """)
 
     def page_ready(self, driver=None):
         driver = self.driver if driver == None else driver
@@ -150,6 +184,9 @@ class BelayStationSection(object):
     
     def get_drop_target(self):
         return self.elem
+
+    def get_drop_target_jq_matcher(self):
+        return "#section-" + self.name()
 
     def set_attributes(self, attrs):
         driver = self.station.driver
@@ -311,7 +348,11 @@ class BuzzerInstancePage(BelayEnabledPage):
             return location[0].text
         
         return None
-        
+    
+    def is_read_only(self):
+        # we can determine if this is a read-only view by the absence
+        # of the input text area
+        return len(self.driver.find_elements_by_id('body')) == 0
 
 
 def open_belay_admin(driver):

@@ -16,7 +16,9 @@ onBelayReady(function() {
   ui.resize(150, 200, true);
 
   belay.dirty = function() {
-    belay.outpost.info.snapshot_cap.put(capServer.snapshot());
+    if(belay.outpost.info.snapshot_cap) {
+      belay.outpost.info.snapshot_cap.put(capServer.snapshot());
+    }
   };
 
   var formAjax = function(form, callback) {

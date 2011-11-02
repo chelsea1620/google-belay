@@ -6,7 +6,6 @@ from selenium import webdriver
 from selenium.webdriver.support.ui import WebDriverWait
 from belay_test_utils import *
 from selenium.webdriver.common.action_chains import *
-import time
 
 class BelayBuzzerTests(BelayTest):
 
@@ -93,10 +92,6 @@ class BelayBuzzerTests(BelayTest):
         instance.close()
         self.st.focus()
 
-        # the station does not realise a page has closed for at least a few
-        # seconds with the current implementation, so we must wait before
-        # we attempt to reopen the site
-        time.sleep(4)
         self.st.find_instances_by_name("Testing")[0].open(self.driver)
         reopenedInstance = BuzzerInstancePage(self.driver)
         self.assertEquals("Testing", reopenedInstance.get_name())

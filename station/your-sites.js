@@ -138,6 +138,9 @@ var launchPageInstance = function(inst, launcher) {
       services: belayBrowser,
       setRefresh: capServer.grant(function(refreshCap) {
         inst.refreshCap = refreshCap;
+      }),
+      notifyClose: capServer.grant(function() {
+        closeInstHandler(inst.state.id);
       })
     }
   },

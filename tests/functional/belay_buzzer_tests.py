@@ -107,8 +107,24 @@ class BelayBuzzerTests(BelayTest):
         self.assertEquals("Testing", instance.get_name())
         self.assertEquals("hello world", instance.get_last_post().get_content())
 
-    
+    def test_read_only_gen(self):
+        driver = self.driver
 
+        instance = self.bzr.create_new_instance("Testing")
+        instance.post("hi mom!")
+        
+        cap = instance.drag_cap_out('.buzzer-reader-chit')
+        self.st.focus()
+        uncategorized = self.st.uncategorized()
+        self.st.drag_cap_in(cap, uncategorized.get_drop_target_jq_matcher())
+
+        self.wait_for(lambda x: len(uncategorized.instances()) == 2)
+        instances = self.st.find_instances_by_name("buzz about Testing")
+        self.assertEqual(1, len(instances))
+
+        instances[0].open(driver)
+        new_instance = BuzzerInstancePage(self.driver)
+        self.assertTrue(new_instance.is_read_only())
 
 
 if __name__ == "__main__":

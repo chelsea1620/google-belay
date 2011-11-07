@@ -911,26 +911,3 @@ describe('CapServer', function() {
 
   });
 });
-
-/*
-Missing Tests
-
-CapServer
-  two caps on the same URL result in different, independent caps
-    -?
-
-  restoring dead cap with nullCapID
-
-  semantics of URL caps
-
-  persisting wrapped caps
-
-  revokeAll revokes
-    awoken caps
-
-  proper reviving 2nd time of caps
-    - serialization is the same
-    - capID is the same
-    - revocation still works, etc...
-
-*/

@@ -165,7 +165,7 @@ function startIfReady() {
 
 function showButterBar(suggests, clickSuggest) {
   var buttonContainer = document.getElementById('suggestButtons');
-  for (k in suggests) {
+  Object.keys(suggests).forEach(function(k) {
     var suggestion = suggests[k];
     var btn = document.createElement('button');
     btn.className = 'suggestButton';
@@ -174,7 +174,7 @@ function showButterBar(suggests, clickSuggest) {
     btn.addEventListener('click', function() {
       clickSuggest.put(suggestion.doLaunch);
     });
-  }
+  });
   actionPort.postMessage('showButterBar');
 }
 

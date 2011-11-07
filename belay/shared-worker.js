@@ -75,39 +75,21 @@ function makeSetStationCallbacks() {
   });
 }
 
-var suggestions = Object.create(null);
 
-function makeSuggestInst() {
-  return workerServer.grant(function(args) {
-    if (!(args.domain in suggestions)) {
-      suggestions[args.domain] = Object.create(null);
-    }
-    suggestions[args.domain][args.id] = {
-      name: args.name,
-      doLaunch: args.doLaunch
-    };
+function checkForSuggestions(location, showSuggestions, navigate) {
+  var m = location.match('^https?://[^/]*');
+  if (m === null) return;
+  location = m[0];
+  
+  stationCaps.getSuggestions.post(location, function(suggestions) {
+    if (suggestions.length == 0) return;
+    showSuggestions.post({
+      suggestions: suggestions,
+      clickSuggest: workerServer.grant(function(doLaunch) {
+        doLaunch.post(buildActivateCap(navigate));
+      })
+    });
   });
-}
-
-function makeRemoveSuggestInst() {
-  return workerServer.grant(function(args) {
-    if (args.domain in suggestions) {
-      delete (suggestions[args.domain])[args.id];
-    }
-  });
-}
-
-// Suggestions for the domain of href.
-function suggestFor(href) {
-  var m = href.match('^https?://[^/]*');
-  if (!(m !== null &&  // failed match returns null
-        m[0] in suggestions &&
-        Object.keys(suggestions[m[0]]).length > 0)) {
-    return [];
-  }
-
-  var domain = m[0];
-  return suggestions[domain];
 }
 
 var highlighters = Object.create(null);
@@ -160,8 +142,6 @@ self.addEventListener('connect', function(e) {
       delete pendingActivates[startId];
       if (pending.isStation) {
         pending.outpost.setStationCallbacks = makeSetStationCallbacks();
-        pending.outpost.suggestInst = makeSuggestInst();
-        pending.outpost.removeSuggestInst = makeRemoveSuggestInst();
         pending.outpost.services = makeHighlighting();
       }
 
@@ -208,14 +188,8 @@ self.addEventListener('connect', function(e) {
         }
       }, function(v) {
         // on setUpClient success:
-        var suggestions = suggestFor(location);
-        if (suggestions.length == 0) return;
-        outpost.showSuggestions.post({
-          suggestions: suggestions,
-          clickSuggest: workerServer.grant(function(doLaunch) {
-            doLaunch.post(buildActivateCap(outpost.navigate));
-          })
-        });
+        checkForSuggestions(location,
+            outpost.showSuggestions, outpost.navigate);
       });
     }
   }); // end setOutpustHandler

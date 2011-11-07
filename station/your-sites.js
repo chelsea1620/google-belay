@@ -26,8 +26,6 @@ var instanceInfo;
 var capServer;
 var belayBrowserTunnel;
 var belayBrowser;
-var belaySuggestInst;
-var belayRemoveSuggestInst;
 
 var defaultIcon = '/tool.png';
 
@@ -143,11 +141,6 @@ var launchPageInstance = function(inst, launcher) {
     }
   },
   function(closeCap) {
-    // Instance opened, so do not show it as a suggestion
-    belayRemoveSuggestInst.put({
-      id: inst.state.id,
-      domain: domainOfInst(inst)
-    });
     inst.closeCap = closeCap;
   },
   function(error) {
@@ -195,22 +188,27 @@ var launchInstance = function(inst, openType, launcher) {
   });
 };
 
-var addSuggestion = function(inst) {
-  belaySuggestInst.put({
-    id: inst.state.id,
-    domain: domainOfInst(inst),
-    name: inst.state.name,
-    doLaunch: capServer.grant(function(activate) {
-      launchInstance(inst, 'page', activate);
-    })
+
+var getSuggestions = function(location) {
+  var suggestions = [];
+  Object.keys(instances).forEach(function(instanceId) {
+    var inst = instances[instanceId];
+    if (domainOfInst(inst) == location && !inst.state.opened) {
+      suggestions.push({
+        name: inst.state.name,
+        doLaunch: capServer.grant(function(activate) {
+          launchInstance(inst, 'page', activate);
+        })
+      });
+    }
   });
+  return suggestions;
 };
 
 var protoItemRow; // TODO(jpolitz): factor this differently?
 var addInstance = function(inst) {
   instances[inst.state.id] = inst;
   sections.newInstance(inst);
-  addSuggestion(inst);
 };
 
 var removeInstance = function(inst) {
@@ -221,10 +219,6 @@ var removeInstance = function(inst) {
   if (inst.capServer) inst.capServer.revokeAll();
   delete instances[inst.state.id];
   inst.storageCap.remove();
-  belayRemoveSuggestInst.put({
-    id: inst.state.id,
-    domain: domainOfInst(inst)
-  });
 };
 
 
@@ -737,9 +731,6 @@ var closeInstHandler = function(instanceId) {
       launchInstance(inst, 'page', activate);
     })
   });
-
-  // Instace closed, so let it re-appear as a suggestion
-  addSuggestion(inst);
 };
 
 window.belay.portReady = function() {
@@ -754,8 +745,6 @@ window.belay.portReady = function() {
     expectPage = outpost.expectPage;
     belayLaunch = outpost.launch;
     belayBrowser = outpost.services;
-    belaySuggestInst = outpost.suggestInst;
-    belayRemoveSuggestInst = outpost.removeSuggestInst;
     instanceInfo = outpost.info;
     var instancesCap = instanceInfo.instances;
     instancesCap.get(function(instances) {
@@ -763,7 +752,8 @@ window.belay.portReady = function() {
     }, function(err) { alert(err.message); });
     outpost.setStationCallbacks.put({
       newInstHandler: capServer.grant(newInstHandler),
-      closeInstHandler: capServer.grant(closeInstHandler)
+      closeInstHandler: capServer.grant(closeInstHandler),
+      getSuggestions: capServer.grant(getSuggestions)
     });
     ui = {
       capDraggable: common.makeCapDraggable(capServer, function() {}),

@@ -194,10 +194,6 @@ self.addEventListener('connect', function(e) {
       outpost.setUpClient.post({
         instanceId: tempInstanceId,
         temporaryInstance: true,
-        suggestions: suggestFor(location),
-        clickSuggest: workerServer.grant(function(doLaunch) {
-          doLaunch.post(buildActivateCap(outpost.navigate));
-        }),
         outpost: {
           instanceId: tempInstanceId,
           temporaryInstance: true,
@@ -210,6 +206,16 @@ self.addEventListener('connect', function(e) {
           expectPage: makeExpectPage(),
           services: makeHighlighting()
         }
+      }, function(v) {
+        // on setUpClient success:
+        var suggestions = suggestFor(location);
+        if (suggestions.length == 0) return;
+        outpost.showSuggestions.post({
+          suggestions: suggestions,
+          clickSuggest: workerServer.grant(function(doLaunch) {
+            doLaunch.post(buildActivateCap(outpost.navigate));
+          })
+        });
       });
     }
   }); // end setOutpustHandler

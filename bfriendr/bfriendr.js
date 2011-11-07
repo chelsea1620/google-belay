@@ -31,13 +31,13 @@ var initMessagesUI = function(container, showHideMessages) {
   msgs.find('.bfriendr-message').detach();
 
   var latestMsgTime = '';
-  var pollIntervalID = false;
+  var pollIntervalId = false;
 
   // i.e., hide this pane, detaching all timers, handlers, etc.
   var close = function() {
-    if (pollIntervalID !== false) {
-      clearInterval(pollIntervalID);
-      pollIntervalID = false;
+    if (pollIntervalId !== false) {
+      clearInterval(pollIntervalId);
+      pollIntervalId = false;
     }
     sendButton.unbind('click');
     showHideMessages(false);
@@ -85,7 +85,7 @@ var initMessagesUI = function(container, showHideMessages) {
 
   var refresh = function(friendName, conversationCap, postCap) {
     var handler = mkRefreshConvHandler(conversationCap);
-    pollIntervalID = setInterval(handler, 2000);
+    pollIntervalId = setInterval(handler, 2000);
     friendNameElt.text(friendName);
     composeTextArea.val('').focus();
     sendButton.click(function() {

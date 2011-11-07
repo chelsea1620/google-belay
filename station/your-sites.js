@@ -642,12 +642,12 @@ var initialize = function(instanceCaps, defaultTools) {
     // TODO(mzero): refactor the two addInstance functions and the newInstHandler
     var addInstanceFromGenerate = function(genCap) {
       genCap.get(function(data) {
-          var newID = newUUIDv4();
+          var newId = newUUIDv4();
           var inst = {
-            storageCap: capServer.grant(instanceInfo.instanceBase + newID),
+            storageCap: capServer.grant(instanceInfo.instanceBase + newId),
               // TODO(arjun) still a hack. Should we be concatenaing URLs here?
             state: {
-              id: newID,
+              id: newId,
               belayInstance: data.launch,
               name: data.name,
               icon: data.icon,

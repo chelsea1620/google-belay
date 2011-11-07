@@ -138,6 +138,9 @@ var launchPageInstance = function(inst, launcher) {
       services: belayBrowser,
       setRefresh: capServer.grant(function(refreshCap) {
         inst.refreshCap = refreshCap;
+      }),
+      notifyClose: capServer.grant(function() {
+        closeInstHandler(inst.state.id);
       })
     }
   },
@@ -270,7 +273,6 @@ var sections = {
     label.addClass('group');
     $('#nav').append(label);
 
-
     var makeDroppable = function(elt) {
       elt.droppable({
         tolerance: 'pointer',
@@ -296,6 +298,7 @@ var sections = {
 
     var section = sections.proto.clone();
     section.css('display', 'none');
+    section.attr('id', 'section-' + name);
     section.appendTo($('#belay-items'));
     label.click(function(evt) { sections.show(name); });
     makeDroppable(label);

@@ -49,7 +49,6 @@ onBelayReady(function() {
           outpostData: {
             info: launchDescriptor.info,
             instanceId: instanceId,
-            instanceID: instanceId // TODO(mzero): remove in the future
           }
         });
       },

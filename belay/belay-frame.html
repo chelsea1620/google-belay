@@ -66,10 +66,10 @@ function log(args) {
 }
 
 
-var iframeInstID = newUUIDv4();
-var iframeServer = new CapServer(iframeInstID);
+var iframeInstanceId = newUUIDv4();
+var iframeServer = new CapServer(iframeInstanceId);
 
-var clientInstID;
+var clientInstanceId;
 var clientTunnel;
 var clientLocation;
 var clientStartId;
@@ -77,9 +77,9 @@ var actionPort;
 
 var workerTunnel;
 
-function resolver(instID) {
-  if (instID === iframeInstID) { return iframeServer.publicInterface; }
-  if (instID === clientInstID) { return clientTunnel.sendInterface; }
+function resolver(instanceId) {
+  if (instanceId === iframeInstanceId) { return iframeServer.publicInterface; }
+  if (instanceId === clientInstanceId) { return clientTunnel.sendInterface; }
   return workerTunnel.sendInterface;
 }
 
@@ -115,7 +115,7 @@ function startIfReady() {
   if (!workerTunnel || !clientTunnel) return;
   
   var outpostMsg = {
-    iframeInstID: iframeInstID,
+    iframeInstanceId: iframeInstanceId,
     clientLocation: clientLocation,
     clientStartId: clientStartId,
     log: iframeServer.grant(log),
@@ -141,7 +141,7 @@ function startIfReady() {
       actionPort.postMessage({ op: 'highlight', args: args });
     }),
     setUpClient: iframeServer.grant(function(v) {
-      clientInstID = v.instID;
+      clientInstanceId = v.instanceId;
       if (v.suggestions && Object.keys(v.suggestions).length > 0) {
         showButterBar(v.suggestions, v.clickSuggest);
       }
@@ -165,13 +165,13 @@ function startIfReady() {
 
 function showButterBar(suggests, clickSuggest) {
   var buttonContainer = document.getElementById('suggestButtons');
-  Object.keys(suggests).forEach(function(instID) {
+  Object.keys(suggests).forEach(function(id) {
     var btn = document.createElement('button');
     btn.className = 'suggestButton';
-    btn.innerText = suggests[instID].name;
+    btn.innerText = suggests[id].name;
     buttonContainer.appendChild(btn);
     btn.addEventListener('click', function() {
-      clickSuggest.put(suggests[instID].doLaunch);
+      clickSuggest.put(suggests[id].doLaunch);
     });
   });
   actionPort.postMessage('showButterBar');

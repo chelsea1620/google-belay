@@ -328,6 +328,12 @@ class BuzzerInstancePage(BelayEnabledPage):
     def get_last_post(self):
         return self.get_posts()[0]
     
+    def get_read_only_cap(self):
+        return self.drag_cap_out('.buzzer-reader-chit')
+
+    def get_post_cap(self):
+        return self.drag_cap_out('.buzzer-post-chit')
+
     def get_read_only_chit(self):
         return self.driver.find_element_by_class_name("buzzer-reader-chit")
     

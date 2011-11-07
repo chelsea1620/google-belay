@@ -63,4 +63,6 @@ onBelayReady(function() {
       });
     });
   }
+
+  window.belaytest.ready = true;
 });

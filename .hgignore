@@ -1,0 +1,10 @@
+syntax: glob
+
+chrome-ext/includes
+.DS_Store
+.*.swp
+*.pyc
+*.*~
+*.orig
+lib/js/include-belay.js
+*.log

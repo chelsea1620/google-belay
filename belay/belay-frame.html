@@ -142,15 +142,15 @@ function startIfReady() {
     }),
     setUpClient: iframeServer.grant(function(v) {
       clientInstanceId = v.instanceId;
-      if (v.suggestions && Object.keys(v.suggestions).length > 0) {
-        showButterBar(v.suggestions, v.clickSuggest);
-      }
-
+      
       if('relaunch' in v) {
         window.sessionStorage['relaunch'] = v.relaunch.serialize();
       }
 
       clientTunnel.sendOutpost(v.outpost);
+    }),
+    showSuggestions: iframeServer.grant(function(v) {
+        showButterBar(v.suggestions, v.clickSuggest);
     })
   };
 
@@ -165,15 +165,16 @@ function startIfReady() {
 
 function showButterBar(suggests, clickSuggest) {
   var buttonContainer = document.getElementById('suggestButtons');
-  Object.keys(suggests).forEach(function(id) {
+  for (k in suggests) {
+    var suggestion = suggests[k];
     var btn = document.createElement('button');
     btn.className = 'suggestButton';
-    btn.innerText = suggests[id].name;
+    btn.innerText = suggestion.name;
     buttonContainer.appendChild(btn);
     btn.addEventListener('click', function() {
-      clickSuggest.put(suggests[id].doLaunch);
+      clickSuggest.put(suggestion.doLaunch);
     });
-  });
+  }
   actionPort.postMessage('showButterBar');
 }
 

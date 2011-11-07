@@ -37,9 +37,14 @@ function createRemoteEnd(port) {
     return undefined;
   });
 
+  var seedAsyncCap = server.grant(function(v, sk, fk) {
+    if (v == 'ignore') { return; }
+    return;
+  })
+
   var outpost = {
       instID: server.instanceID,
-      seeds: [ seedCap ]
+      seeds: [ seedCap, seedAsyncCap ]
   };
 
   setTimeout(function() {
@@ -74,8 +79,9 @@ describe('CapTunnels', function() {
         localServer1 = new CapServer(newUUIDv4());
 
         expect(typeof outpostData.instID).toEqual('string');
-        expect(outpostData.seeds.length).toEqual(1);
+        expect(outpostData.seeds.length).toEqual(2);
         expect(typeof outpostData.seeds[0]).toEqual('object');
+        expect(typeof outpostData.seeds[1]).toEqual('object');
 
         var ifaceMap = {};
         ifaceMap[outpostData.instID] = tunnel.sendInterface;
@@ -98,6 +104,24 @@ describe('CapTunnels', function() {
       });
       waitsFor(function() { return done; }, 'invoke timeout', 250);
       runs(function() { expect(result).toEqual(42); });
+    });
+
+    it('should fail pending invokes on tunnel death', function() {
+      var successCalled = false;
+      var failureCalled = false;
+      runs(function() {
+        var remoteAsyncSeedCap = outpostData.seeds[1];
+        remoteAsyncSeedCap.post('ignore',
+          function(data) { successCalled = true; },
+          function(err) { failureCalled = true; });
+        setTimeout(function() { tunnel.handleClose(); }, 50);
+      });
+      waitsFor(function() { return successCalled || failureCalled; },
+        'invoke timeout', 250);
+      runs(function() {
+        expect(successCalled).toEqual(false);
+        expect(failureCalled).toEqual(true);
+      });
     });
 
     it('should be able to invoke a local cap from the remote side', function() {

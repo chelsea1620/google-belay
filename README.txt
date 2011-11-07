@@ -26,7 +26,10 @@ UNIT TESTING
 
 We use unittest2 and webtest for the Python backend.  You will need to:
 
-  easy_install unittest2 webtest
+  easy_install unittest2 webtest selenium
+
+You'll need the Chrome driver for selenium:
+  http://code.google.com/p/chromium/downloads/list
 
 Unit testing Python server code:
 

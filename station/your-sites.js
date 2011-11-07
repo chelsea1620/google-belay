@@ -46,7 +46,7 @@ function domainOfInst(inst) {
 //
 var instances = Object.create(null);
 /*
-  a map from instanceIDs to
+  a map from instanceIds to
    {
      storageCap: cap,-- where station stores instance state (see next member)
      state: {
@@ -79,15 +79,15 @@ var dirtyProcess = function() {
   var inst;
   while (!inst) {
     if (dirtyInstances.length <= 0) { return; }
-    var instID = dirtyInstances.shift();
-    inst = instances[instID];
+    var instanceId = dirtyInstances.shift();
+    inst = instances[instanceId];
   }
   inst.storageCap.post(inst.state, dirtyProcess);
 };
 var dirty = function(inst) {
-  var instID = inst.state.id;
-  if (dirtyInstances.indexOf(instID) >= 0) return;
-  dirtyInstances.push(instID);
+  var instanceId = inst.state.id;
+  if (dirtyInstances.indexOf(instanceId) >= 0) return;
+  dirtyInstances.push(instanceId);
   if (dirtyInstances.length === 1)
     setTimeout(dirtyProcess, 1000);
 };
@@ -110,7 +110,7 @@ var instanceResolver = function(id) {
   if (instances[id] && instances[id].state.opened) {
     return belayBrowserTunnel.sendInterface;
   }
-  if (id === capServer.instanceID) {
+  if (id === capServer.instanceId) {
     return capServer.publicInterface;
   }
   return belayBrowserTunnel.sendInterface;
@@ -124,7 +124,6 @@ var launchPageInstance = function(inst, launcher) {
   inst.capServer = undefined;
 
   launcher.post({
-    instID: inst.state.id, // TODO(iainmcgin): remove
     instanceId: inst.state.id,
     url: inst.launch.page.html, // TODO(iainmcgin): remove
     pageUrl: inst.launch.page.html,
@@ -133,7 +132,6 @@ var launchPageInstance = function(inst, launcher) {
     }),
     outpostData: {
       info: inst.launch.info,
-      instanceID: inst.state.id, // TODO(iainmcgin): remove
       instanceId: inst.state.id,
       services: belayBrowser,
       setRefresh: capServer.grant(function(refreshCap) {
@@ -147,7 +145,7 @@ var launchPageInstance = function(inst, launcher) {
   function(closeCap) {
     // Instance opened, so do not show it as a suggestion
     belayRemoveSuggestInst.put({
-      instID: inst.state.id,
+      id: inst.state.id,
       domain: domainOfInst(inst)
     });
     inst.closeCap = closeCap;
@@ -199,7 +197,7 @@ var launchInstance = function(inst, openType, launcher) {
 
 var addSuggestion = function(inst) {
   belaySuggestInst.put({
-    instID: inst.state.id,
+    id: inst.state.id,
     domain: domainOfInst(inst),
     name: inst.state.name,
     doLaunch: capServer.grant(function(activate) {
@@ -224,7 +222,7 @@ var removeInstance = function(inst) {
   delete instances[inst.state.id];
   inst.storageCap.remove();
   belayRemoveSuggestInst.put({
-    instID: inst.state.id,
+    id: inst.state.id,
     domain: domainOfInst(inst)
   });
 };
@@ -599,8 +597,8 @@ var attributes = (function() {
           sections.byName[name].attributes = data = editData;
           attributesCap.put(data, hideAttributes);
 
-          Object.keys(instances).forEach(function(instID) {
-            var inst = instances[instID];
+          Object.keys(instances).forEach(function(instanceId) {
+            var inst = instances[instanceId];
             if (inst.state.section === name) {
               attributes.pushToInstance(inst);
             }
@@ -704,12 +702,12 @@ var initialize = function(instanceCaps, defaultTools) {
 // to morph into an instance. The supplied launch cap has the same signature
 // as belayLaunch. Instead of creating a new tab, it reloads P's tab.
 var newInstHandler = function(args) {
-  var instID = newUUIDv4();
+  var instanceId = newUUIDv4();
   var inst = {
-    storageCap: capServer.grant(instanceInfo.instanceBase + instID),
+    storageCap: capServer.grant(instanceInfo.instanceBase + instanceId),
     // TODO(arjun) still a hack. Should we be concatenaing URLs here?
     state: {
-      id: instID,
+      id: instanceId,
       belayInstance: args.instanceDescription.launch,
       name: args.instanceDescription.name,
       icon: args.instanceDescription.icon,
@@ -721,10 +719,10 @@ var newInstHandler = function(args) {
   launchInstance(inst, 'page', args.activate);
 };
 
-var closeInstHandler = function(instID) {
-  if (!(instID in instances)) return;
+var closeInstHandler = function(instanceId) {
+  if (!(instanceId in instances)) return;
 
-  var inst = instances[instID];
+  var inst = instances[instanceId];
   if (inst.state.opened) {
     inst.state.opened = false;
     dirty(inst);
@@ -750,7 +748,7 @@ window.belay.portReady = function() {
   belayBrowserTunnel = new CapTunnel(window.belay.port);
   belayBrowserTunnel.setLocalResolver(instanceResolver);
   belayBrowserTunnel.setOutpostHandler(function(outpost) {
-    capServer = new CapServer(outpost.instanceID);
+    capServer = new CapServer(outpost.instanceId);
     capServer.setResolver(instanceResolver);
 
     expectPage = outpost.expectPage;

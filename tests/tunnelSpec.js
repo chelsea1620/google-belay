@@ -15,7 +15,7 @@
 function createRemoteEnd(port) {
   var tunnel = new CapTunnel(port);
   var server = new CapServer(newUUIDv4());
-  tunnel.setLocalResolver(function(instID) {
+  tunnel.setLocalResolver(function(instanceId) {
     return server.publicInterface;
   });
   server.setResolver(tunnel.remoteResolverProxy);
@@ -43,7 +43,7 @@ function createRemoteEnd(port) {
   })
 
   var outpost = {
-      instID: server.instanceID,
+      instanceId: server.instanceId,
       seeds: [ seedCap, seedAsyncCap ]
   };
 
@@ -78,16 +78,18 @@ describe('CapTunnels', function() {
       runs(function() {
         localServer1 = new CapServer(newUUIDv4());
 
-        expect(typeof outpostData.instID).toEqual('string');
+        expect(typeof outpostData.instanceId).toEqual('string');
         expect(outpostData.seeds.length).toEqual(2);
         expect(typeof outpostData.seeds[0]).toEqual('object');
         expect(typeof outpostData.seeds[1]).toEqual('object');
 
         var ifaceMap = {};
-        ifaceMap[outpostData.instID] = tunnel.sendInterface;
-        ifaceMap[localServer1.instanceID] = localServer1.publicInterface;
+        ifaceMap[outpostData.instanceId] = tunnel.sendInterface;
+        ifaceMap[localServer1.instanceId] = localServer1.publicInterface;
 
-        var resolver = function(instID) { return ifaceMap[instID] || null; };
+        var resolver = function(instanceId) {
+          return ifaceMap[instanceId] || null;
+        };
         tunnel.setLocalResolver(resolver);
         localServer1.setResolver(resolver);
       });

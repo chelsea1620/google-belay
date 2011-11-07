@@ -103,7 +103,7 @@ var nextTop = 50;
 //
 var instances = {};
 /*
-  a map from instanceIDs to
+  a map from instanceIds to
    {
      storageCap: cap,-- where station stores instance state (see next member)
      state: {
@@ -138,15 +138,15 @@ var dirtyProcess = function() {
   var inst;
   while (!inst) {
     if (dirtyInstances.length <= 0) { return; }
-    var instID = dirtyInstances.shift();
-    inst = instances[instID];
+    var instanceId = dirtyInstances.shift();
+    inst = instances[instanceId];
   }
   inst.storageCap.post(inst.state, dirtyProcess);
 };
 var dirty = function(inst) {
-  var instID = inst.state.id;
-  if (dirtyInstances.indexOf(instID) >= 0) return;
-  dirtyInstances.push(instID);
+  var instanceId = inst.state.id;
+  if (dirtyInstances.indexOf(instanceId) >= 0) return;
+  dirtyInstances.push(instanceId);
   if (dirtyInstances.length === 1)
     setTimeout(dirtyProcess, 1000);
 };
@@ -170,7 +170,7 @@ var instanceResolver = function(id) {
       instances[id].opened !== 'closed') {
     return belayBrowserTunnel.sendInterface;
   }
-  if (id === capServer.instanceID) {
+  if (id === capServer.instanceId) {
     return capServer.publicInterface;
   }
   return belayBrowserTunnel.sendInterface;
@@ -337,13 +337,13 @@ var launchPageInstance = function(inst, launchCap) {
   inst.windowedInstance = true;
 
   launchCap.post({
-    instID: inst.state.id,
+    instanceId: inst.state.id,
     url: inst.launch.page.html,
     height: inst.launch.page.window.height,
     width: inst.launch.page.window.width,
     outpostData: {
       info: inst.launch.info,
-      instanceID: inst.state.id,
+      instanceId: inst.state.id,
       services: belayBrowser,
     }
   },
@@ -435,7 +435,7 @@ var addInstance = function(inst, openType, launchCap) {
   launchInstance(inst, openType, launchCap);
 
   belaySuggestInst.put({
-    instID: inst.state.id,
+    id: inst.state.id,
     domain: inst.state.belayInstance.serialize().match('https?://[^/]*')[0],
     name: inst.state.name,
     launchClicked: capServer.grant(function(launch) {
@@ -454,7 +454,7 @@ var removeInstance = function(inst) {
   delete instances[inst.state.id];
   inst.storageCap.remove();
   belayRemoveSuggestInst.put({
-    instID: inst.state.id,
+    id: inst.state.id,
     domain: inst.state.belayInstance.serialize().match('https?://[^/]*')[0]
   });
 };
@@ -575,12 +575,12 @@ var initialize = function(instanceCaps, defaultTools) {
 // to morph into an instance. The supplied launch cap has the same signature
 // as belayLaunch. Instead of creating a new tab, it reloads P's tab.
 var newInstHandler = function(args) {
-  var instID = newUUIDv4();
+  var instanceId = newUUIDv4();
   var inst = {
-    storageCap: capServer.grant(instanceInfo.instanceBase + instID),
+    storageCap: capServer.grant(instanceInfo.instanceBase + instanceId),
     // TODO(arjun) still a hack. Should we be concatenaing URLs here?
     state: {
-      id: instID,
+      id: instanceId,
       belayInstance: args.launchData.launch,
       name: args.launchData.name,
       icon: args.launchData.icon,
@@ -590,10 +590,10 @@ var newInstHandler = function(args) {
   addInstance(inst, 'page', args.relaunch);
 };
 
-var closeInstHandler = function(instID) {
-  if (!(instID in instances)) return;
+var closeInstHandler = function(instanceId) {
+  if (!(instanceId in instances)) return;
 
-  var inst = instances[instID];
+  var inst = instances[instanceId];
   if (inst.pageWindow) {
     inst.pageWindow = undefined;
     inst.state.opened = 'closed';
@@ -609,7 +609,7 @@ window.belay.portReady = function() {
   belayBrowserTunnel.setOutpostHandler(function(outpost) {
     var radishServer = new CapServer('radish');
     var initData = radishServer.dataPostProcess(outpost);
-    capServer = new CapServer(initData.instanceID);
+    capServer = new CapServer(initData.instanceId);
     capServer.setResolver(instanceResolver);
 
     outpost = capServer.dataPostProcess(outpost);

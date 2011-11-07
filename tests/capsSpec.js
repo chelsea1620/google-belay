@@ -157,20 +157,20 @@ describe('CapServer', function() {
     });
   });
   
-  describe('Radish servers (no instanceID)', function() {
+  describe('Radish servers (no instanceId)', function() {
     var radishServer;
     beforeEach(function() {
       radishServer = new CapServer();
       radishServer.setResolver(function(i) { return capServer1.publicInterface; });
     });
     
-    it('should throw on bad instanceIDs', function() {
+    it('should throw on bad instanceIds', function() {
       expect(function() { new CapServer(42); }).toThrow();
       expect(function() { new CapServer("bob"); }).toThrow();
       expect(function() { new CapServer(""); }).toThrow();
     });
     
-    it('should create a server with no instanceID', function() {
+    it('should create a server with no instanceId', function() {
       expect(function() { new CapServer(); }).not.toThrow();
     });
     
@@ -644,7 +644,7 @@ describe('CapServer', function() {
         servers = [capServer1, capServer2];
         ids = [];
         for (var i in servers) {
-          ids.push(servers[i].instanceID);
+          ids.push(servers[i].instanceId);
           servers[i].setResolver(instanceResolver);
         }
 
@@ -864,7 +864,7 @@ describe('CapServer', function() {
         var servers = [capServer1, capServer2];
         var ids = [];
         for (var i in servers) {
-          ids.push(servers[i].instanceID);
+          ids.push(servers[i].instanceId);
           servers[i].setResolver(function(id) {
             var j = ids.indexOf(id);
             return servers[j] ? servers[j].publicInterface : null;

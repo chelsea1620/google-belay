@@ -16,8 +16,8 @@ importScripts('lib/js/caps.js');
 
 var station = undefined;
 
-var workerInstID = newUUIDv4();
-var workerServer = new CapServer(workerInstID);
+var workerInstanceId = newUUIDv4();
+var workerServer = new CapServer(workerInstanceId);
 
 var instToTunnel = Object.create(null);
 
@@ -27,9 +27,13 @@ function log() {
   logCap.put(Array.prototype.slice.call(arguments));
 }
 
-function resolver(instID) {
-  if (instID === workerInstID) { return workerServer.publicInterface; }
-  if (instID in instToTunnel) { return instToTunnel[instID].sendInterface; }
+function resolver(instanceId) {
+  if (instanceId === workerInstanceId) {
+    return workerServer.publicInterface;
+  }
+  if (instanceId in instToTunnel) {
+    return instToTunnel[instanceId].sendInterface;
+  }
   return null;
 }
 
@@ -42,9 +46,6 @@ var pendingActivates = Object.create(null);
 function buildActivateCap(navigateCap) {
   return workerServer.grant(function(args, sk, fk) {
     var pending = {
-      instID: args.instanceId,
-        // TODO(iainmcgin): backwards compatibility, remove once all
-        // instID / instanceID / instanceId variations are cleaned up
       instanceId: args.instanceId,
       temporaryInstance: false,
       outpost: args.outpostData,
@@ -81,7 +82,7 @@ function makeSuggestInst() {
     if (!(args.domain in suggestions)) {
       suggestions[args.domain] = Object.create(null);
     }
-    suggestions[args.domain][args.instID] = {
+    suggestions[args.domain][args.id] = {
       name: args.name,
       doLaunch: args.doLaunch
     };
@@ -91,7 +92,7 @@ function makeSuggestInst() {
 function makeRemoveSuggestInst() {
   return workerServer.grant(function(args) {
     if (args.domain in suggestions) {
-      delete (suggestions[args.domain])[args.instID];
+      delete (suggestions[args.domain])[args.id];
     }
   });
 }
@@ -139,10 +140,10 @@ self.addEventListener('connect', function(e) {
   iframeTunnel.setLocalResolver(resolver);
   iframeTunnel.setOutpostHandler(function(outpost) {
     if (!logCap) { logCap = outpost.log; }
-    instToTunnel[outpost.iframeInstID] = iframeTunnel;
+    instToTunnel[outpost.iframeInstanceId] = iframeTunnel;
 
     iframeTunnel.onclosed = function() {
-      delete instToTunnel[outpost.iframeInstID];
+      delete instToTunnel[outpost.iframeInstanceId];
     };
 
     var location = outpost.clientLocation;
@@ -171,15 +172,15 @@ self.addEventListener('connect', function(e) {
         delete pending.activateContinuations;
       }
       instToTunnel[pending.instanceId] = iframeTunnel;
-      highlighters[outpost.iframeInstID] = {
+      highlighters[outpost.iframeInstanceId] = {
         highlight: outpost.highlight,
         unhighlight: outpost.unhighlight
       };
 
       iframeTunnel.onclosed = function() {
-        delete instToTunnel[outpost.iframeInstID];
+        delete instToTunnel[outpost.iframeInstanceId];
         delete instToTunnel[pending.instanceId];
-        delete highlighters[outpost.iframeInstID];
+        delete highlighters[outpost.iframeInstanceId];
         if (!pending.isStation) {
           stationCaps.closeInstHandler.put(pending.instanceId);
         }
@@ -191,14 +192,14 @@ self.addEventListener('connect', function(e) {
       var tempInstanceId = newUUIDv4();
       instToTunnel[tempInstanceId] = iframeTunnel; // TODO(mzero): need to clean out
       outpost.setUpClient.post({
-        instID: tempInstanceId,
+        instanceId: tempInstanceId,
         temporaryInstance: true,
         suggestions: suggestFor(location),
         clickSuggest: workerServer.grant(function(doLaunch) {
           doLaunch.post(buildActivateCap(outpost.navigate));
         }),
         outpost: {
-          instanceID: tempInstanceId,
+          instanceId: tempInstanceId,
           temporaryInstance: true,
           becomeInstance: workerServer.grant(function(instanceDescription) {
             stationCaps.newInstHandler.post({

@@ -69,6 +69,30 @@ def defaultTools():
 
 class StationData(db.Model):
   pass
+  
+  def allInstances(self):
+    q = InstanceData.all()
+    q.ancestor(self)
+    allInstances = []
+    for instance in q:
+      allInstances.append({
+        'data': dataPostProcess(instance.data),
+        'cap': cap(instance_url(self.key(), instance.key()))
+      })
+    return allInstances
+  
+  def allSections(self):
+    q = SectionData.all()
+    q.ancestor(self)
+    allSections = []
+    for section in q:
+      allSections.append({
+        'name': section.name,
+        'attributes': section.attributes or '{}',
+        'attributesCap': regrant(AttributesHandler, section)
+      })
+    return allSections
+      
 
 class InstanceData(db.Model):
   data = db.TextProperty()
@@ -149,7 +173,9 @@ class BelayLaunchHandler(BaseHandler):
           'instances': cap(instances_url(station.key())),
           'instanceBase': instance_url(station.key(), ''),
           'defaultTools': defaultTools(),
-          'section': regrant(SectionHandler, station)
+          'section': regrant(SectionHandler, station),
+          'allInstances': station.allInstances(),
+          'allSections': station.allSections()
       }
     }
 
@@ -202,7 +228,7 @@ class SectionHandler(CapHandler):
     
     self.bcapResponse({
       'name': section.name,
-      'attributes': regrant(AttributesHandler, section)
+      'attributes': regrant(AttributesHandler, section),
     })
 
   

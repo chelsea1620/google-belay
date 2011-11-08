@@ -221,33 +221,34 @@ var removeInstance = function(inst) {
 };
 
 
-var sections = {
-  proto: null,
-  protoItemRow: null,
-  defaultName: 'Uncategorized',
+var sections = (function(){
+  var proto = null;
+  var protoItemRow = null;
+  var defaultName = 'Uncategorized';
   // Map<Name, { label: jQuery, list: jQuery, insts: inst }>
-  byName: Object.create(null),
-  sitesLabel: null, // jQuery
-  visible: [],
+  var byName = Object.create(null);
+  var sitesLabel = null; // jQuery
+  var visible = [];
 
-  init: function(allSections) {
-    sections.proto = detachProto(topDiv.find('.section'));
-    sections.protoItemRow = detachProto(sections.proto.find('table.items tr'));
+  function init(allSections) {
+    proto = detachProto(topDiv.find('.section'));
+    protoItemRow = detachProto(proto.find('table.items tr'));
 
-    sections.sitesLabel = $('#nav .selected').eq(0).removeClass('proto');
-    sections.sitesLabel.click(sections.showSites);
+    sitesLabel = $('#nav .selected').eq(0).removeClass('proto');
+    sitesLabel.click(showSites);
 
-    allSections.forEach(sections.add);
+    allSections.forEach(add);
     
-    sections.showSites();
-  },
-  add: function(sectionInfo) {
+    showSites();
+  }
+  
+  function add(sectionInfo) {
     var label = $('<li></li>');
     label.text(sectionInfo.name);
     label.addClass('group');
     $('#nav').append(label);
 
-    var makeDroppable = function(elt) {
+    function makeDroppable(elt) {
       elt.droppable({
         tolerance: 'pointer',
         over: function(evt) {
@@ -270,59 +271,63 @@ var sections = {
       });
     };
 
-    var section = sections.proto.clone();
+    var section = proto.clone();
     section.css('display', 'none');
     section.attr('id', 'section-' + sectionInfo.name);
     section.appendTo($('#belay-items'));
     section.find('.header .name').text(sectionInfo.name);
-    label.click(function(evt) { sections.show(sectionInfo.name); });
+    label.click(function(evt) { show(sectionInfo.name); });
     makeDroppable(label);
     makeDroppable(section);
 
 
-    sections.byName[sectionInfo.name] = {
+    byName[sectionInfo.name] = {
       label: label,
       list: section,
       attributes: { }
     };
 
     attributes.setup(sectionInfo, section);
-  },
-  showSites: function() {
-    sections.sitesLabel.addClass('selected');
+  }
+  
+  function showSites() {
+    sitesLabel.addClass('selected');
     // all visible, except for Recent
-    sections.visible =
-      Object.keys(sections.byName)
+    visible =
+      Object.keys(byName)
       .map(function(k) {
-        var sec = sections.byName[k];
+        var sec = byName[k];
         sec.label.removeClass('selected');
         sec.list.show();
         return sec;
       });
-  },
-  show: function(name) {
-    var v = sections.byName[name];
-    sections.sitesLabel.removeClass('selected');
+  }
+  
+  function show(name) {
+    var v = byName[name];
+    sitesLabel.removeClass('selected');
     v.label.addClass('selected');
     v.list.show();
-    sections.visible.forEach(function(sec) {
+    visible.forEach(function(sec) {
       if (sec !== v) {
         sec.label.removeClass('selected');
         sec.list.hide();
       }
     });
-    sections.visible = [v];
-  },
-  deleteInstance: function(inst) {
+    visible = [v];
+  }
+  
+  function deleteInstance(inst) {
     inst.rows.forEach(function(row) {
       row.fadeOut(400, function() { row.remove(); });
     });
     inst.rows = [];
-  },
-  newInstance: function(inst) {
+  }
+  
+  function newInstance(inst) {
     var startId = newUUIDv4();
 
-    var row = sections.protoItemRow.clone();
+    var row = protoItemRow.clone();
 
     var icon = row.find('td.icon img');
     icon.attr('src', inst.state.icon || defaultIcon);
@@ -361,14 +366,22 @@ var sections = {
     row.data('belay-inst', inst);
 
     inst.rows = [row];
-    if (!(inst.state.section in sections.byName)) {
-      inst.state.section = sections.defaultName;
+    if (!(inst.state.section in byName)) {
+      inst.state.section = defaultName;
       dirty(inst);
     }
-    var list = sections.byName[inst.state.section].list;
+    var list = byName[inst.state.section].list;
     row.prependTo(list.find('table.items').eq(0));
   }
-};
+  
+  return {
+    defaultName: defaultName,
+    byName: byName,
+    init: init,
+    newInstance: newInstance,
+    deleteInstance: deleteInstance,
+  }
+})();
 
 var attributes = (function() {
   // list of attributes we support

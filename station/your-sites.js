@@ -22,7 +22,7 @@ if (!window.belaytest) {
 
 var topDiv;
 var ui;
-var instanceInfo;
+var stationInfo;
 var capServer;
 var belayBrowserTunnel;
 var belayBrowser;
@@ -621,24 +621,21 @@ var attributes = (function() {
   };
 })();
 
-var initialize = function(instanceCaps, defaultTools) {
-  var top = topDiv;
-
+var initialize = function() {
   $(document.body).find('.ex').remove(); // remove layout examples
 
-  var itemsDiv = topDiv.find('#belay-items');
 
   sections.proto = detachProto(topDiv.find('.section'));
   protoItemRow = detachProto(sections.proto.find('table.items tr'));
 
-  sections.init(instanceInfo.section, function() {
+  sections.init(stationInfo.section, function() {
 
     // TODO(mzero): refactor the two addInstance functions and the newInstHandler
     var addInstanceFromGenerate = function(genCap) {
       genCap.get(function(data) {
           var newId = newUUIDv4();
           var inst = {
-            storageCap: capServer.grant(instanceInfo.instanceBase + newId),
+            storageCap: capServer.grant(stationInfo.instanceBase + newId),
               // TODO(arjun) still a hack. Should we be concatenaing URLs here?
             state: {
               id: newId,
@@ -657,38 +654,21 @@ var initialize = function(instanceCaps, defaultTools) {
         }
       );
     };
+
+    var itemsDiv = topDiv.find('#belay-items');
     ui.capDroppable(itemsDiv, 'belay/generate', addInstanceFromGenerate);
 
     var loadedInstances = [];
-
-    var loadInsts = function() {
-      loadedInstances.sort(cmpInstByCreated).forEach(function(inst) {
-        addInstance(inst);
-      });
-      window.belaytest.ready = true;
-    };
-
-    var addInstanceFromStorage = function(storageCap) {
-      storageCap.get(function(instState) {
-          var inst = {
-            storageCap: storageCap,
-            state: instState
-          };
-          inst.state.opened = false;
-          loadedInstances.push(inst);
-          if (loadedInstances.length === instanceCaps.length) {
-            loadInsts();
-          }
-        },
-        function(status) { alert('Failed to load instance: ' + status); }
-      );
-    };
-
-    if(instanceCaps.length > 0) {
-      instanceCaps.forEach(addInstanceFromStorage);
-    } else {
-      window.belaytest.ready = true;
-    }
+    stationInfo.allInstances.forEach(function(i) {
+      var inst = {
+        storageCap: i.cap,
+        state: i.data
+      };
+      inst.state.opened = false;
+      loadedInstances.push(inst);
+    });
+    loadedInstances.sort(cmpInstByCreated).forEach(addInstance);
+    window.belaytest.ready = true;
   });
 };
 
@@ -698,7 +678,7 @@ var initialize = function(instanceCaps, defaultTools) {
 var newInstHandler = function(args) {
   var instanceId = newUUIDv4();
   var inst = {
-    storageCap: capServer.grant(instanceInfo.instanceBase + instanceId),
+    storageCap: capServer.grant(stationInfo.instanceBase + instanceId),
     // TODO(arjun) still a hack. Should we be concatenaing URLs here?
     state: {
       id: instanceId,
@@ -745,11 +725,7 @@ window.belay.portReady = function() {
     expectPage = outpost.expectPage;
     belayLaunch = outpost.launch;
     belayBrowser = outpost.services;
-    instanceInfo = outpost.info;
-    var instancesCap = instanceInfo.instances;
-    instancesCap.get(function(instances) {
-      initialize(instances, outpost.info.defaultTools);
-    }, function(err) { alert(err.message); });
+    stationInfo = outpost.info;
     outpost.setStationCallbacks.put({
       newInstHandler: capServer.grant(newInstHandler),
       closeInstHandler: capServer.grant(closeInstHandler),
@@ -759,5 +735,6 @@ window.belay.portReady = function() {
       capDraggable: common.makeCapDraggable(capServer, function() {}),
       capDroppable: common.makeCapDroppable(capServer, function() {})
     };
+    initialize();
   });
 };

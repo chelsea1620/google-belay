@@ -205,7 +205,6 @@ var getSuggestions = function(location) {
   return suggestions;
 };
 
-var protoItemRow; // TODO(jpolitz): factor this differently?
 var addInstance = function(inst) {
   instances[inst.state.id] = inst;
   sections.newInstance(inst);
@@ -224,44 +223,27 @@ var removeInstance = function(inst) {
 
 var sections = {
   proto: null,
+  protoItemRow: null,
   defaultName: 'Uncategorized',
-  names: ['Uncategorized', 'Personal', 'Shopping', 'Games', 'Work'],
   // Map<Name, { label: jQuery, list: jQuery, insts: inst }>
   byName: Object.create(null),
   sitesLabel: null, // jQuery
   visible: [],
-  ready: false,
-  instToAdd: [],
 
-  init: function(sectionCap, continuation) {
+  init: function(allSections) {
+    sections.proto = detachProto(topDiv.find('.section'));
+    sections.protoItemRow = detachProto(sections.proto.find('table.items tr'));
+
     sections.sitesLabel = $('#nav .selected').eq(0).removeClass('proto');
     sections.sitesLabel.click(sections.showSites);
 
-    var fetched = [];
-    function addNextSection(names) {
-      if (names.length) {
-        var name = names.shift();
-        sectionCap.post(name, function(sectionInfo) {
-          fetched.push({name: name, sectionInfo: sectionInfo});
-          addNextSection(names);
-        });
-      }
-      else {
-        for (var i in fetched) {
-          sections.add(fetched[i].name, fetched[i].sectionInfo);
-        }
-        sections.showSites();
-        sections.ready = true;
-        sections.instToAdd.forEach(sections.newInstance);
-        continuation();
-      }
-    }
-
-    addNextSection(sections.names);
+    allSections.forEach(sections.add);
+    
+    sections.showSites();
   },
-  add: function(name, sectionInfo) {
+  add: function(sectionInfo) {
     var label = $('<li></li>');
-    label.text(name);
+    label.text(sectionInfo.name);
     label.addClass('group');
     $('#nav').append(label);
 
@@ -278,7 +260,7 @@ var sections = {
           elt.removeClass('dropHover');
           var row = ui.draggable;
           var inst = row.data('belay-inst');
-          inst.state.section = name;
+          inst.state.section = sectionInfo.name;
           row.detach();
           section.find('table.items').eq(0).prepend(row);
           dirty(inst);
@@ -290,20 +272,21 @@ var sections = {
 
     var section = sections.proto.clone();
     section.css('display', 'none');
-    section.attr('id', 'section-' + name);
+    section.attr('id', 'section-' + sectionInfo.name);
     section.appendTo($('#belay-items'));
-    label.click(function(evt) { sections.show(name); });
+    section.find('.header .name').text(sectionInfo.name);
+    label.click(function(evt) { sections.show(sectionInfo.name); });
     makeDroppable(label);
     makeDroppable(section);
 
 
-    sections.byName[name] = {
+    sections.byName[sectionInfo.name] = {
       label: label,
       list: section,
       attributes: { }
     };
 
-    attributes.setup(name, section, sectionInfo.attributes);
+    attributes.setup(sectionInfo, section);
   },
   showSites: function() {
     sections.sitesLabel.addClass('selected');
@@ -337,14 +320,9 @@ var sections = {
     inst.rows = [];
   },
   newInstance: function(inst) {
-    if (!sections.ready) {
-      sections.instToAdd.push(inst);
-      return;
-    }
-
     var startId = newUUIDv4();
 
-    var row = protoItemRow.clone();
+    var row = sections.protoItemRow.clone();
 
     var icon = row.find('td.icon img');
     icon.attr('src', inst.state.icon || defaultIcon);
@@ -517,95 +495,91 @@ var attributes = (function() {
 
 
   return {
-    setup: function(name, sectionElem, attributesCap) {
-      attributesCap.get(function(data) {
-        sections.byName[name].attributes = data;
+    setup: function(sectionInfo, sectionElem) {
+      var data = sectionInfo.attributes;
+      var editData;
+      
+      sections.byName[sectionInfo.name].attributes = data;
 
-        var editData;
+      var attributesElem = sectionElem.find('.attributes');
+      var attributesDiv = attributesElem.find('.box');
+      var attributesTable = attributesDiv.find('table');
+      var protoRow = detachProto(attributesTable.find('tr'));
 
-        var headerElem = sectionElem.find('.header');
-        var attributesElem = sectionElem.find('.attributes');
-        var attributesDiv = attributesElem.find('.box');
-        var attributesTable = attributesDiv.find('table');
-        var protoRow = detachProto(attributesTable.find('tr'));
-
-        sectionElem.find('.header .name').text(name);
-
-        attributesTable.find('tr').remove();
-        knownAttributes.forEach(function(a) {
-          var row = protoRow.clone();
-          row.find('.include input').removeAttr('checked');
-          row.find('.tag').text(a.en);
-          a.controller.build(row.find('.value'), function(v) {
-            editData[a.attr] = v;
-          });
-          row.appendTo(attributesTable);
+      attributesTable.find('tr').remove();
+      knownAttributes.forEach(function(a) {
+        var row = protoRow.clone();
+        row.find('.include input').removeAttr('checked');
+        row.find('.tag').text(a.en);
+        a.controller.build(row.find('.value'), function(v) {
+          editData[a.attr] = v;
         });
-
-        function resetAttributes(editable) {
-          editData = { };
-
-          attributesTable.find('tr').each(function(i, tr) {
-            var a = knownAttributes[i];
-            var row = $(tr);
-
-            var includeInput = row.find('.include input');
-            var valueTD = row.find('.value');
-
-            function enable() {
-              editData[a.attr] = a.controller.value(valueTD, data[a.attr]);
-              includeInput.attr('checked', 'checked');
-              valueTD.children().show();
-            }
-            function disable() {
-              delete editData[a.attr];
-              includeInput.removeAttr('checked');
-              valueTD.children().hide();
-              valueTD.click(function() {
-                valueTD.unbind();
-                enable();
-                a.controller.focus(valueTD);
-              });
-            }
-            function able(bool) { bool ? enable() : disable(); }
-
-            able(a.attr in data);
-
-            includeInput.change(function() {
-              able(includeInput.attr('checked'));
-            });
-          });
-        }
-        function showAttributes() {
-          if (attributesElem.css('display') !== 'none') return;
-
-          resetAttributes();
-          attributesDiv.hide();
-          attributesElem.show();
-          attributesDiv.slideDown();
-        }
-        function hideAttributes() {
-          attributesDiv.slideUp(function() { attributesElem.hide(); });
-        }
-        function saveAttributes() {
-          sections.byName[name].attributes = data = editData;
-          attributesCap.put(data, hideAttributes);
-
-          Object.keys(instances).forEach(function(instanceId) {
-            var inst = instances[instanceId];
-            if (inst.state.section === name) {
-              attributes.pushToInstance(inst);
-            }
-          });
-        }
-        function cancelAttributes() {
-          hideAttributes();
-        }
-
-        headerElem.find('.settings').click(showAttributes);
-        attributesDiv.find('.save').click(saveAttributes);
-        attributesDiv.find('.cancel').click(cancelAttributes);
+        row.appendTo(attributesTable);
       });
+
+      function resetAttributes(editable) {
+        editData = { };
+
+        attributesTable.find('tr').each(function(i, tr) {
+          var a = knownAttributes[i];
+          var row = $(tr);
+
+          var includeInput = row.find('.include input');
+          var valueTD = row.find('.value');
+
+          function enable() {
+            editData[a.attr] = a.controller.value(valueTD, data[a.attr]);
+            includeInput.attr('checked', 'checked');
+            valueTD.children().show();
+          }
+          function disable() {
+            delete editData[a.attr];
+            includeInput.removeAttr('checked');
+            valueTD.children().hide();
+            valueTD.click(function() {
+              valueTD.unbind();
+              enable();
+              a.controller.focus(valueTD);
+            });
+          }
+          function able(bool) { bool ? enable() : disable(); }
+
+          able(a.attr in data);
+
+          includeInput.change(function() {
+            able(includeInput.attr('checked'));
+          });
+        });
+      }
+      function showAttributes() {
+        if (attributesElem.css('display') !== 'none') return;
+
+        resetAttributes();
+        attributesDiv.hide();
+        attributesElem.show();
+        attributesDiv.slideDown();
+      }
+      function hideAttributes() {
+        attributesDiv.slideUp(function() { attributesElem.hide(); });
+      }
+      function saveAttributes() {
+        sections.byName[sectionInfo.name].attributes = data = editData;
+        sectionInfo.attributesCap.put(data, hideAttributes);
+
+        for (var instanceId in instances) {
+          var inst = instances[instanceId];
+          if (inst.state.section === sectionInfo.name) {
+            attributes.pushToInstance(inst);
+          }
+        }
+      }
+      function cancelAttributes() {
+        hideAttributes();
+      }
+
+      sectionElem.find('.header .settings').click(showAttributes);
+      attributesDiv.find('.save').click(saveAttributes);
+      attributesDiv.find('.cancel').click(cancelAttributes);
     },
 
     pushToInstance: function(inst) {
@@ -624,52 +598,48 @@ var attributes = (function() {
 var initialize = function() {
   $(document.body).find('.ex').remove(); // remove layout examples
 
+  sections.init(stationInfo.allSections);
+  
+  // TODO(mzero): refactor the two addInstance functions and the newInstHandler
+  var addInstanceFromGenerate = function(genCap) {
+    genCap.get(function(data) {
+        var newId = newUUIDv4();
+        var inst = {
+          storageCap: capServer.grant(stationInfo.instanceBase + newId),
+            // TODO(arjun) still a hack. Should we be concatenaing URLs here?
+          state: {
+            id: newId,
+            belayInstance: data.launch,
+            name: data.name,
+            icon: data.icon,
+            info: undefined,
+            created: (new Date()).valueOf()
+          }
+        };
+        addInstance(inst);
+        dirty(inst);
+      },
+      function(error) {
+        alert('Failed to addInstanceFromGenerate, error = ' + error);
+      }
+    );
+  };
 
-  sections.proto = detachProto(topDiv.find('.section'));
-  protoItemRow = detachProto(sections.proto.find('table.items tr'));
+  var itemsDiv = topDiv.find('#belay-items');
+  ui.capDroppable(itemsDiv, 'belay/generate', addInstanceFromGenerate);
 
-  sections.init(stationInfo.section, function() {
-
-    // TODO(mzero): refactor the two addInstance functions and the newInstHandler
-    var addInstanceFromGenerate = function(genCap) {
-      genCap.get(function(data) {
-          var newId = newUUIDv4();
-          var inst = {
-            storageCap: capServer.grant(stationInfo.instanceBase + newId),
-              // TODO(arjun) still a hack. Should we be concatenaing URLs here?
-            state: {
-              id: newId,
-              belayInstance: data.launch,
-              name: data.name,
-              icon: data.icon,
-              info: undefined,
-              created: (new Date()).valueOf()
-            }
-          };
-          addInstance(inst);
-          dirty(inst);
-        },
-        function(error) {
-          alert('Failed to addInstanceFromGenerate, error = ' + error);
-        }
-      );
+  var loadedInstances = [];
+  stationInfo.allInstances.forEach(function(i) {
+    var inst = {
+      storageCap: i.cap,
+      state: i.data
     };
-
-    var itemsDiv = topDiv.find('#belay-items');
-    ui.capDroppable(itemsDiv, 'belay/generate', addInstanceFromGenerate);
-
-    var loadedInstances = [];
-    stationInfo.allInstances.forEach(function(i) {
-      var inst = {
-        storageCap: i.cap,
-        state: i.data
-      };
-      inst.state.opened = false;
-      loadedInstances.push(inst);
-    });
-    loadedInstances.sort(cmpInstByCreated).forEach(addInstance);
-    window.belaytest.ready = true;
+    inst.state.opened = false;
+    loadedInstances.push(inst);
   });
+  loadedInstances.sort(cmpInstByCreated).forEach(addInstance);
+  
+  window.belaytest.ready = true;
 };
 
 // Called by Belay (the extension) when a user visits a Web page, P, that wants

@@ -67,9 +67,7 @@ def defaultTools():
  
 
 
-class StationData(db.Model):
-  pass
-  
+class StationData(db.Model):  
   def allInstances(self):
     q = InstanceData.all()
     q.ancestor(self)
@@ -88,7 +86,7 @@ class StationData(db.Model):
     for section in q:
       allSections.append({
         'name': section.name,
-        'attributes': section.attributes or '{}',
+        'attributes': json.loads(section.attributes or '{}'),
         'attributesCap': regrant(AttributesHandler, section)
       })
     return allSections
@@ -115,6 +113,9 @@ class BaseHandler(BcapHandler):
       station = StationData.get_by_key_name(station_id)
       if station == None:
         station = StationData(key_name=station_id)
+        for n in ['Uncategorized', 'Personal', 'Work', 'Games', 'Trash']:
+          SectionData(parent=station, name=n).put()
+        
       return station
     except:
       raise BaseHandler.InvalidStation()

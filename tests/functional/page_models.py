@@ -338,18 +338,16 @@ class BuzzerInstancePage(BelayEnabledPage):
         return self.driver.find_element_by_class_name("buzzer-reader-chit")
     
     def get_poster_name_attribute(self):
-        inst_name_area = self.driver.find_element_by_id("buzzer-name")
-        xpath_find = inst_name_area.find_elements_by_xpath
-        name = xpath_find("small[@class='poster-name']")
+        xpath_find = self.driver.find_elements_by_xpath
+        name = xpath_find("//i[@class='poster-name']")
         if name:
             return name[0].text
         
         return None
     
     def get_poster_location_attribute(self):
-        inst_name_area = self.driver.find_element_by_id("buzzer-name")
-        xpath_find = inst_name_area.find_elements_by_xpath
-        location = xpath_find("small[@class='poster-location']")
+        xpath_find = self.driver.find_elements_by_xpath
+        location = xpath_find("//i[@class='poster-location']")
         if location:
             return location[0].text
         

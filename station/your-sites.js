@@ -225,28 +225,34 @@ var sections = (function(){
   var proto = null;
   var protoItemRow = null;
   var defaultName = 'Uncategorized';
-  // Map<Name, { label: jQuery, list: jQuery, insts: inst }>
+  // Map<Name, { label: jQuery, list: jQuery }>
   var byName = Object.create(null);
   var sitesLabel = null; // jQuery
   var visible = [];
 
-  function init(allSections) {
-    proto = detachProto(topDiv.find('.section'));
-    protoItemRow = detachProto(proto.find('table.items tr'));
-
-    sitesLabel = $('#nav .selected').eq(0).removeClass('proto');
-    sitesLabel.click(showSites);
-
-    allSections.forEach(add);
+  var Section = function(info) {
+    var me = this;
     
-    showSites();
-  }
-  
-  function add(sectionInfo) {
-    var label = $('<li></li>');
-    label.text(sectionInfo.name);
-    label.addClass('group');
-    $('#nav').append(label);
+    // from the server
+    this.name = info.name;
+    this.data = info.data;
+    this.dataCap = info.dataCap;
+    this.attributes = info.attributes;
+    this.attributesCap = info.attributesCap;
+    
+    // page elements (jQuery objects);    
+    this.label = $('<li></li>');
+    this.label.text(this.name);
+    this.label.addClass('group');
+    this.label.click(function(evt) { show(me); });
+    this.label.appendTo($('#nav'));
+
+    this.list = proto.clone();
+    this.list.css('display', 'none');
+    this.list.attr('id', 'section-' + this.name);
+      // TODO(iainmcgin): what if name has a space?
+    this.list.find('.header .name').text(this.name);
+    this.list.appendTo($('#belay-items'));
 
     function makeDroppable(elt) {
       elt.droppable({
@@ -261,33 +267,33 @@ var sections = (function(){
           elt.removeClass('dropHover');
           var row = ui.draggable;
           var inst = row.data('belay-inst');
-          inst.state.section = sectionInfo.name;
+          inst.state.section = me.name;
           row.detach();
-          section.find('table.items').eq(0).prepend(row);
+          me.list.find('table.items').eq(0).prepend(row);
           dirty(inst);
           attributes.pushToInstance(inst);
         },
         accept: function(elt) { return !!elt.data('belay-inst'); }
       });
     };
+    makeDroppable(this.label);
+    makeDroppable(this.list);
 
-    var section = proto.clone();
-    section.css('display', 'none');
-    section.attr('id', 'section-' + sectionInfo.name);
-    section.appendTo($('#belay-items'));
-    section.find('.header .name').text(sectionInfo.name);
-    label.click(function(evt) { show(sectionInfo.name); });
-    makeDroppable(label);
-    makeDroppable(section);
+    byName[this.name] = this;
+    attributes.setup(info, this.list);
+  };
+  
+  
+  function init(allSections) {
+    proto = detachProto(topDiv.find('.section'));
+    protoItemRow = detachProto(proto.find('table.items tr'));
 
+    sitesLabel = $('#nav .selected').eq(0).removeClass('proto');
+    sitesLabel.click(showSites);
 
-    byName[sectionInfo.name] = {
-      label: label,
-      list: section,
-      attributes: { }
-    };
-
-    attributes.setup(sectionInfo, section);
+    allSections.forEach(function(sectionInfo) { new Section(sectionInfo); });
+    
+    showSites();
   }
   
   function showSites() {
@@ -303,8 +309,7 @@ var sections = (function(){
       });
   }
   
-  function show(name) {
-    var v = byName[name];
+  function show(v) {
     sitesLabel.removeClass('selected');
     v.label.addClass('selected');
     v.list.show();

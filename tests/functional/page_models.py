@@ -14,7 +14,30 @@ class BelayEnabledPage(object):
         self.driver = driver
         self.window = driver.current_window_handle
         self.wait_for_ready()
+        self.inject_js_error_detect()
     
+    def inject_js_error_detect(self):
+        self.driver.execute_script("""
+            window.belaytest.jsErrors = [];
+            window.addEventListener('error', function(evt) {
+                window.belaytest.jsErrors.push({
+                    msg: evt.message,
+                    file: evt.filename,
+                    lineNum: evt.lineno,
+                });
+            });
+        """)
+    
+    def get_js_errors(self):
+        exec_js = self.driver.execute_script
+        num_errors = exec_js("return window.belaytest.jsErrors.length")
+        print "Errors: %d" % num_errors
+        errors = []
+        for i in range(0,num_errors):
+            errors.append(exec_js("return window.belaytest.jsErrors[%d]" % i))
+
+        return errors
+
     def drag_cap_out(self, source_jq_matcher):
         driver = self.driver
         driver.execute_script("""

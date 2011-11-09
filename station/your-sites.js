@@ -280,7 +280,7 @@ var sections = (function(){
     makeDroppable(this.list);
 
     byName[this.name] = this;
-    attributes.setup(info, this.list);
+    attributes.setup(this);
   };
   
   
@@ -379,11 +379,15 @@ var sections = (function(){
     row.prependTo(list.find('table.items').eq(0));
   }
   
+  function forInstance(inst) {
+    return byName[inst.state.section];
+  }
+  
   return {
-    byName: byName,
     init: init,
     newInstance: newInstance,
     deleteInstance: deleteInstance,
+    forInstance: forInstance,
   }
 })();
 
@@ -512,13 +516,11 @@ var attributes = (function() {
 
 
   return {
-    setup: function(sectionInfo, sectionElem) {
-      var data = sectionInfo.attributes;
+    setup: function(section) {
+      var data = section.attributes;
       var editData;
       
-      sections.byName[sectionInfo.name].attributes = data;
-
-      var attributesElem = sectionElem.find('.attributes');
+      var attributesElem = section.list.find('.attributes');
       var attributesDiv = attributesElem.find('.box');
       var attributesTable = attributesDiv.find('table');
       var protoRow = detachProto(attributesTable.find('tr'));
@@ -569,7 +571,11 @@ var attributes = (function() {
         });
       }
       function showAttributes() {
-        if (attributesElem.css('display') !== 'none') return;
+        if (attributesElem.css('display') !== 'none') {
+          for (var k in data) { if (data[k] != editData[k]) return; }
+          hideAttributes();
+          return;
+        };
 
         resetAttributes();
         attributesDiv.hide();
@@ -580,12 +586,12 @@ var attributes = (function() {
         attributesDiv.slideUp(function() { attributesElem.hide(); });
       }
       function saveAttributes() {
-        sections.byName[sectionInfo.name].attributes = data = editData;
-        sectionInfo.attributesCap.put(data, hideAttributes);
+        section.attributes = data = editData;
+        section.attributesCap.put(data, hideAttributes);
 
         for (var instanceId in instances) {
           var inst = instances[instanceId];
-          if (inst.state.section === sectionInfo.name) {
+          if (inst.state.section === section.name) {
             attributes.pushToInstance(inst);
           }
         }
@@ -594,14 +600,14 @@ var attributes = (function() {
         hideAttributes();
       }
 
-      sectionElem.find('.header .settings').click(showAttributes);
+      section.list.find('.header .settings').click(showAttributes);
       attributesDiv.find('.save').click(saveAttributes);
       attributesDiv.find('.cancel').click(cancelAttributes);
     },
 
     pushToInstance: function(inst) {
       if (inst.launch.attributes && inst.launch.attributes.set) {
-        var data = sections.byName[inst.state.section].attributes;
+        var data = sections.forInstance(inst).attributes;
         inst.launch.attributes.set.put(data, function() {
           if (inst.refreshCap) {
             inst.refreshCap.post({});

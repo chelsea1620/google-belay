@@ -280,7 +280,12 @@ var sections = (function(){
     makeDroppable(this.list);
 
     byName[this.name] = this;
-    attributes.setup(this);
+
+    if(this.name != "Trash") {
+      attributes.setup(this);
+    } else {
+      this.list.find('.header .settings').remove();
+    }
   };
   
   

@@ -611,7 +611,9 @@ var attributes = (function() {
     },
 
     pushToInstance: function(inst) {
-      if (inst.launch.attributes && inst.launch.attributes.set) {
+      if (inst.launch && 
+          inst.launch.attributes && 
+          inst.launch.attributes.set) {
         var data = sections.forInstance(inst).attributes;
         inst.launch.attributes.set.put(data, function() {
           if (inst.refreshCap) {

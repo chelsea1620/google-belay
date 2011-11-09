@@ -82,8 +82,9 @@ class BelayBuzzerTests(BelayTest):
         self.assertTrue("My Blog", moved.name())
 
         instance.focus()
-        instance.get_poster_name_attribute()
-        instance.get_poster_location_attribute()
+        self.wait_for(lambda drv: instance.get_poster_name_attribute() != None)
+        self.assertEqual("Betsy Claypool", instance.get_poster_name_attribute())
+        self.assertEqual("Pennsylvania", instance.get_poster_location_attribute())
 
 
     def test_relaunch_from_station(self):

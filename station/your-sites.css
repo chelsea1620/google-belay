@@ -109,8 +109,10 @@ td {
 .items td.actions {
   color: #aaa;
   width: 12em;
-  cursor: pointer;
   text-align: right;
+}
+td.actions * {
+  cursor: pointer;
 }
 .items td.actions a {
   color: #aaa;

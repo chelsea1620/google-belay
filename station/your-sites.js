@@ -380,7 +380,6 @@ var sections = (function(){
   }
   
   return {
-    defaultName: defaultName,
     byName: byName,
     init: init,
     newInstance: newInstance,
@@ -674,7 +673,6 @@ var newInstHandler = function(args) {
       name: args.instanceDescription.name,
       icon: args.instanceDescription.icon,
       created: (new Date()).valueOf(),
-      section: sections.defaultName
     }
   };
   addInstance(inst);

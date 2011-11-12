@@ -1,5 +1,11 @@
 TODO
 ====
+
+Relative urls - should be served from the public site in prod and 
+
+run offline
+
+
 :: multi-window ::
 
 [x] define the public interface API

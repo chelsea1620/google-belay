@@ -50,8 +50,6 @@ Arguments:
 The applications are started with these port mappings:
     belay:    9000
     station:  9001
-    hello:    9002
-    stickies: 9003
     buzzer:   9004
     emote:    9005
     bfriendr: 9009
@@ -107,7 +105,7 @@ startapp() {
   $cmd 2> $LOGS/$app &
 
   echo $! > $PIDS/$app/pid
-  echo "Started $app, pid in $PIDS/$app/pid, log in $LOGS/$app"
+  echo "Started $app, pid in $PIDS/$app/pid, log in $LOGS/$app, site at http://localhost:$port"
 }
 
 stopapp() {
@@ -125,8 +123,8 @@ stopapp() {
 startall() {
   startapp 9000 belay
   startapp 9001 station
-  startapp 9002 hello
-  startapp 9003 stickies
+#  startapp 9002 hello
+#  startapp 9003 stickies
   startapp 9004 buzzer
   startapp 9005 emote
   startapp 9009 bfriendr
@@ -135,8 +133,8 @@ startall() {
 stopall() {
   stopapp belay
   stopapp station
-  stopapp hello
-  stopapp stickies
+#  stopapp hello
+#  stopapp stickies
   stopapp buzzer
   stopapp emote
   stopapp bfriendr

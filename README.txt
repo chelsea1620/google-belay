@@ -20,6 +20,16 @@ The command to run to lint the code is:
   (this avoids checking the .js files in libraries we use)
 
 
+BUILDING
+======
+
+To build optimized versions of the code, you will need node.
+
+Download and install node from:
+http://nodejs.org/#download
+
+If you're on a Mac, use the package installer:
+https://sites.google.com/site/nodejsmacosx/
 
 UNIT TESTING
 ============

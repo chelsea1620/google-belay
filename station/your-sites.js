@@ -217,9 +217,6 @@ var removeInstance = function(inst) {
     inst.closeCap.put();
   }
   sections.deleteInstance(inst);
-  if (inst.capServer) inst.capServer.revokeAll();
-  delete instances[inst.state.id];
-  inst.storageCap.remove();
 };
 
 
@@ -269,11 +266,7 @@ var sections = (function(){
           elt.removeClass('dropHover');
           var row = ui.draggable;
           var inst = row.data('belay-inst');
-          inst.state.section = me.name;
-          row.detach();
-          me.list.find('table.items').eq(0).prepend(row);
-          dirty(inst);
-          attributes.pushToInstance(inst);
+          moveInstanceToSection(inst, me);
         },
         accept: function(elt) { return !!elt.data('belay-inst'); }
       });
@@ -346,10 +339,38 @@ var sections = (function(){
   }
   
   function deleteInstance(inst) {
+    completeCounter = inst.rows.length;
     inst.rows.forEach(function(row) {
-      row.fadeOut(400, function() { row.remove(); });
+      row.fadeOut(400, function() { 
+        row.detach();
+        completeCounter--;
+        if(completeCounter != 0) return;
+
+        if(inst.state.section == "Trash") {
+          if (inst.capServer) inst.capServer.revokeAll();
+          delete instances[inst.state.id];
+          inst.storageCap.remove();
+        } else {
+          moveInstanceToSection(inst, byName["Trash"])
+        }
+      });
     });
-    inst.rows = [];
+  }
+
+  function moveInstanceToSection(inst, section) {
+    inst.state.section = section.name;
+    for(i in inst.rows) {
+      row = inst.rows[i];
+      row.detach();
+      section.list.find('table.items').eq(0).prepend(row);
+
+      // the fade in is only visible on delete, not when explicitly
+      // dragging between sections
+      row.fadeIn(400);
+    }
+
+    dirty(inst);
+    attributes.pushToInstance(inst);
   }
   
   function newInstance(inst) {

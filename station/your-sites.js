@@ -285,6 +285,22 @@ var sections = (function(){
       attributes.setup(this);
     } else {
       this.list.find('.header .settings').remove();
+
+      // TODO(iainmcgin): the clear button should exist in a special
+      // template for the trash section, not be injected into the actions list
+      // as it is below.
+
+      actionsGroup = this.list.find('.header .actions');
+      deleteAll = $('<span>clear</span>')
+      deleteAll.click(function() {
+        for(instanceId in instances) {
+          instance = instances[instanceId];
+          if(instance.state.section == me.name) {
+            removeInstance(instance);
+          }
+        }
+      });
+      actionsGroup.append(deleteAll);
     }
   };
   

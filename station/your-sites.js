@@ -193,7 +193,9 @@ var getSuggestions = function(location) {
   var suggestions = [];
   Object.keys(instances).forEach(function(instanceId) {
     var inst = instances[instanceId];
-    if (domainOfInst(inst) == location && !inst.state.opened) {
+    if (domainOfInst(inst) == location
+        && !inst.state.opened
+        && inst.state.section != "Trash") {
       suggestions.push({
         name: inst.state.name,
         doLaunch: capServer.grant(function(activate) {

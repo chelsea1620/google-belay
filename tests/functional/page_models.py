@@ -92,6 +92,30 @@ class BelayEnabledPage(object):
             found = found and (window == self.window)
         return found
 
+    def get_suggestions(self):
+        self.driver.switch_to_frame("belay-frame")
+        suggest_button_xpath = "//button[@class='suggestButton']"
+        buttons = self.driver.find_elements_by_xpath(suggest_button_xpath)
+        suggestions = [button.text for button in buttons]
+        self.driver.switch_to_default_content()
+        return suggestions
+
+    def open_suggestion(self, suggestion):
+        self.driver.switch_to_frame("belay-frame")
+        suggest_button_xpath = "//button[@class='suggestButton']"
+        buttons = self.driver.find_elements_by_xpath(suggest_button_xpath)
+
+        for b in buttons:
+            if b.text == suggestion:
+                # this is horrible, but I can't find any way to figure out when an
+                # item is both displayed and clickable when a CSS animation is
+                # currently being applied. So, we must wait for the butter bar
+                # CSS animation to complete before we can go ahead and click
+                sleep(1)
+                b.click()
+                return
+
+
 class BelayAdminPage(BelayEnabledPage):
     """ Representation of the contents of the belay-belay admin page. """
 
@@ -274,11 +298,21 @@ class BelayStationPage(BelayEnabledPage):
         
         return categories
 
+    def category_for_name(self, name):
+        for category in self.categories():
+            if category.name() == name:
+                return category
+
+        return None
+
     def uncategorized(self):
         return self.categories()[0]
     
     def personal(self):
         return self.categories()[1]
+
+    def trash(self):
+        return self.category_for_name("Trash")
 
     def is_empty(self):
         """ determines whether any instances exist in the station. """
@@ -294,8 +328,18 @@ class BelayStationPage(BelayEnabledPage):
             for inst in cat.instances():
                 if inst.name() == name:
                     instances.append(inst)
-        
+
         return instances
+
+    def move_to_category(self, instance, category):
+        drag_source = instance.get_drag_source()
+        drop_target = category.get_drop_target()
+        ac = ActionChains(self.driver)
+        ac.drag_and_drop(drag_source, drop_target)
+
+        old_instance_count = category.instances()
+        ac.perform()
+        self.wait_for(lambda drv: category.instances() > old_instance_count)
 
 
 class BuzzerLandingPage(BelayEnabledPage):

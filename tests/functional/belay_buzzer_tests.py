@@ -71,12 +71,8 @@ class BelayBuzzerTests(BelayTest):
             "Location": "Pennsylvania"
         })
 
-        drag_source = self.st.uncategorized().instances()[0].get_drag_source()
-        drop_target = self.st.personal().get_drop_target()
-        ac = ActionChains(self.driver)
-        ac.drag_and_drop(drag_source, drop_target)
-        ac.perform()
-        self.wait_for(lambda drv: self.st.personal().instances() > 0)
+        instanceListing = self.st.uncategorized().instances()[0]
+        self.st.move_to_category(instanceListing, self.st.personal())
 
         moved = self.st.personal().instances()[0]
         self.assertTrue("My Blog", moved.name())

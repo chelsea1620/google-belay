@@ -44,6 +44,7 @@ if (!window.belay) {
     iframe.style.height = IFRAME_HEIGHT;
     iframe.style.backgroundColor = '#ffffcc';
     iframe.style.border = '0px';
+    iframe.name = 'belay-frame';
     if (window.belay.DEBUG) {
       iframe.style.position = 'relative';
     }

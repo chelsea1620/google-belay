@@ -110,10 +110,10 @@ class BelayBuzzerTests(BelayTest):
         instance = self.bzr.create_new_instance("Testing")
         instance.post("hi mom!")
         
-        cap = instance.drag_cap_out('.buzzer-reader-chit')
+        cap = instance.drag_from('.buzzer-reader-chit')
         self.st.focus()
         uncategorized = self.st.uncategorized()
-        self.st.drag_cap_in(cap, uncategorized.get_drop_target_jq_matcher())
+        self.st.drag_to(cap, uncategorized.get_drop_target_jq_matcher())
 
         self.wait_for(lambda x: len(uncategorized.instances()) == 2)
         instances = self.st.find_instances_by_name("buzz about Testing")

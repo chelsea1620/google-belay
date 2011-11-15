@@ -20,7 +20,7 @@ var postComplete = function(succeeded) {
   setTimeout(function() { m.fadeOut('slow'); }, 3000);
 };
 
-var rcPost = 'urn:x-belay://resouce-class/social-feed/postable';
+var rcPost = 'urn:x-belay://resource-class/social-feed/postable';
 var showPanel = function(postCap, nameCap) {
   nameCap.get(function(name) {
     $('#emote-target').text('to ' + name);

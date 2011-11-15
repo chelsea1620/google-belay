@@ -1,0 +1,19 @@
+#!/bin/bash
+
+if [ \! -e .hg ]
+then
+	echo 'run this from the top of the repo'
+	exit 1
+fi
+
+for f in `(hg manifest; hg addremove -n | grep '^adding ' | cut -c 8-) | sort`
+do
+  if [ -f $f ]
+  then
+    case $f in
+      lib/ses/* ) ;;
+      tests/jasmine/* ) ;;
+      * ) echo $f ;;
+    esac
+  fi
+done

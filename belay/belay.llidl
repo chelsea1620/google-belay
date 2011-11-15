@@ -1,0 +1,97 @@
+%% belay/launch/launch
+<< {
+        pageUrl: url,       ; ???
+        info: any
+        attributes: { set: cap(belay/attributes/set) }
+    }
+    ; granted by server to station
+
+
+&activate = {
+     instanceId: uuId,
+     isStation: bool,
+     pageUrl: url,              ; of HTML to load
+     relaunch: cap(belay/launch/doLaunch),  ; PROPOSED
+     outpostData: {         ; for the instance once activated
+        info: any,          ; from the belay/launch/instance
+        instanceId: uuId;   ; same as instId above
+        services: undef,    ; same as received from shared-worker
+        setRefresh: cap(belay/attributes/setRefresh)
+      },
+    }
+
+%% belay/launch/activate
+-> &activate
+<- cap(belay/launch/close)  ; TODO(mzero): funky
+    ; passed to station so it can open things in the right window
+    
+%% belay/launch/navigate
+-> { url: url, startId: uuId }
+<- undef
+    ; Navigate a window to the URL, giving the window name the startId
+    ; granted by belay-frame, which has two forms, one opens in current
+    ; window, the other in a new window. The later doesn't work well, as
+    ; the new window lacks full tools on Chrome.
+    ; NOTE: not safe in that startId will be leaked to the current page
+    ; belay calls this on a given belay-frame to navigate it to a new page
+
+
+%% belay/launch/doLaunch
+-> cap(belay/launch/activate)
+<- undef
+    ; relaunches some bound instance given an opener
+
+
+%% belay/launch/expectPage
+-> { startId: uuId, ready: cap(belay/launch/doLaunch) }
+<- undef
+    ; called by station to let belay expect a window w/a given name
+    ; when the page is loaded, belay should call doLaunch with an activate
+    ; cap for the window.
+    
+
+
+%% belay/station/setStationCallbacks
+>> {
+        newInstHandler: cap(belay/station/newInstance),
+        closeInstHandler: cap(belay/station/closeInstance),
+   }
+
+%% belay/station/newInstance
+-> {
+        instanceDescription: {
+            launch: cap(belay/launch/launch),
+            name: string,
+            icon: url
+        },
+        activate: cap(belay/launch/activate)
+    }
+<- undef
+    ; called when a window wishes to become an instance
+    
+
+%% belay/station/closeInstance
+-> uuId
+<- undef
+    ; notification of closed instance
+
+
+%% belay/station/setSuggestDomains
+>> [ { domain: string, getSuggestions: cap(belay/station/getSuggestions) }]
+
+%% belay/station/getSuggestions
+<< [{ name: string, doLaunch: cap(belay/launch/doLaunch) }] 
+
+
+
+
+%% belay/attributes/set
+>> {}
+    ; 
+%% belay/attributes/setRefresh
+>> cap(belay/attributes/refresh)
+
+%% belay/attributes/refresh
+-> undef
+<- undef
+

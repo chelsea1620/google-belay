@@ -26,6 +26,10 @@ var stationInfo;
 var capServer;
 var belayBrowserTunnel;
 var belayBrowser;
+var dragData = {
+  dragString: null,
+  instanceId: null
+};
 
 var defaultIcon = '/tool.png';
 
@@ -254,23 +258,53 @@ var sections = (function(){
     this.list.appendTo($('#belay-items'));
 
     function makeDroppable(elt) {
-      elt.droppable({
-        tolerance: 'pointer',
-        over: function(evt) {
-          elt.addClass('dropHover');
-        },
-        out: function(evt) {
-          elt.removeClass('dropHover');
-        },
-        drop: function(evt, ui) {
-          elt.removeClass('dropHover');
-          var row = ui.draggable;
-          var inst = row.data('belay-inst');
-          moveInstanceToSection(inst, me);
-        },
-        accept: function(elt) { return !!elt.data('belay-inst'); }
+      elt.bind('dragenter', function(evt) {
+        elt.addClass('dropHover');
+
+        evt.preventDefault();
+        return false;
+      });
+
+      elt.bind('dragover', function(evt) {
+        elt.addClass('dropHover');
+        evt.originalEvent.dataTransfer.dropEffect = 'move';
+
+        evt.preventDefault();
+        return false;
+      });
+
+      elt.bind('dragend', function(evt) {
+        elt.removeClass('dropHover');
+      });
+
+      elt.bind('dragleave', function(evt) {
+        elt.removeClass('dropHover');
+
+        evt.preventDefault();
+        return false;
+      });
+
+      elt.bind('drop', function(evt) {
+        var realEvt = evt.originalEvent;
+        var content = realEvt.dataTransfer.getData('text/html');
+
+        elt.removeClass('dropHover');
+
+        var contentElem = $(content);
+        var data = contentElem.filter('span[data]').attr('data') ||
+          contentElem.find('span[data]').attr('data');
+
+        if(dragData.dragString != data) {
+          return true;
+        }
+
+        var instance = instances[dragData.instanceId];
+        moveInstanceToSection(instance, me);
+        evt.stopPropagation();
+        return false;
       });
     };
+
     makeDroppable(this.label);
     makeDroppable(this.list);
 
@@ -358,6 +392,8 @@ var sections = (function(){
   }
 
   function moveInstanceToSection(inst, section) {
+    if(inst.state.section == section.name) return;
+
     inst.state.section = section.name;
     for(i in inst.rows) {
       row = inst.rows[i];
@@ -401,18 +437,26 @@ var sections = (function(){
       })
     });
 
-    row.draggable({
-      handle: icon,
-      revert: 'invalid',
-      helper: function() {
-        var cl = row.clone();
-        cl.css('width', row.width());
-        cl.css('background-color', 'white');
-        return cl;
-      },
-      cursor: 'pointer'
+    row.attr('draggable', 'true');
+    row.bind('dragstart', function(evt) {
+      var realEvt = evt.originalEvent;
+
+      // TODO(iainmcgin): a chrome bug prevents the use of mime types for data
+      // other than text/plain and text/html. Ideally this should be a
+      // custom mime type, like text/x-belay-instance, but use text/plain
+      // for now.
+      dragData.dragString = newUUIDv4();
+      dragData.instanceId = inst.state.id;
+      content = '<span data="' + dragData.dragString + '">' 
+        + inst.state.name 
+        + '</span>';
+      realEvt.dataTransfer.setData('text/html', content);
+      realEvt.dataTransfer.effectAllowed = 'move';
+      row.addClass('dragging');
     });
-    row.data('belay-inst', inst);
+    row.bind('dragend', function() {
+      row.removeClass('dragging');
+    })
 
     inst.rows = [row];
     if (!(inst.state.section in byName)) {

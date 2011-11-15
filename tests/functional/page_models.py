@@ -38,7 +38,7 @@ class BelayEnabledPage(object):
 
         return errors
 
-    def drag_cap_out(self, source_jq_matcher):
+    def drag_from(self, source_jq_matcher):
         driver = self.driver
         driver.execute_script("""
             var fakeDragEvt = document.createEvent('UIEvents');
@@ -49,25 +49,26 @@ class BelayEnabledPage(object):
                     belaytest.dropped_data = data;
                 }
             };
-            $('""" + source_jq_matcher + """')[0].dispatchEvent(fakeDragEvt);
-        """)
+            $('%s')[0].dispatchEvent(fakeDragEvt);
+        """ % source_jq_matcher)
         data = driver.execute_script("return belaytest.dropped_data")
         driver.execute_script("delete belaytest.dropped_data")
         return data
+    
 
-    def drag_cap_in(self, cap_data, target_jq_matcher):
+    def drag_to(self, cap_data, target_jq_matcher):
         temp_source_id = "belaytest_ddsource_" + str(random.randint(0, 2 ** 64))
         self.driver.execute_script("""
             var fakeDropEvt = document.createEvent('UIEvents');
             fakeDropEvt.initEvent('drop', true, true);
             fakeDropEvt.dataTransfer = {
                 getData: function(mime) {
-                    return '""" + cap_data +"""';
+                    return '%s';
                 }
             };
-            $('""" + target_jq_matcher + """')[0].dispatchEvent(fakeDropEvt);
-        """)
-
+            $('%s')[0].dispatchEvent(fakeDropEvt);
+        """ % (cap_data, target_jq_matcher))
+    
     def page_ready(self, driver=None):
         driver = self.driver if driver == None else driver
         return driver.execute_script("return window.belaytest && window.belaytest.ready")
@@ -209,7 +210,19 @@ class BelayStationInstance(object):
         find_new_window(driver, lambda: self.row.find_element_by_tag_name("a").click())
     
     def get_drag_source(self):
-        return self.row.find_element_by_class_name("icon")
+        return self.row
+
+    def get_drag_source_jq_matcher(self):
+        elements = self.section.elem.find_elements_by_xpath('table[@class="items"]//tr')
+        print len(elements)
+        index = 0
+        my_name = self.name()
+        for element in elements:
+            if element.find_element_by_xpath("td[@class='name']").text == my_name:
+                break
+            index += 1
+
+        return '.items tr:eq(%d)' % index
 
 
 class BelayStationSection(object):
@@ -332,13 +345,13 @@ class BelayStationPage(BelayEnabledPage):
         return instances
 
     def move_to_category(self, instance, category):
-        drag_source = instance.get_drag_source()
-        drop_target = category.get_drop_target()
-        ac = ActionChains(self.driver)
-        ac.drag_and_drop(drag_source, drop_target)
-
+        drag_source = instance.get_drag_source_jq_matcher()
+        drop_target = category.get_drop_target_jq_matcher()
+        data = self.drag_from(drag_source)
+        
         old_instance_count = category.instances()
-        ac.perform()
+        self.drag_to(data, drop_target)
+        
         self.wait_for(lambda drv: category.instances() > old_instance_count)
 
 
@@ -396,10 +409,10 @@ class BuzzerInstancePage(BelayEnabledPage):
         return self.get_posts()[0]
     
     def get_read_only_cap(self):
-        return self.drag_cap_out('.buzzer-reader-chit')
+        return self.drag_from('.buzzer-reader-chit')
 
     def get_post_cap(self):
-        return self.drag_cap_out('.buzzer-post-chit')
+        return self.drag_from('.buzzer-post-chit')
 
     def get_read_only_chit(self):
         return self.driver.find_element_by_class_name("buzzer-reader-chit")

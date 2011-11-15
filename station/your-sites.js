@@ -221,8 +221,9 @@ var removeInstance = function(inst) {
 
 
 var sections = (function(){
-  var proto = null;
+  var protoSection = null;
   var protoItemRow = null;
+  var protoNavSection = null;
   var defaultName = 'Uncategorized';
   // Map<Name, { label: jQuery, list: jQuery }>
   var byName = Object.create(null);
@@ -240,13 +241,12 @@ var sections = (function(){
     this.attributesCap = info.attributesCap;
     
     // page elements (jQuery objects);    
-    this.label = $('<li></li>');
+    this.label = protoNavSection.clone();
     this.label.text(this.name);
-    this.label.addClass('group');
     this.label.click(function(evt) { show(me); });
-    this.label.appendTo($('#nav'));
+    this.label.appendTo($('#nav-sections'));
 
-    this.list = proto.clone();
+    this.list = protoSection.clone();
     this.list.css('display', 'none');
     this.list.attr('id', 'section-' + this.name);
       // TODO(iainmcgin): what if name has a space?
@@ -301,10 +301,11 @@ var sections = (function(){
   
   
   function init(allSections) {
-    proto = detachProto(topDiv.find('.section'));
-    protoItemRow = detachProto(proto.find('table.items tr'));
-
-    sitesLabel = $('#nav .selected').eq(0).removeClass('proto');
+    protoSection = detachProto(topDiv.find('.section.proto'));
+    protoItemRow = detachProto(protoSection.find('table.items tr.proto'));
+    protoNavSection = detachProto($('#nav-sections .proto'));
+    
+    sitesLabel = $('#nav-sections .head');
     sitesLabel.click(showSites);
 
     allSections.forEach(function(sectionInfo) { new Section(sectionInfo); });

@@ -90,6 +90,9 @@ class StationData(db.Model):
         'attributesCap': regrant(AttributesHandler, section)
       })
     return allSections
+  
+  def allIdentities(self):
+    return [ x.toJson() for x in self.identitydata_set ]
       
 
 class InstanceData(db.Model):
@@ -98,6 +101,31 @@ class InstanceData(db.Model):
 class SectionData(db.Model):
   name = db.StringProperty(required=True)
   attributes = db.TextProperty()
+
+class IdentityData(db.Model):
+  station = db.ReferenceProperty(required=True, reference_class=StationData)
+  id_type = db.StringProperty(required=True)
+  id_provider = db.StringProperty()
+  account_name = db.StringProperty(required=True)
+  display_name = db.StringProperty()
+  
+  def toJson(self):
+    j = {
+      'id_type': self.id_type,
+      'account_name': self.account_name,      
+    }
+    if self.id_provider: j['id_provider'] = self.id_provider
+    if self.display_name: j['display_name'] = self.display_name
+    return j
+  
+  @classmethod
+  def fromJson(cls, station, j):
+    i = IdentityData(station=station,
+          id_type=j['id_type'],
+          account_name=j['account_name'])
+    if 'id_provider' in j: i.id_provider = j['id_provider']
+    if 'display_name' in j: i.display_name = j['display_name']
+    return i
 
 
 class BaseHandler(BcapHandler):
@@ -176,7 +204,9 @@ class BelayLaunchHandler(BaseHandler):
           'defaultTools': defaultTools(),
           'section': regrant(SectionHandler, station),
           'allInstances': station.allInstances(),
-          'allSections': station.allSections()
+          'allSections': station.allSections(),
+          'identities': regrant(IdentitiesHandler, station),
+          'allIdentities': station.allIdentities()
       }
     }
 
@@ -244,6 +274,21 @@ class AttributesHandler(CapHandler):
     section.put()
   
 
+class IdentitiesHandler(CapHandler):
+  def get(self):
+    station = self.get_entity()
+    self.bcapResponse(station.allIdentities())
+  
+  def put(self):
+    station = self.get_entity()
+    for i in station.identitydata_set:
+      i.delete()
+    idinfo = self.bcapRequest()
+    for j in idinfo:
+      IdentityData.fromJson(station, j).put()
+    self.bcapNullResponse()
+  
+
 application = webapp.WSGIApplication(
   [(r'/cap/.*', ProxyHandler),
    ('/belay/generate', BelayGenerateHandler),
@@ -257,6 +302,7 @@ set_handlers(
   '/cap',
   [('section', SectionHandler),
    ('attributes', AttributesHandler),
+   ('identities', IdentitiesHandler)
   ])
 
 def main():

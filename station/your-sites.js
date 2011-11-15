@@ -709,10 +709,78 @@ var attributes = (function() {
   };
 })();
 
+
+var identities = (function() {
+  var identitiesCap = null;
+  var navIdentityList = null;
+  var protoIdentity = null;
+  
+  function init(idData, idCap) {
+    identitiesCap = idCap;
+    navIdentityList = $('#nav-ids');
+    protoIdentity = detachProto(navIdentityList.find('.identity.proto'));
+
+    var addElem = protoIdentity.clone();
+    addElem.removeClass('identity');
+    addElem.addClass('button');
+    addElem.text("Add Test Identities");
+    addElem.click(function() {
+      identitiesCap.put([
+        {'id_type': 'OpenID',
+         'id_provider': 'gmail.com',
+         'account_name': 'betsy.ross@gmail.com',
+         'display_name': 'Betsy Ross'},
+        {'id_type': 'OpenID',
+         'id_provider': 'yahoo.com',
+         'account_name': 'bross@yahoo.com'},
+        {'id_type': 'email',
+         'account_name': 'bee.girl@ralvery.com'},
+        ], refresh);
+    });
+    navIdentityList.append(addElem);
+    var removeElem = protoIdentity.clone();
+    removeElem.removeClass('identity');
+    removeElem.addClass('button');
+    removeElem.text("Remove All Identities");
+    removeElem.click(function() {
+      identitiesCap.put([ ], refresh);
+    });
+    navIdentityList.append(removeElem);
+
+    rebuild(idData);
+  }
+  
+  function refresh() {
+    identitiesCap.get(rebuild);
+  }
+  
+  function rebuild(idData) {
+    var list = $('<ul></ul>');
+    for (var k in idData) {
+      var d = idData[k];
+      var text = d.display_name || d.account_name;
+      var title = d.account_name;
+      if (d.id_provider) { title += ' — ' + d.id_provider; }
+      
+      var elem = protoIdentity.clone();
+      elem.text(text);
+      elem.attr('title', title);
+      list.append(elem);
+    }
+    
+    navIdentityList.find('.identity').remove();
+    navIdentityList.find('.head').after(list.children());
+  }
+  return {
+    init: init
+  }
+})();
+
 var initialize = function() {
   $(document.body).find('.ex').remove(); // remove layout examples
 
   sections.init(stationInfo.allSections);
+  identities.init(stationInfo.allIdentities, stationInfo.identities);
   
   // TODO(mzero): refactor the two addInstance functions and the newInstHandler
   var addInstanceFromGenerate = function(genCap) {

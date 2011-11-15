@@ -15,7 +15,6 @@ limitations under the License.
 */
 
 @import url(go-x.css);
-@import url(jquery-ui-1.8.9.custom.css);
 
 body {
   max-width: inherit;

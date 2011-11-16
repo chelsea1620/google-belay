@@ -67,7 +67,7 @@ var instances = Object.create(null);
         attributes: { set: cap }
      },
      capServer: caps -- the cap server for this instance (if !state.remote)
-     rows: [node] -- nodes in the item list
+     row: node -- the row representing the instance in the section list
      closeCap : cap -- present for windowed instances
    }
 */
@@ -250,11 +250,14 @@ var sections = (function(){
     this.label.click(function(evt) { show(me); });
     this.label.appendTo($('#nav-sections'));
 
+    this.showingFullList = false;
+    this.shortListSize = 5;
     this.list = protoSection.clone();
     this.list.css('display', 'none');
     this.list.attr('id', 'section-' + this.name);
       // TODO(iainmcgin): what if name has a space?
     this.list.find('.header .name').text(this.name);
+    this.list.find('.header .show-all').click(function() { show(me) });
     this.list.appendTo($('#belay-items'));
 
     function makeDroppable(elt) {
@@ -331,6 +334,95 @@ var sections = (function(){
       });
       actionsGroup.append(deleteAll);
     }
+
+    this.showShortList = function() {
+      me.showingFullList = false;
+      me.list.show();
+      me.list.find('.items tr:lt(' + me.shortListSize + ')').show();
+      me.list.find('.items tr:gt(' + (me.shortListSize-1) + ')').hide();
+
+      me.updateActionsBar();
+    };
+
+    this.showFullList = function() {
+      me.showingFullList = true;
+      me.list.show();
+      itemRows = me.list.find('.items tr').show();
+      me.list.find('.header .show-all').hide();
+      me.updateActionsBar();
+    };
+
+    this.showList = function() {
+      if(me.showingFullList) {
+        me.showFullList();
+      } else {
+        me.showShortList();
+      }
+    }
+
+    this.updateList = function() {
+      if(me.list.css('display') == 'none') return;
+      me.showList();
+    }
+
+    this.hideList = function() {
+      me.list.hide();
+    };
+
+    this.addInstance = function(inst) {
+      inst.state.section = me.name;
+      inst.row.prependTo(me.list.find('table.items').eq(0));
+      
+      // the fade in is only visible after a delete from another section, 
+      // not when explicitly dragging between sections
+      inst.row.fadeIn(400);
+
+      me.updateList();
+    }
+
+    this.removeInstance = function(inst) {
+      inst.row.detach();
+      me.updateList();
+    }
+
+    this.updateActionsBar = function() {
+      var showAllElem = me.list.find('.header .actions .show-all');
+      if(!me.showingFullList) {
+        var totalItems = me.list.find('.items tr').size();
+        var numExtra = totalItems - me.shortListSize;
+
+        if(numExtra > 0) {
+          showAllElem.show();
+          showAllElem.text('show all (' + numExtra + ' more)');
+        } else {
+          showAllElem.hide();
+        }
+      } else {
+        showAllElem.hide();
+      }
+
+      actionsBar = me.list.find('.header .actions');
+      actions = actionsBar.find('span');
+
+      if(actions.size() <= 0) return;
+
+      actions.detach();
+      actionsBar.html('');
+
+      var lastAction = $(actions.get(0));
+      actionsBar.append(lastAction);
+
+      var i;
+      for(i=1; i < actions.size(); i++) {
+        var action = $(actions.get(i));
+        if(lastAction.css('display') != 'none'
+            && action.css('display') != 'none') {
+          actionsBar.append(' • ');
+        }
+
+        actionsBar.append(action);
+      }
+    }
   };
   
   
@@ -350,62 +442,53 @@ var sections = (function(){
   function showSites() {
     sitesLabel.addClass('selected');
     // all visible, except for Recent
-    visible =
-      Object.keys(byName)
-      .map(function(k) {
-        var sec = byName[k];
-        sec.label.removeClass('selected');
-        sec.list.show();
-        return sec;
-      });
+    visible = []
+    Object.keys(byName).forEach(function(k) {
+      var sec = byName[k];
+      sec.label.removeClass('selected');
+      if(k == "Trash") {
+        sec.hideList();
+      } else {
+        sec.showShortList();
+        visible.push(sec);
+      }
+    });
   }
   
   function show(v) {
     sitesLabel.removeClass('selected');
     v.label.addClass('selected');
-    v.list.show();
+    v.showFullList();
     visible.forEach(function(sec) {
       if (sec !== v) {
         sec.label.removeClass('selected');
-        sec.list.hide();
+        sec.hideList();
       }
     });
     visible = [v];
   }
   
   function deleteInstance(inst) {
-    completeCounter = inst.rows.length;
-    inst.rows.forEach(function(row) {
-      row.fadeOut(400, function() { 
-        row.detach();
-        completeCounter--;
-        if(completeCounter != 0) return;
+    inst.row.fadeOut(400, function() {
+      inst.row.detach();
 
-        if(inst.state.section == "Trash") {
-          if (inst.capServer) inst.capServer.revokeAll();
-          delete instances[inst.state.id];
-          inst.storageCap.remove();
-        } else {
-          moveInstanceToSection(inst, byName["Trash"])
-        }
-      });
+      byName[inst.state.section].updateList();
+      if(inst.state.section == "Trash") {
+        if (inst.capServer) inst.capServer.revokeAll();
+        delete instances[inst.state.id];
+        inst.storageCap.remove();
+      } else {
+        moveInstanceToSection(inst, byName["Trash"])
+        byName["Trash"].updateList();
+      }
     });
   }
 
   function moveInstanceToSection(inst, section) {
     if(inst.state.section == section.name) return;
-
-    inst.state.section = section.name;
-    for(i in inst.rows) {
-      row = inst.rows[i];
-      row.detach();
-      section.list.find('table.items').eq(0).prepend(row);
-
-      // the fade in is only visible on delete, not when explicitly
-      // dragging between sections
-      row.fadeIn(400);
-    }
-
+    byName[inst.state.section].removeInstance(inst);
+    byName[section.name].addInstance(inst);
+    
     dirty(inst);
     attributes.pushToInstance(inst);
   }
@@ -459,13 +542,13 @@ var sections = (function(){
       row.removeClass('dragging');
     })
 
-    inst.rows = [row];
+    inst.row = row;
     if (!(inst.state.section in byName)) {
       inst.state.section = defaultName;
       dirty(inst);
     }
-    var list = byName[inst.state.section].list;
-    row.prependTo(list.find('table.items').eq(0));
+    var section = byName[inst.state.section];
+    section.addInstance(inst);
   }
   
   function forInstance(inst) {
@@ -895,7 +978,7 @@ var closeInstHandler = function(instanceId) {
 
   // Re-prime the link for launching.
   var newStartId = newUUIDv4();
-  inst.rows[0].find('td.actions .open-page').attr('target', newStartId);
+  inst.row.find('td.actions .open-page').attr('target', newStartId);
   expectPage.post({
     startId: newStartId,
     ready: capServer.grant(function(activate) {

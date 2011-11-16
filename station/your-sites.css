@@ -136,7 +136,6 @@ td {
 .header td.actions,
 .items td.actions {
   color: #aaa;
-  width: 12em;
   text-align: right;
 }
 td.actions * {

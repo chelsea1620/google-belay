@@ -82,16 +82,31 @@ class StationTests(BelayTest):
         landing.close()
 
         self.st.focus()
-        trash = self.st.trash()
         instance = self.st.find_instances_by_name("Buzz")[0]
-        self.st.move_to_category(instance, trash)
+        instance.delete()
 
         self.open_new_window("http://localhost:9004")
         landing = BuzzerLandingPage(self.driver)
         self.assertEquals(0, len(landing.get_suggestions()))
+    
+    def create_buzzer(self, name):
+        self.open_new_window("http://localhost:9004")
+        landing = BuzzerLandingPage(self.driver)
+        inst = landing.create_new_instance(name)
+        inst.close()
+        self.st.focus()
 
+    def test_max_five_instances_shown_in_sections(self):
+        for name in ['a', 'b', 'c', 'd', 'e', 'f', 'g']:
+            self.create_buzzer(name)
 
-
+        instances = [inst for inst in self.st.uncategorized().instances() if inst.is_displayed()]
+        self.assertTrue(len(instances) == 5)
+        names = [inst.name() for inst in instances]
+        for name in ['a', 'b']:
+            self.assertFalse(name in names)
+        for name in ['c', 'd', 'e', 'f', 'g']:
+            self.assertTrue(name in names)
 
 
 

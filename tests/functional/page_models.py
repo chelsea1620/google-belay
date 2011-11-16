@@ -209,6 +209,11 @@ class BelayStationInstance(object):
     def open(self, driver):
         find_new_window(driver, lambda: self.row.find_element_by_tag_name("a").click())
     
+    def delete(self):
+        self.row.find_element_by_xpath("//span[@class='remove']").click()
+        # wait for delete animation to complete
+        sleep(1)
+    
     def get_drag_source(self):
         return self.row
 
@@ -223,6 +228,9 @@ class BelayStationInstance(object):
             index += 1
 
         return '.items tr:eq(%d)' % index
+    
+    def is_displayed(self):
+        return self.row.is_displayed()
 
 
 class BelayStationSection(object):
@@ -323,9 +331,6 @@ class BelayStationPage(BelayEnabledPage):
     
     def personal(self):
         return self.categories()[1]
-
-    def trash(self):
-        return self.category_for_name("Trash")
 
     def is_empty(self):
         """ determines whether any instances exist in the station. """

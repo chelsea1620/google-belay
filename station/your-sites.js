@@ -715,16 +715,55 @@ var identities = (function() {
   var navIdentityList = null;
   var protoIdentity = null;
   
-  function init(idData, idCap) {
+  function init(idData, idCap, idAdders) {
     identitiesCap = idCap;
     navIdentityList = $('#nav-ids');
     protoIdentity = detachProto(navIdentityList.find('.identity.proto'));
 
-    var addElem = protoIdentity.clone();
-    addElem.removeClass('identity');
-    addElem.addClass('button');
-    addElem.text("Add Test Identities");
-    addElem.click(function() {
+    var protoButton = protoIdentity.clone();
+    protoButton.removeClass('identity');
+    protoButton.addClass('button');
+    
+    idAdders.forEach(function(adder){
+      var startId;
+      
+      var ready = capServer.grant(function(activate) {
+        adder.launch.get(function(launchInfo) {
+          var instanceId = newUUIDv4();
+          activate.post({
+            instanceId: instanceId,
+            pageUrl: launchInfo.page.html,
+            outpostData: { 
+              info: launchInfo.info,
+              instanceId: instanceId,
+              notifyClose: capServer.grant(refresh)
+            }
+          });
+        });
+      });
+      
+      function reprime() {
+        startId = newUUIDv4();
+        expectPage.post({
+          startId: startId,
+          ready: ready,
+        });        
+      }
+      reprime();
+      
+      var addElem = protoButton.clone();
+      addElem.text(adder.title);
+      addElem.click(function() {
+        window.open('redirect.html', startId,
+            'width=480,height=720,resizable,scrollbars=yes,status=1');
+        reprime();
+      });
+      navIdentityList.append(addElem);
+    });
+
+    var addTestElem = protoButton.clone();
+    addTestElem.text("Add Test Identities");
+    addTestElem.click(function() {
       identitiesCap.put([
         {'id_type': 'OpenID',
          'id_provider': 'gmail.com',
@@ -737,10 +776,8 @@ var identities = (function() {
          'account_name': 'bee.girl@ralvery.com'},
         ], refresh);
     });
-    navIdentityList.append(addElem);
-    var removeElem = protoIdentity.clone();
-    removeElem.removeClass('identity');
-    removeElem.addClass('button');
+    navIdentityList.append(addTestElem);
+    var removeElem = protoButton.clone();
     removeElem.text("Remove All Identities");
     removeElem.click(function() {
       identitiesCap.put([ ], refresh);
@@ -780,7 +817,10 @@ var initialize = function() {
   $(document.body).find('.ex').remove(); // remove layout examples
 
   sections.init(stationInfo.allSections);
-  identities.init(stationInfo.allIdentities, stationInfo.identities);
+  identities.init(
+    stationInfo.allIdentities,
+    stationInfo.identities,
+    stationInfo.addIdentityLaunchers);
   
   // TODO(mzero): refactor the two addInstance functions and the newInstHandler
   var addInstanceFromGenerate = function(genCap) {

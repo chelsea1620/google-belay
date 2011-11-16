@@ -20,6 +20,8 @@ import logging
 import os
 import sys
 import uuid
+
+from model import *
 from lib.py.belay import *
 
 from django.utils import simplejson as json # TODO(mzero): remove for Python27
@@ -27,6 +29,9 @@ from django.utils import simplejson as json # TODO(mzero): remove for Python27
 from google.appengine.ext import db
 from google.appengine.ext import webapp
 from google.appengine.ext.webapp.util import run_wsgi_app
+
+import ids
+
 
 def keyName(key):
   if isinstance(key, str):
@@ -67,65 +72,30 @@ def defaultTools():
  
 
 
-class StationData(db.Model):  
-  def allInstances(self):
-    q = InstanceData.all()
-    q.ancestor(self)
-    allInstances = []
-    for instance in q:
-      allInstances.append({
-        'data': dataPostProcess(instance.data),
-        'cap': cap(instance_url(self.key(), instance.key()))
-      })
-    return allInstances
-  
-  def allSections(self):
-    q = SectionData.all()
-    q.ancestor(self)
-    allSections = []
-    for section in q:
-      allSections.append({
-        'name': section.name,
-        'attributes': json.loads(section.attributes or '{}'),
-        'attributesCap': regrant(AttributesHandler, section)
-      })
-    return allSections
-  
-  def allIdentities(self):
-    return [ x.toJson() for x in self.identitydata_set ]
-      
+def allInstances(station):
+  q = InstanceData.all()
+  q.ancestor(station)
+  allInstances = []
+  for instance in q:
+    allInstances.append({
+      'data': dataPostProcess(instance.data),
+      'cap': cap(instance_url(station.key(), instance.key()))
+    })
+  return allInstances
 
-class InstanceData(db.Model):
-  data = db.TextProperty()
+def allSections(station):
+  q = SectionData.all()
+  q.ancestor(station)
+  allSections = []
+  for section in q:
+    allSections.append({
+      'name': section.name,
+      'attributes': json.loads(section.attributes or '{}'),
+      'attributesCap': regrant(AttributesHandler, section)
+    })
+  return allSections
 
-class SectionData(db.Model):
-  name = db.StringProperty(required=True)
-  attributes = db.TextProperty()
 
-class IdentityData(db.Model):
-  station = db.ReferenceProperty(required=True, reference_class=StationData)
-  id_type = db.StringProperty(required=True)
-  id_provider = db.StringProperty()
-  account_name = db.StringProperty(required=True)
-  display_name = db.StringProperty()
-  
-  def toJson(self):
-    j = {
-      'id_type': self.id_type,
-      'account_name': self.account_name,      
-    }
-    if self.id_provider: j['id_provider'] = self.id_provider
-    if self.display_name: j['display_name'] = self.display_name
-    return j
-  
-  @classmethod
-  def fromJson(cls, station, j):
-    i = IdentityData(station=station,
-          id_type=j['id_type'],
-          account_name=j['account_name'])
-    if 'id_provider' in j: i.id_provider = j['id_provider']
-    if 'display_name' in j: i.display_name = j['display_name']
-    return i
 
 
 class BaseHandler(BcapHandler):
@@ -203,13 +173,13 @@ class BelayLaunchHandler(BaseHandler):
           'instanceBase': instance_url(station.key(), ''),
           'defaultTools': defaultTools(),
           'section': regrant(SectionHandler, station),
-          'allInstances': station.allInstances(),
-          'allSections': station.allSections(),
-          'identities': regrant(IdentitiesHandler, station),
-          'allIdentities': station.allIdentities(),
+          'allInstances': allInstances(station),
+          'allSections': allSections(station),
+          'identities': regrant(ids.IdentitiesHandler, station),
+          'allIdentities': ids.allIdentities(station),
           'addIdentityLaunchers': [
               { 'title': 'Add Profile',
-                'launch': regrant(ProfileIdLaunchHandler, station) }
+                'launch': regrant(ids.ProfileLaunchHandler, station) }
             ]
       }
     }
@@ -278,46 +248,8 @@ class AttributesHandler(CapHandler):
     section.put()
   
 
-class IdentitiesHandler(CapHandler):
-  def get(self):
-    station = self.get_entity()
-    self.bcapResponse(station.allIdentities())
-  
-  def put(self):
-    station = self.get_entity()
-    for i in station.identitydata_set:
-      i.delete()
-    idinfo = self.bcapRequest()
-    for j in idinfo:
-      IdentityData.fromJson(station, j).put()
-    self.bcapNullResponse()
-  
-
-class ProfileIdLaunchHandler(CapHandler):
-  def get(self):
-    station = self.get_entity()
-    reply = {
-      'page': { 'html': server_url('/addProfile.html') },
-      'info': {
-        'add': regrant(ProfileIdAddHandler, station)
-      }
-    }
-    self.bcapResponse(reply)
 
 
-class ProfileIdAddHandler(CapHandler):
-  def post(self):
-    station = self.get_entity()
-    idinfo = self.bcapRequest()
-    name = idinfo['display_name']
-    IdentityData(station=station,
-      id_type='profile',
-      id_provider='user added profile',
-      account_name=name,
-      display_name=name).put()
-    self.bcapNullResponse()
-
-    
 application = webapp.WSGIApplication(
   [(r'/cap/.*', ProxyHandler),
    ('/belay/generate', BelayGenerateHandler),
@@ -331,9 +263,9 @@ set_handlers(
   '/cap',
   [('section', SectionHandler),
    ('attributes', AttributesHandler),
-   ('identities', IdentitiesHandler),
-   ('id/profile/launch', ProfileIdLaunchHandler),
-   ('id/profile/add', ProfileIdAddHandler)
+   ('identities', ids.IdentitiesHandler),
+   ('ids/profile/launch', ids.ProfileLaunchHandler),
+   ('ids/profile/add', ids.ProfileAddHandler),
   ])
 
 def main():

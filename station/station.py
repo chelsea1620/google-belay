@@ -31,6 +31,7 @@ from google.appengine.ext import webapp
 from google.appengine.ext.webapp.util import run_wsgi_app
 
 import ids
+import openid
 
 
 def keyName(key):
@@ -178,6 +179,12 @@ class BelayLaunchHandler(BaseHandler):
           'identities': regrant(ids.IdentitiesHandler, station),
           'allIdentities': ids.allIdentities(station),
           'addIdentityLaunchers': [
+              { 'title': 'Add Gmail',
+                'launch': regrant(openid.GmailLaunchHandler, station) },
+              { 'title': 'Add Yahoo',
+                'launch': regrant(openid.YahooLaunchHandler, station) },
+              { 'title': 'Add AOL',
+                'launch': regrant(openid.AolLaunchHandler, station) },
               { 'title': 'Add Profile',
                 'launch': regrant(ids.ProfileLaunchHandler, station) }
             ]
@@ -266,6 +273,12 @@ set_handlers(
    ('identities', ids.IdentitiesHandler),
    ('ids/profile/launch', ids.ProfileLaunchHandler),
    ('ids/profile/add', ids.ProfileAddHandler),
+   ('openid/gmail/launch', openid.GmailLaunchHandler),
+   ('openid/yahoo/launch', openid.YahooLaunchHandler),
+   ('openid/aol/launch', openid.AolLaunchHandler),
+   ('openid/gmail/callback', openid.GmailCallbackHandler),
+   ('openid/yahoo/callback', openid.YahooCallbackHandler),
+   ('openid/aol/callback', openid.AolCallbackHandler)
   ])
 
 def main():

@@ -837,9 +837,21 @@ var identities = (function() {
       var addElem = protoButton.clone();
       addElem.text(adder.title);
       addElem.click(function() {
-        window.open('redirect.html', startId,
-            'width=480,height=720,resizable,scrollbars=yes,status=1');
+        var newWindow = window.open('redirect.html', startId,
+            'width=600,height=600,resizable,scrollbars=yes,status=1');
         reprime();
+        function checker(evt) {
+          if (evt.originalEvent.source == newWindow) {
+            refresh();
+            unchecker();
+            return true;
+          }
+        }
+        function unchecker() {
+          $(window).unbind('message', checker);
+        }
+        $(window).bind('message', checker);
+        setTimeout(unchecker, 10000);
       });
       navIdentityList.append(addElem);
     });

@@ -206,7 +206,11 @@ class BelayLaunchHandler(BaseHandler):
           'allInstances': station.allInstances(),
           'allSections': station.allSections(),
           'identities': regrant(IdentitiesHandler, station),
-          'allIdentities': station.allIdentities()
+          'allIdentities': station.allIdentities(),
+          'addIdentityLaunchers': [
+              { 'title': 'Add Profile',
+                'launch': regrant(ProfileIdLaunchHandler, station) }
+            ]
       }
     }
 
@@ -289,6 +293,31 @@ class IdentitiesHandler(CapHandler):
     self.bcapNullResponse()
   
 
+class ProfileIdLaunchHandler(CapHandler):
+  def get(self):
+    station = self.get_entity()
+    reply = {
+      'page': { 'html': server_url('/addProfile.html') },
+      'info': {
+        'add': regrant(ProfileIdAddHandler, station)
+      }
+    }
+    self.bcapResponse(reply)
+
+
+class ProfileIdAddHandler(CapHandler):
+  def post(self):
+    station = self.get_entity()
+    idinfo = self.bcapRequest()
+    name = idinfo['display_name']
+    IdentityData(station=station,
+      id_type='profile',
+      id_provider='user added profile',
+      account_name=name,
+      display_name=name).put()
+    self.bcapNullResponse()
+
+    
 application = webapp.WSGIApplication(
   [(r'/cap/.*', ProxyHandler),
    ('/belay/generate', BelayGenerateHandler),
@@ -302,7 +331,9 @@ set_handlers(
   '/cap',
   [('section', SectionHandler),
    ('attributes', AttributesHandler),
-   ('identities', IdentitiesHandler)
+   ('identities', IdentitiesHandler),
+   ('id/profile/launch', ProfileIdLaunchHandler),
+   ('id/profile/add', ProfileIdAddHandler)
   ])
 
 def main():

@@ -1,0 +1,69 @@
+<!--
+Copyright 2011 Google Inc. All Rights Reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Belay Station</title>
+  <link rel="stylesheet" href="https://www.google.com/css/go-x.css">
+  <script src="lib/js/include-belay.js"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.js"></script>
+  <script src="lib/js/caps.js"></script>
+  <script src="lib/js/common.js"></script>
+  <script src="lib/js/belay-client.js"></script>
+  <style>
+   body.compact h1 img { float: left !important; }
+   form { padding-left: 2em; margin-bottom: 4em; }
+  </style>
+</head>
+<body class="compact">
+  <h1><a href="/"><img src="https://www.google.com/images/logos/google_logo_41.png" alt="Google"></a> Profile</h1>
+  <h2>Add Self-Declared Profile Information.</h2>
+  <p>Information you add here can be easily made available to web sites when you
+    choose. Web sites will know that this is user-entered information, and isn't
+    verified.</p>
+  <form class="x-form">
+    <fieldset>
+      <ul>
+        <li>
+          <label for="f-display-name">Your Name</label>
+          <input name="display_name" id="f-display-name" value="">
+        </li>
+        <li>
+          <input type="submit" value="Submit" class="button">​
+        </li>
+      </ul>
+    </fieldset>
+  </form>
+  <div id=​"about">​©2011 Google​</div>
+  <script>
+onBelayReady(function() {
+  function complete() {
+    window.close();
+  }
+  var form = $('form');
+  form.submit(function(evt) {
+    var displayName = form.find('[name="display_name"]').val();
+    launchInfo.add.post({
+      display_name: displayName
+    }, complete, complete);
+    evt.preventDefault();
+    return false;
+  });
+})
+  </script>
+</body>

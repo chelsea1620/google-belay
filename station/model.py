@@ -28,6 +28,7 @@ class InstanceData(db.Model):
 
 class SectionData(db.Model):
   name = db.StringProperty(required=True)
+  hidden = db.BooleanProperty(default=False)
   attributes = db.TextProperty()
 
 

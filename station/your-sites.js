@@ -243,12 +243,20 @@ var sections = (function(){
     this.dataCap = info.dataCap;
     this.attributes = info.attributes;
     this.attributesCap = info.attributesCap;
+    this.hidden = info.hidden;
     
     // page elements (jQuery objects);    
     this.label = protoNavSection.clone();
     this.label.text(this.name);
     this.label.click(function(evt) { show(me); });
-    this.label.appendTo($('#nav-sections'));
+    
+
+    divider = $('#nav-sections .divider');
+    if(this.hidden) {
+      this.label.insertAfter(divider);
+    } else {
+      this.label.insertBefore(divider);
+    }
 
     this.showingFullList = false;
     this.shortListSize = 5;
@@ -446,7 +454,7 @@ var sections = (function(){
     Object.keys(byName).forEach(function(k) {
       var sec = byName[k];
       sec.label.removeClass('selected');
-      if(k == "Trash") {
+      if(sec.hidden) {
         sec.hideList();
       } else {
         sec.showShortList();

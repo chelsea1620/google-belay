@@ -91,6 +91,7 @@ def allSections(station):
   for section in q:
     allSections.append({
       'name': section.name,
+      'hidden': section.hidden,
       'attributes': json.loads(section.attributes or '{}'),
       'attributesCap': regrant(AttributesHandler, section)
     })
@@ -112,8 +113,9 @@ class BaseHandler(BcapHandler):
       station = StationData.get_by_key_name(station_id)
       if station == None:
         station = StationData(key_name=station_id)
-        for n in ['Uncategorized', 'Personal', 'Work', 'Games', 'Trash']:
+        for n in ['Uncategorized', 'Personal', 'Work', 'Games']:
           SectionData(parent=station, name=n).put()
+        SectionData(parent=station, name='Trash', hidden=True).put()
         
       return station
     except:
@@ -240,6 +242,7 @@ class SectionHandler(CapHandler):
     
     self.bcapResponse({
       'name': section.name,
+      'hidden': section.hidden,
       'attributes': regrant(AttributesHandler, section),
     })
 

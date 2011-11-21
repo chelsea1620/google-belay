@@ -12,6 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+#import json # TODO(mzero): add back for Python27
+from django.utils import simplejson as json # TODO(mzero): remove for Python27
+
 from model import *
 from lib.py.belay import *
 
@@ -21,7 +24,9 @@ from google.appengine.ext import webapp
 
 
 def allIdentities(station):
-  return [ x.toJson() for x in station.identitydata_set ]
+  q = IdentityData.all()
+  q.ancestor(station)
+  return [ x.toJson() for x in q]
 
 
 class IdentitiesHandler(CapHandler):
@@ -55,11 +60,23 @@ class ProfileAddHandler(CapHandler):
   def post(self):
     station = self.get_entity()
     idinfo = self.bcapRequest()
-    name = idinfo['display_name']
-    IdentityData(station=station,
+    name = idinfo.get('name', None)
+    if not name:
+      return
+
+    attributes = dict()
+    for t in ['name', 'location', 'email']:
+      v = idinfo.get(t, None)
+      if v:
+          attributes[t] = [v]
+
+    IdentityData(parent=station,
       id_type='profile',
       id_provider='user added profile',
       account_name=name,
-      display_name=name).put()
+      display_name=name,
+      attributes=json.dumps(attributes)
+      ).put()
+    
     self.bcapNullResponse()
 

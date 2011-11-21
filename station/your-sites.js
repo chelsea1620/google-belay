@@ -20,6 +20,16 @@ if (!window.belaytest) {
   }
 }
 
+"use strict";
+
+// TODO(jasvir): These should be modules not scripts
+require([
+    "lib/js/include-belay.js", 
+    "lib/js/caps.js", 
+    "lib/js/common.js",
+    "lib/js/belay-client.js"], 
+  function () {
+
 var topDiv;
 var ui;
 var stationInfo;
@@ -1065,3 +1075,6 @@ window.belay.portReady = function() {
     initialize();
   });
 };
+
+
+});

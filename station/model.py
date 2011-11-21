@@ -21,6 +21,8 @@ from google.appengine.ext import db
 
 class StationData(db.Model):  
   pass
+  # TODO(mzero): if we ever delete a station, need to delete stuff under it
+
 
 class InstanceData(db.Model):
   data = db.TextProperty()
@@ -29,23 +31,29 @@ class InstanceData(db.Model):
 class SectionData(db.Model):
   name = db.StringProperty(required=True)
   hidden = db.BooleanProperty(default=False)
-  attributes = db.TextProperty()
+  attributes = db.TextProperty(default='{}')
+    # JSON encoded map of attribute names to single values
+    # missing 
 
 
 class IdentityData(db.Model):
-  station = db.ReferenceProperty(required=True, reference_class=StationData)
-  id_type = db.StringProperty(required=True)
+  id_type = db.StringProperty(required=True,
+    choices=['profile', 'email', 'openid', 'browserid'])
   id_provider = db.StringProperty()
   account_name = db.StringProperty(required=True)
   display_name = db.StringProperty()
+  attributes = db.TextProperty(default='{}')
+    # JSON encoded map of attribute names to arrays of values
+    # first value in the list is "primary"
 
   def toJson(self):
     j = {
       'id_type': self.id_type,
-      'account_name': self.account_name,      
+      'account_name': self.account_name,
     }
     if self.id_provider: j['id_provider'] = self.id_provider
     if self.display_name: j['display_name'] = self.display_name
+    j['attributes'] = json.loads(self.attributes)
     return j
 
   @classmethod
@@ -55,4 +63,5 @@ class IdentityData(db.Model):
           account_name=j['account_name'])
     if 'id_provider' in j: i.id_provider = j['id_provider']
     if 'display_name' in j: i.display_name = j['display_name']
+    i.attributes = json.dumps(j['attributes'])
     return i

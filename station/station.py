@@ -272,7 +272,7 @@ application = webapp.WSGIApplication(
 set_handlers(
   '/cap',
   [('section', SectionHandler),
-   ('attributes', AttributesHandler),
+   ('section/attributes', AttributesHandler),
    ('identities', ids.IdentitiesHandler),
    ('ids/profile/launch', ids.ProfileLaunchHandler),
    ('ids/profile/add', ids.ProfileAddHandler),
@@ -281,7 +281,7 @@ set_handlers(
    ('openid/aol/launch', openid.AolLaunchHandler),
    ('openid/gmail/callback', openid.GmailCallbackHandler),
    ('openid/yahoo/callback', openid.YahooCallbackHandler),
-   ('openid/aol/callback', openid.AolCallbackHandler)
+   ('openid/aol/callback', openid.AolCallbackHandler),
   ])
 
 def main():

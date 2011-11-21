@@ -694,8 +694,35 @@ var attributes = (function() {
     { attr: 'age', en: 'Age', controller: new FixedAttribute('34') }
   ];
 
+  function rebuild(idData) {
+    options = {}
+    function opt(k, v) {
+      if (!(k in options)) { options[k] = []; }
+      options[k].push(v);
+    }
+    function opts(k, vs) {
+      options[k] = (options[k] || []).concat(vs);
+    }
+    
+    for (var k in idData) {
+      var d = idData[k];
+      var text = d.display_name || d.account_name;
+      if (d.id_provider) { text += ' — ' + d.id_provider; }
+      text += '(' + d.id_type + ')';
+      
+      opt('id', text);
+      
+      for (var t in d.attributes) {
+        opts(t, d.attributes[t]);
+      }
+    }
+    for (var z in options) {
+      console.log(z + ': ' + options[z].join(', '));
+    }
+  }
 
   return {
+    rebuild: rebuild,
     setup: function(section) {
       var data = section.attributes;
       var editData;
@@ -910,6 +937,8 @@ var identities = (function() {
     
     navIdentityList.find('.identity').remove();
     navIdentityList.find('.head').after(list.children());
+
+    attributes.rebuild(idData);
   }
   return {
     init: init

@@ -40,8 +40,16 @@ limitations under the License.
     <fieldset>
       <ul>
         <li>
-          <label for="f-display-name">Your Name</label>
-          <input name="display_name" id="f-display-name" value="">
+          <label for="f-name">Your Name</label>
+          <input name="name" id="f-name" value="">
+        </li>
+        <li>
+          <label for="f-location">Location</label>
+          <input name="location" id="f-location" value="">
+        </li>
+        <li>
+          <label for="f-email">Email</label>
+          <input name="email" id="f-email" value="">
         </li>
         <li>
           <input type="submit" value="Submit" class="button">​
@@ -57,10 +65,11 @@ onBelayReady(function() {
   }
   var form = $('form');
   form.submit(function(evt) {
-    var displayName = form.find('[name="display_name"]').val();
-    launchInfo.add.post({
-      display_name: displayName
-    }, complete, complete);
+    var attributes = { }
+    form.find('[name]').each(function() {
+      attributes[$(this).attr('name')] = $(this).val();
+    })
+    launchInfo.add.post(attributes, complete, complete);
     evt.preventDefault();
     return false;
   });

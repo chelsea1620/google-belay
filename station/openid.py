@@ -121,22 +121,32 @@ def decodeAttributes(args):
       attrs[type] = values
   return attrs
 
-def extractName(attrs):
-  names = attrs.get('http://axschema.org/namePerson', None)
-  if names: return names[0]
+def permuteAttributes(ax):
+  # reform attributes from AX names and format to our names and format
+  attrs = dict()
 
-  names = attrs.get('http://axschema.org/namePerson/friendly', None)
-  if names: return names[0]
-
-  parts = []
-  names = attrs.get('http://axschema.org/namePerson/first', None)
-  if names: parts.append(names[0])
-  names = attrs.get('http://axschema.org/namePerson/last', None)
-  if names: parts.append(names[0])
-  if parts:
-    return ' '.join(parts)
-
-  return None
+  v = []
+  v.extend(ax.get('http://axschema.org/namePerson', []))
+  v.extend(ax.get('http://axschema.org/namePerson/friendly', []))
+  fns = ax.get('http://axschema.org/namePerson/first', [])
+  lns = ax.get('http://axschema.org/namePerson/last', [])
+  v.extend([f + ' ' + l for (f, l) in zip(fns,lns)])
+    # not clear if the first and last name values sets are 'aligned' like this
+  if v:
+    attrs['name'] = v
+  
+  v = []
+  v.extend(ax.get('http://axschema.org/contact/verifiedemail', []))
+  v.extend(ax.get('http://axschema.org/contact/email', []))
+  if v:
+    attrs['email'] = v
+  
+  v = []
+  v.extend(ax.get('http://axschema.org/media/image/default', []))
+  if v:
+    attrs['image'] = v
+  
+  return attrs
 
 
 class CallbackHandler(CapHandler):
@@ -147,24 +157,32 @@ class CallbackHandler(CapHandler):
     self.handleOpenIdResponse(self.request.POST)
 
   def handleOpenIdResponse(self, args):
+    # TODO(mzero): check that the response is a postiive assertion:
+      # opendid.mode == 'id_res'
+      
     # TODO(mzero): check signature
+    # 1) check that openid.return_to == current URL of current request
+    #     check that scheme, authority and path match
+    #     check that all query args in openid.return_to are in current URL
+    # 2) do discovery on openid.claimed_id and make sure it points back at
+    #     the opendid.idenity, openid.op_endpoint, and openid.ns
+    # 3) check that the openid.response_nonce hasn't been used before by this OP
+    # 4) resend the query to the OP w/openid.mode = check_authentication
     
     station = self.get_entity()
-    attrs = decodeAttributes(args)
-    
-    id_type = 'openid'
-    id_provider = self.provider()
-    account_name = args['openid.claimed_id']
-    display_name = extractName(attrs)
-    
-    i = IdentityData(station=station,
-      id_type=id_type, account_name=account_name)
-    if id_provider: i.id_provider = id_provider
-    if display_name: i.display_name = display_name
-    i.put()
+    ax = decodeAttributes(args)
+    attrs = permuteAttributes(ax)
+        
+    IdentityData(parent=station,
+      id_type='openid',
+      id_provider=self.provider(),
+      account_name=args['openid.claimed_id'],
+      display_name=attrs.get('name', [None])[0],
+      attributes=json.dumps(attrs)
+      ).put()
     
     page = self.buildClosePage()
-    #page = self.buildDebuggingPage(args, attrs)
+    #page = self.buildDebuggingPage(args, ax)
     
     self.response.out.write(page)
     self.response.headers.add_header("Cache-Control", "no-cache")

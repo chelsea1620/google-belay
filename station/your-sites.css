@@ -68,16 +68,18 @@ body h1 i {
   width: 122px;
 }
 
-#nav li.section,
-#nav li.identity {
+#nav li.section {
   padding-left: 30px;
 }
 
-#nav li.section {
-  background: url(globe.png) no-repeat 10px 8px;
+#nav li.identity img {
+	width: 13px;
+	vertical-align: text-top;
+	padding-right: 0.5em;
 }
-#nav li.identity {
-  background: url(person.png) no-repeat 10px 6px;
+
+#nav li.section {
+  background: url(res/images/globe.png) no-repeat 10px 8px;
 }
 
 #nav li.selected {
@@ -249,7 +251,7 @@ tr.attributes {
   height: 96px;
   top: 16px;
   left: 40%;
-  background: url(drop.png) no-repeat;
+  background: url(res/images/drop.png) no-repeat;
   z-index: 2000;
   margin: 0;
   padding: 0;
@@ -495,7 +497,7 @@ body input, body button, body select {
 }
 select.button {
   -webkit-appearance: listbox;
-  background-image: url(updown.png);
+  background-image: url(res/images/updown.png);
   background-attachment: scroll;
   background-repeat: no-repeat;
   background-position: 95% center;

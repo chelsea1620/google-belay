@@ -35,7 +35,8 @@ mimeTypeMap = {
   '.css':   'text/css;charset=UTF-8',
 
   '.png':   'image/png',
-  '.gif':	'image/gif'
+  '.gif':   'image/gif',
+  '.ico':   'image/ico'
 }
 
 if extension not in mimeTypeMap:
@@ -43,7 +44,7 @@ if extension not in mimeTypeMap:
   sys.exit()
 
 basePath = os.path.dirname(os.path.dirname(os.path.dirname(os.environ['PATH_TRANSLATED'])))
-	# presumes that this script is two levels below the root of the application
+    # presumes that this script is two levels below the root of the application
 filePath = os.path.join(basePath,pathInfo)
 
 f = open(filePath, 'rb')

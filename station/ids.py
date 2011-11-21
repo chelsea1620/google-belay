@@ -22,11 +22,69 @@ from google.appengine.ext import db
 from google.appengine.ext import webapp
 
 
+GOOGLE_PROVIDER = 'Google'
+YAHOO_PROVIDER = 'Yahoo'
+AOL_PROVIDER = 'AOL'
+
+
+# a map from id_type -> provider_id -> icon path
+# defaults are provided if a matching provider_id cannot be found by using the
+# key 'other'
+# all icons should render well at a size of 16x16
+id_icon_map = {
+    'openid': {
+        GOOGLE_PROVIDER: 'google.ico',
+        YAHOO_PROVIDER: 'yahoo.ico',
+        AOL_PROVIDER: 'aol.ico',
+        'other': 'openid.ico'
+    },
+    'browserid': {
+        'other': 'browserid.ico'
+    },
+    'email': {
+        # TODO(iainmcgin): need an icon to distinguish verified from unverified
+        'other': 'unverified.png',
+    },
+    'profile': {
+        'other': 'profile.png'
+    }
+}
+
+
+def icon_for_id(id):
+  icon_map = id_icon_map[id.id_type]
+  if id.id_provider in icon_map:
+    return '/res/images/%s' % icon_map[id.id_provider]
+  else:
+    return '/res/images/%s' % icon_map['other']
+
+
+def id_to_json(id):
+  j = {
+    'id_type': id.id_type,
+    'id_icon': icon_for_id(id),
+    'account_name': id.account_name,
+  }
+  if id.id_provider: j['id_provider'] = id.id_provider
+  if id.display_name: j['display_name'] = id.display_name
+  j['attributes'] = json.loads(id.attributes)
+  return j
+
+
+def json_to_id(j, station):
+  i = IdentityData(station=station,
+        id_type=j['id_type'],
+        account_name=j['account_name'])
+  if 'id_provider' in j: i.id_provider = j['id_provider']
+  if 'display_name' in j: i.display_name = j['display_name']
+  i.attributes = json.dumps(j['attributes'])
+  return i
+
 
 def allIdentities(station):
   q = IdentityData.all()
   q.ancestor(station)
-  return [ x.toJson() for x in q]
+  return [ id_to_json(x) for x in q]
 
 
 class IdentitiesHandler(CapHandler):
@@ -36,11 +94,13 @@ class IdentitiesHandler(CapHandler):
 
   def put(self):
     station = self.get_entity()
-    for i in station.identitydata_set:
+    q = IdentityData.all()
+    q.ancestor(station)
+    for i in q:
       i.delete()
     idinfo = self.bcapRequest()
     for j in idinfo:
-      IdentityData.fromJson(station, j).put()
+      json_to_id(j, station).put()
     self.bcapNullResponse()
 
 

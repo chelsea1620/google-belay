@@ -17,6 +17,8 @@ import cgi
 from model import *
 from lib.py.belay import *
 
+import ids
+
 class LaunchHandler(CapHandler):
   def get(self):
     args = {}
@@ -65,12 +67,12 @@ class LaunchHandler(CapHandler):
 
 # TODO(mzero): These should be doing discovery to find the endpoint URLs
 
-class GmailLaunchHandler(LaunchHandler):
+class GoogleLaunchHandler(LaunchHandler):
   def endpointUrl(self):
     return 'https://www.google.com/accounts/o8/ud'
   
   def callbackClass(self):
-    return GmailCallbackHandler
+    return GoogleCallbackHandler
 
 
 class YahooLaunchHandler(LaunchHandler):
@@ -212,16 +214,16 @@ class CallbackHandler(CapHandler):
     </html>'''
 
 
-class GmailCallbackHandler(CallbackHandler):
+class GoogleCallbackHandler(CallbackHandler):
   def provider(self):
-    return 'Gmail'
+    return ids.GOOGLE_PROVIDER
 
 
 class YahooCallbackHandler(CallbackHandler):
   def provider(self):
-    return 'Yahoo'
+    return ids.YAHOO_PROVIDER
 
 
 class AolCallbackHandler(CallbackHandler):
   def provider(self):
-    return 'AOL'
+    return ids.AOL_PROVIDER

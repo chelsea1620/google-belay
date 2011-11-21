@@ -31,7 +31,7 @@ var dragData = {
   instanceId: null
 };
 
-var defaultIcon = '/tool.png';
+var defaultIcon = '/res/images/tool.png';
 
 function detachProto(elem) {
   var proto = elem.eq(0).detach();
@@ -896,11 +896,11 @@ var identities = (function() {
     addTestElem.click(function() {
       identitiesCap.put([
         {'id_type': 'OpenID',
-         'id_provider': 'gmail.com',
+         'id_provider': 'google',
          'account_name': 'betsy.ross@gmail.com',
          'display_name': 'Betsy Ross'},
         {'id_type': 'OpenID',
-         'id_provider': 'yahoo.com',
+         'id_provider': 'yahoo',
          'account_name': 'bross@yahoo.com'},
         {'id_type': 'email',
          'account_name': 'bee.girl@ralvery.com'},
@@ -930,8 +930,12 @@ var identities = (function() {
       if (d.id_provider) { title += ' — ' + d.id_provider; }
       
       var elem = protoIdentity.clone();
-      elem.text(text);
-      elem.attr('title', title);
+      var image = elem.find('img');
+      image.attr('src', d.id_icon);
+      image.attr('alt', d.id_provider || '')
+      var desc = elem.find('span');
+      desc.text(text);
+      desc.attr('title', title);
       list.append(elem);
     }
     

@@ -45,23 +45,3 @@ class IdentityData(db.Model):
   attributes = db.TextProperty(default='{}')
     # JSON encoded map of attribute names to arrays of values
     # first value in the list is "primary"
-
-  def toJson(self):
-    j = {
-      'id_type': self.id_type,
-      'account_name': self.account_name,
-    }
-    if self.id_provider: j['id_provider'] = self.id_provider
-    if self.display_name: j['display_name'] = self.display_name
-    j['attributes'] = json.loads(self.attributes)
-    return j
-
-  @classmethod
-  def fromJson(cls, station, j):
-    i = IdentityData(station=station,
-          id_type=j['id_type'],
-          account_name=j['account_name'])
-    if 'id_provider' in j: i.id_provider = j['id_provider']
-    if 'display_name' in j: i.display_name = j['display_name']
-    i.attributes = json.dumps(j['attributes'])
-    return i

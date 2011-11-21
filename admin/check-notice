@@ -1,0 +1,28 @@
+#!/bin/bash
+
+NOTICES=`dirname $0`/notices
+if [ \! -d $NOTICES ]
+then
+	echo 'could not find the notices directory'
+	exit 1
+fi
+
+for f in "$@"
+do
+  case $f in
+	*.*)
+	  c=${f/*./$NOTICES/}
+	  if [ -f $f -a -e $c ]
+	  then
+	    if grep -q -i Copyright $f
+	    then
+	      echo '#' already copyrighted: $f
+	    else
+	      echo cat $c $f '>' tmp ';' mv tmp $f
+	    fi
+	  else
+	    echo '#' not a source file: $f
+	  fi
+	  ;;
+  esac
+done

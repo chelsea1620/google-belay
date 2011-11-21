@@ -1,0 +1,401 @@
+TODO
+====
+
+Relative urls - should be served from the public site in prod and 
+
+run offline
+
+
+:: multi-window ::
+
+[x] define the public interface API
+
+[x] decide if things should take capID or ser
+  -- especially the APIs on the externalInterface
+
+[x] change invoke interface to not expect JQuery opts and match docs
+[x] remove revoke from the Capability interface (only have it on CapServer)
+
+[x] refactor decode & m[1] into a getCapID function
+[x] delete externalInterface
+[x] change impls' interface to not expect JQuery opts and match docs
+
+[-] resolvers take a ser not an instanceID
+[x] resolve our naming of resolver --- is it a router?  a gizmatchki?
+[x] fix interface of instanceResolver to return a public interface and take a ser
+
+[x] refactor how Capability objects are constructed so they are "local"
+   [x] restore -> enliven(?) a function a modules uses on its own capserver to create
+      a useful object interface to the cap (from a ser.)
+   [x] Capability.invoke does the routing up and over to the public interface each time
+   [x] revive becomes a function called on invocation if needed
+   [x] fix deadCap (see bork'd FIXME)
+
+[x] belay station demo fixes
+  [x] calls to invoke
+  [x] change belay's resolver to return publicInterfaces rather than instances
+
+[x] test cleanups
+  [x] fix hard coded URL in tests
+  [x] clean up transcript logging in testInstance.html
+
+[~] message port transport tunnel
+  [x] implement public interface (with common API)
+  [x] serializes the request to postMessage
+  [x] remote handler that deserializes and calls local CapServer public interface
+  [] passing caps in request and response data
+  [] invoking a passed cap
+  [x] proof of concept invoking back from remote window
+    * caps have to be passed serialized, as dataPre/PostProcessing isn't done yet
+    * no way to grant invokeWithThree in such a way that it can delay its response
+      predicated on the response of its cap invocation
+      ? CapServer.grantAsyncFunc(function(d, s, f) { ... })
+    * code now implements a 'seedCap' pattern
+    * invoking a cap, fetched via a seedCap requires chaining
+      * this would require standard async JS techniques off of the success function
+      * but, in Jasmine tests, requires awkward blocks of runs/waits and status vars
+      * perhaps refactoring the Jasmine tests will yield a nicer technique
+      * perhaps we are just re-inventing futures (and web_send)
+
+[] ui call to allow spawn into new window
+  [] user click causes new window, with handler
+  [] "open" message provides serializtion info, and capServer snapshot
+    [] creates channels, remote handler, capServer
+    [] foop's instnace into existance
+
+[x] partition instance state in database
+  [x] so capServer and instance data can save from remote window w/o protocol
+  
+[] where to put publicInterface tests
+
+[x] clean up CapTunnel
+  [x] indenting is wrong
+  [x] responseOK/Err could be refactored into one response method & message
+  [x] handle invokeSync() calls on the tunnel... throw exception?
+
+
+:: later ::
+
+[] set up JavaScript linting on project
+
+[] convert station to use Capabilities rather than $.ajax 
+
+[] factor out boilerplate between station and buzzer
+
+[] revisit two forms of Capabilities (public/privateInterface on construction)
+
+[] we don't have a way to call grant a cap to a function that itself
+  wants to do async. operations.. for example another invoke!
+
+[] rework application model
+  [] to support enlivening persistent caps
+  [] to support "put away"
+
+[] support "put away"
+  [] drawer/tab with put away things
+
+[] add name to emote of its target
+[] title bar and title on stuff
+[] separate tool bar icons
+[] top on click if not top
+
+[] belay logout
+[] rename belay station to ???
+  -- Belay Station is name of service provider
+
+[] layout must work at multiple browser resizes
+
+[] what is with the reload bug where things are in the wrong spot???
+
+
+[] write a "start servers" script that launches these correctly
+
+[] support tabbed things
+  [] os.ui.windowOptions API
+
+[] fix the ugly sticky notes
+
+[] Better station state
+  [] store record per instance and tool, not as one big blob
+  [] only update record per instance as needed
+  [] delay updates and coallesce into one write
+  [] update pending indicator (?)
+  [] error on unable to update
+
+[] inner desk area should be sized to contain stuff, and scroll if needed
+  -- works but h & v scroll bars are funky
+
+[] should provide a utility function for the normal, load up and initialize()
+    that each application has to do
+
+[] resolve which div is responsible for w/h 100%, pos abs, t/l 0
+    - the generated (by foop) inner div?
+    - a static inner div (between belay-container and the foop)
+    - the thing's own top div
+    - something should overflow:hidden here
+
+[] fix casing in py and js files to be correct
+
+[] progress indicator during foop()
+[] read template files as UTF-8 and pass unicode objects to django's templates
+[] why does failing foop kill chrome?
+[] add |escapejs for stationURL in belay's index.tmpl
+
+[] belay account management page
+  [] should show name of provider, not url
+  [] should allow deleting the account
+  -- never delete, always just archive (!)
+  
+[] station delete should move to trash
+
+[] generation of JSON in python on launch should be safer
+[] server_url shouldn't come from HTTP_HOST? or be sanitized
+
+[] a concept of precious: sometimes you've generated an instance, but until
+  it is semantically filled-in, there is no point in saving it.
+
+[] change os.ui.capDraggable() and os.ui.capDroppable to take not just a single
+  resourceClass string, but instead an array of descriptors
+
+[] if we detect that the environment isn't secureable (say no Object.freeze)
+  [] then we should give a visual indication
+
+[] should have a way for a container to be notified about a change in
+  a containee's capServer
+
+[] CapServer.prototype.restore should return null on error, not a deadCap
+  - or we should be able to test for a deadCap --- better UI if the
+  restoring app can tell if the cap is dead.
+
+[] ? cap restoration before the instance resolver can find the instance
+
+
+ISSUES
+======
+[] absolute URLs in components
+    -- all have to know their base URL, and it is copied everywhere
+[] lack of composability in web client-side framework a real problem
+[] should extra property of foop instead be a hook for modifying the os
+  before being used? It is concievable that foop may build an os with things
+  that are extensible, call the hook, then add things to os that aren't
+  overridable
+[] resize & window os.ui caps should be much more sophisticated
+  - perhaps allowing item to provide a w,h filter function?
+[] if we indirect URLs we give out (to users or apps) so that we can revoke,
+  then we have the issue of what to do with the caps derived from the cap that
+  are delivered to the app:
+    1? we box 'em too: the membrane model, requiring knowledge of what is and
+        isn't a cap, and the expense of proxying 'em all if not done at the dest
+    2? have derived caps be short lived (the SL model) - requires app to do the
+        right thing
+    3? do nothing -- assume that encapsulation of those caps in the code will
+        keep them safe - or at least safe from accidental disclosure
+[] letting apps know their instances were killed... or not...
+[] dragging: rife with vulnerabilities and ugliness
+  - the source supplies the element that is cloned
+  - getting the style of the dragged thing out is a pain (scoped css)
+[] bringing base libraries into scope is a giant pain in the arse
+  - consider getting caps.js in scope - it was easiest to do it in belay/belay
+[] should be freezing things in kickoff.js/foop()
+[] whole thing is incredibly fragile: 
+  - one dead script and the whole page comes to a screaming halt
+[] we still rely on being able to walk the DOM tree from container to containee
+  - for example during drang-n-drop hilighting
+  - this environment therefore, exposes itself - since the containee nodes are
+    under the control of the continee
+
+
+USER STORIES
+============
+:: pre-demo ::
+
+[] Logger example
+      [] creates instance, but registered as a feed & added to tools
+  [] mood posting app: "Emote"
+    [] only the feed gets to add 'via'
+
+[] App Store Experience
+  [] there is a tool that is the app store
+  [] clicking on it opens it (not generate)
+  [] clicking on an item installs it
+
+:: maybe demo ::
+
+[] Sharing Experience
+  [] click on an item and select share
+  [] can share to "anyone with the URL"
+   -- shares a boxed URL (how do we, or do we box the child cap URLs?)
+  [] can share to someone with an e-mail / pet-name
+    -- generates an invitiation cap
+    -- cap sent/delivered to user
+    -- user exchanges it for a cap that is bound to them
+
+:: later ::
+
+[] drag tool to stuff, foop()
+
+[] Several kinds of App
+  [x] common iurl for all instances, data stores all state :: hello
+  [x] custom iurl for each instance, no data :: station, sticky
+  [] custom tool url per station, but common iurl, and storing in data
+  [] code installed as tool, data stores all state
+
+[] App Access Experience
+  [] drag thing to tool, foop(thing)
+  [] drag thing to thing --> grant(thing)
+  [] thing has boxed URL for the final thing... (yes?)
+
+[] an instance can offer to add a tool
+[] an instnace can offer to add another instance
+
+[] privacy demo -- sharing with someone, sealed to their container
+
+
+EXPLORATIONS
+============
+
+WHAT IS STORAGE
+---------------
+If A foop's B, then A needs to store enough information to be able to recreate
+B in the same state.
+
+    A: Original script & data as provided by B
+    B: Original URL & data as provided by B
+    C: URL as provided by B
+    D: URL & data provided by B
+    E: Script & data provided by B
+
+At some point, B will have additional caps, given it by the user or system.
+Those need to be pickled too.
+
+    A: Have B tell which caps it needs
+    B: Save and restore all additional caps
+
+We need to support both the "instance of an application" model, as well as the
+"reference to a remote resource" model.
+
+A "Tool" can be:
+  T1: Code that is run on stored instance data
+  T2: A URL to code that is run on stored instance data
+  T3: A URL that is invoked to get an instance URL
+
+The way we reach the code to be executed for an instance is:
+  T1 item -> T1 code
+  T2 item -> T2 url -> T2 code
+  T3 item -> T3 url -> T3 inst. url -> T3 code
+
+An "Instance" is then some stored element along those paths, and some optional
+data. To run (foop) the instance means to follow from the stored thing to get
+the code, then start the code with the optional stored data.
+  
+  Storing things on the left lead to updating, storing things on the right
+  lead to more guarantees. 
+  
+Typically, we store one link before the code:
+  T1: store ref
+  T2: store url
+  T3: store iurl
+
+For now we are following T3, and storing the iurl. Application can return
+a constant URL for the inst. url, thus simulating a T2 style tool.
+
+
+
+MECHANISMS FOR FOOP
+-------------------
+a) create a containing div
+   XHR from URL to get script
+   eval script in confined way
+        prepend "use strict"
+        var g = undefined; for all globals g
+        let "os" into the environment
+   -- this implied that you have to add "Access-Control-Allow-Origin: *"
+
+MISC
+----
+We need an application/instance life cycle system
+
+  instance :: {
+    iurl :: url,
+    type :: urn
+    data :: string -- JSON
+    
+    name :: string,
+    icon :: data? url?,
+    
+    location :: Desk | Tools | Accounts | Archive | Misc
+    window :: {...} -- as needed
+  }
+  
+  type implies API for starting it:
+  
+  type == 'instance':
+    recreate window environment
+    use iurl to fetch JS
+    run the js in an env. w/os & os.topDiv 
+  
+  type == 'generator'
+    use iurl to fetch a new iurl
+    build an instance on the Desk w/that iurl, type 'instance'
+    start that instance
+  
+  type == ''
+
+
+Tools area: displays frozen instances, clicking revives in desktop
+  ? in area previously opened?
+  ? in area requested by code after opening?
+  ? in area requested by code when tool was made?
+  ? is this a running instance of a "Tool Holder"?
+    ? therefore clicking on a instance (or what ever UI it wants)
+      allows the instance to request foop'ing another instance
+        ? who says iurl/name/icon/type/location?
+        
+Desk area: displays live instances
+
+
+Let's look at the usage scenarios we need:
+
+      1) In tool bar is a icon for the App store
+a::      Clicking on that tool opens a tab (desk?) window
+i::      Clicking on an item in the App store window (presumably user decision)
+           installs a new tool in the tool bar
+
+      2) In tool bar is a pad of sticky notes
+b::      Clicking on the tool creates a new sticky note on the desk
+f,a::    The note can be put away (filed), and reopened
+d::      The note can be deleted
+
+      3) While browsing a page  (in a tab?), is a link to create an account
+         Clicking create (presumably user decision)
+i::        installs a new item in the Accounts tab
+f::          - acts like a filed (put away) instance
+a::        clicking THAT new item, results in a new tab (desk?) window
+
+a:: - click on an icon launches THAT instance
+b:: - click on an icon launches a new instance
+d:: - a running (frozen?) item can be deleted
+f:: - a running item can be frozen and filed
+i:: - running instance can install an item
+      (sometimes the item is a tool that does b::, sometimes an instance that does a::)
+      (sometimes the item is generic, sometimes it is a generated instance)
+
+
+SO - big question
+  is b:: really a:: followed by i:: followed by a:: on that item --- all without
+    a window for the original item??!?!?!?!
+    
+
+
+os.install(<instance_spec>)
+os.launch(<instance_spec>)
+
+instance_spec :: {
+  iurl :: url,  // where is the code
+  type :: Instance | Generator
+  data :: string -- JSON
+  
+  name :: string,
+  icon :: data? url?,
+  location :: Tools | Accounts | Misc | Ask
+}

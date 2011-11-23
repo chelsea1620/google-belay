@@ -27,7 +27,7 @@ class TestJavascript(BelayTest):
     
     def test_app_spec_runner(self):
         self.driver.get("file:" + sys.path[0] + "/AppSpecRunner.html")
-        self.wait_for(lambda drv: self.get_result() != None, 20)
+        self.wait_for(lambda drv: self.get_result() != None, 40)
         self.assertTrue(self.get_result(), "AppSpecRunner tests failed")
 
 if __name__ == "__main__":

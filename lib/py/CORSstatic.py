@@ -26,6 +26,11 @@ import sys
 # content that AppEngine already provides. In particular we need to support
 # MIME Type sniffing, and add appropriate headers for caching.
 
+def errorResponse(status, message):
+  print "Status: %d %s" % (status, message)
+  print ""
+  sys.exit(status)
+  
 pathInfo = os.environ['PATH_INFO'][1:] # strip leading slash
 extension = os.path.splitext(pathInfo)[1]
 
@@ -40,15 +45,18 @@ mimeTypeMap = {
 }
 
 if extension not in mimeTypeMap:
-  print os.environ['SERVER_PROTOCOL'],"500 Unknown static file extension"
-  sys.exit()
+  errorResponse(404, "Unknown file type")
 
 basePath = os.path.dirname(os.path.dirname(os.path.dirname(os.environ['PATH_TRANSLATED'])))
     # presumes that this script is two levels below the root of the application
 filePath = os.path.join(basePath,pathInfo)
 
-f = open(filePath, 'rb')
-content = f.read()
+try:
+  f = open(filePath, 'rb')
+except:
+  errorResponse(404, "File not found")
+
+content = f.read()  
 f.close()
 
 contentType = mimeTypeMap[extension]

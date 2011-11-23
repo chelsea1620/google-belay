@@ -40,7 +40,9 @@ handlers:
   secure: always
 
 - url: /(.*\.(html|css|js|png|gif|ico))
-  script: lib/py/CORSstatic.py
+  static_files: \1
+  upload: (.*\.(html|css|js|png|gif|ico))
+#  script: lib/py/CORSstatic.py
   secure: always
 
 - url: /test

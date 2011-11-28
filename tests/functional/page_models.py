@@ -15,6 +15,7 @@ class BelayEnabledPage(object):
         self.window = driver.current_window_handle
         self.wait_for_ready()
         self.inject_js_error_detect()
+        self.disable_jquery_animations()
     
     def inject_js_error_detect(self):
         self.driver.execute_script("""
@@ -27,6 +28,9 @@ class BelayEnabledPage(object):
                 });
             });
         """)
+    
+    def disable_jquery_animations(self):
+        self.driver.execute_script('jQuery.fx.off = true;')
     
     def get_js_errors(self):
         exec_js = self.driver.execute_script

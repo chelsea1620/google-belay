@@ -32,17 +32,8 @@ limitations under the License.
   </form>
   <script>
 onBelayReady(function() {
-  var form = $('form');
-  form.attr('action', launchInfo.url);
-  form.attr('method', 'POST');
-  for (var k in launchInfo.args) {
-    var v = launchInfo.args[k];
-    var elem = $('<input />');
-    elem.attr('name', k);
-    elem.attr('value', v);
-    elem.attr('type', 'hidden');
-    form.append(elem);
-  }
+  var form = $(launchInfo.formContent);
+  $('form').replaceWith(form);
   form.submit();
 });
   </script>

@@ -50,6 +50,10 @@ handlers:
   secure: always
   login: admin
 
+- url: /cleanup
+  script: gae_openid_store.py
+  login: admin
+
 admin_console:
   pages:
   - name: Server Info

@@ -17,25 +17,38 @@ import cgi
 from model import *
 from lib.py.belay import *
 
-import ids
+from openid.consumer import consumer
+from openid.extensions import ax
+from gae_openid_store import AppEngineOpenIDStore
+
+import logging
+
+import identities
 
 class LaunchHandler(CapHandler):
   def get(self):
-    args = {}
+    c = consumer.Consumer({}, AppEngineOpenIDStore())
+    auth_request = c.begin(self.discoveryUrl())
+
+    auth_request.addExtension(self.buildAttributeRequest())
+    
+    station = self.get_entity()
+    returnCap = regrant(self.callbackClass(), station)
+    realm = server_url('')
+
+    form = auth_request.formMarkup(realm, returnCap.serialize(), False, {})
 
     reply = {
       'page': { 'html': server_url('/addOpenId.html') },
       'info': {
-        'url': self.endpointUrl(),
-        'args': self.buildOpenIdArgs()
+        'formContent': form
       }
     }
     self.bcapResponse(reply)
 
-  def buildOpenIdArgs(self):
-    station = self.get_entity()
-    returnCap = regrant(self.callbackClass(), station)
-    realm = server_url('')
+  def buildAttributeRequest(self):
+    ax_request = ax.FetchRequest()
+    
     attributes = [
       'http://axschema.org/contact/email',
       'http://axschema.org/contact/verifiedemail',
@@ -45,47 +58,32 @@ class LaunchHandler(CapHandler):
       'http://axschema.org/namePerson/friendly',
       'http://axschema.org/media/image/default',
     ]
-
-    args = { }
-    args['openid.ns'] = 'http://specs.openid.net/auth/2.0'
-    args['openid.mode'] = 'checkid_setup'
-    args['openid.claimed_id'] = 'http://specs.openid.net/auth/2.0/identifier_select'
-    args['openid.identity'] = 'http://specs.openid.net/auth/2.0/identifier_select'
-    args['openid.realm'] = realm
-    args['openid.ns.ax'] = 'http://openid.net/srv/ax/1.0'
-    args['openid.return_to'] = returnCap.serialize()
-
-    args['openid.ax.mode'] = 'fetch_request'
-    aliases = [ ]
-    for i in xrange(0,len(attributes)):
-      k = 'a%d' % i
-      args['openid.ax.type.' + k] = attributes[i]
-      aliases.append(k)
-    args['openid.ax.required'] = ','.join(aliases)
+    for attr in attributes:
+        ax_request.add(ax.AttrInfo(attr, required=True))
     
-    return args
+    return ax_request
 
 # TODO(mzero): These should be doing discovery to find the endpoint URLs
 
 class GoogleLaunchHandler(LaunchHandler):
-  def endpointUrl(self):
-    return 'https://www.google.com/accounts/o8/ud'
+  def discoveryUrl(self):
+    return 'https://www.google.com/accounts/o8/id'
   
   def callbackClass(self):
     return GoogleCallbackHandler
 
 
 class YahooLaunchHandler(LaunchHandler):
-  def endpointUrl(self):
-    return 'https://open.login.yahooapis.com/openid/op/auth'
+  def discoveryUrl(self):
+    return 'https://yahoo.com/'
   
   def callbackClass(self):
     return YahooCallbackHandler
 
 
 class AolLaunchHandler(LaunchHandler):
-  def endpointUrl(self):
-    return 'https://api.screenname.aol.com/auth/openidServer'
+  def discoveryUrl(self):
+    return 'http://aol.com/'
   
   def callbackClass(self):
     return AolCallbackHandler
@@ -104,47 +102,29 @@ def extractAliases(prefix, args):
     if a:
       r[v] = a
   return r
-  
-def decodeAttributes(args):
-  attrs = dict()
-  ns = extractAliases('openid.ns.', args)
-  ax_prefix = ns.get('http://openid.net/srv/ax/1.0', None)
-  if ax_prefix != None:
-    types = extractAliases('openid.' + ax_prefix + '.type.', args)
-    for (type, alias) in types.iteritems():
-      count = args.get('openid.' + ax_prefix + '.count.' + alias, -1)
-      values = []
-      if count < 0:
-        values.append(args.get('openid.' + ax_prefix + '.value.' + alias, ''))
-      else:
-        k = 'openid.' + ax_prefix + '.value.' + alias + '.'
-        for i in xrange(1, count+1):
-          values.append(args.get(k + str(i), ''))
-      attrs[type] = values
-  return attrs
 
 def permuteAttributes(ax):
   # reform attributes from AX names and format to our names and format
   attrs = dict()
 
   v = []
-  v.extend(ax.get('http://axschema.org/namePerson', []))
-  v.extend(ax.get('http://axschema.org/namePerson/friendly', []))
-  fns = ax.get('http://axschema.org/namePerson/first', [])
-  lns = ax.get('http://axschema.org/namePerson/last', [])
+  v.extend(ax.data.get('http://axschema.org/namePerson', []))
+  v.extend(ax.data.get('http://axschema.org/namePerson/friendly', []))
+  fns = ax.data.get('http://axschema.org/namePerson/first', [])
+  lns = ax.data.get('http://axschema.org/namePerson/last', [])
   v.extend([f + ' ' + l for (f, l) in zip(fns,lns)])
     # not clear if the first and last name values sets are 'aligned' like this
   if v:
     attrs['name'] = v
   
   v = []
-  v.extend(ax.get('http://axschema.org/contact/verifiedemail', []))
-  v.extend(ax.get('http://axschema.org/contact/email', []))
+  v.extend(ax.data.get('http://axschema.org/contact/verifiedemail', []))
+  v.extend(ax.data.get('http://axschema.org/contact/email', []))
   if v:
     attrs['email'] = v
   
   v = []
-  v.extend(ax.get('http://axschema.org/media/image/default', []))
+  v.extend(ax.data.get('http://axschema.org/media/image/default', []))
   if v:
     attrs['image'] = v
   
@@ -159,32 +139,30 @@ class CallbackHandler(CapHandler):
     self.handleOpenIdResponse(self.request.POST)
 
   def handleOpenIdResponse(self, args):
-    # TODO(mzero): check that the response is a postiive assertion:
-      # opendid.mode == 'id_res'
-      
-    # TODO(mzero): check signature
-    # 1) check that openid.return_to == current URL of current request
-    #     check that scheme, authority and path match
-    #     check that all query args in openid.return_to are in current URL
-    # 2) do discovery on openid.claimed_id and make sure it points back at
-    #     the opendid.idenity, openid.op_endpoint, and openid.ns
-    # 3) check that the openid.response_nonce hasn't been used before by this OP
-    # 4) resend the query to the OP w/openid.mode = check_authentication
-    
-    station = self.get_entity()
-    ax = decodeAttributes(args)
-    attrs = permuteAttributes(ax)
-        
-    IdentityData(parent=station,
-      id_type='openid',
-      id_provider=self.provider(),
-      account_name=args['openid.claimed_id'],
-      display_name=attrs.get('name', [None])[0],
-      attributes=json.dumps(attrs)
-      ).put()
-    
-    page = self.buildClosePage()
-    #page = self.buildDebuggingPage(args, ax)
+    c = consumer.Consumer({}, AppEngineOpenIDStore())
+    result = c.complete(args, server_url(self.request.path_info_cap))
+
+    if result.status == consumer.SUCCESS:
+        ax_response = ax.FetchResponse.fromSuccessResponse(result)
+        if ax_response:
+            station = self.get_entity()
+            attrs = permuteAttributes(ax_response)
+
+            IdentityData(
+                parent=station,
+                id_type='openid',
+                id_provider=self.provider(),
+                account_name=result.identity_url,
+                display_name=attrs.get('name', [None])[0],
+                attributes=json.dumps(attrs)
+            ).put()
+
+        # TODO(iainmcgin): we're not handling missing attributes
+        page = self.buildClosePage()
+        #page = self.buildDebuggingPage(args, attrs)
+    elif result.status == consumer.FAILURE:
+        logging.getLogger().info('openid request failed: %s' % result.message)
+        page = self.buildFailPage()
     
     self.response.out.write(page)
     self.response.headers.add_header("Cache-Control", "no-cache")
@@ -213,17 +191,26 @@ class CallbackHandler(CapHandler):
     </script></body>
     </html>'''
 
+  def buildFailPage(self):
+    return '''<html>
+    <body><h1>Failed!</h1>
+    <p>The request to authenticate with your identity provider failed. You
+    may close this window when ready.</p>
+    <script>
+      window.opener.postMessage('done', '*');
+    </script></body>
+    </html>'''
 
 class GoogleCallbackHandler(CallbackHandler):
   def provider(self):
-    return ids.GOOGLE_PROVIDER
+    return identities.GOOGLE_PROVIDER
 
 
 class YahooCallbackHandler(CallbackHandler):
   def provider(self):
-    return ids.YAHOO_PROVIDER
+    return identities.YAHOO_PROVIDER
 
 
 class AolCallbackHandler(CallbackHandler):
   def provider(self):
-    return ids.AOL_PROVIDER
+    return identities.AOL_PROVIDER

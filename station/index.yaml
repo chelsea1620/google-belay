@@ -23,3 +23,28 @@ indexes:
 # manually, move them above the marker line.  The index.yaml file is
 # automatically uploaded to the admin console when you next deploy
 # your application using appcfg.py.
+
+- kind: OpenIDAssociationData
+  properties:
+  - name: handle
+  - name: idp_server_url
+  - name: issued
+    direction: desc
+
+- kind: OpenIDAssociationData
+  properties:
+  - name: idp_server_url
+  - name: issued
+    direction: desc
+
+- kind: OpenIDNonceData
+  properties:
+  - name: salt
+  - name: server_url
+  - name: expiry
+
+- kind: OpenIDNonceData
+  properties:
+  - name: salt
+  - name: server_url
+  - name: timestamp

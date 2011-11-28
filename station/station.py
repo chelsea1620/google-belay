@@ -30,8 +30,8 @@ from google.appengine.ext import db
 from google.appengine.ext import webapp
 from google.appengine.ext.webapp.util import run_wsgi_app
 
-import ids
-import openid
+import identities
+import identities_openid
 
 
 def keyName(key):
@@ -178,17 +178,17 @@ class BelayLaunchHandler(BaseHandler):
           'section': regrant(SectionHandler, station),
           'allInstances': allInstances(station),
           'allSections': allSections(station),
-          'identities': regrant(ids.IdentitiesHandler, station),
-          'allIdentities': ids.allIdentities(station),
+          'identities': regrant(identities.IdentitiesHandler, station),
+          'allIdentities': identities.allIdentities(station),
           'addIdentityLaunchers': [
               { 'title': 'Add Gmail',
-                'launch': regrant(openid.GoogleLaunchHandler, station) },
+                'launch': regrant(identities_openid.GoogleLaunchHandler, station) },
               { 'title': 'Add Yahoo',
-                'launch': regrant(openid.YahooLaunchHandler, station) },
+                'launch': regrant(identities_openid.YahooLaunchHandler, station) },
               { 'title': 'Add AOL',
-                'launch': regrant(openid.AolLaunchHandler, station) },
+                'launch': regrant(identities_openid.AolLaunchHandler, station) },
               { 'title': 'Add Profile',
-                'launch': regrant(ids.ProfileLaunchHandler, station) }
+                'launch': regrant(identities.ProfileLaunchHandler, station) }
             ]
       }
     }
@@ -222,7 +222,7 @@ class InstancesHandler(BaseHandler):
     q.ancestor(station)
     ids = []
     for instanceKey in q:
-      ids.append(cap(instance_url(station.key(), instanceKey)))
+      identities.append(cap(instance_url(station.key(), instanceKey)))
     
     self.bcapResponse(ids)
 
@@ -273,15 +273,15 @@ set_handlers(
   '/cap',
   [('section', SectionHandler),
    ('section/attributes', AttributesHandler),
-   ('identities', ids.IdentitiesHandler),
-   ('ids/profile/launch', ids.ProfileLaunchHandler),
-   ('ids/profile/add', ids.ProfileAddHandler),
-   ('openid/google/launch', openid.GoogleLaunchHandler),
-   ('openid/yahoo/launch', openid.YahooLaunchHandler),
-   ('openid/aol/launch', openid.AolLaunchHandler),
-   ('openid/google/callback', openid.GoogleCallbackHandler),
-   ('openid/yahoo/callback', openid.YahooCallbackHandler),
-   ('openid/aol/callback', openid.AolCallbackHandler),
+   ('identities', identities.IdentitiesHandler),
+   ('ids/profile/launch', identities.ProfileLaunchHandler),
+   ('ids/profile/add', identities.ProfileAddHandler),
+   ('openid/google/launch', identities_openid.GoogleLaunchHandler),
+   ('openid/yahoo/launch', identities_openid.YahooLaunchHandler),
+   ('openid/aol/launch', identities_openid.AolLaunchHandler),
+   ('openid/google/callback', identities_openid.GoogleCallbackHandler),
+   ('openid/yahoo/callback', identities_openid.YahooCallbackHandler),
+   ('openid/aol/callback', identities_openid.AolCallbackHandler),
   ])
 
 def main():

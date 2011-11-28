@@ -262,6 +262,8 @@ class ProxyHandler(BcapHandler):
     handler = handler_class()
     handler.set_entity(item)
 
+    self.request.path_info_cap = self.request.path_info
+      # retain the original cap request path
     self.request.path_info = grant.internal_path # handler sees private path
     handler.initialize(self.request, self.response)
     return handler

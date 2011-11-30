@@ -20,16 +20,30 @@ define(['utils', 'attributes'], function(utils, attributes) {
   var navIdentityList = null;
   var protoIdentity = null;
   
-  function init(cs, idData, idCap, idAdders) {
+  function init(cs, idData, idCap, idAdders, createProfile) {
     capServer = cs;
     identitiesCap = idCap;
     navIdentityList = $('#nav-ids');
     protoIdentity = utils.detachProto(navIdentityList.find('.identity.proto'));
 
-    var protoButton = protoIdentity.clone();
-    protoButton.removeClass('identity');
-    protoButton.addClass('button');
-    
+    var openDialogButton = $('#add-id-button');
+    openDialogButton.click(function() {
+      $('.dark-screen').show();
+      dialog = $('#id-add-dialog');
+      dialog.show();
+      dialog.css('top', ($(window).height() - dialog.outerHeight()) / 2 + 'px');
+      dialog.css('left', ($(window).width() - dialog.outerWidth()) / 2 + 'px');
+    });
+
+    var hideIdAddDialog = function() {
+      $('.dark-screen').hide();
+      $('#id-add-dialog').hide();
+    }
+
+    $('#id-add-dialog .close').click(hideIdAddDialog);
+
+    var protoButton = utils.detachProto($('#proto-add-id'));
+
     idAdders.forEach(function(adder){
       var startId;
       
@@ -53,13 +67,15 @@ define(['utils', 'attributes'], function(utils, attributes) {
         expectPage.post({
           startId: startId,
           ready: ready,
-        });        
+        });
       }
       reprime();
       
       var addElem = protoButton.clone();
-      addElem.text(adder.title);
+      addElem.find('span').text(adder.title);
+      addElem.css('background-image', 'url(' + adder.image + ')');
       addElem.click(function() {
+        hideIdAddDialog();
         var newWindow = window.open('redirect.html', startId,
             'width=600,height=600,resizable,scrollbars=yes,status=1');
         reprime();
@@ -76,31 +92,55 @@ define(['utils', 'attributes'], function(utils, attributes) {
         $(window).bind('message', checker);
         setTimeout(unchecker, 10000);
       });
-      navIdentityList.append(addElem);
+      $('#add-id-list').append(addElem);
     });
 
-    var addTestElem = protoButton.clone();
-    addTestElem.text("Add Test Identities");
-    addTestElem.click(function() {
-      identitiesCap.put([
-        {'id_type': 'OpenID',
-         'id_provider': 'google',
-         'account_name': 'betsy.ross@gmail.com',
-         'display_name': 'Betsy Ross'},
-        {'id_type': 'OpenID',
-         'id_provider': 'yahoo',
-         'account_name': 'bross@yahoo.com'},
-        {'id_type': 'email',
-         'account_name': 'bee.girl@ralvery.com'},
-        ], refresh);
-    });
-    navIdentityList.append(addTestElem);
-    var removeElem = protoButton.clone();
+    var removeElem = $('#add-id-button').clone();
+    removeElem.attr('id', 'id-remove-button');
     removeElem.text("Remove All Identities");
     removeElem.click(function() {
       identitiesCap.put([ ], refresh);
     });
     navIdentityList.append(removeElem);
+
+    $('#custom-profile-fields input').each(function(index, elem) {
+      var input = $(elem);
+      if(input.attr('type') == 'submit') return;
+
+      var initialText = input.val();
+      input.focus(function() {
+        if(elem.classList.contains('fresh')) {
+          elem.classList.remove('fresh');
+          input.val('');
+        }
+      });
+
+      input.focusout(function() {
+        if(input.attr('value') == '') {
+          elem.classList.add('fresh');
+          input.val(initialText);
+        }
+      });
+    });
+
+    $('#custom-profile-fields input[type="submit"]').click(function() {
+      attrs = {};
+      $('#custom-profile-fields input').each(function(index, elem) {
+        var jqElem = $(elem);
+        if(jqElem.attr('type') == 'submit') return false;
+        if(elem.classList.contains('fresh')) return false;
+        attrs[jqElem.attr('name')] = jqElem.val();
+      });
+
+      if('name' in attrs && 'location' in attrs && 'email' in attrs) {
+        createProfile.post(attrs, function() {
+          hideIdAddDialog();
+          refresh();
+        }, hideIdAddDialog);
+      }
+      
+      return false;
+    });
 
     rebuild(idData);
   }

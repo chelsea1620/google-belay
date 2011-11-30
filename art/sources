@@ -13,20 +13,37 @@ globe image from
 person image from
     https://gallery.googleplex.com/all/ca5c3d716b783cc31a986907f9970e3f#offset=48&searchbox=person
 
+----------------
+Identity Related
+----------------
+
 yahoo icon at station/res/images/yahoo.ico from
 	http://www.yahoo.com/favicon.ico
+
+yahoo badge at station/res/images/yahoo.png from
+    https://www.google.com/uds/modules/identitytoolkit/image/yahoo-ac.png
 
 aol icon at station/res/images/aol.ico from
 	http://www.aol.com/favicon.ico
 
+aol badge at station/res/images/aol.png from
+    https://www.google.com/uds/modules/identitytoolkit/image/aol-ac.png
+
 browser id icon at station/res/images/browserid.ico from
 	http://www.browserid.com/favicon.ico
 
+browser id badge at station/res/images/browserid.eps adapted from
+    https://github.com/mozilla/browserid/blob/dev/resources/assets/browserID-logo.eps
+
 google icon at station/res/images/google.ico from
 	http://www.google.com/favicon.ico
+
+gmail badge at station/res/images/gmail.png from
+    https://www.google.com/uds/modules/identitytoolkit/image/gmail-ac.png
 
 email icon at station/res/images/unverified.gif from
 	http://www.google.com/enterprise/images/16x16_unread.gif
 
 profile icon at station/res/images/profile.png from
     https://gallery.googleplex.com/all/ca5c3d716b783cc31a986907f9970e3f#offset=48&searchbox=person
+

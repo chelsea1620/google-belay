@@ -104,18 +104,6 @@ class IdentitiesHandler(CapHandler):
     self.bcapNullResponse()
 
 
-class ProfileLaunchHandler(CapHandler):
-  def get(self):
-    station = self.get_entity()
-    reply = {
-      'page': { 'html': server_url('/addProfile.html') },
-      'info': {
-        'add': regrant(ProfileAddHandler, station)
-      }
-    }
-    self.bcapResponse(reply)
-
-
 class ProfileAddHandler(CapHandler):
   def post(self):
     station = self.get_entity()

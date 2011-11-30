@@ -96,7 +96,8 @@ var initialize = function() {
   identities.init(capServer,
     stationInfo.allIdentities,
     stationInfo.identities,
-    stationInfo.addIdentityLaunchers);
+    stationInfo.addIdentityLaunchers,
+    stationInfo.createProfile);
 
   // TODO(mzero): refactor the two addInstance functions and the newInstHandler
   var addInstanceFromGenerate = function(genCap) {

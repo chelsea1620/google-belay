@@ -182,14 +182,16 @@ class BelayLaunchHandler(BaseHandler):
           'allIdentities': identities.allIdentities(station),
           'addIdentityLaunchers': [
               { 'title': 'Add Gmail',
-                'launch': regrant(identities_openid.GoogleLaunchHandler, station) },
+                'launch': regrant(identities_openid.GoogleLaunchHandler, station),
+                'image': '/res/images/gmail.png' },
               { 'title': 'Add Yahoo',
-                'launch': regrant(identities_openid.YahooLaunchHandler, station) },
+                'launch': regrant(identities_openid.YahooLaunchHandler, station),
+                'image': '/res/images/yahoo.png' },
               { 'title': 'Add AOL',
-                'launch': regrant(identities_openid.AolLaunchHandler, station) },
-              { 'title': 'Add Profile',
-                'launch': regrant(identities.ProfileLaunchHandler, station) }
-            ]
+                'launch': regrant(identities_openid.AolLaunchHandler, station),
+                'image': '/res/images/aol.png' },
+            ],
+          'createProfile': regrant(identities.ProfileAddHandler, station)
       }
     }
 
@@ -274,7 +276,6 @@ set_handlers(
   [('section', SectionHandler),
    ('section/attributes', AttributesHandler),
    ('identities', identities.IdentitiesHandler),
-   ('ids/profile/launch', identities.ProfileLaunchHandler),
    ('ids/profile/add', identities.ProfileAddHandler),
    ('openid/google/launch', identities_openid.GoogleLaunchHandler),
    ('openid/yahoo/launch', identities_openid.YahooLaunchHandler),

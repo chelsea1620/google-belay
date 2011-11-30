@@ -25,7 +25,7 @@ limitations under the License.
 </head>
 <body>
   <div class="grey"></div>
-  <h1><a href="/"><img src="https://www.google.com/images/logos/google_logo_41.png" alt="Google"></a> Web Relationships</h1>
+  <h1><a href="/"><img src="https://www.google.com/images/logos/google_logo_41.png" alt="Google" style="width: 116px; height: 41px;"></a> Web Relationships</h1>
   <div id="nav">
     <ul id="nav-sections">
       <li class="head">Sites</li>
@@ -39,8 +39,7 @@ limitations under the License.
     <ul id="nav-ids">
       <li class="head">Identity</li>
       <li class="proto identity"><img src='/res/images/google.ico' alt='Google'></img><span>betsy.ross@gmail.com</span></li>
-      <li class="ex identity"><img src='/res/images/unverified.gif' alt='Unverified'></img><span>Betsy Ross</span></li>
-      <li class="ex button">Add Identity</li>
+      <li id="add-id-button" class="button">Add Identity</li>
     </ul>
   </div>
   <div id="aux">
@@ -236,5 +235,34 @@ limitations under the License.
       </div>
     </div>
     <div id="about">©2011 Google</div>
+    <div class="dark-screen" style="display: none"></div>
+    <div id="id-add-dialog" style="display: none">
+      <div class="header">
+        <h1>Add Identity</h1>
+        <span class="close"></span>
+      </div>
+      <div class="main">
+        <div class="idp-list">
+          <h2>Add identity from</h2>
+          <ol id='add-id-list'>
+            <li id='proto-add-id' class="idp proto"><a href="javascript:void(0)"><span>Gmail</span></a></li>
+            <li class="idp ex"><a href="javascript:void(0)"><span>Yahoo</span></a></li>
+            <li class="idp ex"><a href="javascript:void(0)"><span>AOL</span></a></li>
+            <li class="idp ex"><a href="javascript:void(0)"><span>Browser ID</span></a></li>
+          </ol>
+        </div>
+        <div class="profile">
+          <h2>Or, just create one:</h2>
+          <fieldset id="custom-profile-fields">
+            <input name="name" type="text" value="Name" class="fresh">
+            <input name="location" type="text" value="Location" class="fresh">
+            <input name="email" type="email" value="Email address" class="fresh">
+            <input type="submit" class="widget-keyhole-button" value="Create Profile">
+          </fieldset>
+        </div>
+      </div>
+      <div class="widget-footer">
+      </div>
+    </div>
   </div>
 </body>

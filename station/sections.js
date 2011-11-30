@@ -106,7 +106,7 @@ define(['utils', 'instances', 'attributes'],
           return true;
         }
 
-        var instance = instances.instances[dragData.instanceId];
+        var instance = instances.getById(dragData.instanceId);
         moveInstanceToSection(instance, me);
         evt.stopPropagation();
         return false;
@@ -130,12 +130,11 @@ define(['utils', 'instances', 'attributes'],
       actionsGroup = this.list.find('.header .actions');
       deleteAll = $('<span>clear</span>')
       deleteAll.click(function() {
-        for(instanceId in instances.instances) {
-          instance = instances.instances[instanceId];
+        instances.forEach(function(instance) {
           if(instance.state.section == me.name) {
-            instances.removeInstance(instance);
+            deleteInstance(instance);
           }
-        }
+        });
       });
       actionsGroup.append(deleteAll);
     }
@@ -275,13 +274,18 @@ define(['utils', 'instances', 'attributes'],
   }
   
   function deleteInstance(inst) {
+    // TODO (iainmcgin): this is the main 'delete' action for instances,
+    // despite not living in the instances.js module. Responsibility for delete
+    // needs to be more clearly defined.
+    if (inst.state.opened) {
+      inst.closeCap.put();
+    }
     inst.row.fadeOut(400, function() {
       inst.row.detach();
 
       byName[inst.state.section].updateList();
       if(inst.state.section == "Trash") {
-        if (inst.capServer) inst.capServer.revokeAll();
-        delete instances.instances[inst.state.id];
+        instances.deleteInstance(inst.state.id);
         inst.storageCap.remove();
       } else {
         moveInstanceToSection(inst, byName["Trash"])
@@ -308,8 +312,8 @@ define(['utils', 'instances', 'attributes'],
     icon.attr('src', inst.state.icon || defaultIcon);
     row.find('td.name').text(inst.state.name || 'an item');
     row.find('td.actions .remove').click(function() {
-        instances.removeInstance(inst);
-      });
+      deleteInstance(inst);
+    });
 
     var openPageBtn = row.find('td.actions .open-page');
     openPageBtn.attr('href', 'redirect.html');

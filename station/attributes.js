@@ -234,12 +234,11 @@ define(['utils', 'instances', 'require'], function(utils, instances, require) {
       section.attributes = data = editData;
       section.attributesCap.put(data, hideAttributes);
 
-      for (var instanceId in instances.instances) {
-        var inst = instances.instances[instanceId];
+      instances.forEach(function(inst) {
         if (inst.state.section === section.name) {
           pushToInstance(inst);
         }
-      }
+      });
     }
     function cancelAttributes() {
       hideAttributes();

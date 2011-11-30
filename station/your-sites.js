@@ -46,15 +46,14 @@ var defaultIcon = '/res/images/tool.png';
 // CapServers
 //
 var instanceResolver = function(id) {
-  if (instances.instances[id] && instances.instances[id].capServer) {
-    return instances.instances[id].capServer.publicInterface;
-  }
-  if (instances.instances[id] && instances.instances[id].state.opened) {
+  var instance = instances.getById(id);
+  if (instance && instance.state.opened) {
     return belayBrowserTunnel.sendInterface;
   }
   if (id === capServer.instanceId) {
     return capServer.publicInterface;
   }
+
   return belayBrowserTunnel.sendInterface;
 };
 
@@ -70,8 +69,7 @@ function cmpInstByCreated(inst1, inst2) {
 
 var getSuggestions = function(location) {
   var suggestions = [];
-  Object.keys(instances.instances).forEach(function(instanceId) {
-    var inst = instances.instances[instanceId];
+  instances.forEach(function(inst) {
     if (domainOfInst(inst) == location
         && !inst.state.opened
         && inst.state.section != "Trash") {

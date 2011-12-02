@@ -139,7 +139,7 @@ var initialize = function() {
   window.belaytest.ready = true;
 };
 
-window.belay.portReady = function() {
+window.belay.onPortReady(function() {
   belayBrowserTunnel = new CapTunnel(window.belay.port);
   belayBrowserTunnel.setLocalResolver(instanceResolver);
   belayBrowserTunnel.setOutpostHandler(function(outpost) {
@@ -161,10 +161,6 @@ window.belay.portReady = function() {
     };
     initialize();
   });
-};
-
-if (window.belay.wasReady) {
-  window.belay.portReady();
-}
+});
 
 });

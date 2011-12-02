@@ -37,7 +37,7 @@ onBelayReady(function() {
       }
     }
     capServer.restore(form.action).invoke(
-      form.method || 'GET',
+      form.method.toUpperCase() || 'GET',
       data,
       callback,
       function(error) { alert('form update failed: ' + error.message + ' (' + error.status + ')'); }

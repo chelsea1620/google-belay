@@ -508,6 +508,78 @@ select.button {
 
 /* @end */
 
+/* @group fancy selectors */
+
+.attr-select {
+  display: inline-block;
+  border: 1px solid #999;
+  border-radius: 2px;
+  min-width: 200px;
+  position: relative;
+  background-color: white;
+}
+
+.attr-select .indicator {
+  float: right;
+  border-left: 1px solid #999;
+  padding-left: 5px;
+  padding-right: 5px;
+  color: #999;
+}
+
+.attr-select .selected {
+  padding-left: 0.5em;
+}
+
+.attr-select ul {
+  position:absolute;
+  left:0;
+  border:1px solid #32333b;
+  border-width:0 1px 1px;
+  list-style:none;
+  margin: 0;
+  padding: 0;
+  background-color: white;
+  
+  -moz-box-sizing:border-box;
+  -webkit-box-sizing:border-box;
+  box-sizing:border-box;
+  
+  -moz-box-shadow:0 0 4px #111;
+  -webkit-box-shadow:0 0 4px #111;
+  box-shadow:0 0 4px #111;
+  z-index: 100;
+}
+
+.attr-select li {
+  cursor:pointer;
+  position:relative;
+  padding-left: 0.5em;
+}
+
+.attr-select li:hover {
+  background-color: #bbb;
+}
+
+.attr-select li + li {
+  border-top: 1px solid #ccc;
+}
+
+.attr-select img.value {
+  max-width: 64px;
+  max-height: 64px;
+  padding: 2px;
+}
+
+.attr-select .source {
+  float: right;
+  width: 16px;
+  height: 16px;
+  padding: 2px;
+}
+
+/* @end */
+
 #id-add-dialog p,
 #id-add-dialog h1,
 #id-add-dialog h2,

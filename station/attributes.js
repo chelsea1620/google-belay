@@ -14,177 +14,242 @@
 
 define(['utils', 'instances', 'require'], function(utils, instances, require) {
 
-  var FixedAttribute = function(value) { this.fixed = value; };
-  FixedAttribute.prototype = {
-    build: function(td, setter) {
-      var span = $('<span></span>');
-      span.text(this.fixed);
-      td.empty();
-      td.append(span);
-    },
-    value: function(td, value) {
-      return this.fixed;
-    },
-    focus: function(td) {
+  function isChildOf(elem, parentCandidate) {
+    var parent = elem.parentNode;
+    while(parent != null) {
+      if(parent == parentCandidate) {
+        return true;
+      }
+      parent = parent.parentNode;
     }
-  };
 
-  var TextAttribute = function() { };
-  TextAttribute.prototype = {
-    build: function(td, setter) {
-      var input = $('<input />');
-      input.change(function() {
-        setter(input.val().trim());
-      });
-      td.empty();
-      td.append(input);
-    },
-    value: function(td, value) {
-      td.find('input').val(value);
-      return value;
-    },
-    focus: function(td) {
-      td.find('input').focus();
-    }
-  };
+    return false;
+  }
+
+  // top-level click handler which is used to collapse opened choice
+  // attribute selectors if the user clicks somewhere outside of the
+  // selector when it is expanded.
+  $(document).click(function(evt) {
+    $('.attr-select.expanded').each(function() {
+      if(!isChildOf(evt.target, this)) {
+        $(this).find('ul').trigger('hide');
+      }
+    });
+  });
 
   var ChoiceAttribute = function(choices) { this.choices = choices; };
+
   ChoiceAttribute.prototype = {
     build: function(td, setter) {
-      var select = $('<select></select>');
-      select.addClass('button');
-      this.choices.forEach(function(choice) {
-        var option = $('<option></option>');
-        option.attr('value', choice);
-        option.text(choice);
-        select.append(option);
-      });
-      select.change(function() {
-        setter(select.val());
-      });
-      td.empty();
-      td.append(select);
-    },
-    value: function(td, value) {
-      td.find('select').val(value);
-      return td.find('select').val();
-    },
-    focus: function(td) {
-      td.find('select').focus();
-    }
-  };
+      var selectElem = $('<div>', { class: 'attr-select' });
+      var indicatorElem = $('<div>', { class: 'indicator', text: '▼' });
+      var currentSelectionElem = $('<div>', { class: 'selected' });
+      var optionsElem = $('<ul>');
 
-  var MultiChoiceAttribute = function(choices) { this.choices = choices; };
-  MultiChoiceAttribute.prototype = {
-    build: function(td, setter) {
-      td.empty();
       this.choices.forEach(function(choice) {
-        var option = $('<input type="checkbox"/>');
-        option.attr('name', choice);
-        option.attr('value', choice);
-        option.change(function() {
-          var nv = [];
-          td.find('input').each(function(i, elem) {
-            var input = $(elem);
-            if (input.attr('checked')) {
-              nv.push(input.attr('name'));
-            }
-          });
-          setter(nv.join(','));
+        var optionElem = $('<li>');
+        optionElem.data('value', choice.value);
+        if(choice.image) {
+          optionElem.append($('<img>', { 
+            src: choice.image,
+            class: 'value'
+          }));
+        } else {
+          optionElem.append($('<span>', { text: choice.value }));
+        }
+
+        if(choice.sourceIcon) {
+          optionElem.append($('<img>', { 
+            src: choice.sourceIcon,
+            class: 'source'
+          }));
+        }
+
+        optionElem.click(function() {
+          currentSelectionElem.html(optionElem.html());
+          currentSelectionElem.data('value', optionElem.data('value'));
+          optionsElem.trigger('hide');
+          setter(optionElem.data('value'));
         });
-        var span = $('<span></span>');
-        span.text(choice);
-        span.prepend(option);
-        td.append(span);
+
+        optionsElem.append(optionElem);
       });
+
+      indicatorElem.click(function() { optionsElem.trigger('toggle'); });
+      currentSelectionElem.click(function() { optionsElem.trigger('toggle'); });
+
+      optionsElem.find('li:eq(0)').click();
+
+      selectElem.append(indicatorElem);
+      selectElem.append(currentSelectionElem);
+      selectElem.append(optionsElem);
+
+      optionsElem.bind('show', function() {
+        if(optionsElem.is(":animated")) return false;
+        selectElem.addClass('expanded');
+        optionsElem.css('width', selectElem.innerWidth());
+        optionsElem.css('top', selectElem.outerHeight());
+        optionsElem.slideDown('fast');
+      });
+
+      optionsElem.bind('hide', function() {
+        if(optionsElem.is(":animated")) return false;
+        selectElem.removeClass('expanded');
+        optionsElem.slideUp('fast');
+      });
+
+      optionsElem.bind('toggle', function() {
+        if(selectElem.hasClass('expanded')) optionsElem.trigger('hide');
+        else optionsElem.trigger('show');
+      });
+
+      td.empty();
+      td.append(selectElem);
+
+      optionsElem.hide();
     },
     value: function(td, value) {
-      // TODO(mzero): should really split value on ',' to be safe
-      value = value || '';
-      var nv = [];
-      td.find('input').each(function(i, elem) {
-        var input = $(elem);
-        var name = input.attr('name');
-        if (value.indexOf(name) >= 0) {
-          input.attr('checked', 'checked');
-          nv.push(name);
-        }
-        else {
-          input.removeAttr('checked');
-        }
-      });
-      return nv.join(',');
+      return td.find('.attr-select .selected').data('value');
     },
     focus: function(td) {
+      td.find('.attr-select').focus();
     }
   };
 
-  var knownAttributes = [
-    { attr: 'name', en: 'Name', controller: new ChoiceAttribute(
-      ['Betsy Ross', 'Betsy Asburn', 'Betsy Claypool', 'Bee Girl']) },
-    { attr: 'location', en: 'Location', controller: new ChoiceAttribute(
-      ['239 Arch Street, Philadelphia, Pennsylvania',
-       'Philadelphia, Pennsylvania',
-       'Pennsylvania',
-       'USA']) },
-    { attr: 'email', en: 'Email', controller: new ChoiceAttribute(
-      ['besty@ross-upholstery.com', 'betsy@ralvery.com']
-      ) },
-    { attr: 'gender', en: 'Gender', controller: new FixedAttribute('Female') },
-    { attr: 'age', en: 'Age', controller: new FixedAttribute('34') }
-  ];
+  var attributeProperties = {
+    'name': { 
+      'en': 'Name',
+      'type': 'text',
+      'order': 0
+    },
+    'email': { 
+      'en': 'Email',
+      'type': 'text',
+      'order': 1
+    },
+    'gender': { 
+      'en': 'Gender',
+      'type': 'text',
+      'defaults': {
+        'male': { 'en': 'Male' },
+        'female': { 'en': 'Female' },
+        'other': { 'en': 'Other' }
+      },
+      'order': 2
+    },
+    'age': { 
+      'en': 'Age',
+      'type': 'int',
+      'order': 3
+    },
+    'location': { 
+      'en': 'Location',
+      'type': 'text',
+      'order': 4
+    },
+    'image': { 
+      'en': 'Image',
+      'type': 'image',
+      'showSource': true,
+      'order': 5
+    },
+  };
+
+  var knownAttributes = [];
 
   function rebuild(idData) {
-    options = {}
+    // map of attr -> (map of value -> {value, Maybe sourceIcon, Maybe image})
+    options = {};
     function opt(k, v) {
-      if (!(k in options)) { options[k] = []; }
-      options[k].push(v);
-    }
-    function opts(k, vs) {
-      options[k] = (options[k] || []).concat(vs);
-    }
-    
-    for (var k in idData) {
-      var d = idData[k];
-      var text = d.display_name || d.account_name;
-      if (d.id_provider) { text += ' — ' + d.id_provider; }
-      text += '(' + d.id_type + ')';
-      
-      opt('id', text);
-      
-      for (var t in d.attributes) {
-        opts(t, d.attributes[t]);
+      if (!(k in options)) { options[k] = {}; }
+      if(!(v.value in options[k])) {
+        options[k][v.value] = v;
       }
     }
-    for (var z in options) {
-      console.log(z + ': ' + options[z].join(', '));
+    
+    knownAttributes = [];
+    extractAttributes(idData, opt);
+    addDefaultAttributes(opt);
+    sortAttributeOptions(options);
+    knownAttributes = sortAttributes(options);
+  }
+
+  function extractAttributes(idData, addOpt) {
+    idData.forEach(function(id) {
+      for (var attrName in id.attributes) {
+        id.attributes[attrName].forEach(function(val) {
+          var optionInfo = {
+            value: val
+          };
+
+          if(attributeProperties[attrName].showSource) {
+            optionInfo.sourceIcon = id.id_icon;
+          }
+
+          if(attributeProperties[attrName].type == 'image') {
+            optionInfo.image = val;
+          }
+
+          addOpt(attrName, optionInfo);
+        });
+      }
+    });
+  }
+
+  function addDefaultAttributes(addOpt) {
+    for(var attrKey in attributeProperties) {
+      if(!('defaults' in attributeProperties[attrKey])) continue;
+
+      var defaults = attributeProperties[attrKey].defaults;
+      for(defaultOpt in defaults) {
+        addOpt(attrKey, {
+          'value': defaults[defaultOpt].en
+        });
+      }
     }
   }
 
-  function setup(section) {
-    var data = section.attributes;
-    var editData;
-    
-    var attributesElem = section.list.find('.attributes');
-    var attributesDiv = attributesElem.find('.box');
-    var attributesTable = attributesDiv.find('table');
-    var protoRow = utils.detachProto(attributesTable.find('tr'));
+  function sortAttributeOptions(options) {
+    for (var attrKey in options) {
+      var sortedOptions = [];
+      Object.keys(options[attrKey])
+        .sort()
+        .forEach(function(value) {
+          sortedOptions.push(options[attrKey][value]);
+        });
+      options[attrKey] = sortedOptions;
+    }
+  }
 
-    attributesTable.find('tr').remove();
-    knownAttributes.forEach(function(a) {
-      var row = protoRow.clone();
-      row.find('.include input').removeAttr('checked');
-      row.find('.tag').text(a.en);
-      a.controller.build(row.find('.value'), function(v) {
-        editData[a.attr] = v;
+  function sortAttributes(options) {
+    return Object.keys(options)
+      .sort(function(a, b) {
+        return attributeProperties[a].order - attributeProperties[b].order;
+      })
+      .map(function(attrName) {
+        return {
+          attr: attrName,
+          en: attributeProperties[attrName].en,
+          controller: new ChoiceAttribute(options[attrName])
+        };
       });
-      row.appendTo(attributesTable);
-    });
+  }
 
-    function resetAttributes(editable) {
-      editData = { };
+  function SectionAttributesEditor(section) {
+    var me = this;
+    this.data = section.attributes;
+    this.editData = {};
+    
+    this.attributesElem = section.list.find('.attributes');
+    this.attributesDiv = this.attributesElem.find('.box');
 
-      attributesTable.find('tr').each(function(i, tr) {
+    this.attributesTable = this.attributesDiv.find('table');
+    this.protoRow = utils.detachProto(this.attributesTable.find('tr'));
+
+    function resetAttributes() {
+      me.editData = { };
+
+      me.attributesTable.find('tr').each(function(i, tr) {
         var a = knownAttributes[i];
         var row = $(tr);
 
@@ -192,14 +257,14 @@ define(['utils', 'instances', 'require'], function(utils, instances, require) {
         var valueTD = row.find('.value');
 
         function enable() {
-          editData[a.attr] = a.controller.value(valueTD, data[a.attr]);
+          me.editData[a.attr] = a.controller.value(valueTD, me.data[a.attr]);
           includeInput.attr('checked', 'checked');
-          valueTD.children().show();
+          valueTD.children().css('visibility', 'visible');
         }
         function disable() {
-          delete editData[a.attr];
+          delete me.editData[a.attr];
           includeInput.removeAttr('checked');
-          valueTD.children().hide();
+          valueTD.children().css('visibility', 'hidden');
           valueTD.click(function() {
             valueTD.unbind();
             enable();
@@ -208,31 +273,37 @@ define(['utils', 'instances', 'require'], function(utils, instances, require) {
         }
         function able(bool) { bool ? enable() : disable(); }
 
-        able(a.attr in data);
+        able(a.attr in me.data);
 
         includeInput.change(function() {
           able(includeInput.attr('checked'));
         });
       });
-    }
+    };
+
     function showAttributes() {
-      if (attributesElem.css('display') !== 'none') {
-        for (var k in data) { if (data[k] != editData[k]) return; }
+      if (me.attributesElem.css('display') !== 'none') {
+        for (var k in me.data) { 
+          if (me.data[k] != me.editData[k]) return; 
+        }
         hideAttributes();
         return;
       };
 
       resetAttributes();
-      attributesDiv.hide();
-      attributesElem.show();
-      attributesDiv.slideDown();
+      me.attributesDiv.hide();
+      me.attributesElem.show();
+      me.attributesDiv.slideDown();
     }
+
     function hideAttributes() {
-      attributesDiv.slideUp(function() { attributesElem.hide(); });
+      me.attributesDiv.slideUp(function() { me.attributesElem.hide(); });
     }
+
     function saveAttributes() {
-      section.attributes = data = editData;
-      section.attributesCap.put(data, hideAttributes);
+      console.log('save');
+      section.attributes = me.data = me.editData;
+      section.attributesCap.put(me.data, hideAttributes);
 
       instances.forEach(function(inst) {
         if (inst.state.section === section.name) {
@@ -240,13 +311,30 @@ define(['utils', 'instances', 'require'], function(utils, instances, require) {
         }
       });
     }
+
     function cancelAttributes() {
       hideAttributes();
     }
 
+    this.rebuild = function() {
+      me.attributesTable.find('tr').remove();
+      knownAttributes.forEach(function(a) {
+        var row = me.protoRow.clone();
+        row.find('.include input').removeAttr('checked');
+        row.find('.tag').text(a.en);
+        a.controller.build(row.find('.value'), function(v) {
+          me.editData[a.attr] = v;
+        });
+        row.appendTo(me.attributesTable);
+      });
+
+      resetAttributes();
+    };
+
+    this.rebuild();
     section.list.find('.header .settings').click(showAttributes);
-    attributesDiv.find('.save').click(saveAttributes);
-    attributesDiv.find('.cancel').click(cancelAttributes);
+    me.attributesDiv.find('.save').click(saveAttributes);
+    me.attributesDiv.find('.cancel').click(cancelAttributes);
   }
 
   function pushToInstance(inst) {
@@ -264,7 +352,7 @@ define(['utils', 'instances', 'require'], function(utils, instances, require) {
 
   return {
     rebuild: rebuild,
-    setup: setup,
+    SectionAttributesEditor: SectionAttributesEditor,
     pushToInstance: pushToInstance,
   };
 });

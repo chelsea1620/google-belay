@@ -66,6 +66,7 @@ class BelayBuzzerTests(BelayTest):
         instance = self.bzr.create_new_instance("My Blog")
         st.focus()
 
+        st.add_profile("Betsy Claypool", "betsy@gmail.com", "Pennsylvania")
         st.personal().set_attributes({
             "Name": "Betsy Claypool",
             "Location": "Pennsylvania"

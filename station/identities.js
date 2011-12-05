@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-define(['utils', 'attributes'], function(utils, attributes) {
+define(['utils', 'sections'], function(utils, sections) {
 
   var capServer;
   
@@ -95,6 +95,11 @@ define(['utils', 'attributes'], function(utils, attributes) {
       $('#add-id-list').append(addElem);
     });
 
+    // TODO (iainmcgin): when we remove an identity, what should we do with
+    // sections that were using that identity or individual attributes from
+    // the identity? Should the user be asked what to do, should we retain
+    // those values as "special" in some sense, or silently override the
+    // user's attribute selections?
     var removeElem = $('#add-id-button').clone();
     removeElem.attr('id', 'id-remove-button');
     removeElem.text("Remove All Identities");
@@ -170,7 +175,7 @@ define(['utils', 'attributes'], function(utils, attributes) {
     navIdentityList.find('.identity').remove();
     navIdentityList.find('.head').after(list.children());
 
-    attributes.rebuild(idData);
+    sections.updateAttributes(idData);
   }
   
   return {

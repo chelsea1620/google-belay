@@ -119,7 +119,7 @@ define(['utils', 'instances', 'attributes'],
     byName[this.name] = this;
 
     if(this.name != "Trash") {
-      attributes.setup(this);
+      this.attributesEditor = new attributes.SectionAttributesEditor(this);
     } else {
       this.list.find('.header .settings').remove();
 
@@ -162,12 +162,12 @@ define(['utils', 'instances', 'attributes'],
       } else {
         me.showShortList();
       }
-    }
+    };
 
     this.updateList = function() {
       if(me.list.css('display') == 'none') return;
       me.showList();
-    }
+    };
 
     this.hideList = function() {
       me.list.hide();
@@ -182,12 +182,12 @@ define(['utils', 'instances', 'attributes'],
       inst.row.fadeIn(400);
 
       me.updateList();
-    }
+    };
 
     this.removeInstance = function(inst) {
       inst.row.detach();
       me.updateList();
-    }
+    };
 
     this.updateActionsBar = function() {
       var showAllElem = me.list.find('.header .actions .show-all');
@@ -226,7 +226,11 @@ define(['utils', 'instances', 'attributes'],
 
         actionsBar.append(action);
       }
-    }
+    };
+
+    this.updateAttributes = function() { 
+      if(this.attributesEditor) { this.attributesEditor.rebuild(); }
+    };
   };
   
   
@@ -364,12 +368,26 @@ define(['utils', 'instances', 'attributes'],
   function forInstance(inst) {
     return byName[inst.state.section];
   }
+
+  function forEach(visitor) {
+    for(sectionName in byName) {
+      visitor(byName[sectionName]);
+    }
+  }
+
+  function updateAttributes(idData) {
+    attributes.rebuild(idData);
+    for(sectionName in byName) {
+      byName[sectionName].updateAttributes();
+    }
+  }
   
   return {
     init: init,
     newInstance: newInstance,
     deleteInstance: deleteInstance,
     forInstance: forInstance,
+    updateAttributes: updateAttributes
   };
 });
 

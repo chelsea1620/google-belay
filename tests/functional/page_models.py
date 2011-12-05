@@ -269,11 +269,14 @@ class BelayStationSection(object):
             attr_name = row.find_element_by_class_name("tag").text
             if attr_name in attrs:
                 row.find_element_by_tag_name("input").click()
-                select_group = row.find_element_by_tag_name("select")
+                select_widget = row.find_element_by_class_name("attr-select")
+                wait_for(driver, lambda drv: select_widget.is_displayed);
+                select_widget.click()
+                select_group = row.find_element_by_tag_name("ul")
                 wait_for(driver, lambda drv: select_group.is_displayed())
                 
                 found = False
-                selections = select_group.find_elements_by_tag_name("option")
+                selections = select_group.find_elements_by_tag_name("span")
                 for selection in selections:
                     if selection.text == attrs[attr_name]:
                         found = True
@@ -362,6 +365,16 @@ class BelayStationPage(BelayEnabledPage):
         self.drag_to(data, drop_target)
         
         self.wait_for(lambda drv: category.instances() > old_instance_count)
+    
+    def add_profile(self, name, email, location):
+        self.driver.find_element_by_id("add-id-button").click()
+
+        id_add_dialog = self.driver.find_element_by_id("id-add-dialog")
+        id_add_dialog.find_element_by_name("name").send_keys(name)
+        id_add_dialog.find_element_by_name("location").send_keys(location)
+        id_add_dialog.find_element_by_name("email").send_keys(email)
+
+        id_add_dialog.find_element_by_class_name("widget-keyhole-button").click()
 
 
 class BuzzerLandingPage(BelayEnabledPage):

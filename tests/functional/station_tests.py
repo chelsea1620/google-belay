@@ -14,6 +14,7 @@ class StationTests(BelayTest):
         super(StationTests,self).setUp()
         self.ba = open_belay_admin(self.driver)
         self.st = self.ba.open_station()
+        self.st.add_profile("Betsy Claypool", "betsy@gmail.com", "Pennsylvania")
     
     def test_move_section_on_fresh_open(self):
         """

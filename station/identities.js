@@ -38,6 +38,9 @@ define(['utils', 'sections'], function(utils, sections) {
     var hideIdAddDialog = function() {
       $('.dark-screen').hide();
       $('#id-add-dialog').hide();
+      $('#custom-profile-fields input, #custom-profile-fields select')
+        .each(function() { $(this).trigger('reset'); });
+      $('#id-add-dialog .error').hide();
     }
 
     $('#id-add-dialog .close').click(hideIdAddDialog);
@@ -108,41 +111,81 @@ define(['utils', 'sections'], function(utils, sections) {
     });
     navIdentityList.append(removeElem);
 
-    $('#custom-profile-fields input').each(function(index, elem) {
-      var input = $(elem);
-      if(input.attr('type') == 'submit') return;
+    $('#custom-profile-fields input, #custom-profile-fields select')
+      .each(function() {
+        var elem = this;
+        var input = $(elem);
+        if(input.attr('type') == 'submit') return;
 
-      var initialText = input.val();
-      input.focus(function() {
-        if(elem.classList.contains('fresh')) {
-          elem.classList.remove('fresh');
-          input.val('');
-        }
-      });
+        var initialText = input.val();
+        input.bind('focus mousedown', function() {
+          if(elem.classList.contains('fresh')) {
+            elem.classList.remove('fresh');
+            input.val('');
+          }
+        });
 
-      input.focusout(function() {
-        if(input.attr('value') == '') {
+        input.focusout(function() {
+          if(input.val() == '' || input.val() == initialText) {
+            elem.classList.add('fresh');
+            input.val(initialText);
+          }
+        });
+
+        input.bind('reset', function() {
           elem.classList.add('fresh');
           input.val(initialText);
-        }
+        });
       });
-    });
+
+      $('#custom-profile-fields select').each(function() {
+        var defaultOption = $(this).find('option[value=""]');
+        var initialText = defaultOption.text();
+        $(this).bind('focus mousedown', function() {
+          defaultOption.text('');
+        })
+
+        $(this).focusout(function() {
+          defaultOption.text(initialText);
+        });
+
+        $(this).bind('reset', function() {
+          defaultOption.text(initialText);
+        });
+      });
 
     $('#custom-profile-fields input[type="submit"]').click(function() {
       attrs = {};
-      $('#custom-profile-fields input').each(function(index, elem) {
-        var jqElem = $(elem);
-        if(jqElem.attr('type') == 'submit') return false;
-        if(elem.classList.contains('fresh')) return false;
-        attrs[jqElem.attr('name')] = jqElem.val();
-      });
-
-      if('name' in attrs && 'location' in attrs && 'email' in attrs) {
-        createProfile.post(attrs, function() {
-          hideIdAddDialog();
-          refresh();
-        }, hideIdAddDialog);
+      var missingRequired = false;
+      $('#custom-profile-fields input, #custom-profile-fields select')
+        .each(function(index, elem) {
+          var jqElem = $(elem);
+          if(jqElem.attr('type') == 'submit') return false;
+          if(elem.classList.contains('fresh')) {
+            if(elem.classList.contains('required')) {
+              missingRequired = true;
+            }
+            return false;
+          }
+          attrs[jqElem.attr('name')] = jqElem.val();
+        });
+      
+      if(missingRequired) {
+        $('.error').fadeIn('fast');
+        return false;
       }
+
+      if('age' in attrs) {
+        var ageNum = parseInt(attrs['age']);
+        if(isNaN(ageNum) || ageNum < 0) {
+          delete attrs['age'];
+        }
+      }
+
+      createProfile.post(attrs, function() {
+        hideIdAddDialog();
+        refresh();
+      }, hideIdAddDialog);
       
       return false;
     });

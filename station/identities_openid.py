@@ -21,9 +21,20 @@ from openid.consumer import consumer
 from openid.extensions import ax
 from gae_openid_store import AppEngineOpenIDStore
 
+import datetime
 import logging
 
 import identities
+
+EMAIL_ATTR = 'http://axschema.org/contact/email'
+VERIFIED_EMAIL_ATTR = 'http://axschema.org/contact/verifiedemail'
+NAME_ATTR = 'http://axschema.org/namePerson'
+FIRST_NAME_ATTR = 'http://axschema.org/namePerson/first'
+LAST_NAME_ATTR = 'http://axschema.org/namePerson/last'
+FRIENDLY_NAME_ATTR = 'http://axschema.org/namePerson/friendly'
+GENDER_ATTR = 'http://axschema.org/person/gender'
+BIRTH_DATE_ATTR = 'http://axschema.org/birthDate'
+AVATAR_ATTR = 'http://axschema.org/media/image/default'
 
 class LaunchHandler(CapHandler):
   def get(self):
@@ -50,13 +61,15 @@ class LaunchHandler(CapHandler):
     ax_request = ax.FetchRequest()
     
     attributes = [
-      'http://axschema.org/contact/email',
-      'http://axschema.org/contact/verifiedemail',
-      'http://axschema.org/namePerson',
-      'http://axschema.org/namePerson/first',
-      'http://axschema.org/namePerson/last',
-      'http://axschema.org/namePerson/friendly',
-      'http://axschema.org/media/image/default',
+      EMAIL_ATTR,
+      VERIFIED_EMAIL_ATTR,
+      NAME_ATTR,
+      FIRST_NAME_ATTR,
+      LAST_NAME_ATTR,
+      FRIENDLY_NAME_ATTR,
+      GENDER_ATTR,
+      BIRTH_DATE_ATTR,
+      AVATAR_ATTR,
     ]
     for attr in attributes:
         ax_request.add(ax.AttrInfo(attr, required=True))
@@ -108,25 +121,46 @@ def permuteAttributes(ax):
   attrs = dict()
 
   v = []
-  v.extend(ax.data.get('http://axschema.org/namePerson', []))
-  v.extend(ax.data.get('http://axschema.org/namePerson/friendly', []))
-  fns = ax.data.get('http://axschema.org/namePerson/first', [])
-  lns = ax.data.get('http://axschema.org/namePerson/last', [])
+  v.extend(ax.data.get(NAME_ATTR, []))
+  v.extend(ax.data.get(FRIENDLY_NAME_ATTR, []))
+  fns = ax.data.get(FIRST_NAME_ATTR, [])
+  lns = ax.data.get(LAST_NAME_ATTR, [])
   v.extend([f + ' ' + l for (f, l) in zip(fns,lns)])
     # not clear if the first and last name values sets are 'aligned' like this
   if v:
     attrs['name'] = v
   
   v = []
-  v.extend(ax.data.get('http://axschema.org/contact/verifiedemail', []))
-  v.extend(ax.data.get('http://axschema.org/contact/email', []))
+  v.extend(ax.data.get(VERIFIED_EMAIL_ATTR, []))
+  v.extend(ax.data.get(EMAIL_ATTR, []))
   if v:
     attrs['email'] = v
   
   v = []
-  v.extend(ax.data.get('http://axschema.org/media/image/default', []))
+  v.extend(ax.data.get(AVATAR_ATTR, []))
   if v:
     attrs['image'] = v
+
+  if GENDER_ATTR in ax.data:
+    if ax.data.get(GENDER_ATTR) == 'M':
+        attrs['gender'] = ['male']
+    elif ax.data.get(GENDER_ATTR) == 'F':
+        attrs['gender'] = ['female']
+    else:
+        attrs['gender'] = ['other']
+
+  logging.info(ax.data.keys())
+
+  if BIRTH_DATE_ATTR in ax.data:
+    bdate = datetime.date(BIRTH_DATE_ATTR)
+    now = datetime.today()
+
+    age = now.year - bdate.year
+    if (now.month < bdate.month or 
+        (now.month == bdate.month and now.day < bdate.day)):
+      age -= 1
+    
+    attrs['age'] = [str(age)]
   
   return attrs
 

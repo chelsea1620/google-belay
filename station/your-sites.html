@@ -253,11 +253,20 @@ limitations under the License.
         </div>
         <div class="profile">
           <h2>Or, just create one:</h2>
+          <div class="error" style="display: none"><span class="icon">⚠</span> Missing values for required fields</div>
           <fieldset id="custom-profile-fields">
-            <input name="name" type="text" value="Name" class="fresh">
-            <input name="location" type="text" value="Location" class="fresh">
+            <input name="name" type="text" value="Name (Required)" class="fresh required">
             <input name="email" type="email" value="Email address" class="fresh">
+            <select name="gender" class="fresh">
+              <option value="female">Female</option>
+              <option value="male">Male</option>
+              <option value="other">Other</option>
+              <option value="" selected="selected">Gender</option>
+            </select>
+            <input name="age" type="text" value="Age" class="fresh">
+            <input name="location" type="text" value="Location" class="fresh">
             <input type="submit" class="widget-keyhole-button" value="Create Profile">
+
           </fieldset>
         </div>
       </div>

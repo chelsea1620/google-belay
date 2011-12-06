@@ -113,7 +113,7 @@ class ProfileAddHandler(CapHandler):
       return
 
     attributes = dict()
-    for t in ['name', 'location', 'email']:
+    for t in ['name', 'location', 'email', 'age', 'gender']:
       v = idinfo.get(t, None)
       if v:
           attributes[t] = [v]

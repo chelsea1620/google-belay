@@ -720,7 +720,8 @@ select.button {
  */
 #id-add-dialog input[type=email],
 #id-add-dialog input[type=password],
-#id-add-dialog input[type=text] {
+#id-add-dialog input[type=text],
+#id-add-dialog select {
   width: 100%;
   display: inline-block;
   height: 32px;
@@ -871,6 +872,31 @@ select.button {
   margin: 0;
 }
 
+#id-add-dialog input.required {
+  border-color: #FA0;
+}
+
+#id-add-dialog input.required:hover {
+  border-color: #F90;
+}
+
+#id-add-dialog input.required:focus {
+  border-color: #F90;
+}
+
+#id-add-dialog .error {
+  line-height: normal;
+  margin-bottom: 1em;
+  color: #F66;
+}
+
+#id-add-dialog .error .icon {
+  font-size: 200%;
+  display: inline-block;
+  vertical-align: middle;
+  color: #F66;
+}
+
 #id-add-dialog .widget-keyhole-button:hover {
   color: #fff !important;
   background-color: #6f6f6f;
@@ -902,7 +928,7 @@ select.button {
   color: #fff !important;
 }
 
-#id-add-dialog input.fresh {
+#id-add-dialog .fresh {
 	color: #999;
 	font-style: italic;
 }

@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import uuid
+
 #import json # TODO(mzero): add back for Python27
 from django.utils import simplejson as json # TODO(mzero): remove for Python27
 from lib.py.belay import *
@@ -20,9 +22,19 @@ from google.appengine.ext import db
 
 
 class StationData(db.Model):  
-  pass
   # TODO(mzero): if we ever delete a station, need to delete stuff under it
 
+  @staticmethod
+  def create(station_id=None):
+    if station_id == None:
+      station_id = str(uuid.uuid4())
+
+    station = StationData(key_name=station_id)
+    station.put()
+    for n in ['Uncategorized', 'Personal', 'Work', 'Games']:
+      SectionData(parent=station, name=n).put()
+    SectionData(parent=station, name='Trash', hidden=True).put()
+    return station
 
 class InstanceData(db.Model):
   data = db.TextProperty()

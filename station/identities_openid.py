@@ -16,6 +16,7 @@ import cgi
 
 from model import *
 from lib.py.belay import *
+from utils import *
 
 from openid.consumer import consumer
 from openid.extensions import ax
@@ -43,11 +44,10 @@ class LaunchHandler(CapHandler):
 
     auth_request.addExtension(self.buildAttributeRequest())
     
-    station = self.get_entity()
-    returnCap = regrant(self.callbackClass(), station)
+    callback = self.callbackUrl()
     realm = server_url('')
 
-    form = auth_request.formMarkup(realm, returnCap.serialize(), False, {})
+    form = auth_request.formMarkup(realm, callback, False, {})
 
     reply = {
       'page': { 'html': server_url('/addOpenId.html') },
@@ -56,6 +56,10 @@ class LaunchHandler(CapHandler):
       }
     }
     self.bcapResponse(reply)
+
+  def callbackUrl(self):
+    station = self.get_entity()
+    return regrant(self.callbackClass(), station).serialize()
 
   def buildAttributeRequest(self):
     ax_request = ax.FetchRequest()
@@ -75,6 +79,7 @@ class LaunchHandler(CapHandler):
         ax_request.add(ax.AttrInfo(attr, required=True))
     
     return ax_request
+
 
 # TODO(mzero): These should be doing discovery to find the endpoint URLs
 
@@ -174,35 +179,47 @@ class CallbackHandler(CapHandler):
 
   def handleOpenIdResponse(self, args):
     c = consumer.Consumer({}, AppEngineOpenIDStore())
-    result = c.complete(args, server_url(self.request.path_info_cap))
+    result = c.complete(args, server_url(self.requestPath()))
 
     if result.status == consumer.SUCCESS:
         ax_response = ax.FetchResponse.fromSuccessResponse(result)
-        if ax_response:
-            station = self.get_entity()
-            attrs = permuteAttributes(ax_response)
+        self.handleSuccess(result.identity_url, ax_response)
+    else: # NOTE(mzero): generally result.status == consumer.FAILURE
+        self.handleFailure(result.message)
+  
+  def handleSuccess(self, identity_url, ax_response):
+    self.addIdentity(identity_url, ax_response)
+    page = self.buildClosePage()
+    #page = self.buildDebuggingPage(args, attrs)
+    self.writeOutPage(page);
 
-            IdentityData(
-                parent=station,
-                id_type='openid',
-                id_provider=self.provider(),
-                account_name=result.identity_url,
-                display_name=attrs.get('name', [None])[0],
-                attributes=json.dumps(attrs)
-            ).put()
+  def handleFailure(self, message):
+    logging.getLogger().info('openid request failed: %s' % message)
+    page = self.buildFailPage()
+    self.writeOutPage(page);
 
-        # TODO(iainmcgin): we're not handling missing attributes
-        page = self.buildClosePage()
-        #page = self.buildDebuggingPage(args, attrs)
-    elif result.status == consumer.FAILURE:
-        logging.getLogger().info('openid request failed: %s' % result.message)
-        page = self.buildFailPage()
-    
+  def writeOutPage(self, page):
     self.response.out.write(page)
     self.response.headers.add_header("Cache-Control", "no-cache")
     self.response.headers.add_header("Content-Type", "text/html;charset=UTF-8")
     self.response.headers.add_header("Expires", "Fri, 01 Jan 1990 00:00:00 GMT")
 
+  def addIdentity(self, identity_url, ax_response):
+    station = self.get_entity()
+    if ax_response:
+      attrs = permuteAttributes(ax_response)
+    else:
+      attrs = {}
+    
+    IdentityData(
+        parent=station,
+        id_type='openid',
+        id_provider=self.provider(),
+        account_name=identity_url,
+        display_name=attrs.get('name', [None])[0],
+        attributes=json.dumps(attrs)
+    ).put()
+    
   def buildDebuggingPage(self, args, attrs):
     page = "<html><body>"
     page += "<h1>results</h1><dl>"
@@ -234,6 +251,9 @@ class CallbackHandler(CapHandler):
       window.opener.postMessage('done', '*');
     </script></body>
     </html>'''
+  
+  def requestPath(self):
+    return self.request.path_info_cap
 
 class GoogleCallbackHandler(CallbackHandler):
   def provider(self):
@@ -248,3 +268,110 @@ class YahooCallbackHandler(CallbackHandler):
 class AolCallbackHandler(CallbackHandler):
   def provider(self):
     return identities.AOL_PROVIDER
+
+
+class LoginCallbackHandler(CallbackHandler):
+  def handleSuccess(self, identity_url, ax_response):
+    q = IdentityData.all()
+    q.filter('id_type =', 'openid')
+    q.filter('id_provider =', self.provider())
+    q.filter('account_name =', identity_url)
+    results = [ r for r in q.fetch(2) ]
+    page = ''
+    if len(results) == 0:
+      logging.getLogger().debug('new station for: %s' % identity_url)
+      station = StationData.create()
+      self.set_entity(station)
+      self.addIdentity(identity_url, ax_response)
+      page = self.buildNewStationPage(station.key())
+    elif len(results) == 1:
+      logging.getLogger().debug('login for: %s' % identity_url)
+      identity = results[0]
+      if ax_response:
+          attrs = permuteAttributes(ax_response)
+          identity.attributes = json.dumps(attrs)
+          identity.put()
+      station = identity.parent()
+      self.set_entity(station)
+      page = self.buildStationPage(station.key())
+    else:
+      logging.getLogger().debug('multiple stations for: %s' % identity_url)
+      self.writeOutPage(page);
+      page = self.buildMultipleStationPage()
+    self.writeOutPage(page);
+
+  def requestPath(self):
+    return self.request.path_info
+
+  def buildNewStationPage(self, stationKey):
+    return '''<html>
+    <body><h1>New Station</h1>
+    <p>A new station has been created for you. Use this same identity to
+      get back to it.</p>
+    <script>
+      window.localStorage.removeItem('launchCap');
+      window.localStorage.setItem('launchCap', '%s');
+      window.opener.postMessage('done', '*');
+      setTimeout(function() { window.close(); }, 5000);
+    </script></body>
+    </html>''' % (launch_url(stationKey))
+
+  def buildStationPage(self, stationKey):
+    return '''<html>
+    <body><h1>Station Login</h1>
+    <p>We have your station.</p>
+    <script>
+      window.localStorage.removeItem('launchCap');
+      window.localStorage.setItem('launchCap', '%s');
+      window.opener.postMessage('done', '*');
+      window.close();
+    </script></body>
+    </html>''' % (launch_url(stationKey))
+
+  def buildMultipleStationPage(self):
+    return '''<html>
+    <body><h1>Multiple Stations</h1>
+    <p>That identity is associated with multiple stations.</p>
+    <script>
+      window.opener.postMessage('done', '*');
+    </script></body>
+    </html>'''
+
+# TODO(mzero): these callbackUrl() calls must match the map in station.py
+class GoogleLoginLaunchHandler(GoogleLaunchHandler):
+  def callbackUrl(self):
+    return server_url("/login/openid/google/callback")
+
+
+class YahooLoginLaunchHandler(YahooLaunchHandler):
+  def callbackUrl(self):
+    return server_url("/login/openid/yahoo/callback")
+
+
+class AolLoginLaunchHandler(AolLaunchHandler):
+  def callbackUrl(self):
+    return server_url("/login/openid/aol/callback")
+
+
+class GoogleLoginCallbackHandler(LoginCallbackHandler):
+  def provider(self):
+    return identities.GOOGLE_PROVIDER
+
+
+class YahooLoginCallbackHandler(LoginCallbackHandler):
+  def provider(self):
+    return identities.YAHOO_PROVIDER
+
+
+class AolLoginCallbackHandler(LoginCallbackHandler):
+  def provider(self):
+    return identities.AOL_PROVIDER
+
+
+def loginIdentityHandlers():
+  return 
+  
+
+
+
+

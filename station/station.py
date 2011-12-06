@@ -23,6 +23,7 @@ import uuid
 
 from model import *
 from lib.py.belay import *
+from utils import *
 
 from django.utils import simplejson as json # TODO(mzero): remove for Python27
 
@@ -34,26 +35,6 @@ import identities
 import identities_openid
 
 
-def keyName(key):
-  if isinstance(key, str):
-    return key
-  return key.name()
-  
-def launch_url(stationKey):
-  return server_url('/belay/launch?s=' + keyName(stationKey))
-  
-def instances_url(stationKey):
-  return server_url('/instances?s=' + keyName(stationKey))
-
-def instance_url(stationKey, instanceKey):
-  return server_url('/instance?s=' + keyName(stationKey)
-    + '&i=' + keyName(instanceKey))
-
-def tool_url(port, path):
-  return "http://%s:%d%s" % (os.environ['SERVER_NAME'], port, path)
-
-def cap(url):
-  return { '@': url }
 
 def defaultTools():
   return [
@@ -112,10 +93,7 @@ class BaseHandler(BcapHandler):
       station_id = str(station_uuid)
       station = StationData.get_by_key_name(station_id)
       if station == None:
-        station = StationData(key_name=station_id)
-        for n in ['Uncategorized', 'Personal', 'Work', 'Games']:
-          SectionData(parent=station, name=n).put()
-        SectionData(parent=station, name='Trash', hidden=True).put()
+        station = StationData.create(station_id)
         
       return station
     except:
@@ -162,8 +140,6 @@ class BelayLaunchHandler(BaseHandler):
 
   def launch(self, type):
     station = self.validate_station()
-    if not station.is_saved():
-      station.put()
 
     html = "/your-sites.html"
     if (type == "old"):
@@ -268,6 +244,12 @@ application = webapp.WSGIApplication(
    ('/belay/launch',   BelayLaunchHandler),
    ('/instance', InstanceHandler),
    ('/instances',InstancesHandler),
+   ('/login/openid/google/launch', identities_openid.GoogleLoginLaunchHandler),
+   ('/login/openid/yahoo/launch', identities_openid.YahooLoginLaunchHandler),
+   ('/login/openid/aol/launch', identities_openid.AolLoginLaunchHandler),
+   ('/login/openid/google/callback', identities_openid.GoogleLoginCallbackHandler),
+   ('/login/openid/yahoo/callback', identities_openid.YahooLoginCallbackHandler),
+   ('/login/openid/aol/callback', identities_openid.AolLoginCallbackHandler),
   ],
   debug=True)
 

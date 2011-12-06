@@ -35,6 +35,10 @@ handlers:
   script: station.py
   secure: always
 
+- url: /login/.*
+  script: station.py
+  secure: always
+
 - url: /cap/.*
   script: station.py
   secure: always

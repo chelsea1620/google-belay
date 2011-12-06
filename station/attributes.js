@@ -49,13 +49,14 @@ define(['utils', 'instances', 'require'], function(utils, instances, require) {
       this.choices.forEach(function(choice) {
         var optionElem = $('<li>');
         optionElem.data('value', choice.value);
+        optionElem.data('sources', choice.sources);
         if(choice.image) {
           optionElem.append($('<img>', { 
             src: choice.image,
             class: 'value'
           }));
         } else {
-          optionElem.append($('<span>', { text: choice.value }));
+          optionElem.append($('<span>', { text: choice.display }));
         }
 
         if(choice.sourceIcon) {
@@ -68,8 +69,9 @@ define(['utils', 'instances', 'require'], function(utils, instances, require) {
         optionElem.click(function() {
           currentSelectionElem.html(optionElem.html());
           currentSelectionElem.data('value', optionElem.data('value'));
+          currentSelectionElem.data('sources', optionElem.data('sources'));
           optionsElem.trigger('hide');
-          setter(optionElem.data('value'));
+          setter(optionElem.data('value'), optionElem.data('sources'));
         });
 
         optionsElem.append(optionElem);
@@ -108,6 +110,23 @@ define(['utils', 'instances', 'require'], function(utils, instances, require) {
 
       optionsElem.hide();
     },
+    selectFromSource: function(td, source) {
+      var selectionMade = false;
+      td.find('.attr-select').each(function() {
+        var choiceElem = $(this);
+        
+        choiceElem.find('li').each(function() {
+          var sources = $(this).data('sources');
+          for(var i=0; i < sources.length; i++) {
+            if(sources[i] == source) {
+              $(this).click();
+              selectionMade = true;
+            }
+          }
+        });
+      });
+      return selectionMade;
+    },
     value: function(td, value) {
       return td.find('.attr-select .selected').data('value');
     },
@@ -117,15 +136,21 @@ define(['utils', 'instances', 'require'], function(utils, instances, require) {
   };
 
   var attributeProperties = {
+    'id': {
+      'en': 'Identity',
+      'type': 'id',
+      'showSource': true,
+      'order': 0
+    },
     'name': { 
       'en': 'Name',
       'type': 'text',
-      'order': 0
+      'order': 1
     },
     'email': { 
       'en': 'Email',
       'type': 'text',
-      'order': 1
+      'order': 2
     },
     'gender': { 
       'en': 'Gender',
@@ -135,34 +160,36 @@ define(['utils', 'instances', 'require'], function(utils, instances, require) {
         'female': { 'en': 'Female' },
         'other': { 'en': 'Other' }
       },
-      'order': 2
+      'order': 3
     },
     'age': { 
       'en': 'Age',
       'type': 'int',
-      'order': 3
+      'order': 4
     },
     'location': { 
       'en': 'Location',
       'type': 'text',
-      'order': 4
+      'order': 5
     },
     'image': { 
       'en': 'Image',
       'type': 'image',
       'showSource': true,
-      'order': 5
+      'order': 6
     },
   };
 
   var knownAttributes = [];
 
   function rebuild(idData) {
-    // map of attr -> (map of value -> {value, Maybe sourceIcon, Maybe image})
     options = {};
     function opt(k, v) {
       if (!(k in options)) { options[k] = {}; }
-      if(!(v.value in options[k])) {
+      if(v.value in options[k]) {
+        mapping = options[k][v.value];
+        mapping.sources = mapping.sources.concat(v.sources);
+      } else {
         options[k][v.value] = v;
       }
     }
@@ -179,7 +206,9 @@ define(['utils', 'instances', 'require'], function(utils, instances, require) {
       for (var attrName in id.attributes) {
         id.attributes[attrName].forEach(function(val) {
           var optionInfo = {
-            value: val
+            value: val,
+            display: val,
+            sources: [ id.account_name ]
           };
 
           if(attributeProperties[attrName].showSource) {
@@ -193,6 +222,14 @@ define(['utils', 'instances', 'require'], function(utils, instances, require) {
           addOpt(attrName, optionInfo);
         });
       }
+
+      var idName = id.display_name || id.account_name;
+      addOpt('id', {
+        value: id.account_name,
+        display: idName,
+        sourceIcon: id.id_icon,
+        sources: [ id.account_name ]
+      });
     });
   }
 
@@ -203,7 +240,9 @@ define(['utils', 'instances', 'require'], function(utils, instances, require) {
       var defaults = attributeProperties[attrKey].defaults;
       for(defaultOpt in defaults) {
         addOpt(attrKey, {
-          'value': defaults[defaultOpt].en
+          'value': defaultOpt,
+          'display': defaults[defaultOpt].en,
+          sources: []
         });
       }
     }
@@ -316,15 +355,45 @@ define(['utils', 'instances', 'require'], function(utils, instances, require) {
       hideAttributes();
     }
 
+    function selectFromSource(source) {
+      me.attributesTable.find('tr').each(function() {
+        var row = $(this);
+        var attrName = row.data('attr');
+        if(attrName == 'id') return;
+
+        var checkBox = row.find('.include input');
+        var selection = row.find('.value');
+        
+        knownAttributes.forEach(function(a) {
+          if(a.attr != attrName) return;
+          if(a.controller.selectFromSource(selection, source)) {
+            checkBox.attr('checked', 'checked');
+          }
+        });
+      });
+    }
+
     this.rebuild = function() {
       me.attributesTable.find('tr').remove();
       knownAttributes.forEach(function(a) {
         var row = me.protoRow.clone();
         row.find('.include input').removeAttr('checked');
         row.find('.tag').text(a.en);
-        a.controller.build(row.find('.value'), function(v) {
-          me.editData[a.attr] = v;
-        });
+        row.data('attr', a.attr);
+
+        var setter;
+        if(a.attr == 'id') {
+          setter = function(value, sources) {
+            me.editData[a.attr] = value;
+            selectFromSource(sources[0]);
+          };
+        } else {
+          setter = function(value, sources) {
+            me.editData[a.attr] = value;
+          };
+        }
+
+        a.controller.build(row.find('.value'), setter);
         row.appendTo(me.attributesTable);
       });
 

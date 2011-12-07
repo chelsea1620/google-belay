@@ -49,6 +49,11 @@ handlers:
 #  script: lib/py/CORSstatic.py
   secure: always
 
+- url: /
+  static_files: index.html
+  upload: index.html
+  secure: always
+
 - url: /test
   script: lib/py/test.py
   secure: always

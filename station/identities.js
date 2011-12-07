@@ -160,12 +160,12 @@ define(['utils', 'sections'], function(utils, sections) {
       $('#custom-profile-fields input, #custom-profile-fields select')
         .each(function(index, elem) {
           var jqElem = $(elem);
-          if(jqElem.attr('type') == 'submit') return false;
+          if(jqElem.attr('type') == 'submit') return;
           if(elem.classList.contains('fresh')) {
             if(elem.classList.contains('required')) {
               missingRequired = true;
             }
-            return false;
+            return;
           }
           attrs[jqElem.attr('name')] = jqElem.val();
         });

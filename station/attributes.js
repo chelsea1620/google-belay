@@ -37,7 +37,14 @@ define(['utils', 'instances', 'require'], function(utils, instances, require) {
     });
   });
 
-  var ChoiceAttribute = function(choices) { this.choices = choices; };
+  var ChoiceAttribute = function(choices) { 
+    this.choices = choices;
+    this.choices.push({
+      noValue: true,
+      sources: [],
+      display: 'Keep private'
+    });
+  };
 
   ChoiceAttribute.prototype = {
     build: function(td, setter) {
@@ -45,11 +52,19 @@ define(['utils', 'instances', 'require'], function(utils, instances, require) {
       var indicatorElem = $('<div>', { class: 'indicator', text: '▼' });
       var currentSelectionElem = $('<div>', { class: 'selected' });
       var optionsElem = $('<ul>');
+      var noValue = this.noValue;
+
+      function chooseNoValue() {
+        currentSelectionElem.html('<span class="no-value">Keep private</span>');
+        currentSelectionElem.data('value', null);
+        currentSelectionElem.data('sources', []);
+        optionsElem.trigger('hide');
+        setter(null, []);
+      }
 
       this.choices.forEach(function(choice) {
         var optionElem = $('<li>');
-        optionElem.data('value', choice.value);
-        optionElem.data('sources', choice.sources);
+
         if(choice.image) {
           optionElem.append($('<img>', { 
             src: choice.image,
@@ -66,21 +81,30 @@ define(['utils', 'instances', 'require'], function(utils, instances, require) {
           }));
         }
 
-        optionElem.click(function() {
-          currentSelectionElem.html(optionElem.html());
-          currentSelectionElem.data('value', optionElem.data('value'));
-          currentSelectionElem.data('sources', optionElem.data('sources'));
-          optionsElem.trigger('hide');
-          setter(optionElem.data('value'), optionElem.data('sources'));
-        });
+        if(choice.noValue) {
+          optionElem.click(chooseNoValue);
+        } else {
+          optionElem.data('value', choice.value);
+          optionElem.data('sources', choice.sources);
+          optionElem.click(function() {
+            currentSelectionElem.html(optionElem.html());
+            currentSelectionElem.data('value', optionElem.data('value'));
+            currentSelectionElem.data('sources', optionElem.data('sources'));
+            optionsElem.trigger('hide');
+            setter(optionElem.data('value'), optionElem.data('sources'));
+          });
+        }
 
         optionsElem.append(optionElem);
       });
 
+      selectElem.bind('reset', chooseNoValue);
       indicatorElem.click(function() { optionsElem.trigger('toggle'); });
       currentSelectionElem.click(function() { optionsElem.trigger('toggle'); });
 
-      optionsElem.find('li:eq(0)').click();
+      currentSelectionElem.html('<span class="no-value">Keep private</span>');
+      currentSelectionElem.data('value', null);
+      currentSelectionElem.data('sources', []);
 
       selectElem.append(indicatorElem);
       selectElem.append(currentSelectionElem);
@@ -117,6 +141,7 @@ define(['utils', 'instances', 'require'], function(utils, instances, require) {
         
         choiceElem.find('li').each(function() {
           var sources = $(this).data('sources');
+          if(!sources) return;
           for(var i=0; i < sources.length; i++) {
             if(sources[i] == source) {
               $(this).click();
@@ -292,38 +317,22 @@ define(['utils', 'instances', 'require'], function(utils, instances, require) {
         var a = knownAttributes[i];
         var row = $(tr);
 
-        var includeInput = row.find('.include input');
         var valueTD = row.find('.value');
+        var choiceElem = row.find('.attr-select');
 
-        function enable() {
-          me.editData[a.attr] = a.controller.value(valueTD, me.data[a.attr]);
-          includeInput.attr('checked', 'checked');
-          valueTD.children().css('visibility', 'visible');
-        }
-        function disable() {
+        if(!(a.attr in me.data)) {
+          choiceElem.trigger('reset');
           delete me.editData[a.attr];
-          includeInput.removeAttr('checked');
-          valueTD.children().css('visibility', 'hidden');
-          valueTD.click(function() {
-            valueTD.unbind();
-            enable();
-            a.controller.focus(valueTD);
-          });
+        } else {
+          me.editData[a.attr] = a.controller.value(valueTD, me.data[a.attr]);
         }
-        function able(bool) { bool ? enable() : disable(); }
-
-        able(a.attr in me.data);
-
-        includeInput.change(function() {
-          able(includeInput.attr('checked'));
-        });
       });
     };
 
     function showAttributes() {
       if (me.attributesElem.css('display') !== 'none') {
-        for (var k in me.data) { 
-          if (me.data[k] != me.editData[k]) return; 
+        for (var k in me.data) {
+          if (me.data[k] != me.editData[k]) return;
         }
         hideAttributes();
         return;
@@ -366,9 +375,7 @@ define(['utils', 'instances', 'require'], function(utils, instances, require) {
         
         knownAttributes.forEach(function(a) {
           if(a.attr != attrName) return;
-          if(a.controller.selectFromSource(selection, source)) {
-            checkBox.attr('checked', 'checked');
-          }
+          a.controller.selectFromSource(selection, source);
         });
       });
     }
@@ -377,19 +384,23 @@ define(['utils', 'instances', 'require'], function(utils, instances, require) {
       me.attributesTable.find('tr').remove();
       knownAttributes.forEach(function(a) {
         var row = me.protoRow.clone();
-        row.find('.include input').removeAttr('checked');
         row.find('.tag').text(a.en);
         row.data('attr', a.attr);
 
-        var setter;
+        var baseSetter = function(value, sources) {
+          if(value == null) {
+            delete me.editData[a.attr];
+          } else {
+            me.editData[a.attr] = value;
+          }
+
+          return !(value == null);
+        };
+
+        var setter = baseSetter;
         if(a.attr == 'id') {
           setter = function(value, sources) {
-            me.editData[a.attr] = value;
-            selectFromSource(sources[0]);
-          };
-        } else {
-          setter = function(value, sources) {
-            me.editData[a.attr] = value;
+            if(baseSetter(value, sources)) selectFromSource(sources[0]);
           };
         }
 

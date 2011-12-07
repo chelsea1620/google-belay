@@ -545,6 +545,11 @@ select.button {
   padding-left: 0.5em;
 }
 
+.attr-select .no-value {
+  font-style: italic;
+  color: #888;
+}
+
 .attr-select ul {
   position:absolute;
   left:0;

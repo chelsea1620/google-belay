@@ -263,12 +263,13 @@ class BelayStationSection(object):
     def set_attributes(self, attrs):
         driver = self.station.driver
         self.open_attributes()
+
+        attributes_to_set = list(attrs)
         
         attribute_rows = self.elem.find_elements_by_xpath("table//table//tr")
         for row in attribute_rows:
             attr_name = row.find_element_by_class_name("tag").text
             if attr_name in attrs:
-                row.find_element_by_tag_name("input").click()
                 select_widget = row.find_element_by_class_name("attr-select")
                 wait_for(driver, lambda drv: select_widget.is_displayed);
                 select_widget.click()
@@ -283,10 +284,15 @@ class BelayStationSection(object):
                         selection.click()
 
                 if not found:
-                    raise ("Attribute value " +
-                            attrs[attr_name] +
-                            "not a valid option")
+                    raise Exception("Attribute value %s not a valid option" 
+                        % attrs[attr_name])
+                
+                attributes_to_set.remove(attr_name)
         
+        if attributes_to_set:
+            raise Exception ("Could not set: %s" % attributes_to_set)
+        
+        sleep(10)
         self.save_attributes()
     
     def open_attributes(self):
@@ -375,6 +381,8 @@ class BelayStationPage(BelayEnabledPage):
         id_add_dialog.find_element_by_name("email").send_keys(email)
 
         id_add_dialog.find_element_by_class_name("widget-keyhole-button").click()
+        overlay = self.driver.find_element_by_class_name('dark-screen')
+        self.wait_for(lambda drv: not overlay.is_displayed())
 
 
 class BuzzerLandingPage(BelayEnabledPage):

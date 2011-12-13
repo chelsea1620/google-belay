@@ -231,7 +231,7 @@ limitations under the License.
     </div>
     <div id="about">©2011 Google</div>
     <div class="dark-screen" style="display: none"></div>
-    <div id="id-add-dialog" style="display: none">
+    <div id="id-add-dialog" class="dialog" style="display: none">
       <div class="header">
         <h1>Add Identity</h1>
         <span class="close"></span>
@@ -266,6 +266,36 @@ limitations under the License.
         </div>
       </div>
       <div class="widget-footer">
+      </div>
+    </div>
+    <div id="id-added-dialog" class="dialog" style="display: none">
+      <div class="header">
+        <h1>Identity Added</h1>
+        <span class="close"></span>
+      </div>
+      <div class="main">
+        Your identity information from <span class="idp-name">Google</span> was
+        successfully retrieved. The provider shared the following with us:
+
+        <ul class="attr-list">
+          <li class="proto">
+            <span class="attr-name">Name</span> - 
+            <span class="attr-value">John Doe</span>
+          </li>
+        </ul>
+
+        Select which categories of sites you would like to share this information with:
+
+        <ul class="section-list">
+          <li class="proto">
+            <input type="checkbox">
+            <span class="section-name">Games</span>
+          </li>
+        </ul>
+
+        <div style="text-align: center">
+          <button class="widget-keyhole-button">OK</button>
+        </div>
       </div>
     </div>
   </div>

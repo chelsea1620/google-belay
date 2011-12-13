@@ -89,6 +89,7 @@ var getSuggestions = function(location) {
 var initialize = function() {
   $(document.body).find('.ex').remove(); // remove layout examples
   
+  attributes.init(stationInfo.allIdentities);
   instances.init(capServer, stationInfo.instanceBase);
   sections.init(capServer, stationInfo.allSections);
   identities.init(capServer,

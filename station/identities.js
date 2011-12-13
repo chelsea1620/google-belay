@@ -12,13 +12,27 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-define(['utils', 'sections'], function(utils, sections) {
+define(['utils', 'sections', 'attributes'], 
+function(utils, sections, attributes) {
 
   var capServer;
   
   var identitiesCap = null;
   var navIdentityList = null;
   var protoIdentity = null;
+  var identities = null;
+
+  function hideDialog(dialog) {
+    $('.dark-screen').hide();
+    dialog.hide();
+  }
+
+  function showDialog(dialog) {
+    $('.dark-screen').show();
+    dialog.show();
+    dialog.css('top', ($(window).height() - dialog.outerHeight()) / 2 + 'px');
+    dialog.css('left', ($(window).width() - dialog.outerWidth()) / 2 + 'px');
+  }
   
   function init(cs, idData, idCap, idAdders, createProfile) {
     capServer = cs;
@@ -26,24 +40,17 @@ define(['utils', 'sections'], function(utils, sections) {
     navIdentityList = $('#nav-ids');
     protoIdentity = utils.detachProto(navIdentityList.find('.identity.proto'));
 
-    var openDialogButton = $('#add-id-button');
-    openDialogButton.click(function() {
-      $('.dark-screen').show();
-      dialog = $('#id-add-dialog');
-      dialog.show();
-      dialog.css('top', ($(window).height() - dialog.outerHeight()) / 2 + 'px');
-      dialog.css('left', ($(window).width() - dialog.outerWidth()) / 2 + 'px');
-    });
-
     var hideIdAddDialog = function() {
-      $('.dark-screen').hide();
-      $('#id-add-dialog').hide();
+      hideDialog($('#id-add-dialog'));
       $('#custom-profile-fields input, #custom-profile-fields select')
         .each(function() { $(this).trigger('reset'); });
       $('#id-add-dialog .error').hide();
     }
 
-    $('#id-add-dialog .close').click(hideIdAddDialog);
+    $('#add-id-button').click(function() { 
+      showDialog($('#id-add-dialog'));
+      $('#id-add-dialog .close').click(hideIdAddDialog);
+    });
 
     var protoButton = utils.detachProto($('#proto-add-id'));
 
@@ -59,7 +66,7 @@ define(['utils', 'sections'], function(utils, sections) {
             outpostData: { 
               info: launchInfo.info,
               instanceId: instanceId,
-              notifyClose: capServer.grant(refresh)
+              notifyClose: capServer.grant(handleNewId)
             }
           });
         });
@@ -84,7 +91,7 @@ define(['utils', 'sections'], function(utils, sections) {
         reprime();
         function checker(evt) {
           if (evt.originalEvent.source == newWindow) {
-            refresh();
+            handleNewId();
             unchecker();
             return true;
           }
@@ -107,7 +114,7 @@ define(['utils', 'sections'], function(utils, sections) {
     removeElem.attr('id', 'id-remove-button');
     removeElem.text("Remove All Identities");
     removeElem.click(function() {
-      identitiesCap.put([ ], refresh);
+      identitiesCap.put([ ], clearIds);
     });
     navIdentityList.append(removeElem);
 
@@ -193,11 +200,114 @@ define(['utils', 'sections'], function(utils, sections) {
     rebuild(idData);
   }
   
+  function handleNewId() {
+    var oldIdentities = identities;
+    identitiesCap.get(function(idData) {
+      identities = idData;
+      rebuild(idData);
+
+      if(sections.withoutAssignedId().length == 0) return;
+
+      var newIds = identities.filter(function(id) {
+        return !(oldIdentities.some(function(oldId) {
+          return oldId.account_name == id.account_name;
+        }));
+      });
+      
+      if(newIds.length == 0) return;
+
+      var newId = newIds[0];
+      var newIdDialog = $('#id-added-dialog');
+      newIdDialog.find('.idp-name').text(newId.id_provider);
+
+      var attributeList = newIdDialog.find('.attr-list');
+      var protoAttr = attributeList.find('li.proto').clone();
+      attributeList.empty();
+      attributeList.append(protoAttr);
+
+      for(var attrName in newId.attributes) {
+        var attributeValues = newId.attributes[attrName];
+        var attrElem = protoAttr.clone();
+        attrElem.removeClass('proto');
+        attrElem.find('.attr-name').text(attrName);
+
+        var valueElem = attrElem.find('.attr-value');
+        if(attributes.getAttributeProperties(attrName).type == 'image') {
+          valueElem.empty();
+          attributeValues.forEach(function(value) {
+            var imageElem = $('<img>', {
+              src: value,
+              alt: 'provided avatar image'
+            });
+
+            valueElem.append(imageElem);
+          });
+        } else {
+          var valueString = attributeValues
+            .sort()
+            .reduce(function(vals, val) {
+              if(vals.length != 0) {
+                if(vals[vals.length-1] == val) return vals;
+              }
+
+              vals.push(val);
+              return vals;
+            }, [])
+            .reduce(function(a, b) {
+              if(a == '') return b;
+              else return a + ', ' + b;
+            });
+            valueElem.text(valueString);
+        }
+
+        $('.attr-list').append(attrElem);
+      }
+
+      var sectionList = newIdDialog.find('.section-list');
+      var protoSection = sectionList.find('li.proto').clone();
+      sectionList.empty();
+      sectionList.append(protoSection);
+
+      sections.withoutAssignedId().forEach(function(section) {
+        var sectionElem = protoSection.clone();
+        sectionElem.data('section', section);
+        sectionElem.removeClass('proto');
+        sectionElem.find('.section-name').text(section.name);
+        sectionList.append(sectionElem);
+      });
+
+      var okButton = newIdDialog.find('button');
+      okButton.unbind('click');
+      okButton.click(function() {
+        sectionList.find('li input:checked').each(function() {
+          var selected = $(this).parent();
+          var section = selected.data('section');
+          section.setAssignedId(newId.account_name);
+        });
+
+        hideDialog(newIdDialog);
+      });
+
+      var closeButton = newIdDialog.find('.close');
+      closeButton.unbind('click');
+      closeButton.click(function() { hideDialog(newIdDialog); });
+      showDialog(newIdDialog);
+    });
+  }
+
+  function clearIds() {
+    sections.forEach(function(section) {
+      section.clearAssignedId();
+    });
+    refresh();
+  }
+
   function refresh() {
     identitiesCap.get(rebuild);
   }
   
   function rebuild(idData) {
+    identities = idData;
     var list = $('<ul></ul>');
     for (var k in idData) {
       var d = idData[k];

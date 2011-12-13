@@ -231,6 +231,19 @@ define(['utils', 'instances', 'attributes'],
     this.updateAttributes = function() { 
       if(this.attributesEditor) { this.attributesEditor.rebuild(); }
     };
+
+    this.setAssignedId = function(id) {
+      if(this.attributesEditor) { this.attributesEditor.setAssignedId(id); }
+    };
+
+    this.hasAssignedId = function() {
+      if(!this.attributesEditor) { return true; }
+      return this.attributesEditor.hasAssignedId();
+    }
+
+    this.clearAssignedId = function() {
+      if(this.attributesEditor) { this.attributesEditor.clearAssignedId(); }
+    }
   };
   
   
@@ -381,13 +394,33 @@ define(['utils', 'instances', 'attributes'],
       byName[sectionName].updateAttributes();
     }
   }
+
+  function withoutAssignedId() {
+    var sections = [];
+    for(var secName in byName) {
+      var section = byName[secName];
+      if(!section.hasAssignedId()) {
+        sections.push(byName[secName]);
+      }
+    }
+
+    return sections;
+  }
+
+  function forEach(visitor) {
+    for(var secName in byName) {
+      visitor(byName[secName]);
+    }
+  }
   
   return {
     init: init,
     newInstance: newInstance,
     deleteInstance: deleteInstance,
     forInstance: forInstance,
-    updateAttributes: updateAttributes
+    updateAttributes: updateAttributes,
+    withoutAssignedId: withoutAssignedId,
+    forEach: forEach
   };
 });
 

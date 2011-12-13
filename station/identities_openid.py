@@ -147,14 +147,13 @@ def permuteAttributes(ax):
     attrs['image'] = v
 
   if GENDER_ATTR in ax.data:
-    if ax.data.get(GENDER_ATTR) == 'M':
+    gender = ax.data.get(GENDER_ATTR)[0]
+    if gender == 'M':
         attrs['gender'] = ['male']
-    elif ax.data.get(GENDER_ATTR) == 'F':
+    elif gender == 'F':
         attrs['gender'] = ['female']
     else:
         attrs['gender'] = ['other']
-
-  logging.info(ax.data.keys())
 
   if BIRTH_DATE_ATTR in ax.data:
     bdate = datetime.date(BIRTH_DATE_ATTR)

@@ -40,6 +40,12 @@ define(['utils', 'instances', 'require'], function(utils, instances, require) {
   var ChoiceAttribute = function(choices) { 
     this.choices = choices;
     this.choices.push({
+      oldDataHolder: true,
+      sources: [],
+      value: '',
+      display: ''
+    });
+    this.choices.push({
       noValue: true,
       sources: [],
       display: 'Keep private'
@@ -52,12 +58,12 @@ define(['utils', 'instances', 'require'], function(utils, instances, require) {
       var indicatorElem = $('<div>', { class: 'indicator', text: '▼' });
       var currentSelectionElem = $('<div>', { class: 'selected' });
       var optionsElem = $('<ul>');
-      var noValue = this.noValue;
+      var freeTextOption = null;
+      var me = this;
 
       function chooseNoValue() {
         currentSelectionElem.html('<span class="no-value">Keep private</span>');
-        currentSelectionElem.data('value', null);
-        currentSelectionElem.data('sources', []);
+        currentSelectionElem.data('choice', null);
         optionsElem.trigger('hide');
         setter(null, []);
       }
@@ -81,17 +87,21 @@ define(['utils', 'instances', 'require'], function(utils, instances, require) {
           }));
         }
 
+        if(choice.oldDataHolder) {
+          me.oldDataHolder = optionElem;
+          optionElem.hide();
+        }
+
+        optionElem.data('choice', choice);
         if(choice.noValue) {
           optionElem.click(chooseNoValue);
         } else {
-          optionElem.data('value', choice.value);
-          optionElem.data('sources', choice.sources);
           optionElem.click(function() {
+            var choice = optionElem.data('choice');
             currentSelectionElem.html(optionElem.html());
-            currentSelectionElem.data('value', optionElem.data('value'));
-            currentSelectionElem.data('sources', optionElem.data('sources'));
+            currentSelectionElem.data('choice', choice);
             optionsElem.trigger('hide');
-            setter(optionElem.data('value'), optionElem.data('sources'));
+            setter(choice.value, choice.sources);
           });
         }
 
@@ -103,8 +113,7 @@ define(['utils', 'instances', 'require'], function(utils, instances, require) {
       currentSelectionElem.click(function() { optionsElem.trigger('toggle'); });
 
       currentSelectionElem.html('<span class="no-value">Keep private</span>');
-      currentSelectionElem.data('value', null);
-      currentSelectionElem.data('sources', []);
+      currentSelectionElem.data('choice', null);
 
       selectElem.append(indicatorElem);
       selectElem.append(currentSelectionElem);
@@ -140,7 +149,7 @@ define(['utils', 'instances', 'require'], function(utils, instances, require) {
         var choiceElem = $(this);
         
         choiceElem.find('li').each(function() {
-          var sources = $(this).data('sources');
+          var sources = $(this).data('choice').sources;
           if(!sources) return;
           for(var i=0; i < sources.length; i++) {
             if(sources[i] == source) {
@@ -153,7 +162,28 @@ define(['utils', 'instances', 'require'], function(utils, instances, require) {
       return selectionMade;
     },
     value: function(td, value) {
-      return td.find('.attr-select .selected').data('value');
+      var matchingOption = null;
+      td.find('.attr-select li').each(function() {
+        optionElem = $(this);
+        if(optionElem.data('choice').value == value) {
+          matchingOption = optionElem;
+        }
+      });
+
+      if(matchingOption) {
+        if(!matchingOption.data('choice').oldDataHolder) {
+          this.oldDataHolder.hide();
+        }
+      } else {
+        this.oldDataHolder.find('span').text(value);
+        this.oldDataHolder.data('choice').value = value;
+        this.oldDataHolder.show();
+        matchingOption = this.oldDataHolder;
+      }
+
+      matchingOption.click();
+
+      return matchingOption.data('choice').value;
     },
     focus: function(td) {
       td.find('.attr-select').focus();
@@ -220,6 +250,10 @@ define(['utils', 'instances', 'require'], function(utils, instances, require) {
     }
     
     knownAttributes = [];
+    for(attrName in attributeProperties) {
+      options[attrName] = {};
+    }
+
     extractAttributes(idData, opt);
     addDefaultAttributes(opt);
     sortAttributeOptions(options);
@@ -303,6 +337,7 @@ define(['utils', 'instances', 'require'], function(utils, instances, require) {
     var me = this;
     this.data = section.attributes;
     this.editData = {};
+    this.assignedIdentity = null;
     
     this.attributesElem = section.list.find('.attributes');
     this.attributesDiv = this.attributesElem.find('.box');
@@ -349,7 +384,6 @@ define(['utils', 'instances', 'require'], function(utils, instances, require) {
     }
 
     function saveAttributes() {
-      console.log('save');
       section.attributes = me.data = me.editData;
       section.attributesCap.put(me.data, hideAttributes);
 
@@ -370,7 +404,6 @@ define(['utils', 'instances', 'require'], function(utils, instances, require) {
         var attrName = row.data('attr');
         if(attrName == 'id') return;
 
-        var checkBox = row.find('.include input');
         var selection = row.find('.value');
         
         knownAttributes.forEach(function(a) {
@@ -400,7 +433,10 @@ define(['utils', 'instances', 'require'], function(utils, instances, require) {
         var setter = baseSetter;
         if(a.attr == 'id') {
           setter = function(value, sources) {
-            if(baseSetter(value, sources)) selectFromSource(sources[0]);
+            if(baseSetter(value, sources)) {
+              me.assignedIdentity = value;
+              selectFromSource(sources[0]);
+            }
           };
         }
 
@@ -410,6 +446,30 @@ define(['utils', 'instances', 'require'], function(utils, instances, require) {
 
       resetAttributes();
     };
+
+    this.setAssignedId = function(id) {
+      me.attributesTable.find('tr').each(function() {
+        if($(this).data('attr') != 'id') return;
+
+        $(this).find('.value li').each(function() {
+          if($(this).data('choice').value != id) return;
+          $(this).click();
+        });
+      });
+      saveAttributes();
+    };
+
+    this.getAssignedId = function() {
+      return me.assignedIdentity;
+    };
+
+    this.hasAssignedId = function() {
+      return me.assignedIdentity != null;
+    }
+
+    this.clearAssignedId = function() {
+      this.setAssignedId('');
+    }
 
     this.rebuild();
     section.list.find('.header .settings').click(showAttributes);
@@ -430,10 +490,16 @@ define(['utils', 'instances', 'require'], function(utils, instances, require) {
     }
   }
 
+  function getAttributeProperties(attrName) {
+    return attributeProperties[attrName];
+  }
+
   return {
+    init: rebuild,
     rebuild: rebuild,
     SectionAttributesEditor: SectionAttributesEditor,
     pushToInstance: pushToInstance,
+    getAttributeProperties: getAttributeProperties
   };
 });
 

@@ -1,0 +1,272 @@
+<!--
+Copyright 2011 Google Inc. All Rights Reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Belay Station</title>
+  <link rel="stylesheet" href="https://www.google.com/css/go-x.css">
+  <link rel="stylesheet" href="your-sites.css">
+  <script data-main="your-sites.js" src="lib/js/require-jquery.js"></script>
+</head>
+<body>
+  <div class="grey"></div>
+  <h1><a href="/"><img src="https://www.google.com/images/logos/google_logo_41.png" alt="Google" style="width: 116px; height: 41px;"></a> Web Relationships</h1>
+  <div id="nav">
+    <ul id="nav-sections">
+      <li class="head">Sites</li>
+      <li class="proto section">Uncategorized</li>
+      <li class="ex section selected">Personal</li>
+      <li class="ex section">Shopping</li>
+      <li class="ex section">Games</li>
+      <li class="ex section">Work</li>
+      <hr class="divider"/>
+    </ul>
+    <ul id="nav-ids">
+      <li class="head">Identity</li>
+      <li class="proto identity"><img src='/res/images/google.ico' alt='Google'></img><span>betsy.ross@gmail.com</span></li>
+      <li id="add-id-button" class="button">Add Identity</li>
+    </ul>
+  </div>
+  <div id="aux">
+    <div>
+      <div id="belay-station-outer">
+        <div id="belay-station-inner">
+          <div id="belay-items">
+            <div class="section proto">
+              <table class="header">
+                <tr>
+                  <td class="name">Recent</td>
+                  <td class="actions">
+                    <span class="show-all">show all</span>
+                    <span class="settings">settings</span>
+                  </td>
+                </tr>
+                <tr class="attributes"><td colspan="2"><div class="box">
+                  <table>
+                    <tr class="proto">
+                      <td class="tag">Name</td>
+                      <td class="value">Martha Washington</td>
+                    </tr>
+                    <tr class="ex">
+                      <td class="tag">Occupation</td>
+                      <td class="value">Undercover Diplomat</td>
+                    </tr>                      
+                    <tr class="ex">
+                      <td class="tag">E-mail</td>
+                      <td class="value">mw@whitehouse.gov</td>
+                    </tr>                      
+                    <tr class="ex">
+                      <td class="tag">Tel.</td>
+                      <td class="value">201-555-1212</td>
+                    </tr>                      
+                    <tr class="ex">
+                      <td class="tag">Location</td>
+                      <td class="value">Philadelphia, PA</td>
+                    </tr>                      
+                  </table>
+                  <div class="buttons">
+                    <span class="save button button-submit">Save</span>
+                    <span class="cancel button">Cancel</span>
+                  </div>
+                </div></td></tr>
+              </table>
+              <table class="items">
+                <tr class="proto">
+                  <td class="icon"><img src="res/images/site.png" /></td>
+                  <td class="name">site one</td>
+                  <td class="actions"><a href="redirect.html" target="_blank" class="open-page">open</a>
+                    • <span class="remove">×</span></td>
+                </tr>
+                <tr class="ex">
+                  <td class="icon"><img src="res/images/site.png" /></td>
+                  <td class="name">site two</td>
+                  <td class="actions"><a href="redirect.html" target="_blank" class="open-page">open</a>
+                    • <span class="remove">×</span></td>
+                </tr>
+                <tr class="ex">
+                  <td class="icon"><img src="res/images/site.png" /></td>
+                  <td class="name">site three</td>
+                  <td class="actions"><a href="redirect.html" target="_blank" class="open-page">open</a>
+                    • <span class="remove">×</span></td>
+                </tr>
+              </table>
+            </div>
+            
+            <div class="section ex">
+              <table class="header">
+                <tr>
+                  <td class="name">News and Blogs</td>
+                  <td class="actions"><span class="settings">settings</span></td>
+                </tr>
+              </table>
+              <table class="items">
+                <tr>
+                  <td class="icon"><img src="res/images/site.png" /></td>
+                  <td class="name">site four</td>
+                  <td class="actions"><a href="redirect.html" target="_blank" class="open-page">open</a>
+                    • <span class="remove">×</span></td>
+                </tr>
+                <tr>
+                  <td class="icon"><img src="res/images/site.png" /></td>
+                  <td class="name">site five</td>
+                  <td class="actions"><a href="redirect.html" target="_blank"  class="open-page">open</a>
+                    • <span class="remove">×</span></td>
+                </tr>
+                <tr>
+                  <td class="icon"><img src="res/images/site.png" /></td>
+                  <td class="name">site six</td>
+                  <td class="actions"><a href="redirect.html" target="_blank"  class="open-page">open</a>
+                    • <span class="remove">×</span></td>
+                </tr>
+              </table>
+            </div>
+            
+            <div class="section ex">
+              <table class="header">
+                <tr>
+                  <td class="name">Empty Section</td>
+                  <td class="actions"><span class="settings">settings</span></td>
+                </tr>
+              </table>
+              <table class="items">
+              </table>
+            </div>
+            
+            <div class="section ex">
+              <table class="header">
+                <tr>
+                  <td class="name">Forums and Disucssions</td>
+                  <td class="actions"><span class="settings">settings</span></td>
+                </tr>
+                <tr class="attributes" style="display:table-row;"><td colspan="2"><div class="box" style="display:block;">
+                  <table>
+                    <tr>
+                      <td class="include"><input type="checkbox" checked="checked" /></td>
+                      <td class="tag">Name</td>
+                      <td class="value">Martha Washington</td>
+                    </tr>                      
+                    <tr>
+                      <td class="include"><input type="checkbox" checked="checked" /></td>
+                      <td class="tag">Name</td>
+                      <td class="value"><input value="Martha Washington" /></td>
+                    </tr>                      
+                    <tr>
+                      <td class="include"><input type="checkbox" checked="checked" /></td>
+                      <td class="tag">Occupation</td>
+                      <td class="value">Undercover Diplomat</td>
+                    </tr>                      
+                    <tr>
+                      <td class="include"><input type="checkbox" checked="checked" /></td>
+                      <td class="tag">E-mail</td>
+                      <td class="value"><select class="button">
+                        <option value="martha@whitehouse.gov">martha@whitehouse.gov</option>
+                        <option value="mw@dar.org" selected="seleted">mw@dar.org</option>
+                        <option value="tatter@ralvery.org">tatter@ralvery.org</option>
+                        </select></td>
+                    </tr>                      
+                    <tr>
+                      <td class="include"><input type="checkbox" checked="checked" /></td>
+                      <td class="tag">Tel.</td>
+                      <td class="value">201-555-1212</td>
+                    </tr>                      
+                    <tr>
+                      <td class="include"><input type="checkbox" checked="checked" /></td>
+                      <td class="tag">Location</td>
+                      <td class="value">Philadelphia, PA</td>
+                    </tr>                      
+                    <tr>
+                      <td class="include"><input type="checkbox" checked="checked" /></td>
+                      <td class="tag">Fruit</td>
+                      <td class="value"><span><input type="checkbox" />Apples</span>
+                        <span><input type="checkbox" />Bananas</span>
+                        <span><input type="checkbox" />Citrons</span></td>
+                    </tr>                      
+                  </table>
+                  <div class="buttons">
+                    <span class="button button-submit">Save</span>
+                    <span class="button">Cancel</span>
+                  </div>
+                </div></td></tr>
+              </table>
+              <table class="items">
+                <tr>
+                  <td class="icon"><img src="res/images/site.png" /></td>
+                  <td class="name">site seven</td>
+                  <td class="actions"><a href="redirect.html" target="_blank"  class="open-page">open</a>
+                    • <span class="remove">×</span></td>
+                </tr>
+                <tr>
+                  <td class="icon"><img src="res/images/site.png" /></td>
+                  <td class="name">site eight</td>
+                  <td class="actions"><a href="redirect.html" target="_blank" class="open-page">open</a>
+                    • <span class="remove">×</span></td>
+                </tr>
+                <tr>
+                  <td class="icon"><img src="res/images/site.png" /></td>
+                  <td class="name">site nine</td>
+                  <td class="actions"><a href="redirect.html" target="_blank"  class="open-page">open</a>
+                    • <span class="remove">×</span></td>
+                </tr>
+              </table>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="about">©2011 Google</div>
+    <div class="dark-screen" style="display: none"></div>
+    <div id="id-add-dialog" style="display: none">
+      <div class="header">
+        <h1>Add Identity</h1>
+        <span class="close"></span>
+      </div>
+      <div class="main">
+        <div class="idp-list">
+          <h2>Add identity from</h2>
+          <ol id='add-id-list'>
+            <li id='proto-add-id' class="idp proto"><a href="javascript:void(0)"><span>Gmail</span></a></li>
+            <li class="idp ex"><a href="javascript:void(0)"><span>Yahoo</span></a></li>
+            <li class="idp ex"><a href="javascript:void(0)"><span>AOL</span></a></li>
+            <li class="idp ex"><a href="javascript:void(0)"><span>Browser ID</span></a></li>
+          </ol>
+        </div>
+        <div class="profile">
+          <h2>Or, just create one:</h2>
+          <div class="error" style="display: none"><span class="icon">⚠</span> Missing values for required fields</div>
+          <fieldset id="custom-profile-fields">
+            <input name="name" type="text" value="Name (Required)" class="fresh required">
+            <input name="email" type="email" value="Email address" class="fresh">
+            <select name="gender" class="fresh">
+              <option value="female">Female</option>
+              <option value="male">Male</option>
+              <option value="other">Other</option>
+              <option value="" selected="selected">Gender</option>
+            </select>
+            <input name="age" type="text" value="Age" class="fresh">
+            <input name="location" type="text" value="Location" class="fresh">
+            <input type="submit" class="widget-keyhole-button" value="Create Profile">
+
+          </fieldset>
+        </div>
+      </div>
+      <div class="widget-footer">
+      </div>
+    </div>
+  </div>
+</body>

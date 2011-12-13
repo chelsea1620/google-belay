@@ -292,7 +292,6 @@ class BelayStationSection(object):
         if attributes_to_set:
             raise Exception ("Could not set: %s" % attributes_to_set)
         
-        sleep(10)
         self.save_attributes()
     
     def open_attributes(self):

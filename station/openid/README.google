@@ -1,0 +1,10 @@
+URL: https://github.com/openid/python-openid
+Version: 12efd783e7b58aa72aff8feaff54bed1c133a3f9
+License: Apache 2.0
+License File: LICENSE
+
+Description:
+The JanRain OpenID library for Python provides utilities for acting as both an OpenID relying party and an OpenID provider.
+
+Local Modifications:
+Only the library itself is included from the main source tree, with the tests pruned.

@@ -30,8 +30,17 @@ def instance_url(stationKey, instanceKey):
   return server_url('/instance?s=' + keyName(stationKey)
     + '&i=' + keyName(instanceKey))
 
-def tool_url(port, path):
-  return "http://%s:%d%s" % (os.environ['SERVER_NAME'], port, path)
+def tool_url(port, path, https=True):
+  # as this utility generates urls to other applications, it is
+  # safer to base the http/https decision on whether we are running
+  # on the dev appengine runtime. We should be using https all the
+  # time in the real environment.
+  if os.environ['SERVER_SOFTWARE'].startswith('Development'):
+    proto = 'http'
+  else:
+    proto = 'https'
+
+  return "%s://%s:%d%s" % (proto, os.environ['SERVER_NAME'], port, path)
 
 def cap(url):
   return { '@': url }

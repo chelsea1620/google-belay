@@ -283,7 +283,11 @@ class LoginCallbackHandler(CallbackHandler):
       station = StationData.create()
       self.set_entity(station)
       self.addIdentity(identity_url, ax_response)
-      page = self.buildNewStationPage(station.key())
+      page = self.buildStationPage(
+        "New Station",
+        """A new station has been created for you.
+        Use this same identity to get back to it.""",
+        station.key())
     elif len(results) == 1:
       logging.getLogger().debug('login for: %s' % identity_url)
       identity = results[0]
@@ -293,7 +297,10 @@ class LoginCallbackHandler(CallbackHandler):
           identity.put()
       station = identity.parent()
       self.set_entity(station)
-      page = self.buildStationPage(station.key())
+      page = self.buildStationPage(
+        "Station Login",
+        """We have your station.""",
+        station.key())
     else:
       logging.getLogger().debug('multiple stations for: %s' % identity_url)
       self.writeOutPage(page);
@@ -303,30 +310,25 @@ class LoginCallbackHandler(CallbackHandler):
   def requestPath(self):
     return self.request.path_info
 
-  def buildNewStationPage(self, stationKey):
+  def buildStationPage(self, header, message, stationKey):
     return '''<html>
-    <body><h1>New Station</h1>
-    <p>A new station has been created for you. Use this same identity to
-      get back to it.</p>
+    <head>
+    	<title>{header}</title>
+    	<script src="/lib/js/include-belay.js"></script>
+    </head>
+    <body><h1>{header}</h1>
+    <p>{message}</p>
     <script>
+      window.addEventListener('storage', function(e) {{
+      	if (e.key = 'station-launch-time') {{
+        	window.close();
+      	}}
+      }}, false);
       window.localStorage.removeItem('launchCap');
-      window.localStorage.setItem('launchCap', '%s');
-      window.opener.postMessage('done', '*');
-      setTimeout(function() { window.close(); }, 5000);
+      window.localStorage.setItem('launchCap', '{url}');
     </script></body>
-    </html>''' % (launch_url(stationKey))
-
-  def buildStationPage(self, stationKey):
-    return '''<html>
-    <body><h1>Station Login</h1>
-    <p>We have your station.</p>
-    <script>
-      window.localStorage.removeItem('launchCap');
-      window.localStorage.setItem('launchCap', '%s');
-      window.opener.postMessage('done', '*');
-      window.close();
-    </script></body>
-    </html>''' % (launch_url(stationKey))
+    </html>'''.format(
+      header=header, message=message, url=launch_url(stationKey))
 
   def buildMultipleStationPage(self):
     return '''<html>

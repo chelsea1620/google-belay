@@ -16,7 +16,12 @@ limitations under the License.
 
 /* @group k styling */
 
+html {
+  padding-top: 0;
+}
+
 body {
+  padding-top: 20px;
   padding-left: 5em;
   padding-right: 5em;
   max-width: none;
@@ -33,12 +38,6 @@ body div.grey {
   right: 0;
 }
 
-body #aux {
-}
-
-body h1 i {
-  color: #c0c0c0;
-}
 /* @end */
 
 .ex, .proto {

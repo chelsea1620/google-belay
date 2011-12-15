@@ -26,8 +26,9 @@ MockWebServer.prototype.process = function(method, url, data, success, failure) 
     }
     var f = this.urlMap[url];
     var t = method || 'GET';
-    var pre = this.server.dataPreProcess.bind(this.server);
-    var post = this.server.dataPostProcess.bind(this.server);
+    var server = this.server;
+    var pre = function(d) { return server.dataPreProcess(d); };
+    var post = function(d) { return server.dataPostProcess(d); };
     var response;
 
     if (t == 'GET') response = pre(f());

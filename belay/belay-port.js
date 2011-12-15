@@ -62,12 +62,12 @@ if (!window.belay) {
       });
     }
 
-    function highlight(rc, className) {
+    function highlight(args) {
       unhighlight();
-      toArray(window.document.getElementsByClassName(className))
+      toArray(window.document.getElementsByClassName(args.className))
       .filter(function(elt) {
         var ixrc = elt.getAttribute('data-rc');
-        return rc === '*' || ixrc === '*' || ixrc === rc;
+        return args.rc === '*' || ixrc === '*' || ixrc === args.rc;
         // TODO(mzero): in theory only one of ixrc or rc should be checked for
         // wildcard, depending on if we are hilighting targets are sources.
        })
@@ -108,7 +108,7 @@ if (!window.belay) {
         } else if (msg.data === 'unhighlight') {
           unhighlight();
         } else if (msg.data.op === 'highlight') {
-          highlight.apply(null, msg.data.args);
+          highlight(msg.data.args);
         } else if (msg.data.op === 'navigate') {
           window.location = msg.data.args.url;
           window.name = msg.data.args.startId;

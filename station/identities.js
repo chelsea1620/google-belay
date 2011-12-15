@@ -47,10 +47,8 @@ function(utils, sections, attributes) {
       $('#id-add-dialog .error').hide();
     }
 
-    $('#add-id-button').click(function() { 
-      showDialog($('#id-add-dialog'));
-      $('#id-add-dialog .close').click(hideIdAddDialog);
-    });
+    $('#id-add-button').click(function() { showDialog($('#id-add-dialog')); });
+    $('#id-add-dialog .close').click(hideIdAddDialog);
 
     var protoButton = utils.detachProto($('#proto-add-id'));
 
@@ -102,7 +100,7 @@ function(utils, sections, attributes) {
         $(window).bind('message', checker);
         setTimeout(unchecker, 10000);
       });
-      $('#add-id-list').append(addElem);
+      $('#id-add-list').append(addElem);
     });
 
     // TODO (iainmcgin): when we remove an identity, what should we do with
@@ -110,7 +108,7 @@ function(utils, sections, attributes) {
     // the identity? Should the user be asked what to do, should we retain
     // those values as "special" in some sense, or silently override the
     // user's attribute selections?
-    var removeElem = $('#add-id-button').clone();
+    var removeElem = $('#id-add-button').clone();
     removeElem.attr('id', 'id-remove-button');
     removeElem.text("Remove All Identities");
     removeElem.click(function() {
@@ -221,14 +219,16 @@ function(utils, sections, attributes) {
       newIdDialog.find('.idp-name').text(newId.id_provider);
 
       var attributeList = newIdDialog.find('.attr-list');
-      var protoAttr = attributeList.find('li.proto').clone();
+      var protoAttr = $('<li>');
+      protoAttr.append($('<span>', { class: "attr-name" }));
+      protoAttr.append(' - ');
+      protoAttr.append($('<span>', { class: "attr-value" }));
+      
       attributeList.empty();
-      attributeList.append(protoAttr);
 
       for(var attrName in newId.attributes) {
         var attributeValues = newId.attributes[attrName];
         var attrElem = protoAttr.clone();
-        attrElem.removeClass('proto');
         attrElem.find('.attr-name').text(attrName);
 
         var valueElem = attrElem.find('.attr-value');
@@ -264,14 +264,14 @@ function(utils, sections, attributes) {
       }
 
       var sectionList = newIdDialog.find('.section-list');
-      var protoSection = sectionList.find('li.proto').clone();
+      var protoSection = $('<li>');
+      protoSection.append($('<input>', { type: "checkbox" }));
+      protoSection.append($('<span>', { class: "section-name" }));
       sectionList.empty();
-      sectionList.append(protoSection);
 
       sections.withoutAssignedId().forEach(function(section) {
         var sectionElem = protoSection.clone();
         sectionElem.data('section', section);
-        sectionElem.removeClass('proto');
         sectionElem.find('.section-name').text(section.name);
         sectionList.append(sectionElem);
       });

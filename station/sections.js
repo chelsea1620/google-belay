@@ -236,9 +236,9 @@ define(['utils', 'instances', 'attributes'],
       if(this.attributesEditor) { this.attributesEditor.setAssignedId(id); }
     };
 
-    this.hasAssignedId = function() {
-      if(!this.attributesEditor) { return true; }
-      return this.attributesEditor.hasAssignedId();
+    this.assignIdCandidate = function() {
+      if(!this.attributesEditor) { return false; }
+      return !(this.attributesEditor.hasAssignedId());
     }
 
     this.clearAssignedId = function() {
@@ -399,7 +399,7 @@ define(['utils', 'instances', 'attributes'],
     var sections = [];
     for(var secName in byName) {
       var section = byName[secName];
-      if(!section.hasAssignedId()) {
+      if(section.assignIdCandidate()) {
         sections.push(byName[secName]);
       }
     }

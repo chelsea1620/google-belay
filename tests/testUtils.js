@@ -66,6 +66,9 @@ InvokeRunner.prototype.runsExpectSuccess = function(resultChecker) {
     expect(me.failureCalled).toBe(false);
     expect(me.successCalled).toBe(true);
     expect(me.errorRaised).toBe(false);
+    if (me.errorRaised) {
+      jasmine.log('unexpected error: ', me.error);
+    }
     if (resultChecker)
       resultChecker(me.result);
   });
@@ -76,6 +79,9 @@ InvokeRunner.prototype.runsExpectFailure = function() {
     expect(me.failureCalled).toBe(true);
     expect(me.successCalled).toBe(false);
     expect(me.errorRaised).toBe(false);
+    if (me.errorRaised) {
+      jasmine.log('unexpected error: ', me.error);
+    }
     expect(typeof me.failureStatus).toEqual('number');
   });
 };

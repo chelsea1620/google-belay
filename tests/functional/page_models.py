@@ -372,7 +372,7 @@ class BelayStationPage(BelayEnabledPage):
         self.wait_for(lambda drv: category.instances() > old_instance_count)
     
     def add_profile(self, name, email, location):
-        self.driver.find_element_by_id("add-id-button").click()
+        self.driver.find_element_by_id("id-add-button").click()
 
         id_add_dialog = self.driver.find_element_by_id("id-add-dialog")
         id_add_dialog.find_element_by_name("name").send_keys(name)

@@ -44,7 +44,22 @@ $(window).bind('storage', function(evt) {
   if (evt.originalEvent.key == 'launchCap') {
     var launchCap = evt.originalEvent.newValue;
     if (launchCap != null) {
-      alert('Should be launching: ' + launchCap);
+      capServer.restore(launchCap).post({ version: 'new' },
+        function(launchDescriptor) {
+          var instanceId = newUUIDv4();
+
+          belay.outpost.activate.post({
+            instanceId: instanceId,
+            isStation: true,
+            pageUrl: launchDescriptor.pageUrl || launchDescriptor.page.html,
+            outpostData: {
+              info: launchDescriptor.info,
+              instanceId: instanceId,
+            }
+          });
+        },
+        function(err) { alert("Your station isn't on-line."); }
+      );
     }
   }
 });

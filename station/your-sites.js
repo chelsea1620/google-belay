@@ -161,6 +161,7 @@ window.belay.onPortReady(function() {
       capDroppable: common.makeCapDroppable(capServer, function() {})
     };
     initialize();
+    localStorage.setItem('station-launch-time', Date.now());
   });
 });
 

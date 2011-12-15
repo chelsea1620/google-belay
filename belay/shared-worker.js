@@ -171,6 +171,7 @@ self.addEventListener('connect', function(e) {
       // client might want to become an instance or the station
       var tempInstanceId = newUUIDv4();
       instToTunnel[tempInstanceId] = iframeTunnel; // TODO(mzero): need to clean out
+      var activate = buildActivateCap(outpost.navigate);
       outpost.setUpClient.post({
         instanceId: tempInstanceId,
         temporaryInstance: true,
@@ -180,9 +181,10 @@ self.addEventListener('connect', function(e) {
           becomeInstance: workerServer.grant(function(instanceDescription) {
             stationCaps.newInstHandler.post({
               instanceDescription: instanceDescription,
-              activate: buildActivateCap(outpost.navigate)
+              activate: activate
             });
           }),
+          activate: activate,
           expectPage: makeExpectPage(),
           services: makeHighlighting()
         }

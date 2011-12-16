@@ -77,30 +77,38 @@ if (!window.belay) {
     };
 
 
-    function MessageChannelComms(iwindow, origin) {
-      var belayChan = new MessageChannel();
-      var actionChan = new MessageChannel();
-      
-      return {
-        belayPort: belayChan.port1,
-        actionPort: actionChan.port1,
-        init: function(msg) {
-          iwindow.postMessage(
-            msg,
-            // two following args. backward for Chrome and Safari
-            [belayChan.port2, actionChan.port2],
-            origin);
-        }
-      };
+    function MessageChannelComms(remoteWindow, origin, handleInit, firstEvent) {
+      if (handleInit) {
+        handleInit({
+          belayPort: firstEvent.ports[0],
+          actionPort: firstEvent.ports[1],
+          initData: firstEvent.data
+        })
+      } else {
+        var belayChan = new MessageChannel();
+        var actionChan = new MessageChannel();
+
+        return {
+          belayPort: belayChan.port1,
+          actionPort: actionChan.port1,
+          postInit: function(msg) {
+            remoteWindow.postMessage(
+              msg,
+              // two following args. backward for Chrome and Safari
+              [belayChan.port2, actionChan.port2],
+              origin);
+          }
+        };
+      }
     }
     
-    function MultiplexedComms(iwindow, origin) {
+    function MultiplexedComms(remoteWindow, origin, handleInit, firstEvent) {
       var ConcentratedPort = function(id) {
         this.id = id;
         this.onmessage = null;
       };
       ConcentratedPort.prototype.postMessage = function(data) {
-        iwindow.postMessage({ id: this.id, data: data }, origin);
+        remoteWindow.postMessage({ id: this.id, data: data }, origin);
       };
       
       var ports = {
@@ -108,24 +116,34 @@ if (!window.belay) {
         action: new ConcentratedPort('action')
       }
       
-      window.addEventListener('message', function(e) {
-        if (e.source != iwindow) { return; }
+      function handleEvent(e) {
+        if (e.source != remoteWindow) { return; }
         if (e.origin != origin && origin != '*') { return; }
         if (e.data.id in ports) {
           var onmessage = ports[e.data.id].onmessage;
           if (onmessage) { onmessage({ data: e.data.data }); }
         }
-        e.stopPropagation();
-      }, false);
-
-      return {
-        belayPort: ports.belay,
-        actionPort: ports.action,
-        init: function(msg) {
-          setTimeout(function() {
-            iwindow.postMessage({ id: 'init', data: msg }, origin)            
-          }, 250);
+        else if (handleInit && e.data.id == 'init') {
+          handleInit({
+            belayPort: ports.belay,
+            actionPort: ports.action,
+            initData: e.data.data
+          });
         }
+        e.stopPropagation();
+      }
+      
+      window.addEventListener('message', handleEvent, false);
+      if (handleInit) {
+        handleEvent(firstEvent)
+      } else {
+        return {
+          belayPort: ports.belay,
+          actionPort: ports.action,
+          postInit: function(msg) {
+            remoteWindow.postMessage({ id: 'init', data: msg }, origin)            
+          }
+        }        
       }
     }
     
@@ -168,7 +186,7 @@ if (!window.belay) {
         }
       };
 
-      comms.init(
+      comms.postInit(
         // cross-domain <iframe> can set window.location but cannot read it
         { DEBUG: window.belay.DEBUG,
           // required on Chrome 14

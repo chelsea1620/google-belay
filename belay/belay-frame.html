@@ -233,27 +233,27 @@ function MultiplexedComms(remoteWindow, origin, handleInit, firstEvent) {
 }
 
 
-window.addEventListener('message', setUpClient);
+function setUpClient() {
+  var comms = ('MessageChannel' in window
+      ? MessageChannelComms
+      : MultiplexedComms)(window.parent, '*');
 
-function setUpClient(e) {
-  window.removeEventListener('message', setUpClient);
+  clientTunnel = new CapTunnel(comms.belayPort);
+  clientTunnel.setLocalResolver(router.resolver);
 
-  function init(comms) {
-    clientTunnel = new CapTunnel(comms.belayPort);
-    actionPort = comms.actionPort;
-    clientTunnel.setLocalResolver(router.resolver);
-    var clientLocation = comms.initData.clientLocation;
-    var clientStartId = comms.initData.clientStartId;
-    window.DEBUG = comms.initData.DEBUG;
+  actionPort = comms.actionPort;
+  actionPort.onmessage = function(event) {
+    var clientData = event.data;
+    window.DEBUG = clientData.DEBUG;
     if (window.DEBUG) {
       actionPort.postMessage('showButterBar'); 
       document.getElementById('debug').style.display = 'block';
     }
 
-    var instruction = router.retrieveStart(clientStartId);
+    var instruction = router.retrieveStart(clientData.startId);
     if (instruction === null) {
       setupFreshPage();
-      checkForSuggestions(clientLocation);
+      checkForSuggestions(clientData.location);
     }
     else if ('startLaunch' in instruction) {
       instruction.startLaunch.post(navigateCap);
@@ -265,10 +265,7 @@ function setUpClient(e) {
       // unknown start instruction
     }    
   }
-
-  ('MessageChannel' in window
-      ? MessageChannelComms
-      : MultiplexedComms)(window.parent, '*', init, e);
+  comms.postInit(null);
 }
 
 function expectPage(expect) {
@@ -384,6 +381,8 @@ document.getElementById('clearButton').addEventListener('click',
   function() { 
     delete localStorage['belay'];
   });
+
+setUpClient();
 
 </script>
 </body>

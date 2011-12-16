@@ -1,0 +1,66 @@
+<!--
+Copyright 2011 Google Inc. All Rights Reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+
+<!DOCTYPE html>
+<html>
+<head>
+  <script src="../lib/js/caps.js"></script>
+  <script src="../belay/caprouter.js"></script>
+</head>
+<body>
+  <script>
+
+var router = new CapRouter();
+var instanceId = newUUIDv4();
+var server = new CapServer(instanceId);
+router.addInterface(instanceId, server.publicInterface);
+server.setResolver(router.resolver);
+
+function simple(v) { 
+  if (v == "answer") { return 42; }
+  if (v == "question") { return "?"; }
+  return undefined;
+}
+
+function simpleAsync(v, sk, fk) {
+  if (v == "answer") { sk(42); }
+  else if (v == "question") { sk("?"); }
+  else if (v == "defer") { setTimeout(function() { sk(99); }, 100); }
+  else if (v == 'fail') { fk({ status: 500, message: 'asked to fail' }); }
+  else if (v == 'ignore') { return; }
+}
+
+function callBackWithThree(v) {
+  v.post(3);
+  return 32;
+}
+
+function callBackLaterWithNine(v, sk, fk) {
+    setTimeout(function() { v.post(9, sk, fk); }, 0);
+}
+
+var startId = window.name;
+var start = router.retrieveStart(startId);
+start.announce.put({
+  simple: server.grant(simple),
+  simpleAsync: server.grant(simpleAsync),
+  callBackWithThree: server.grant(callBackWithThree),
+  callBackLaterWithNine: server.grant(callBackLaterWithNine),
+});
+
+  </script>
+</body>
+

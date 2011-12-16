@@ -75,8 +75,12 @@ class BelayEnabledPage(object):
     
     def page_ready(self, driver=None):
         driver = self.driver if driver == None else driver
+        driver.switch_to_default_content()
         return driver.execute_script("return window.belaytest && window.belaytest.ready")
     
+    def condemn(self):
+        self.driver.execute_script("delete window.belaytest")
+        
     def wait_for(self, p, timeout=5):
         wait_for(self.driver, p, timeout)
 
@@ -106,6 +110,7 @@ class BelayEnabledPage(object):
         return suggestions
 
     def open_suggestion(self, suggestion):
+        self.condemn()
         self.driver.switch_to_frame("belay-frame")
         suggest_button_xpath = "//button[@class='suggestButton']"
         buttons = self.driver.find_elements_by_xpath(suggest_button_xpath)
@@ -375,8 +380,11 @@ class BelayStationPage(BelayEnabledPage):
         self.driver.find_element_by_id("id-add-button").click()
 
         id_add_dialog = self.driver.find_element_by_id("id-add-dialog")
+        id_add_dialog.find_element_by_name("name").click()
         id_add_dialog.find_element_by_name("name").send_keys(name)
+        id_add_dialog.find_element_by_name("location").click()
         id_add_dialog.find_element_by_name("location").send_keys(location)
+        id_add_dialog.find_element_by_name("email").click()
         id_add_dialog.find_element_by_name("email").send_keys(email)
 
         id_add_dialog.find_element_by_class_name("widget-keyhole-button").click()
@@ -389,9 +397,9 @@ class BuzzerLandingPage(BelayEnabledPage):
         super(BuzzerLandingPage,self).__init__(driver)
 
     def create_new_instance(self, title):
+        self.condemn()
         self.get_title_field().send_keys(title)
         self.driver.find_element_by_xpath("//form//input[@type='submit']").submit()
-        self.wait_for(lambda drv: drv.current_url == "http://localhost:9004/buzzer-belay.html")
         return BuzzerInstancePage(self.driver)
 
     def get_title_field(self):

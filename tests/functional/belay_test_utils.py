@@ -8,6 +8,7 @@ class BelayTest(unittest.TestCase):
 
     def setUp(self):
         self.driver = webdriver.Chrome()
+        #self.driver = webdriver.Firefox()
 
     def tearDown(self):
         self.driver.quit()

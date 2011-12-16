@@ -12,8 +12,9 @@ class EmotePage(BelayEnabledPage):
         return not invite_box.is_displayed()
 
     def attach_to_buzzer(self, post_cap):
+        self.condemn()
         self.drag_to(post_cap, '#emote-invite')
-        self.wait_for(lambda x: self.is_instance())
+        self.wait_for_ready()
 
     def post(self, smiley):
         buttons = self.driver.find_elements_by_class_name('emote-post')

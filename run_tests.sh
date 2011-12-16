@@ -14,7 +14,7 @@ do
 done
 
 if `which -s py.test`
-then py.test tests/test_all.py
+then py.test --tb=short tests/test_all.py
 else exec tests/test_all.py
 fi
 

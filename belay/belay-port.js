@@ -147,54 +147,57 @@ if (!window.belay) {
       }
     }
     
-    var connect = function() {
-      iframe.removeEventListener('load', connect);
+    var connect = function(event) {
+      window.removeEventListener('message', connect);
 
-      var comms = ('MessageChannel' in window
-                      ? MessageChannelComms
-                      : MultiplexedComms)(iframe.contentWindow, '*');
-      window.belay.port = comms.belayPort;
-      window.belay.portReady();
+      function init(comms) {
+        window.belay.port = comms.belayPort;
+        window.belay.portReady();
 
-      comms.actionPort.onmessage = function(msg) {
-        if (msg.data === 'close') {
-          // This trick is all over the Web.
-          window.open('', '_self').close();
-        } else if (msg.data === 'showButterBar') {
-          iframe.style.webkitTransition = 'all 0.5s ease-in';
-          iframe.style.top = '0px';
-        } else if (msg.data === 'hideButterBar') {
-          if (window.belay.DEBUG) {
-            // .top doesn't work because it is relative
-            iframe.style.display = 'none';
+        comms.actionPort.onmessage = function(msg) {
+          if (msg.data === 'close') {
+            // This trick is all over the Web.
+            window.open('', '_self').close();
+          } else if (msg.data === 'showButterBar') {
+            iframe.style.webkitTransition = 'all 0.5s ease-in';
+            iframe.style.top = '0px';
+          } else if (msg.data === 'hideButterBar') {
+            if (window.belay.DEBUG) {
+              // .top doesn't work because it is relative
+              iframe.style.display = 'none';
+            }
+            else {
+              iframe.style.top = IFRAME_NEG_HEIGHT;
+            }
+          } else if (msg.data === 'unhighlight') {
+            unhighlight();
+          } else if (msg.data.op === 'highlight') {
+            highlight(msg.data.args);
+          } else if (msg.data.op === 'navigate') {
+            window.location = msg.data.args.url;
+            window.name = msg.data.args.startId;
+              // TODO(iainmcgin): exposing the startId to a potentially untrusted
+              // outer window may give it a way to hijack the launch of an
+              // instance. The implications of this need investigation.
+          } else {
+            console.log('unknown action', msg);
           }
-          else {
-            iframe.style.top = IFRAME_NEG_HEIGHT;
-          }
-        } else if (msg.data === 'unhighlight') {
-          unhighlight();
-        } else if (msg.data.op === 'highlight') {
-          highlight(msg.data.args);
-        } else if (msg.data.op === 'navigate') {
-          window.location = msg.data.args.url;
-          window.name = msg.data.args.startId;
-            // TODO(iainmcgin): exposing the startId to a potentially untrusted
-            // outer window may give it a way to hijack the launch of an
-            // instance. The implications of this need investigation.
-        } else {
-          console.log('unknown action', msg);
-        }
-      };
+        };
 
-      comms.postInit(
-        // cross-domain <iframe> can set window.location but cannot read it
-        { DEBUG: window.belay.DEBUG,
-          // required on Chrome 14
-          clientLocation: window.location.href,
-          clientStartId: startId });
+        comms.actionPort.postMessage(
+          // cross-domain <iframe> can set window.location but cannot read it
+          { DEBUG: window.belay.DEBUG,
+            // required on Chrome 14
+            location: window.location.href,
+            startId: startId });
+      }
+          
+      ('MessageChannel' in window
+              ? MessageChannelComms
+              : MultiplexedComms)(iframe.contentWindow, '*', init, event);
     };
 
-    iframe.addEventListener('load', connect);
+    window.addEventListener('message', connect)
 
   };
 

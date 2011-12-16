@@ -76,21 +76,69 @@ if (!window.belay) {
       });
     };
 
-    var connect = function() {
+
+    function MessageChannelComms(iwindow, origin) {
       var belayChan = new MessageChannel();
-      // Certain window-manipulating actions cannot be performed by the cross-
-      // domain IFrame and are handled on this page by actionChan. Do not
-      // introduce a dependency on caps.js; it's stupid and would be broken
-      // by an adversarial container.
       var actionChan = new MessageChannel();
+      
+      return {
+        belayPort: belayChan.port1,
+        actionPort: actionChan.port1,
+        init: function(msg) {
+          iwindow.postMessage(
+            msg,
+            // two following args. backward for Chrome and Safari
+            [belayChan.port2, actionChan.port2],
+            origin);
+        }
+      };
+    }
+    
+    function MultiplexedComms(iwindow, origin) {
+      var ConcentratedPort = function(id) {
+        this.id = id;
+        this.onmessage = null;
+      };
+      ConcentratedPort.prototype.postMessage = function(data) {
+        iwindow.postMessage({ id: this.id, data: data }, origin);
+      };
+      
+      var ports = {
+        belay: new ConcentratedPort('belay'),
+        action: new ConcentratedPort('action')
+      }
+      
+      window.addEventListener('message', function(e) {
+        if (e.source != iwindow) { return; }
+        if (e.origin != origin && origin != '*') { return; }
+        if (e.data.id in ports) {
+          var onmessage = ports[e.data.id].onmessage;
+          if (onmessage) { onmessage({ data: e.data.data }); }
+        }
+        e.stopPropagation();
+      }, false);
 
-      window.belay.port = belayChan.port1;
-      window.belay.portReady();
-
+      return {
+        belayPort: ports.belay,
+        actionPort: ports.action,
+        init: function(msg) {
+          setTimeout(function() {
+            iwindow.postMessage({ id: 'init', data: msg }, origin)            
+          }, 250);
+        }
+      }
+    }
+    
+    var connect = function() {
       iframe.removeEventListener('load', connect);
 
+      var comms = ('MessageChannel' in window
+                      ? MessageChannelComms
+                      : MultiplexedComms)(iframe.contentWindow, '*');
+      window.belay.port = comms.belayPort;
+      window.belay.portReady();
 
-      actionChan.port1.onmessage = function(msg) {
+      comms.actionPort.onmessage = function(msg) {
         if (msg.data === 'close') {
           // This trick is all over the Web.
           window.open('', '_self').close();
@@ -120,15 +168,12 @@ if (!window.belay) {
         }
       };
 
-      iframe.contentWindow.postMessage(
+      comms.init(
         // cross-domain <iframe> can set window.location but cannot read it
         { DEBUG: window.belay.DEBUG,
           // required on Chrome 14
           clientLocation: window.location.href,
-          clientStartId: startId },
-        // two following args. backward for Chrome and Safari
-        [belayChan.port2, actionChan.port2],
-        '*');
+          clientStartId: startId });
     };
 
     iframe.addEventListener('load', connect);

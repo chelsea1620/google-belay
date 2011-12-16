@@ -6,7 +6,7 @@
 <style type='text/css'>
 
 #log {
- font-family: Consolas; fixed;
+ font-family: Consolas, fixed;
  font-size: 10pt;
  background-color: black;
  color: white;
@@ -30,7 +30,7 @@
 }
 
 body {
-  backgroundColor: #ffffcc;
+  background-color: #ffffcc;
 }
 
 </style>
@@ -162,35 +162,86 @@ window.addEventListener('storage', function(e) {
 }, false);
 
 
+function MessageChannelComms(owindow, origin, event, init) {
+  init({
+    clientPort: event.ports[0],
+    actionPort: event.ports[1],
+    initData: event.data
+  });
+}
+
+function MultiplexedComms(owindow, origin, event, init) {
+  var ConcentratedPort = function(id) {
+    this.id = id;
+    this.onmessage = null;
+  };
+  ConcentratedPort.prototype.postMessage = function(data) {
+    owindow.postMessage({ id: this.id, data: data }, origin);
+  };
+  
+  var ports = {
+    belay: new ConcentratedPort('belay'),
+    action: new ConcentratedPort('action')
+  }
+  
+  function handleEvent(e) {
+    if (e.source != owindow) { return; }
+    if (e.origin != origin && origin != '*') { return; }
+    if (e.data.id in ports) {
+      var onmessage = ports[e.data.id].onmessage;
+      if (onmessage) { onmessage({ data: e.data.data }); }
+    }
+    else if (e.data.id == 'init') {
+      init({
+        clientPort: ports.belay,
+        actionPort: ports.action,
+        initData: e.data.data
+      });
+    }
+    e.stopPropagation();
+  }
+  
+  window.addEventListener('message', handleEvent, false);
+  handleEvent(event);
+}
+
+
 window.addEventListener('message', setUpClient);
 
 function setUpClient(e) {
-  window.removeEventListener(setUpClient);
-  clientTunnel = new CapTunnel(e.ports[0]);
-  actionPort = e.ports[1];
-  clientTunnel.setLocalResolver(router.resolver);
-  var clientLocation = e.data.clientLocation;
-  var clientStartId = e.data.clientStartId;
-  window.DEBUG = e.data.DEBUG;
-  if (window.DEBUG) {
-    actionPort.postMessage('showButterBar'); 
-    document.getElementById('debug').style.display = 'block';
+  window.removeEventListener('message', setUpClient);
+
+  function init(comms) {
+    clientTunnel = new CapTunnel(comms.clientPort); //e.ports[0]);
+    actionPort = comms.actionPort; //e.ports[1];
+    clientTunnel.setLocalResolver(router.resolver);
+    var clientLocation = comms.initData.clientLocation;
+    var clientStartId = comms.initData.clientStartId;
+    window.DEBUG = comms.initData.DEBUG;
+    if (window.DEBUG) {
+      actionPort.postMessage('showButterBar'); 
+      document.getElementById('debug').style.display = 'block';
+    }
+
+    var instruction = router.retrieveStart(clientStartId);
+    if (instruction === null) {
+      setupFreshPage();
+      checkForSuggestions(clientLocation);
+    }
+    else if ('startLaunch' in instruction) {
+      instruction.startLaunch.post(navigateCap);
+    }
+    else if ('finishLaunch' in instruction) {
+      instruction.finishLaunch.post(closeCap, setupLaunchedPage);
+    }
+    else {
+      // unknown start instruction
+    }    
   }
 
-  var instruction = router.retrieveStart(clientStartId);
-  if (instruction === null) {
-    setupFreshPage();
-    checkForSuggestions(clientLocation);
-  }
-  else if ('startLaunch' in instruction) {
-    instruction.startLaunch.post(navigateCap);
-  }
-  else if ('finishLaunch' in instruction) {
-    instruction.finishLaunch.post(closeCap, setupLaunchedPage);
-  }
-  else {
-    // unknown start instruction
-  }
+  ('MessageChannel' in window
+      ? MessageChannelComms
+      : MultiplexedComms)(window.parent, '*', e, init);
 }
 
 function expectPage(expect) {

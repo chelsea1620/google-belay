@@ -77,6 +77,8 @@ if (!window.belay) {
     };
 
 
+    // TODO(mzero): These Comms functions are identical to the ones in
+    // belay-frame.html and should be factored out once we have a build system.
     function MessageChannelComms(remoteWindow, origin, handleInit, firstEvent) {
       if (handleInit) {
         handleInit({

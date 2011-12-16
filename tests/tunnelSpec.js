@@ -52,6 +52,38 @@ function createRemoteEnd(port) {
   }, 10);
 }
 
+if (!('MessageChannel' in window)) {
+  window.MessageChannel = (function(){
+    // Implement a minimal MessageChannel and MessagePort, which should be all
+    // CapTunnel depends on.
+
+    var MessagePort = function() {
+      this._entangled = null;
+      this.onmessage = null;
+    }
+    MessagePort.prototype.postMessage = function(message) {
+      var dest = this._entangled;
+      if (!dest) return;
+      setTimeout(function() {
+        if (dest.onmessage) {
+          var e = { data: message };
+          dest.onmessage(e);          
+        }
+      }, 0);
+    };
+
+    var MessageChannel = function() {
+      this.port1 = new MessagePort();
+      this.port2 = new MessagePort();
+
+      this.port1._entangled = this.port2;
+      this.port2._entangled = this.port1;
+    };
+    
+    return MessageChannel;
+  })();
+}
+
 describe('CapTunnels', function() {
   var tunnel;
 

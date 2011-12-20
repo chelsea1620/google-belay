@@ -362,7 +362,7 @@ function checkForSuggestions(location, showSuggestions, navigate) {
       var suggestion = v.suggestions[k];
       var btn = document.createElement('button');
       btn.className = 'suggestButton';
-      btn.innerText = suggestion.name;
+      btn.appendChild(document.createTextNode(suggestion.name));
       buttonContainer.appendChild(btn);
       btn.addEventListener('click', function() {
         v.doLaunchActivate.post({

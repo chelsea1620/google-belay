@@ -87,6 +87,9 @@ class BelayEnabledPage(object):
     def wait_for_ready(self):
         self.wait_for(self.page_ready)
     
+    def wait_for_suggestions(self):
+        self.wait_for(self.are_suggestions_visible)
+    
     def focus(self):
         self.driver.switch_to_window(self.window)
         self.driver.execute_script("window.focus()")
@@ -96,12 +99,22 @@ class BelayEnabledPage(object):
         self.driver.close()
     
     def is_open(self):
-        found = false
+        found = False
         for window in self.driver.window_handles:
             found = found and (window == self.window)
         return found
 
+    def are_suggestions_visible(self, driver=None):
+        driver = self.driver if driver == None else driver
+        driver.switch_to_frame("belay-frame")
+        try:
+          suggest_bar = driver.find_element_by_id('suggestButtons')
+          return suggest_bar.is_displayed()
+        finally:
+          driver.switch_to_default_content()
+        
     def get_suggestions(self):
+        self.driver.switch_to_default_content()
         self.driver.switch_to_frame("belay-frame")
         suggest_button_xpath = "//button[@class='suggestButton']"
         buttons = self.driver.find_elements_by_xpath(suggest_button_xpath)
@@ -275,9 +288,9 @@ class BelayStationSection(object):
         for row in attribute_rows:
             attr_name = row.find_element_by_class_name("tag").text
             if attr_name in attrs:
-                select_widget = row.find_element_by_class_name("attr-select")
-                wait_for(driver, lambda drv: select_widget.is_displayed);
-                select_widget.click()
+                indicator = row.find_element_by_class_name("indicator")
+                wait_for(driver, lambda drv: indicator.is_displayed);
+                indicator.click()
                 select_group = row.find_element_by_tag_name("ul")
                 wait_for(driver, lambda drv: select_group.is_displayed())
                 

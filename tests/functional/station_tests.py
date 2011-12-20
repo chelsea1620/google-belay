@@ -63,6 +63,7 @@ class StationTests(BelayTest):
         self.open_new_window("http://localhost:9004")
         landing = BuzzerLandingPage(self.driver)
         
+        landing.wait_for_suggestions()
         self.assertEquals(1, len(landing.get_suggestions()))
         self.assertEquals("Buzz", landing.get_suggestions()[0])
 

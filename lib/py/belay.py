@@ -185,7 +185,7 @@ class BcapHandler(webapp.RequestHandler):
   # allows cross-domain requests  
   def options(self):
     m = self.request.headers["Access-Control-Request-Method"]
-    h = self.request.headers["Access-Control-Request-Headers"]
+    h = self.request.headers.get("Access-Control-Request-Headers", None)
 
     self.response.headers["Access-Control-Allow-Origin"] = "*"
     self.response.headers["Access-Control-Max-Age"] = "2592000"

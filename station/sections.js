@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-define(['utils', 'instances', 'attributes'],
-  function(utils, instances, attributes) {
+define(['utils', 'instances', 'attributes', 'pageManager'],
+  function(utils, instances, attributes, pageManager) {
   
   var capServer;
 
@@ -45,8 +45,9 @@ define(['utils', 'instances', 'attributes'],
     // page elements (jQuery objects);    
     this.label = protoNavSection.clone();
     this.label.text(this.name);
-    this.label.click(function(evt) { show(me); });
-    
+
+    var showSection = function() { show(me); };
+    var pid = pageManager.registerPage(this.label, showSection, hideSites);
 
     divider = $('#nav-sections .divider');
     if(this.hidden) {
@@ -62,7 +63,9 @@ define(['utils', 'instances', 'attributes'],
     this.list.attr('id', 'section-' + this.name);
       // TODO(iainmcgin): what if name has a space?
     this.list.find('.header .name').text(this.name);
-    this.list.find('.header .show-all').click(function() { show(me) });
+    this.list.find('.header .show-all').click(function() { 
+      pageManager.showPage(pid);
+    });
     this.list.appendTo($('#belay-items'));
 
     function makeDroppable(elt) {
@@ -254,20 +257,19 @@ define(['utils', 'instances', 'attributes'],
     protoNavSection = utils.detachProto($('#nav-sections .proto'));
     
     sitesLabel = $('#nav-sections .head');
-    sitesLabel.click(showSites);
+    // the "Sites" header is the default page, where all nav flows
+    // should return to by default
+    pageManager.registerDefaultPage(sitesLabel, showSites, hideSites);
 
     allSections.forEach(function(sectionInfo) { new Section(sectionInfo); });
-    
-    showSites();
+    pageManager.showDefaultPage();
   }
   
   function showSites() {
-    sitesLabel.addClass('selected');
     // all visible, except for Recent
     visible = []
     Object.keys(byName).forEach(function(k) {
       var sec = byName[k];
-      sec.label.removeClass('selected');
       if(sec.hidden) {
         sec.hideList();
       } else {
@@ -275,19 +277,22 @@ define(['utils', 'instances', 'attributes'],
         visible.push(sec);
       }
     });
+    $('#belay-items').show();
+  }
+
+  function hideSites() {
+    $('#belay-items').hide();
   }
   
   function show(v) {
-    sitesLabel.removeClass('selected');
-    v.label.addClass('selected');
     v.showFullList();
     visible.forEach(function(sec) {
       if (sec !== v) {
-        sec.label.removeClass('selected');
         sec.hideList();
       }
     });
     visible = [v];
+    $('#belay-items').show();
   }
   
   function deleteInstance(inst) {

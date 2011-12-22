@@ -59,6 +59,14 @@ describe('CapRouter', function() {
       var runner = new InvokeRunner(c2);
       runner.runsGetAndExpectFailure();
     });
+    
+    it('should report routability correctly', function() {
+      var knownId = s1.instanceId;
+      expect(router.isRoutable(knownId)).toBeTruthy();
+
+      var unknownId = newUUIDv4();
+      expect(router.isRoutable(unknownId)).toBeFalsy();
+    });
   });
   
   describe('inter-frame access', function() {
@@ -87,8 +95,10 @@ describe('CapRouter', function() {
     });
     
     afterEach(function() {
-      document.body.removeChild(iframe);
-      iframe = undefined;
+      if (iframe) {
+        document.body.removeChild(iframe);
+        iframe = undefined;
+      }
     });
     
     it('should simply invoke', function() {
@@ -138,17 +148,42 @@ describe('CapRouter', function() {
       var runner = new InvokeRunner(c1);
       runner.runsGetAndExpectFailure();
     });
+    
+    it('should report routability correctly', function() {
+      var remoteId = remoteCaps.instanceId;
+      
+      runs(function() {
+        expect(router.isRoutable(remoteId)).toBeTruthy();
+        
+        document.body.removeChild(iframe);
+        iframe = undefined;
+
+        // immediately we expect it to still appear routable
+        expect(router.isRoutable(remoteId)).toBeTruthy();
+      });
+      
+      // within 1 second we expect it to not be
+      waitsFor(function() {
+          return !(router.isRoutable(remoteId, 900));
+        }, 'waiting to not be routable', 1000);
+      
+      runs(function() {
+        expect(router.isRoutable(remoteId,  500)).toBeFalsy();
+        expect(router.isRoutable(remoteId, 5000)).toBeTruthy();
+      });
+    })
   });
 
   describe('misc. functionality', function () {
     it('should clear out old messages', function() {
+      router.expireMessages(-1);
       expect(localStorage.length).toEqual(0);
       
       var t = Date.now();
-      var oldKey = ['msg',t-2000,'test'].join(',');
-      var newKey = ['msg',t-1000,'test'].join(',');
-      localStorage.setItem(oldKey, 'hi');
-      localStorage.setItem(newKey, 'ho');
+      var oldKey = ['lsm','test','old'].join(',');
+      var newKey = ['lsm','test','new'].join(',');
+      localStorage.setItem(oldKey, JSON.stringify({ t: t-2000 }));
+      localStorage.setItem(newKey, JSON.stringify({ t: t-1000 }));
       expect(localStorage.length).toEqual(2);
       
       router.expireMessages(1500);

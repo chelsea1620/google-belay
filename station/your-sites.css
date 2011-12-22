@@ -71,6 +71,11 @@ body div.grey {
   padding-left: 30px;
 }
 
+#nav li.identity:hover {
+  cursor: pointer;
+  background-color: #f4f4f4;
+}
+
 #nav li.identity img {
 	width: 13px;
 	vertical-align: text-top;
@@ -1017,4 +1022,22 @@ select.button {
 
 #description h3 {
   margin: 0.25em 0 2em;
+}
+
+#id-page .id-header {
+  padding-bottom: 0.5em;
+  border-bottom: 1px solid #d5d5d5;
+  margin-bottom: 0.5em;
+}
+
+#id-page .id-header img {
+  width: 64px;
+  height: 64px;
+  vertical-align: middle;
+  padding-right: 1em;
+}
+
+#id-page .id-header span {
+  font-size: 20px;
+  font-family: "Helvetica Neue", helvetica, arial, sans-serif;
 }

@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-define(['utils', 'sections', 'attributes'], 
-function(utils, sections, attributes) {
+define(['utils', 'sections', 'attributes', 'pageManager'], 
+function(utils, sections, attributes, pageManager) {
 
   var capServer;
   
@@ -197,6 +197,80 @@ function(utils, sections, attributes) {
 
     rebuild(idData);
   }
+
+  function showIdentityPage(identity) {
+    var page = $('#id-page');
+
+    var profileImage = page.find('.id-header img');
+    var imageSource = identity.attributes.image || '/res/images/person_2x.png';
+    profileImage.attr('src', imageSource);
+
+    page.find('.id-header span').text(identity.display_name);
+
+    var idProviderElem = page.find('.id-provider-field');
+    if(identity.id_provider) {
+      idProviderElem.show();
+      page.find('.id-provider-value').text(identity.id_provider);
+    } else {
+      idProviderElem.hide();
+    }
+
+    page.find('ul').replaceWith(buildAttributeListing(identity));    
+
+    var deleteButton = page.find('#delete-id');
+    deleteButton.unbind('click');
+    deleteButton.click(function() {
+      identities = identities.filter(function(id) {
+        return id.account_name != identity.account_name;
+      });
+      identitiesCap.put(identities, function() {
+        rebuild(identities);
+      });
+      pageManager.returnToDefault();
+    })
+
+    page.show();
+  }
+
+  function buildAttributeListing(identity) {
+    var attrList = $('<ul>');
+    var attrProtoRow = $('<li>');
+    attrProtoRow.append($('<span class="attr-name">'));
+    attrProtoRow.append(' - ');
+    attrProtoRow.append($('<span class="attr-values">'));
+
+    for(attrName in identity.attributes) {
+      var attributeValues = identity.attributes[attrName];
+      var attrRow = attrProtoRow.clone();
+      attrRow.find('.attr-name').text(attrName);
+      var attrValueElem = attrRow.find('.attr-values');
+      if(attributes.getAttributeProperties(attrName).type == 'image') {
+        attributeValues.forEach(function(value) {
+          attrValueElem.append($('<img>', { src: value }));
+        });
+      } else {
+        var valueString = attributeValues
+            .sort()
+            .reduce(function(vals, val) {
+              if(vals.length != 0) {
+                if(vals[vals.length-1] == val) return vals;
+              }
+
+              vals.push(val);
+              return vals;
+            }, [])
+            .reduce(function(a, b) {
+              if(a == '') return b;
+              else return a + ', ' + b;
+            });
+            attrValueElem.text(valueString);
+      }
+
+      attrList.append(attrRow);
+    }
+
+    return attrList;
+  }
   
   function handleNewId() {
     var oldIdentities = identities;
@@ -219,49 +293,7 @@ function(utils, sections, attributes) {
       newIdDialog.find('.idp-name').text(newId.id_provider);
 
       var attributeList = newIdDialog.find('.attr-list');
-      var protoAttr = $('<li>');
-      protoAttr.append($('<span>', { class: "attr-name" }));
-      protoAttr.append(' - ');
-      protoAttr.append($('<span>', { class: "attr-value" }));
-      
-      attributeList.empty();
-
-      for(var attrName in newId.attributes) {
-        var attributeValues = newId.attributes[attrName];
-        var attrElem = protoAttr.clone();
-        attrElem.find('.attr-name').text(attrName);
-
-        var valueElem = attrElem.find('.attr-value');
-        if(attributes.getAttributeProperties(attrName).type == 'image') {
-          valueElem.empty();
-          attributeValues.forEach(function(value) {
-            var imageElem = $('<img>', {
-              src: value,
-              alt: 'provided avatar image'
-            });
-
-            valueElem.append(imageElem);
-          });
-        } else {
-          var valueString = attributeValues
-            .sort()
-            .reduce(function(vals, val) {
-              if(vals.length != 0) {
-                if(vals[vals.length-1] == val) return vals;
-              }
-
-              vals.push(val);
-              return vals;
-            }, [])
-            .reduce(function(a, b) {
-              if(a == '') return b;
-              else return a + ', ' + b;
-            });
-            valueElem.text(valueString);
-        }
-
-        $('.attr-list').append(attrElem);
-      }
+      attributeList.replaceWith(buildAttributeListing(newId));
 
       var sectionList = newIdDialog.find('.section-list');
       var protoSection = $('<li>');
@@ -322,6 +354,13 @@ function(utils, sections, attributes) {
       var desc = elem.find('span');
       desc.text(text);
       desc.attr('title', title);
+
+      var showHandler = (function(id) {
+        return function() { showIdentityPage(id); };
+      })(d);
+      var hideHandler = function() { $('#id-page').hide(); };
+      pageManager.registerPage(elem, showHandler, hideHandler);
+      
       list.append(elem);
     }
     

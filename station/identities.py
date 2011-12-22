@@ -72,7 +72,7 @@ def id_to_json(id):
 
 
 def json_to_id(j, station):
-  i = IdentityData(station=station,
+  i = IdentityData(parent=station,
         id_type=j['id_type'],
         account_name=j['account_name'])
   if 'id_provider' in j: i.id_provider = j['id_provider']

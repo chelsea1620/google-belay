@@ -29,7 +29,7 @@ var showPanel = function(postCap, nameCap) {
   $('.emote-post').click(function(ev) {
     $('#emote-message-posting').show();
     postCap.post(
-      { body: ev.target.innerText, via: 'emote' },
+      { body: $(ev.target).text(), via: 'emote' },
       function() { postComplete(true); },
       function() { postComplete(false); }
     );
@@ -55,7 +55,8 @@ onBelayReady(function() {
         var postCap = buzzerCaps.post;
         var nameCap = buzzerCaps.name;
         nameCap.get(function(name) {
-          var emoteInstanceCap = capServer.restore(window.location.origin + '/generate');
+          var origin = window.location.protocol + '//' + window.location.host;
+          var emoteInstanceCap = capServer.restore(origin + '/generate');
           emoteInstanceCap.post({ postCap: postCap, nameCap: nameCap, name: name }, 
             function(response) { belay.outpost.becomeInstance.put(response); }, 
             function() { alert('failed to generate :-('); });

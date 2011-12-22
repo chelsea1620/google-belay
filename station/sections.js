@@ -326,8 +326,6 @@ define(['utils', 'instances', 'attributes', 'pageManager'],
   }
   
   function newInstance(inst) {
-    var startId = newUUIDv4();
-
     var row = protoItemRow.clone();
 
     var icon = row.find('td.icon img');
@@ -337,21 +335,27 @@ define(['utils', 'instances', 'attributes', 'pageManager'],
       deleteInstance(inst);
     });
 
+    var readyCap = capServer.grant(function(activate) {
+      instances.launchInstance(inst, 'page', activate);
+    });
+    function reprime() {
+      var startId = newUUIDv4();
+      openPageBtn.attr('target', startId);      
+      expectPage.post({
+        startId: startId,
+        ready: readyCap
+      });
+    }
     var openPageBtn = row.find('td.actions .open-page');
     openPageBtn.attr('href', 'redirect.html');
-    openPageBtn.attr('target', startId);
     openPageBtn.click(function(evt) {
       if (inst.state.opened) {
         evt.preventDefault(); // do not re-open the window
       }
+      setTimeout(reprime, 0);
     });
+    reprime();
 
-    expectPage.post({
-      startId: startId,
-      ready: capServer.grant(function(activate) {
-        instances.launchInstance(inst, 'page', activate);
-      })
-    });
 
     row.attr('draggable', 'true');
     row.bind('dragstart', function(evt) {

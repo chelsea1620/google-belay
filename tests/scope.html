@@ -1,22 +1,200 @@
 <html>
 <head>
   <title>Local Storage Scope</title>
+  <link rel="stylesheet" type="text/css" href="scope.css">
+  <meta charset="utf-8">
 </head>
 <body>
   <h1>Local Storage Scope</h1>
+  <div id="log">
+  </div>
   <script>
+
+"use strict";
+
+var log = document.getElementById('log');
+
+function addEntry(cls, text) {
+  var e = document.createElement('p');
+  e.className = cls;
+  e.appendChild(document.createTextNode(text));
+  log.appendChild(e);
+}
+
+function span(cls, text) {
+  var e = document.createElement('span');
+  e.className = cls;
+  e.appendChild(document.createTextNode(text));
+  return e;
+}
+
+
+var colors = [];
+function nextColor() {
+  if (colors.length == 0) {
+    colors = ['c01', 'c02', 'c03', 'c04', 'c05', 'c06'];
+  }
+  return colors.shift();
+}
+
+var tStart = null;
+var tLast = null;
+var inFlight = {};
+
+function startBar(key) {
+  if (key in inFlight) {
+    return inFlight[key].color;
+  }
+  
+  var color = nextColor();
+  var firstColor = color + ' cFirst';
+  var bar = document.createElement('div');
+  bar.className = 'bar ' + firstColor;
+  log.appendChild(bar);
+  
+  inFlight[key] = {
+    bar: bar,
+    color: color
+  };
+  
+  return firstColor
+}
+
+function extendBars() {
+  for (var key in inFlight) {
+    if ('bar' in inFlight[key]) {
+      var line = document.createElement('p');
+      line.appendChild(document.createTextNode(' '));
+      inFlight[key].bar.appendChild(line);
+    }
+  }
+}
+
+function endBar(key) {
+  delete inFlight[key];
+}
+
+function endAllBars() {
+  inFlight = { };
+}
+
+function ppUUID(uuid) {
+  return uuid.substring(0,6) + '…'
+}
+
+function safeParse(value) {
+  try {
+    return JSON.parse(value);
+  } catch (e) {
+    return value;
+  }
+}
+
+function safeGetProperty(value, key, def) {
+  if (typeof value == 'object' && value.hasOwnProperty(key)) {
+    return value[key];
+  }
+  return def;
+}
+
+function pp(value) {
+  return JSON.stringify(value, null, 2);
+}
 
 window.addEventListener('storage', function(e) {
   if (e.key === null) {
-    console.log('localStorage.clear()');
-  }
-  else if (e.newValue === null) {
-    console.log('localStorage.removeItem(' + e.key + ')');
-  }
-  else {
-    console.log('localStorage.setItem(' + e.key + ', ' + e.newValue + ')');
+    addEntry('ls-clear', '-- all local storage cleared --');
+    endAllBars();
+  } else {
+    var parts = e.key.split(',');
+    if (parts.length >= 5 && parts[0] == 'msg') {
+      var t = +parts[1];
+      var op = parts[2];
+      var id = parts[3];
+      var tx = parts[4];
+      var val = e.newValue;
+
+      var cls = val ? 'ls-set' : 'ls-remove';
+      cls += ' msg-' + op;
+      
+      var key = (tx != '0') ? tx : id
+      
+      if (key) {
+        var clr = startBar(key);
+        cls += ' ' + clr;
+      }
+      extendBars();   
+      if (op != 'invoke' && !val) {
+        endBar(key);
+      }
+
+      var p = document.createElement('p');
+      p.className = cls;
+
+      if (val) {      
+        if (tStart === null) { tStart = tLast = t; }
+        var tRel = t - tStart;
+        var tDelta = t - tLast;
+        tLast = t;
+        p.appendChild(span('timestamp', "+" + tDelta));
+      } else {
+        p.appendChild(span('timestamp', " "));
+      }
+      
+      if (val) {
+        try {
+          var msg = safeParse(val);
+          var data = safeParse(safeGetProperty(msg, 'data', undefined));
+          var value = safeGetProperty(data, 'value', data);
+
+          if (op == 'invoke') {
+            val = (msg.method + '\n\n'
+                    + pp(value) + '\n\n'
+                    + 'bcap: ' + msg.ser + '\n\n'
+                    + 'reply: ' + msg.reply);
+          } else if (op == 'response') {
+            if (msg.type == 'success') {
+              op += " ✓";
+              val = value === undefined ? '-- no data --' : pp(value);
+            } else if (msg.type == 'failure') {
+              op += " ✗";
+              val = pp(data);
+            } else {
+              throw "huh?"
+              val = pp(msg);
+            }
+          } else if (op == 'start') {
+            msg = safeParse(msg);
+            value = safeGetProperty(msg, 'value', msg);
+            val = pp(value);
+          } else {
+            val = pp(msg);
+          }
+        } catch(e) { console.log(e); }
+        p.title = val;
+      }
+
+      p.appendChild(span('operation', op));
+      var dest = 'to ' + ppUUID(id);
+      if (tx != '0') {
+        dest += ' / ' + ppUUID(tx);
+      }
+      p.appendChild(span('destination', dest));
+
+      p.appendChild(document.createTextNode(val));
+      
+      log.appendChild(p);
+    } else {
+      extendBars();
+      if (e.newValue === null) {
+        addEntry('ls-remove', e.key);
+      } else {
+        addEntry('ls-set', e.key + ' = ' + e.newValue);
+      }
+    }
   }
 }, false);
 
   </script>
 </body>
+</html>

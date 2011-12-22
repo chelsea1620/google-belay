@@ -182,16 +182,6 @@ define(['require'], function(require) {
       inst.state.opened = false;
       dirty(inst);
     }
-
-    // Re-prime the link for launching.
-    var newStartId = newUUIDv4();
-    inst.row.find('td.actions .open-page').attr('target', newStartId);
-    expectPage.post({
-      startId: newStartId,
-      ready: capServer.grant(function(activate) {
-        launchInstance(inst, 'page', activate);
-      })
-    });
   };
 
   var forEach = function(visitor) {

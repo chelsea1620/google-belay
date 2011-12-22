@@ -77,30 +77,40 @@ if (!window.belay) {
     };
 
 
-    function MessageChannelComms(iwindow, origin) {
-      var belayChan = new MessageChannel();
-      var actionChan = new MessageChannel();
-      
-      return {
-        belayPort: belayChan.port1,
-        actionPort: actionChan.port1,
-        init: function(msg) {
-          iwindow.postMessage(
-            msg,
-            // two following args. backward for Chrome and Safari
-            [belayChan.port2, actionChan.port2],
-            origin);
-        }
-      };
+    // TODO(mzero): These Comms functions are identical to the ones in
+    // belay-frame.html and should be factored out once we have a build system.
+    function MessageChannelComms(remoteWindow, origin, handleInit, firstEvent) {
+      if (handleInit) {
+        handleInit({
+          belayPort: firstEvent.ports[0],
+          actionPort: firstEvent.ports[1],
+          initData: firstEvent.data
+        })
+      } else {
+        var belayChan = new MessageChannel();
+        var actionChan = new MessageChannel();
+
+        return {
+          belayPort: belayChan.port1,
+          actionPort: actionChan.port1,
+          postInit: function(msg) {
+            remoteWindow.postMessage(
+              msg,
+              // two following args. backward for Chrome and Safari
+              [belayChan.port2, actionChan.port2],
+              origin);
+          }
+        };
+      }
     }
     
-    function MultiplexedComms(iwindow, origin) {
+    function MultiplexedComms(remoteWindow, origin, handleInit, firstEvent) {
       var ConcentratedPort = function(id) {
         this.id = id;
         this.onmessage = null;
       };
       ConcentratedPort.prototype.postMessage = function(data) {
-        iwindow.postMessage({ id: this.id, data: data }, origin);
+        remoteWindow.postMessage({ id: this.id, data: data }, origin);
       };
       
       var ports = {
@@ -108,75 +118,88 @@ if (!window.belay) {
         action: new ConcentratedPort('action')
       }
       
-      window.addEventListener('message', function(e) {
-        if (e.source != iwindow) { return; }
+      function handleEvent(e) {
+        if (e.source != remoteWindow) { return; }
         if (e.origin != origin && origin != '*') { return; }
         if (e.data.id in ports) {
           var onmessage = ports[e.data.id].onmessage;
           if (onmessage) { onmessage({ data: e.data.data }); }
         }
-        e.stopPropagation();
-      }, false);
-
-      return {
-        belayPort: ports.belay,
-        actionPort: ports.action,
-        init: function(msg) {
-          setTimeout(function() {
-            iwindow.postMessage({ id: 'init', data: msg }, origin)            
-          }, 250);
+        else if (handleInit && e.data.id == 'init') {
+          handleInit({
+            belayPort: ports.belay,
+            actionPort: ports.action,
+            initData: e.data.data
+          });
         }
+        e.stopPropagation();
+      }
+      
+      window.addEventListener('message', handleEvent, false);
+      if (handleInit) {
+        handleEvent(firstEvent)
+      } else {
+        return {
+          belayPort: ports.belay,
+          actionPort: ports.action,
+          postInit: function(msg) {
+            remoteWindow.postMessage({ id: 'init', data: msg }, origin)            
+          }
+        }        
       }
     }
     
-    var connect = function() {
-      iframe.removeEventListener('load', connect);
+    var connect = function(event) {
+      window.removeEventListener('message', connect);
 
-      var comms = ('MessageChannel' in window
-                      ? MessageChannelComms
-                      : MultiplexedComms)(iframe.contentWindow, '*');
-      window.belay.port = comms.belayPort;
-      window.belay.portReady();
+      function init(comms) {
+        window.belay.port = comms.belayPort;
+        window.belay.portReady();
 
-      comms.actionPort.onmessage = function(msg) {
-        if (msg.data === 'close') {
-          // This trick is all over the Web.
-          window.open('', '_self').close();
-        } else if (msg.data === 'showButterBar') {
-          iframe.style.webkitTransition = 'all 0.5s ease-in';
-          iframe.style.top = '0px';
-        } else if (msg.data === 'hideButterBar') {
-          if (window.belay.DEBUG) {
-            // .top doesn't work because it is relative
-            iframe.style.display = 'none';
+        comms.actionPort.onmessage = function(msg) {
+          if (msg.data === 'close') {
+            // This trick is all over the Web.
+            window.open('', '_self').close();
+          } else if (msg.data === 'showButterBar') {
+            iframe.style.webkitTransition = 'all 0.5s ease-in';
+            iframe.style.top = '0px';
+          } else if (msg.data === 'hideButterBar') {
+            if (window.belay.DEBUG) {
+              // .top doesn't work because it is relative
+              iframe.style.display = 'none';
+            }
+            else {
+              iframe.style.top = IFRAME_NEG_HEIGHT;
+            }
+          } else if (msg.data === 'unhighlight') {
+            unhighlight();
+          } else if (msg.data.op === 'highlight') {
+            highlight(msg.data.args);
+          } else if (msg.data.op === 'navigate') {
+            window.location = msg.data.args.url;
+            window.name = msg.data.args.startId;
+              // TODO(iainmcgin): exposing the startId to a potentially untrusted
+              // outer window may give it a way to hijack the launch of an
+              // instance. The implications of this need investigation.
+          } else {
+            console.log('unknown action', msg);
           }
-          else {
-            iframe.style.top = IFRAME_NEG_HEIGHT;
-          }
-        } else if (msg.data === 'unhighlight') {
-          unhighlight();
-        } else if (msg.data.op === 'highlight') {
-          highlight(msg.data.args);
-        } else if (msg.data.op === 'navigate') {
-          window.location = msg.data.args.url;
-          window.name = msg.data.args.startId;
-            // TODO(iainmcgin): exposing the startId to a potentially untrusted
-            // outer window may give it a way to hijack the launch of an
-            // instance. The implications of this need investigation.
-        } else {
-          console.log('unknown action', msg);
-        }
-      };
+        };
 
-      comms.init(
-        // cross-domain <iframe> can set window.location but cannot read it
-        { DEBUG: window.belay.DEBUG,
-          // required on Chrome 14
-          clientLocation: window.location.href,
-          clientStartId: startId });
+        comms.actionPort.postMessage(
+          // cross-domain <iframe> can set window.location but cannot read it
+          { DEBUG: window.belay.DEBUG,
+            // required on Chrome 14
+            location: window.location.href,
+            startId: startId });
+      }
+          
+      ('MessageChannel' in window
+              ? MessageChannelComms
+              : MultiplexedComms)(iframe.contentWindow, '*', init, event);
     };
 
-    iframe.addEventListener('load', connect);
+    window.addEventListener('message', connect)
 
   };
 

@@ -161,22 +161,40 @@ window.addEventListener('storage', function(e) {
   }
 }, false);
 
+// TODO(mzero): These Comms functions are identical to the ones in
+// belay-port.js and should be factored out once we have a build system.
+function MessageChannelComms(remoteWindow, origin, handleInit, firstEvent) {
+  if (handleInit) {
+    handleInit({
+      belayPort: firstEvent.ports[0],
+      actionPort: firstEvent.ports[1],
+      initData: firstEvent.data
+    })
+  } else {
+    var belayChan = new MessageChannel();
+    var actionChan = new MessageChannel();
 
-function MessageChannelComms(owindow, origin, event, init) {
-  init({
-    clientPort: event.ports[0],
-    actionPort: event.ports[1],
-    initData: event.data
-  });
+    return {
+      belayPort: belayChan.port1,
+      actionPort: actionChan.port1,
+      postInit: function(msg) {
+        remoteWindow.postMessage(
+          msg,
+          // two following args. backward for Chrome and Safari
+          [belayChan.port2, actionChan.port2],
+          origin);
+      }
+    };
+  }
 }
 
-function MultiplexedComms(owindow, origin, event, init) {
+function MultiplexedComms(remoteWindow, origin, handleInit, firstEvent) {
   var ConcentratedPort = function(id) {
     this.id = id;
     this.onmessage = null;
   };
   ConcentratedPort.prototype.postMessage = function(data) {
-    owindow.postMessage({ id: this.id, data: data }, origin);
+    remoteWindow.postMessage({ id: this.id, data: data }, origin);
   };
   
   var ports = {
@@ -185,15 +203,15 @@ function MultiplexedComms(owindow, origin, event, init) {
   }
   
   function handleEvent(e) {
-    if (e.source != owindow) { return; }
+    if (e.source != remoteWindow) { return; }
     if (e.origin != origin && origin != '*') { return; }
     if (e.data.id in ports) {
       var onmessage = ports[e.data.id].onmessage;
       if (onmessage) { onmessage({ data: e.data.data }); }
     }
-    else if (e.data.id == 'init') {
-      init({
-        clientPort: ports.belay,
+    else if (handleInit && e.data.id == 'init') {
+      handleInit({
+        belayPort: ports.belay,
         actionPort: ports.action,
         initData: e.data.data
       });
@@ -202,31 +220,41 @@ function MultiplexedComms(owindow, origin, event, init) {
   }
   
   window.addEventListener('message', handleEvent, false);
-  handleEvent(event);
+  if (handleInit) {
+    handleEvent(firstEvent)
+  } else {
+    return {
+      belayPort: ports.belay,
+      actionPort: ports.action,
+      postInit: function(msg) {
+        remoteWindow.postMessage({ id: 'init', data: msg }, origin)            
+      }
+    }        
+  }
 }
 
 
-window.addEventListener('message', setUpClient);
+function setUpClient() {
+  var comms = ('MessageChannel' in window
+      ? MessageChannelComms
+      : MultiplexedComms)(window.parent, '*');
 
-function setUpClient(e) {
-  window.removeEventListener('message', setUpClient);
+  clientTunnel = new CapTunnel(comms.belayPort);
+  clientTunnel.setLocalResolver(router.resolver);
 
-  function init(comms) {
-    clientTunnel = new CapTunnel(comms.clientPort); //e.ports[0]);
-    actionPort = comms.actionPort; //e.ports[1];
-    clientTunnel.setLocalResolver(router.resolver);
-    var clientLocation = comms.initData.clientLocation;
-    var clientStartId = comms.initData.clientStartId;
-    window.DEBUG = comms.initData.DEBUG;
+  actionPort = comms.actionPort;
+  actionPort.onmessage = function(event) {
+    var clientData = event.data;
+    window.DEBUG = clientData.DEBUG;
     if (window.DEBUG) {
       actionPort.postMessage('showButterBar'); 
       document.getElementById('debug').style.display = 'block';
     }
 
-    var instruction = router.retrieveStart(clientStartId);
+    var instruction = router.retrieveStart(clientData.startId);
     if (instruction === null) {
       setupFreshPage();
-      checkForSuggestions(clientLocation);
+      checkForSuggestions(clientData.location);
     }
     else if ('startLaunch' in instruction) {
       instruction.startLaunch.post(navigateCap);
@@ -238,10 +266,7 @@ function setUpClient(e) {
       // unknown start instruction
     }    
   }
-
-  ('MessageChannel' in window
-      ? MessageChannelComms
-      : MultiplexedComms)(window.parent, '*', e, init);
+  comms.postInit(null);
 }
 
 function expectPage(expect) {
@@ -337,7 +362,7 @@ function checkForSuggestions(location, showSuggestions, navigate) {
       var suggestion = v.suggestions[k];
       var btn = document.createElement('button');
       btn.className = 'suggestButton';
-      btn.innerText = suggestion.name;
+      btn.appendChild(document.createTextNode(suggestion.name));
       buttonContainer.appendChild(btn);
       btn.addEventListener('click', function() {
         v.doLaunchActivate.post({
@@ -357,6 +382,8 @@ document.getElementById('clearButton').addEventListener('click',
   function() { 
     delete localStorage['belay'];
   });
+
+setUpClient();
 
 </script>
 </body>

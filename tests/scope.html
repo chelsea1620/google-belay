@@ -1,0 +1,22 @@
+<html>
+<head>
+  <title>Local Storage Scope</title>
+</head>
+<body>
+  <h1>Local Storage Scope</h1>
+  <script>
+
+window.addEventListener('storage', function(e) {
+  if (e.key === null) {
+    console.log('localStorage.clear()');
+  }
+  else if (e.newValue === null) {
+    console.log('localStorage.removeItem(' + e.key + ')');
+  }
+  else {
+    console.log('localStorage.setItem(' + e.key + ', ' + e.newValue + ')');
+  }
+}, false);
+
+  </script>
+</body>

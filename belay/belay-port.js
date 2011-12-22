@@ -153,9 +153,6 @@ if (!window.belay) {
       window.removeEventListener('message', connect);
 
       function init(comms) {
-        window.belay.port = comms.belayPort;
-        window.belay.portReady();
-
         comms.actionPort.onmessage = function(msg) {
           if (msg.data === 'close') {
             // This trick is all over the Web.
@@ -186,12 +183,15 @@ if (!window.belay) {
           }
         };
 
-        comms.actionPort.postMessage(
-          // cross-domain <iframe> can set window.location but cannot read it
-          { DEBUG: window.belay.DEBUG,
-            // required on Chrome 14
-            location: window.location.href,
-            startId: startId });
+        window.belay.port = comms.belayPort;
+        window.belay.portReady(function() {
+          comms.actionPort.postMessage(
+            // cross-domain <iframe> can set window.location but cannot read it
+            { DEBUG: window.belay.DEBUG,
+              // required on Chrome 14
+              location: window.location.href,
+              startId: startId });
+        });
       }
           
       ('MessageChannel' in window

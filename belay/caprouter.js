@@ -19,7 +19,13 @@ var ROUTER_EXPORTS = (function() {
   // i.e.: there could be things in localStorage that are of the wrong format
   // so there should be try/catch blocks around those things that might throw
   
-  var RESPONSE_TIMEOUT = 1000;
+  var RESPONSE_TIMEOUT = 1000;  // timeout invocations in 1sec
+  
+  var EXPIRY_DELAY = 15 * 1000;  // pause before doing expires check at start up
+  var EXPIRY_TIMEOUT = 60 * 1000;  // expire anything 1min. old
+  
+  var LIVENESS_UPDATE = 250;
+  var LIVENESS_DEFAULT_MAXAGE = LIVENESS_UPDATE * 4;
   
   var freeze = ('freeze' in Object) ? Object.freeze : function(x) { return x; };
   var now = ('now' in Date) ? Date.now : function() { return +(new Date); };
@@ -36,14 +42,18 @@ var ROUTER_EXPORTS = (function() {
     
     this.handlers = { };
 
-    this.expireMessages(15 * 60 * 1000); // expire anything 15min. old
+    setTimeout(function() { me.expireMessages(EXPIRY_TIMEOUT); }, EXPIRY_DELAY);
 
     theLocalStorageMedium = this;
     this.storageEventListener = function(e) { me.handleStorageEvent(e); };
     window.addEventListener('storage', this.storageEventListener, false);
+    
+    this.timer = setInterval(
+      function() { me.updateRoutables(); }, LIVENESS_UPDATE);
   };
   
   LocalStorageMedium.prototype.close = function() {
+    clearInterval(this.timer);
     window.removeEventListener('storage', this.storageEventListener);
     theLocalStorageMedium = null;
   };
@@ -55,40 +65,49 @@ var ROUTER_EXPORTS = (function() {
     return theLocalStorageMedium;
   }
 
-  LocalStorageMedium.prototype.postMessage = function(op, id, tx, msg) {
+  LocalStorageMedium.prototype.key = function(op, id, tx) {
+    // keys are of the format: lsm,<op>,<id>,<tx>
+    // values are the JSON.stringify of { t: <timestamp>, m: <msg> }
+    return ['lsm', op, id, tx].join(',');
+  }
+
+  LocalStorageMedium.prototype.postMessage = function(op, id, tx, msg) {    
     if (id in this.handlers) {
       var h = this.handlers[id];
       h(op, id, tx, msg);
     }
     else {
-      var key = ['msg', now(), op, id, tx].join(',');
-      var data = JSON.stringify(msg);
+      var key = this.key(op, id, tx);
+      var data = JSON.stringify({ t: now(), m: msg });
       localStorage.setItem(key, data);
     }
   };
   
   LocalStorageMedium.prototype.addMessageHandler = function(id, h) {
     this.handlers[id] = h;
+    this.updateRoutables();
   };
   
   LocalStorageMedium.prototype.handleStorageEvent = function(e) {
     if (e.newValue === null) return;
     
     var parts = e.key.split(',');
-    if (parts && parts[0] == 'msg') {
-      var op = parts[2];
-      var id = parts[3];
-      var tx = parts[4];
-      
-      if (id in this.handlers) {
-        localStorage.removeItem(e.key);
-        
-        var msg = JSON.parse(e.newValue);
-        
-        var h = this.handlers[id];
-        (h)(op, id, tx, msg);
+    try {
+      if (parts && parts[0] == 'lsm') {
+        var op = parts[1];
+        var id = parts[2];
+        var tx = parts[3];
+
+        if (id in this.handlers) {
+          localStorage.removeItem(e.key);
+
+          var payload = JSON.parse(e.newValue);
+
+          var h = this.handlers[id];
+          (h)(op, id, tx, payload.m);
+        }
       }
-    }
+    } catch (e) { }
   };
   
   LocalStorageMedium.prototype.saveMessage = function(op, id, msg) {
@@ -96,23 +115,36 @@ var ROUTER_EXPORTS = (function() {
   };
   
   LocalStorageMedium.prototype.retrieveMessage = function(op, id) {
-    for (var i = localStorage.length - 1; i >= 0; --i) {
-      var key = localStorage.key(i);
-      var parts = key.split(',');
-      if (parts[0] == 'msg' && parts[2] == op && parts[3] == id) {
-        var msg = JSON.parse(localStorage.getItem(key));
-        localStorage.removeItem(key);
-        return msg;
-      }
-    }
+    var key = this.key(op, id, 0);
+    var payload = localStorage.getItem(key);
+    try {
+      var msg = JSON.parse(payload).m;
+      localStorage.removeItem(key);
+      return msg;
+    } catch (e) { }
     return null;
   };
-
-  // The common key format (msg,<time>,<op>,<id>,<tx>) includes the time so
-  // that this function can expire messages without having to fetch or parse
-  // the values in localStorage. Because of the <time> parameter, the
-  // save/retrieveMessage facility slower, but since it is used only once per
-  // page load, the trade-off seems fair.
+  
+  LocalStorageMedium.prototype.updateRoutables = function() {
+    var payload = JSON.stringify({ t: now() });
+    for (var id in this.handlers) {
+      var key = this.key('live', 0, id);
+      localStorage.setItem(key, payload);
+    }
+  };
+  
+  LocalStorageMedium.prototype.isRoutable = function(id, maxAge) {
+    if (id in this.handlers) { return true; }
+    if (maxAge === undefined) { maxAge = LIVENESS_DEFAULT_MAXAGE; }
+    var key = this.key('live', 0, id);
+    var payload = localStorage.getItem(key);
+    try {
+      var timestamp = JSON.parse(payload).t;
+      return (now() - timestamp) <= maxAge;
+    }
+    catch (e) { }
+    return false;
+  };
   
   LocalStorageMedium.prototype.expireMessages = function(delta) {
     var cutoff = now() - delta;
@@ -120,8 +152,16 @@ var ROUTER_EXPORTS = (function() {
     
     for (var i = localStorage.length - 1; i >= 0; --i) {
       var key = localStorage.key(i);
-      var parts = key.split(',');
-      if (parts[0] == 'msg' && parts[1] < cutoff) keysToKill.push(key);
+      try {
+        var parts = key.split(',');
+        if (parts[0] == 'lsm') {
+          var payload = localStorage.getItem(key);
+          var timestamp = JSON.parse(payload).t;
+          if (timestamp < cutoff) {
+            keysToKill.push(key);        
+          }
+        } 
+      } catch (e) { }
     }
     for (var j in keysToKill) {
       localStorage.removeItem(keysToKill[j]);
@@ -182,6 +222,10 @@ var ROUTER_EXPORTS = (function() {
     });
   };
   
+  CapRouter.prototype.isRoutable = function(instanceId, maxAge) {
+    if (instanceId in this.ifaces) { return true; }
+    return  this.medium.isRoutable(instanceId, maxAge);
+  }
   
   CapRouter.prototype.sendInvoke = function(ser, method, data, success, failure)
   {

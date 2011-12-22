@@ -55,6 +55,7 @@ function callBackLaterWithNine(v, sk, fk) {
 var startId = window.name;
 var start = router.retrieveStart(startId);
 start.announce.put({
+  instanceId: instanceId,
   simple: server.grant(simple),
   simpleAsync: server.grant(simpleAsync),
   callBackWithThree: server.grant(callBackWithThree),

@@ -3,8 +3,13 @@ TODO
 
 Relative urls - should be served from the public site in prod and 
 
-run offline
+[ ] run offline
 
+[ ] onBelayReady (and possibly onPortReady) appear to be callable
+multiple times and call their list of callbacks when ready.  If any of
+the callbacks throws and exception, the remaining callbacks are not
+called (they're called as callbacks.forEach(...)).  Either don't allow
+list of callbacks or provide an api that handles callbacks throwing.
 
 :: multi-window ::
 

@@ -6,6 +6,8 @@
 </head>
 <body>
   <h1>Local Storage Scope</h1>
+  <div id="live">
+  </div>
   <div id="log">
   </div>
   <script>
@@ -13,6 +15,7 @@
 "use strict";
 
 var log = document.getElementById('log');
+var liveDiv = document.getElementById('live');
 
 function addEntry(cls, text) {
   var e = document.createElement('p');
@@ -40,6 +43,7 @@ function nextColor() {
 var tStart = null;
 var tLast = null;
 var inFlight = {};
+var live = {};
 
 function startBar(key) {
   if (key in inFlight) {
@@ -78,6 +82,38 @@ function endAllBars() {
   inFlight = { };
 }
 
+var liveList;
+function rebuildLive() {
+  var now = Date.now();
+  var newList = document.createElement('ul');
+  
+  var items = [];
+  for (var k in live) {
+    items.push({ t: live[k] - now, id: k });
+  }
+  items.sort(function(a,b) {
+    var c = a.t - b.t;
+    if (c != 0) return c;
+    if (a.id < b.id) return -1;
+    if (a.id > b.id) return 1;
+    return 0;
+  });
+  for (var i in items) {
+    var li = document.createElement('li');
+    if (items[i].t < -1000) { li.className = 'old'; }
+    li.appendChild(span('timestamp', items[i].t));
+    li.appendChild(document.createTextNode(ppUUID(items[i].id)));
+    newList.appendChild(li);
+  }
+  if (liveList) {
+    liveDiv.replaceChild(newList, liveList);
+  } else {
+    liveDiv.appendChild(newList);
+  }
+  liveList = newList;
+}
+setInterval(rebuildLive, 2000);
+
 function ppUUID(uuid) {
   return uuid.substring(0,6) + '…'
 }
@@ -101,89 +137,108 @@ function pp(value) {
   return JSON.stringify(value, null, 2);
 }
 
+function lsmEntry(op, id, tx, val) {
+  var msg;
+  var t;
+  var ts = " ";
+  if (val) {
+    try {
+      var payload = JSON.parse(val);
+      t = payload.t;
+      msg = payload.m;
+
+      if (tStart === null) { tStart = tLast = t; }
+      var tRel = t - tStart;
+      var tDelta = t - tLast;
+      tLast = t;
+      ts = "+" + tDelta;
+      
+    } catch (e) { }
+  }
+
+  if (op == 'live') {
+    if (val) {
+      live[tx] = t;
+    } else {
+      delete live[tx];
+    }
+    return;
+  };
+  
+  var cls = val ? 'ls-set' : 'ls-remove';
+  cls += ' msg-' + op;
+  
+  var trackable = op == 'invoke' || op == 'response';
+  if (trackable) {
+    var clr = startBar(tx);
+    cls += ' ' + clr;
+  }
+  extendBars();   
+  if (trackable && op == 'response' && val == null) {
+    endBar(tx);
+  }
+
+  var p = document.createElement('p');
+  p.className = cls;
+
+  p.appendChild(span('timestamp', ts));
+  
+  if (val) {
+    try {
+      var data = safeParse(safeGetProperty(msg, 'data', undefined));
+      var value = safeGetProperty(data, 'value', data);
+
+      if (op == 'invoke') {
+        val = (msg.method + '\n\n'
+                + pp(value) + '\n\n'
+                + 'bcap: ' + msg.ser + '\n\n'
+                + 'reply: ' + msg.reply);
+      } else if (op == 'response') {
+        if (msg.type == 'success') {
+          op += " ✓";
+          val = value === undefined ? '-- no data --' : pp(value);
+        } else if (msg.type == 'failure') {
+          op += " ✗";
+          val = pp(data);
+        } else {
+          throw "huh?"
+          val = pp(msg);
+        }
+      } else if (op == 'start') {
+        msg = safeParse(msg);
+        value = safeGetProperty(msg, 'value', msg);
+        val = pp(value);
+      } else {
+        val = pp(msg);
+      }
+    } catch(e) { console.log(e); }
+    p.title = val;
+  }
+
+  p.appendChild(span('operation', op));
+  var dest = 'to ' + ppUUID(id);
+  if (tx != '0') {
+    dest += ' / ' + ppUUID(tx);
+  }
+  p.appendChild(span('destination', dest));
+
+  p.appendChild(document.createTextNode(val));
+  
+  log.appendChild(p);
+
+}
 window.addEventListener('storage', function(e) {
   if (e.key === null) {
     addEntry('ls-clear', '-- all local storage cleared --');
     endAllBars();
   } else {
     var parts = e.key.split(',');
-    if (parts.length >= 5 && parts[0] == 'msg') {
-      var t = +parts[1];
-      var op = parts[2];
-      var id = parts[3];
-      var tx = parts[4];
+    if (parts.length >= 4 && parts[0] == 'lsm') {
+      var op = parts[1];
+      var id = parts[2];
+      var tx = parts[3];
       var val = e.newValue;
-
-      var cls = val ? 'ls-set' : 'ls-remove';
-      cls += ' msg-' + op;
-      
-      var key = (tx != '0') ? tx : id
-      
-      if (key) {
-        var clr = startBar(key);
-        cls += ' ' + clr;
-      }
-      extendBars();   
-      if (op != 'invoke' && !val) {
-        endBar(key);
-      }
-
-      var p = document.createElement('p');
-      p.className = cls;
-
-      if (val) {      
-        if (tStart === null) { tStart = tLast = t; }
-        var tRel = t - tStart;
-        var tDelta = t - tLast;
-        tLast = t;
-        p.appendChild(span('timestamp', "+" + tDelta));
-      } else {
-        p.appendChild(span('timestamp', " "));
-      }
-      
-      if (val) {
-        try {
-          var msg = safeParse(val);
-          var data = safeParse(safeGetProperty(msg, 'data', undefined));
-          var value = safeGetProperty(data, 'value', data);
-
-          if (op == 'invoke') {
-            val = (msg.method + '\n\n'
-                    + pp(value) + '\n\n'
-                    + 'bcap: ' + msg.ser + '\n\n'
-                    + 'reply: ' + msg.reply);
-          } else if (op == 'response') {
-            if (msg.type == 'success') {
-              op += " ✓";
-              val = value === undefined ? '-- no data --' : pp(value);
-            } else if (msg.type == 'failure') {
-              op += " ✗";
-              val = pp(data);
-            } else {
-              throw "huh?"
-              val = pp(msg);
-            }
-          } else if (op == 'start') {
-            msg = safeParse(msg);
-            value = safeGetProperty(msg, 'value', msg);
-            val = pp(value);
-          } else {
-            val = pp(msg);
-          }
-        } catch(e) { console.log(e); }
-        p.title = val;
-      }
-
-      p.appendChild(span('operation', op));
-      var dest = 'to ' + ppUUID(id);
-      if (tx != '0') {
-        dest += ' / ' + ppUUID(tx);
-      }
-      p.appendChild(span('destination', dest));
-
-      p.appendChild(document.createTextNode(val));
-      
-      log.appendChild(p);
+      lsmEntry(op, id, tx, val);
     } else {
       extendBars();
       if (e.newValue === null) {

@@ -19,6 +19,7 @@
         setRefresh: cap(belay/attributes/setRefresh)
       },
     }
+&activate = { close: true } ; an alternative
 
 %% belay/launch/activate
 -> &activate
@@ -54,7 +55,6 @@
 %% belay/station/setStationCallbacks
 >> {
         newInstHandler: cap(belay/station/newInstance),
-        closeInstHandler: cap(belay/station/closeInstance),
    }
 
 %% belay/station/newInstance
@@ -69,11 +69,6 @@
 <- undef
     ; called when a window wishes to become an instance
     
-
-%% belay/station/closeInstance
--> uuId
-<- undef
-    ; notification of closed instance
 
 
 %% belay/station/setSuggestDomains

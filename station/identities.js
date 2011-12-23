@@ -64,7 +64,6 @@ function(utils, sections, attributes, pageManager) {
             outpostData: { 
               info: launchInfo.info,
               instanceId: instanceId,
-              notifyClose: capServer.grant(handleNewId)
             }
           });
         });

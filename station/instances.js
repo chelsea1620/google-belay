@@ -16,10 +16,12 @@ define(['require'], function(require) {
 
   var capServer;
   var instanceBase;
+  var isRunning;
   
-  function init(cs, ib) {
+  function init(cs, ib, ir) {
     capServer = cs;
     instanceBase = ib;
+    isRunning = ir;
   }
   
   // TODO (iainmcgin): we could do with a more robust object abstraction for
@@ -36,7 +38,6 @@ define(['require'], function(require) {
          created: Int      -- time created (seconds since epoch)
          name: string,
          icon: url,
-         opened: boolean, -- whether the instance is open or not
          data: string  -- stored data for the instance
          section: string -- the section the instance belongs to
        },
@@ -46,7 +47,7 @@ define(['require'], function(require) {
           attributes: { set: cap }
        },
        row: node -- the row representing the instance in the section list
-       closeCap : cap -- present for windowed instances
+       closeCap : cap -- close the window
      }
   */
 
@@ -78,74 +79,43 @@ define(['require'], function(require) {
   }
 
 
-  function launchPageInstance(inst, launcher) {
-    inst.state.opened = true;
-    dirty(inst);
-
-    launcher.post({
-      instanceId: inst.state.id,
-      url: inst.launch.page.html, // TODO(iainmcgin): remove
-      pageUrl: inst.launch.page.html,
-      relaunch: capServer.grant(function(activate) {
-        launchInstance(inst, 'relaunchpage', activate);
-      }),
-      outpostData: {
-        info: inst.launch.info,
-        instanceId: inst.state.id,
-        services: belayBrowser,
-        setRefresh: capServer.grant(function(refreshCap) {
-          inst.refreshCap = refreshCap;
-        }),
-        notifyClose: capServer.grant(function() {
-          closeInstHandler(inst.state.id);
-        })
+  function launchInstance(inst, launcher) {
+    isRunning.post(inst.state.id, function(r) {
+      if (r) {
+        launcher.post({ close: true });
+        return;
       }
-    },
-    function(closeCap) {
-      inst.closeCap = closeCap;
-    },
-    function(error) {
-      console.assert(false);
-    });
-  }
+      
+      inst.state.belayInstance.get(function(launch) {
+        inst.launch = launch;
+        
+        require('attributes').pushToInstance(inst);
+        dirty(inst);
+        // TODO(mzero): is pushing attributes and dirty really needed here?
 
-  function launchInstance(inst, openType, launcher) {
-    var instState = inst.state;
-
-    // TODO(mzero) create cap for storage to station
-    // gets/puts from instState.data, and dirty(inst) on put
-
-    dirty(inst);
-    instState.belayInstance.get(function(launch) {
-      inst.launch = launch;
-      require('attributes').pushToInstance(inst);
-      var canPage = 'page' in launch;
-
-      var preferred = canPage ? 'page' : 'none';
-
-      if (openType == 'restore') {
-        if (instState.opened) {
-          openType = 'none';
-        } else {
-          openType = preferred;
-        }
-      }
-      else if (openType == 'openAny') {
-        openType = preferred;
-      }
-
-      if (openType == 'closed' || openType == 'none') {
-        // leave closed!
-      }
-      else if (openType == 'page' && canPage) {
-        if (instState.opened) return;
-        launchPageInstance(inst, launcher);
-      } else if (openType == 'relaunchpage' && canPage) {
-        launchPageInstance(inst, launcher);
-      }
-      else {
-        alert('launchInstance: this instance cannot open as a ' + openType);
-      }
+        launcher.post({
+          instanceId: inst.state.id,
+          url: inst.launch.page.html, // TODO(iainmcgin): remove
+          pageUrl: inst.launch.page.html,
+          relaunch: capServer.grant(function(activate) {
+            launchInstance(inst, activate);
+          }),
+          outpostData: {
+            info: inst.launch.info,
+            instanceId: inst.state.id,
+            services: belayBrowser,
+            setRefresh: capServer.grant(function(refreshCap) {
+              inst.refreshCap = refreshCap;
+            }),
+          }
+        },
+        function(closeCap) {
+          inst.closeCap = closeCap;
+        },
+        function(error) {
+          console.assert(false);
+        });
+      });
     });
   }
   
@@ -154,9 +124,7 @@ define(['require'], function(require) {
     require('sections').newInstance(inst);
   };
 
-  // Called by Belay (the extension) when a user visits a Web page, P, that wants
-  // to morph into an instance. The supplied launch cap has the same signature
-  // as belayLaunch. Instead of creating a new tab, it reloads P's tab.
+  // Called when a Web page that wants to morph into an instance.
   var newInstHandler = function(args) {
     var instanceId = newUUIDv4();
     var inst = {
@@ -171,17 +139,7 @@ define(['require'], function(require) {
       }
     };
     addInstance(inst);
-    launchInstance(inst, 'page', args.activate);
-  };
-
-  var closeInstHandler = function(instanceId) {
-    if (!(instanceId in instances)) return;
-
-    var inst = instances[instanceId];
-    if (inst.state.opened) {
-      inst.state.opened = false;
-      dirty(inst);
-    }
+    launchInstance(inst, args.activate);
   };
 
   var forEach = function(visitor) {
@@ -211,7 +169,6 @@ define(['require'], function(require) {
     addInstance: addInstance,
     deleteInstance: deleteInstance,
     newInstHandler: newInstHandler,
-    closeInstHandler: closeInstHandler,
   };
 
 });

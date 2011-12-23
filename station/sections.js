@@ -299,7 +299,7 @@ define(['utils', 'instances', 'attributes', 'pageManager'],
     // TODO (iainmcgin): this is the main 'delete' action for instances,
     // despite not living in the instances.js module. Responsibility for delete
     // needs to be more clearly defined.
-    if (inst.state.opened) {
+    if (inst.closeCap) {
       inst.closeCap.put();
     }
     inst.row.fadeOut(400, function() {
@@ -336,7 +336,7 @@ define(['utils', 'instances', 'attributes', 'pageManager'],
     });
 
     var readyCap = capServer.grant(function(activate) {
-      instances.launchInstance(inst, 'page', activate);
+      instances.launchInstance(inst, activate);
     });
     function reprime() {
       var startId = newUUIDv4();
@@ -349,9 +349,6 @@ define(['utils', 'instances', 'attributes', 'pageManager'],
     var openPageBtn = row.find('td.actions .open-page');
     openPageBtn.attr('href', 'redirect.html');
     openPageBtn.click(function(evt) {
-      if (inst.state.opened) {
-        evt.preventDefault(); // do not re-open the window
-      }
       setTimeout(reprime, 0);
     });
     reprime();

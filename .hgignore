@@ -6,5 +6,5 @@ chrome-ext/includes
 *.pyc
 *.*~
 *.orig
-lib/js/include-belay.js
 *.log
+built/*

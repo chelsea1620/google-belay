@@ -16,8 +16,8 @@
 LOGS="/tmp/belay/logs"
 PIDS="/tmp/belay/pids"
 
-mkdir -p $LOGS
-mkdir -p $PIDS
+mkdir -p "$LOGS/built"
+mkdir -p "$PIDS/built"
 
 CLEAR=""
 
@@ -116,11 +116,12 @@ stopapp() {
   else 
     echo "Stopping $app..."
     kill `cat $PIDS/$app/pid`
-    rm $PIDS/$app/pid
+    rm -r $PIDS/$app/pid
   fi 
 }
 
 startall() {
+#  startapp 9010 built/belay
   startapp 9000 belay
   startapp 9001 station
 #  startapp 9002 hello
@@ -131,6 +132,7 @@ startall() {
 }
 
 stopall() {
+#  stopapp built/belay
   stopapp belay
   stopapp station
 #  stopapp hello

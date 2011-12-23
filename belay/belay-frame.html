@@ -80,21 +80,26 @@ var router = new CapRouter();
 router.addInterface(iframeInstanceId, iframeServer.publicInterface);
 iframeServer.setResolver(router.resolver);
 
+var navigation = {
+  navigateCap: iframeServer.grant(function(args) { 
+    actionPort.postMessage({ op: 'navigate', args: args });
+  }),
+  closeCap: iframeServer.grant(function() {
+    actionPort.postMessage('close');
+  })
+};
 
-var navigateCap = iframeServer.grant(function(args) { 
-  actionPort.postMessage({ op: 'navigate', args: args });
-});
-var closeCap = iframeServer.grant(function() {
-  actionPort.postMessage('close');
-});
 
+var isRunningCap = iframeServer.grant(function(instanceId) {
+  return router.isRoutable(instanceId);
+});
 
 var setStationCallbacksCap = iframeServer.grant(function(stationCallbacks) {
   function newInstHandler(v) {
     if ('newInstHandler' in stationCallbacks) {
       stationCallbacks.newInstHandler.post({
         instanceDescription: v.instanceDescription,
-        activate: buildActivateCap(v.navigate)
+        activate: buildActivateCap(v.navigation)
       });
     }
     else {
@@ -108,7 +113,7 @@ var setStationCallbacksCap = iframeServer.grant(function(stationCallbacks) {
         success({
           suggestions: suggestions,
           doLaunchActivate: iframeServer.grant(function(v) {
-            v.doLaunch.post(buildActivateCap(v.navigate));
+            v.doLaunch.post(buildActivateCap(v.navigation));
           })
         });
       },
@@ -257,10 +262,10 @@ function setUpClient() {
       checkForSuggestions(clientData.location);
     }
     else if ('startLaunch' in instruction) {
-      instruction.startLaunch.post(navigateCap);
+      instruction.startLaunch.post(navigation);
     }
     else if ('finishLaunch' in instruction) {
-      instruction.finishLaunch.post(closeCap, setupLaunchedPage);
+      instruction.finishLaunch.post(navigation, setupLaunchedPage);
     }
     else {
       // unknown start instruction
@@ -278,10 +283,14 @@ function expectPage(expect) {
 
 var expectCap = iframeServer.grant(expectPage);
 
-function buildActivateCap(navigateCap) {
+function buildActivateCap(stage1Nav) {
   return iframeServer.grant(function(args, success, failure) {
-    var finishCap = iframeServer.grant(function(close) {
-      success(close);
+    if (args.close) {
+      stage1Nav.closeCap.post();
+      return;
+    }
+    var finishCap = iframeServer.grant(function(stage2Nav) {
+      success(stage2Nav.closeCap);
       var pending = {
         instanceId: args.instanceId,
         temporaryInstance: false,
@@ -291,8 +300,12 @@ function buildActivateCap(navigateCap) {
       
       if('relaunch' in args) {
         var relaunch = args.relaunch;
-        pending.relaunch = iframeServer.grant(function(navigateCap) {
-          relaunch.post(buildActivateCap(navigateCap));
+        pending.relaunch = iframeServer.grant(function(relaunchNav) {
+          setTimeout(function() {
+            relaunch.post(buildActivateCap(relaunchNav));            
+          }, 1500);
+          // TODO(mzero): remove this need to wait for liveness to expire,
+          // perhaps by expiring the liveness directly at this point?
         });
       };
       return pending;
@@ -300,7 +313,7 @@ function buildActivateCap(navigateCap) {
     
     var startId = newUUIDv4();
     router.storeStart(startId, { finishLaunch: finishCap });
-    navigateCap.post({url: args.pageUrl, startId: startId});
+    stage1Nav.navigateCap.post({url: args.pageUrl, startId: startId});
   });
 }
 
@@ -308,6 +321,7 @@ function setupLaunchedPage(pending) {
   if (pending.isStation) {
     pending.outpost.setStationCallbacks = setStationCallbacksCap;
     pending.outpost.services = highlightingCaps;
+    pending.outpost.isRunning = isRunningCap;
   }
   pending.outpost.expectPage = expectCap;
 
@@ -323,7 +337,7 @@ function setupFreshPage() {
   if('relaunch' in window.sessionStorage) {
     var relaunch = iframeServer.restore(window.sessionStorage['relaunch']);
     delete (window.sessionStorage)['relaunch']
-    relaunch.post(navigateCap);
+    relaunch.post(navigation);
       // TODO(iainmcgin): should handle failure here and do something nice
     return;
   }
@@ -338,7 +352,7 @@ function setupFreshPage() {
     becomeInstance: iframeServer.grant(function(instanceDescription) {
       stationCap('newInstHandler').post({
         instanceDescription: instanceDescription,
-        navigate: navigateCap
+        navigation: navigation
       });
     }),
     expectPage: expectCap,
@@ -367,7 +381,7 @@ function checkForSuggestions(location, showSuggestions, navigate) {
       btn.addEventListener('click', function() {
         v.doLaunchActivate.post({
           doLaunch: suggestion.doLaunch,
-          navigate: navigateCap
+          navigation: navigation
         });
       });
     });

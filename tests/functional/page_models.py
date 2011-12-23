@@ -97,6 +97,7 @@ class BelayEnabledPage(object):
     def close(self):
         self.driver.switch_to_window(self.window)
         self.driver.close()
+        sleep(2)
     
     def is_open(self):
         found = False

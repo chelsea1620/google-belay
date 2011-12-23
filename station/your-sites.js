@@ -37,6 +37,7 @@ require([
 
 var ui;
 var stationInfo;
+var isRunning;
 var capServer;
 var belayBrowserTunnel;
 
@@ -46,14 +47,9 @@ var defaultIcon = '/res/images/tool.png';
 // CapServers
 //
 var instanceResolver = function(id) {
-  var instance = instances.getById(id);
-  if (instance && instance.state.opened) {
-    return belayBrowserTunnel.sendInterface;
-  }
   if (id === capServer.instanceId) {
     return capServer.publicInterface;
   }
-
   return belayBrowserTunnel.sendInterface;
 };
 
@@ -67,21 +63,34 @@ function cmpInstByCreated(inst1, inst2) {
 }
 
 
-var getSuggestions = function(location) {
-  var suggestions = [];
+var getSuggestions = function(location, success, failure) {
+  var possibleInstances = [];
   instances.forEach(function(inst) {
-    if (domainOfInst(inst) == location
-        && !inst.state.opened
-        && inst.state.section != "Trash") {
-      suggestions.push({
-        name: inst.state.name,
-        doLaunch: capServer.grant(function(activate) {
-          instances.launchInstance(inst, 'page', activate);
-        })
-      });
+    if (domainOfInst(inst) == location && inst.state.section != "Trash") {
+      possibleInstances.push(inst);
     }
   });
-  return suggestions;
+  
+  var suggestions = [];
+  function processNext() {
+    if (possibleInstances.length > 0) {
+      var inst = possibleInstances.shift();
+      isRunning.post(inst.state.id, function(r) {
+        if (!r) {
+          suggestions.push({
+            name: inst.state.name,
+            doLaunch: capServer.grant(function(activate) {
+              instances.launchInstance(inst, activate);
+            })
+          });
+        }
+        processNext();
+      }, processNext);
+    } else {
+      success(suggestions);
+    }
+  }
+  processNext();
 };
 
 
@@ -90,7 +99,7 @@ var initialize = function() {
   $(document.body).find('.ex').remove(); // remove layout examples
   
   attributes.init(stationInfo.allIdentities);
-  instances.init(capServer, stationInfo.instanceBase);
+  instances.init(capServer, stationInfo.instanceBase, isRunning);
   sections.init(capServer, stationInfo.allSections);
   identities.init(capServer,
     stationInfo.allIdentities,
@@ -132,7 +141,6 @@ var initialize = function() {
       storageCap: i.cap,
       state: i.data
     };
-    inst.state.opened = false;
     loadedInstances.push(inst);
   });
   loadedInstances.sort(cmpInstByCreated).forEach(instances.addInstance);
@@ -148,12 +156,11 @@ window.belay.onPortReady(function() {
     capServer.setResolver(instanceResolver);
     
     expectPage = outpost.expectPage;
-    belayLaunch = outpost.launch;
     belayBrowser = outpost.services;
+    isRunning = outpost.isRunning;
     stationInfo = outpost.info;
     outpost.setStationCallbacks.put({
       newInstHandler: capServer.grant(instances.newInstHandler),
-      closeInstHandler: capServer.grant(instances.closeInstHandler),
       getSuggestions: capServer.grant(getSuggestions)
     });
     ui = {

@@ -1,7 +1,7 @@
 ({
     appDir: "../belay/",
     baseUrl: "./",
-    dir: "../built",
+    dir: "../built/belay",
 
     // TODO(jasvir): Turn on closure
     optimize: "uglify",
@@ -18,6 +18,8 @@
         CompilationLevel: 'SIMPLE_OPTIMIZATIONS',
         loggingLevel: 'WARNING'
     },
+
+    optimizeCss: "standard",
 
     paths: {
         "jquery": "lib/js/require-jquery",

@@ -85,7 +85,7 @@ if (!window.belay) {
           belayPort: firstEvent.ports[0],
           actionPort: firstEvent.ports[1],
           initData: firstEvent.data
-        })
+        });
       } else {
         var belayChan = new MessageChannel();
         var actionChan = new MessageChannel();
@@ -103,7 +103,7 @@ if (!window.belay) {
         };
       }
     }
-    
+
     function MultiplexedComms(remoteWindow, origin, handleInit, firstEvent) {
       var ConcentratedPort = function(id) {
         this.id = id;
@@ -112,12 +112,12 @@ if (!window.belay) {
       ConcentratedPort.prototype.postMessage = function(data) {
         remoteWindow.postMessage({ id: this.id, data: data }, origin);
       };
-      
+
       var ports = {
         belay: new ConcentratedPort('belay'),
         action: new ConcentratedPort('action')
-      }
-      
+      };
+
       function handleEvent(e) {
         if (e.source != remoteWindow) { return; }
         if (e.origin != origin && origin != '*') { return; }
@@ -134,21 +134,21 @@ if (!window.belay) {
         }
         e.stopPropagation();
       }
-      
+
       window.addEventListener('message', handleEvent, false);
       if (handleInit) {
-        handleEvent(firstEvent)
+        handleEvent(firstEvent);
       } else {
         return {
           belayPort: ports.belay,
           actionPort: ports.action,
           postInit: function(msg) {
-            remoteWindow.postMessage({ id: 'init', data: msg }, origin)            
+            remoteWindow.postMessage({ id: 'init', data: msg }, origin);
           }
-        }        
+        };
       }
     }
-    
+
     var connect = function(event) {
       window.removeEventListener('message', connect);
 
@@ -175,7 +175,7 @@ if (!window.belay) {
           } else if (msg.data.op === 'navigate') {
             window.location = msg.data.args.url;
             window.name = msg.data.args.startId;
-              // TODO(iainmcgin): exposing the startId to a potentially untrusted
+              // TODO(iainmcgin): exposing startId to a potentially untrusted
               // outer window may give it a way to hijack the launch of an
               // instance. The implications of this need investigation.
           } else {
@@ -193,13 +193,13 @@ if (!window.belay) {
               startId: startId });
         });
       }
-          
-      ('MessageChannel' in window
-              ? MessageChannelComms
-              : MultiplexedComms)(iframe.contentWindow, '*', init, event);
+
+      var commSystem =
+        'MessageChannel' in window ? MessageChannelComms : MultiplexedComms;
+      commSystem(iframe.contentWindow, '*', init, event);
     };
 
-    window.addEventListener('message', connect)
+    window.addEventListener('message', connect);
 
   };
 

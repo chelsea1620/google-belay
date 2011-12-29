@@ -1,10 +1,10 @@
 ({
-    appDir: "../belay/",
-    baseUrl: "./",
-    dir: "../built/belay",
+    appDir: '../belay/',
+    baseUrl: './',
+    dir: '../built/belay',
 
     // TODO(jasvir): Turn on closure
-    optimize: "uglify",
+    optimize: 'uglify',
 
     uglify: {
         gen_codeOptions: {},
@@ -19,11 +19,11 @@
         loggingLevel: 'WARNING'
     },
 
-    optimizeCss: "standard",
+    optimizeCss: 'standard',
 
     paths: {
-        "jquery": "lib/js/require-jquery",
-        "require-jquery": "lib/js/require-jquery",
+        'jquery': 'lib/js/require-jquery',
+        'require-jquery': 'lib/js/require-jquery'
     },
 
     useStrict: false,
@@ -31,14 +31,14 @@
     modules: [
         //Optimize the require-jquery.js
         {
-            name: "require-jquery"
+            name: 'require-jquery'
         },
 
         //Optimize the application files. Exclude jQuery since it is
         //included already in require-jquery.js
         {
-            name: "index",
-            exclude: ["jquery", "belay-port.js"]
+            name: 'index',
+            exclude: ['jquery', 'belay-port.js']
         }
     ]
-})
+});

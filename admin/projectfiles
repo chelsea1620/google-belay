@@ -11,7 +11,13 @@ do
   if [ -f $f ]
   then
     case $f in
+      build/r.js ) ;;
+      lib/css/go* ) ;;
+      lib/js/include-belay.js ) ;; # generated
+      lib/js/require* ) ;;
       lib/ses/* ) ;;
+      station/openid/* ) ;;
+      station/order.js ) ;;
       tests/jasmine/* ) ;;
       * ) echo $f ;;
     esac

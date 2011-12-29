@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-define(['utils', 'sections', 'attributes', 'pageManager'], 
+define(['utils', 'sections', 'attributes', 'pageManager'],
 function(utils, sections, attributes, pageManager) {
 
   var capServer;
-  
+
   var identitiesCap = null;
   var navIdentityList = null;
   var protoIdentity = null;
@@ -33,7 +33,7 @@ function(utils, sections, attributes, pageManager) {
     dialog.css('top', ($(window).height() - dialog.outerHeight()) / 2 + 'px');
     dialog.css('left', ($(window).width() - dialog.outerWidth()) / 2 + 'px');
   }
-  
+
   function init(cs, idData, idCap, idAdders, createProfile) {
     capServer = cs;
     identitiesCap = idCap;
@@ -52,32 +52,32 @@ function(utils, sections, attributes, pageManager) {
 
     var protoButton = utils.detachProto($('#proto-add-id'));
 
-    idAdders.forEach(function(adder){
+    idAdders.forEach(function(adder) {
       var startId;
-      
+
       var ready = capServer.grant(function(activate) {
         adder.launch.get(function(launchInfo) {
           var instanceId = newUUIDv4();
           activate.post({
             instanceId: instanceId,
             pageUrl: launchInfo.page.html,
-            outpostData: { 
+            outpostData: {
               info: launchInfo.info,
-              instanceId: instanceId,
+              instanceId: instanceId
             }
           });
         });
       });
-      
+
       function reprime() {
         startId = newUUIDv4();
         expectPage.post({
           startId: startId,
-          ready: ready,
+          ready: ready
         });
       }
       reprime();
-      
+
       var addElem = protoButton.clone();
       addElem.find('span').text(adder.title);
       addElem.css('background-image', 'url(' + adder.image + ')');
@@ -109,9 +109,9 @@ function(utils, sections, attributes, pageManager) {
     // user's attribute selections?
     var removeElem = $('#id-add-button').clone();
     removeElem.attr('id', 'id-remove-button');
-    removeElem.text("Remove All Identities");
+    removeElem.text('Remove All Identities');
     removeElem.click(function() {
-      identitiesCap.put([ ], clearIds);
+      identitiesCap.put([], clearIds);
     });
     navIdentityList.append(removeElem);
 
@@ -119,18 +119,18 @@ function(utils, sections, attributes, pageManager) {
       .each(function() {
         var elem = this;
         var input = $(elem);
-        if(input.attr('type') == 'submit') return;
+        if (input.attr('type') == 'submit') return;
 
         var initialText = input.val();
         input.bind('focus mousedown', function() {
-          if(elem.classList.contains('fresh')) {
+          if (elem.classList.contains('fresh')) {
             elem.classList.remove('fresh');
             input.val('');
           }
         });
 
         input.focusout(function() {
-          if(input.val() == '' || input.val() == initialText) {
+          if (input.val() == '' || input.val() == initialText) {
             elem.classList.add('fresh');
             input.val(initialText);
           }
@@ -147,7 +147,7 @@ function(utils, sections, attributes, pageManager) {
         var initialText = defaultOption.text();
         $(this).bind('focus mousedown', function() {
           defaultOption.text('');
-        })
+        });
 
         $(this).focusout(function() {
           defaultOption.text(initialText);
@@ -164,24 +164,24 @@ function(utils, sections, attributes, pageManager) {
       $('#custom-profile-fields input, #custom-profile-fields select')
         .each(function(index, elem) {
           var jqElem = $(elem);
-          if(jqElem.attr('type') == 'submit') return;
-          if(elem.classList.contains('fresh')) {
-            if(elem.classList.contains('required')) {
+          if (jqElem.attr('type') == 'submit') return;
+          if (elem.classList.contains('fresh')) {
+            if (elem.classList.contains('required')) {
               missingRequired = true;
             }
             return;
           }
           attrs[jqElem.attr('name')] = jqElem.val();
         });
-      
-      if(missingRequired) {
+
+      if (missingRequired) {
         $('.error').fadeIn('fast');
         return false;
       }
 
-      if('age' in attrs) {
+      if ('age' in attrs) {
         var ageNum = parseInt(attrs['age']);
-        if(isNaN(ageNum) || ageNum < 0) {
+        if (isNaN(ageNum) || ageNum < 0) {
           delete attrs['age'];
         }
       }
@@ -190,7 +190,7 @@ function(utils, sections, attributes, pageManager) {
         hideIdAddDialog();
         refresh();
       }, hideIdAddDialog);
-      
+
       return false;
     });
 
@@ -207,14 +207,14 @@ function(utils, sections, attributes, pageManager) {
     page.find('.id-header span').text(identity.display_name);
 
     var idProviderElem = page.find('.id-provider-field');
-    if(identity.id_provider) {
+    if (identity.id_provider) {
       idProviderElem.show();
       page.find('.id-provider-value').text(identity.id_provider);
     } else {
       idProviderElem.hide();
     }
 
-    page.find('ul').replaceWith(buildAttributeListing(identity));    
+    page.find('ul').replaceWith(buildAttributeListing(identity));
 
     var deleteButton = page.find('#delete-id');
     deleteButton.unbind('click');
@@ -226,7 +226,7 @@ function(utils, sections, attributes, pageManager) {
         rebuild(identities);
       });
       pageManager.returnToDefault();
-    })
+    });
 
     page.show();
   }
@@ -238,12 +238,12 @@ function(utils, sections, attributes, pageManager) {
     attrProtoRow.append(' - ');
     attrProtoRow.append($('<span class="attr-values">'));
 
-    for(attrName in identity.attributes) {
+    for (attrName in identity.attributes) {
       var attributeValues = identity.attributes[attrName];
       var attrRow = attrProtoRow.clone();
       attrRow.find('.attr-name').text(attrName);
       var attrValueElem = attrRow.find('.attr-values');
-      if(attributes.getAttributeProperties(attrName).type == 'image') {
+      if (attributes.getAttributeProperties(attrName).type == 'image') {
         attributeValues.forEach(function(value) {
           attrValueElem.append($('<img>', { src: value }));
         });
@@ -251,15 +251,15 @@ function(utils, sections, attributes, pageManager) {
         var valueString = attributeValues
             .sort()
             .reduce(function(vals, val) {
-              if(vals.length != 0) {
-                if(vals[vals.length-1] == val) return vals;
+              if (vals.length != 0) {
+                if (vals[vals.length - 1] == val) return vals;
               }
 
               vals.push(val);
               return vals;
             }, [])
             .reduce(function(a, b) {
-              if(a == '') return b;
+              if (a == '') return b;
               else return a + ', ' + b;
             });
             attrValueElem.text(valueString);
@@ -270,22 +270,22 @@ function(utils, sections, attributes, pageManager) {
 
     return attrList;
   }
-  
+
   function handleNewId() {
     var oldIdentities = identities;
     identitiesCap.get(function(idData) {
       identities = idData;
       rebuild(idData);
 
-      if(sections.withoutAssignedId().length == 0) return;
+      if (sections.withoutAssignedId().length == 0) return;
 
       var newIds = identities.filter(function(id) {
         return !(oldIdentities.some(function(oldId) {
           return oldId.account_name == id.account_name;
         }));
       });
-      
-      if(newIds.length == 0) return;
+
+      if (newIds.length == 0) return;
 
       var newId = newIds[0];
       var newIdDialog = $('#id-added-dialog');
@@ -296,8 +296,8 @@ function(utils, sections, attributes, pageManager) {
 
       var sectionList = newIdDialog.find('.section-list');
       var protoSection = $('<li>');
-      protoSection.append($('<input>', { type: "checkbox" }));
-      protoSection.append($('<span>', { class: "section-name" }));
+      protoSection.append($('<input>', { type: 'checkbox' }));
+      protoSection.append($('<span>', { class: 'section-name' }));
       sectionList.empty();
 
       sections.withoutAssignedId().forEach(function(section) {
@@ -336,7 +336,7 @@ function(utils, sections, attributes, pageManager) {
   function refresh() {
     identitiesCap.get(rebuild);
   }
-  
+
   function rebuild(idData) {
     identities = idData;
     var list = $('<ul></ul>');
@@ -345,11 +345,11 @@ function(utils, sections, attributes, pageManager) {
       var text = d.display_name || d.account_name;
       var title = d.account_name;
       if (d.id_provider) { title += ' — ' + d.id_provider; }
-      
+
       var elem = protoIdentity.clone();
       var image = elem.find('img');
       image.attr('src', d.id_icon);
-      image.attr('alt', d.id_provider || '')
+      image.attr('alt', d.id_provider || '');
       var desc = elem.find('span');
       desc.text(text);
       desc.attr('title', title);
@@ -359,16 +359,16 @@ function(utils, sections, attributes, pageManager) {
       })(d);
       var hideHandler = function() { $('#id-page').hide(); };
       pageManager.registerPage(elem, showHandler, hideHandler);
-      
+
       list.append(elem);
     }
-    
+
     navIdentityList.find('.identity').remove();
     navIdentityList.find('.head').after(list.children());
 
     sections.updateAttributes(idData);
   }
-  
+
   return {
     init: init
   };

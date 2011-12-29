@@ -39,8 +39,8 @@ var showPanel = function(postCap, nameCap) {
 };
 
 onBelayReady(function() {
-  
-  if(!belay.outpost.temporaryInstance) {
+
+  if (!belay.outpost.temporaryInstance) {
     // we are a configured instance of emote, configure the
     // post panel.
     showPanel(capServer.restore(belay.outpost.info.post),
@@ -57,8 +57,9 @@ onBelayReady(function() {
         nameCap.get(function(name) {
           var origin = window.location.protocol + '//' + window.location.host;
           var emoteInstanceCap = capServer.restore(origin + '/generate');
-          emoteInstanceCap.post({ postCap: postCap, nameCap: nameCap, name: name }, 
-            function(response) { belay.outpost.becomeInstance.put(response); }, 
+          emoteInstanceCap.post(
+            { postCap: postCap, nameCap: nameCap, name: name },
+            function(response) { belay.outpost.becomeInstance.put(response); },
             function() { alert('failed to generate :-('); });
         });
       });

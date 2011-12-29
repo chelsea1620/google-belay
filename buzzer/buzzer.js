@@ -16,7 +16,7 @@ onBelayReady(function() {
   ui.resize(150, 200, true);
 
   belay.dirty = function() {
-    if(belay.outpost.info.snapshot_cap) {
+    if (belay.outpost.info.snapshot_cap) {
       belay.outpost.info.snapshot_cap.put(capServer.snapshot());
     }
   };
@@ -40,8 +40,10 @@ onBelayReady(function() {
       form.method.toUpperCase() || 'GET',
       data,
       callback,
-      function(error) { alert('form update failed: ' + error.message + ' (' + error.status + ')'); }
-      );
+      function(error) {
+        alert('form update failed: ' + error.message +
+            ' (' + error.status + ')');
+      });
   };
 
   var rcPost = 'urn:x-belay://resource-class/social-feed/postable';
@@ -78,9 +80,11 @@ onBelayReady(function() {
           launchInfo.readChitURL);
       ui.capDraggable(topDiv.find('.buzzer-post-chit'), rcPost,
           capServer.grant(function(selectedRC) {
-              return { 
-                post: capServer.grantKey(selectedRC), 
-                name: capServer.grant(function() { return $('#buzzer-name').text().trim(); }) 
+              return {
+                post: capServer.grantKey(selectedRC),
+                name: capServer.grant(function() {
+                    return $('#buzzer-name').text().trim();
+                  })
               };
           }),
           launchInfo.postChitURL);

@@ -17,13 +17,13 @@ define(['require'], function(require) {
   var capServer;
   var instanceBase;
   var isRunning;
-  
+
   function init(cs, ib, ir) {
     capServer = cs;
     instanceBase = ib;
     isRunning = ir;
   }
-  
+
   // TODO (iainmcgin): we could do with a more robust object abstraction for
   // the collection of instances, instead of just a map with some poorly
   // defined methods from the previous refactoring step.
@@ -52,7 +52,7 @@ define(['require'], function(require) {
   */
 
   var dirtyInstances = [];
-  
+
   function dirtyProcess() {
     var inst;
     while (!inst) {
@@ -85,10 +85,10 @@ define(['require'], function(require) {
         launcher.post({ close: true });
         return;
       }
-      
+
       inst.state.belayInstance.get(function(launch) {
         inst.launch = launch;
-        
+
         require('attributes').pushToInstance(inst);
         dirty(inst);
         // TODO(mzero): is pushing attributes and dirty really needed here?
@@ -106,7 +106,7 @@ define(['require'], function(require) {
             services: belayBrowser,
             setRefresh: capServer.grant(function(refreshCap) {
               inst.refreshCap = refreshCap;
-            }),
+            })
           }
         },
         function(closeCap) {
@@ -118,7 +118,7 @@ define(['require'], function(require) {
       });
     });
   }
-  
+
   var addInstance = function(inst) {
     instances[inst.state.id] = inst;
     require('sections').newInstance(inst);
@@ -135,7 +135,7 @@ define(['require'], function(require) {
         belayInstance: args.instanceDescription.launch,
         name: args.instanceDescription.name,
         icon: args.instanceDescription.icon,
-        created: (new Date()).valueOf(),
+        created: (new Date()).valueOf()
       }
     };
     addInstance(inst);
@@ -143,7 +143,7 @@ define(['require'], function(require) {
   };
 
   var forEach = function(visitor) {
-    for(instanceId in instances) {
+    for (instanceId in instances) {
       visitor(instances[instanceId]);
     }
   }
@@ -159,7 +159,7 @@ define(['require'], function(require) {
     // the delete activity for instances needs to be defined.
     delete instances[instanceId];
   };
-  
+
   return {
     init: init,
     forEach: forEach,
@@ -168,7 +168,7 @@ define(['require'], function(require) {
     launchInstance: launchInstance,
     addInstance: addInstance,
     deleteInstance: deleteInstance,
-    newInstHandler: newInstHandler,
+    newInstHandler: newInstHandler
   };
 
 });

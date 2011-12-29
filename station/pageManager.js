@@ -25,7 +25,7 @@ define(function() {
       navElem: navElem,
       showHandler: showHandler,
       hideHandler: hideHandler
-    }
+    };
 
     navElem.click(function() { showPage(pageId); });
 
@@ -38,7 +38,7 @@ define(function() {
   }
 
   function showPage(pageId) {
-    if(!(pageId in pages)) return;
+    if (!(pageId in pages)) return;
     hidePage(currentPageId);
     pages[pageId].navElem.addClass('selected');
     pages[pageId].showHandler();
@@ -46,12 +46,12 @@ define(function() {
   }
 
   function showDefaultPage() {
-    if(defaultPageId === null) return;
+    if (defaultPageId === null) return;
     showPage(defaultPageId);
   }
 
   function hidePage(pageId) {
-    if(!(pageId in pages)) return;
+    if (!(pageId in pages)) return;
 
     pages[currentPageId].navElem.removeClass('selected');
     pages[currentPageId].hideHandler();
@@ -59,7 +59,7 @@ define(function() {
   }
 
   function returnToDefault() {
-    if(currentPageId != defaultPageId) {
+    if (currentPageId != defaultPageId) {
       hidePage(currentPageId);
     }
     showDefaultPage();
@@ -71,5 +71,5 @@ define(function() {
     showPage: showPage,
     showDefaultPage: showDefaultPage,
     returnToDefault: returnToDefault
-  }
-})
+  };
+});

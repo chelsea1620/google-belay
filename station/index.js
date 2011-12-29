@@ -17,17 +17,17 @@
 
 // TODO(jasvir): These should be modules not scripts
 require([
-    "utils",
-    "order!lib/js/include-belay.js", 
-    "order!lib/js/caps.js", 
-    "order!lib/js/common.js",
-    "order!lib/js/belay-client.js"], 
-  function (utils) {
+    'utils',
+    'order!lib/js/include-belay.js',
+    'order!lib/js/caps.js',
+    'order!lib/js/common.js',
+    'order!lib/js/belay-client.js'],
+  function(utils) {
 
 var protoButton = utils.detachProto($('#proto-login-id'));
 $(document.body).find('.ex').remove(); // remove layout examples
 
-var loginMethods = [ 
+var loginMethods = [
     // NOTE(mzero): launch paths must be absolute
     { 'title': 'Sign in via Gmail',
       'launch': '/login/openid/google/launch',
@@ -54,7 +54,7 @@ $(window).bind('storage', function(evt) {
             pageUrl: launchDescriptor.pageUrl || launchDescriptor.page.html,
             outpostData: {
               info: launchDescriptor.info,
-              instanceId: instanceId,
+              instanceId: instanceId
             }
           });
         },
@@ -65,10 +65,10 @@ $(window).bind('storage', function(evt) {
 });
 
 function init() {
-  loginMethods.forEach(function(login){
+  loginMethods.forEach(function(login) {
     function refresh() {
     }
-    
+
     var startId;
 
     var ready = capServer.grant(function(activate) {
@@ -79,9 +79,9 @@ function init() {
         activate.post({
           instanceId: instanceId,
           pageUrl: launchInfo.page.html,
-          outpostData: { 
+          outpostData: {
             info: launchInfo.info,
-            instanceId: instanceId,
+            instanceId: instanceId
           }
         });
       });
@@ -91,7 +91,7 @@ function init() {
       startId = newUUIDv4();
       belay.outpost.expectPage.post({
         startId: startId,
-        ready: ready,
+        ready: ready
       });
     }
     reprime();
@@ -120,7 +120,7 @@ function init() {
   });
 }
 
-onBelayReady(function(){
+onBelayReady(function() {
   init();
   window.belaytest.ready = true;
 });

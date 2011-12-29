@@ -16,8 +16,8 @@ define(['utils', 'instances', 'require'], function(utils, instances, require) {
 
   function isChildOf(elem, parentCandidate) {
     var parent = elem.parentNode;
-    while(parent != null) {
-      if(parent == parentCandidate) {
+    while (parent != null) {
+      if (parent == parentCandidate) {
         return true;
       }
       parent = parent.parentNode;
@@ -31,13 +31,13 @@ define(['utils', 'instances', 'require'], function(utils, instances, require) {
   // selector when it is expanded.
   $(document).click(function(evt) {
     $('.attr-select.expanded').each(function() {
-      if(!isChildOf(evt.target, this)) {
+      if (!isChildOf(evt.target, this)) {
         $(this).find('ul').trigger('hide');
       }
     });
   });
 
-  var ChoiceAttribute = function(choices) { 
+  var ChoiceAttribute = function(choices) {
     this.choices = choices;
     this.choices.push({
       oldDataHolder: true,
@@ -71,8 +71,8 @@ define(['utils', 'instances', 'require'], function(utils, instances, require) {
       this.choices.forEach(function(choice) {
         var optionElem = $('<li>');
 
-        if(choice.image) {
-          optionElem.append($('<img>', { 
+        if (choice.image) {
+          optionElem.append($('<img>', {
             src: choice.image,
             class: 'value'
           }));
@@ -80,20 +80,20 @@ define(['utils', 'instances', 'require'], function(utils, instances, require) {
           optionElem.append($('<span>', { text: choice.display }));
         }
 
-        if(choice.sourceIcon) {
-          optionElem.append($('<img>', { 
+        if (choice.sourceIcon) {
+          optionElem.append($('<img>', {
             src: choice.sourceIcon,
             class: 'source'
           }));
         }
 
-        if(choice.oldDataHolder) {
+        if (choice.oldDataHolder) {
           me.oldDataHolder = optionElem;
           optionElem.hide();
         }
 
         optionElem.data('choice', choice);
-        if(choice.noValue) {
+        if (choice.noValue) {
           optionElem.click(chooseNoValue);
         } else {
           optionElem.click(function() {
@@ -120,7 +120,7 @@ define(['utils', 'instances', 'require'], function(utils, instances, require) {
       selectElem.append(optionsElem);
 
       optionsElem.bind('show', function() {
-        if(optionsElem.is(":animated")) return false;
+        if (optionsElem.is(':animated')) return false;
         selectElem.addClass('expanded');
         optionsElem.css('width', selectElem.innerWidth());
         optionsElem.css('top', selectElem.outerHeight());
@@ -128,13 +128,13 @@ define(['utils', 'instances', 'require'], function(utils, instances, require) {
       });
 
       optionsElem.bind('hide', function() {
-        if(optionsElem.is(":animated")) return false;
+        if (optionsElem.is(':animated')) return false;
         selectElem.removeClass('expanded');
         optionsElem.slideUp('fast');
       });
 
       optionsElem.bind('toggle', function() {
-        if(selectElem.hasClass('expanded')) optionsElem.trigger('hide');
+        if (selectElem.hasClass('expanded')) optionsElem.trigger('hide');
         else optionsElem.trigger('show');
       });
 
@@ -147,12 +147,12 @@ define(['utils', 'instances', 'require'], function(utils, instances, require) {
       var selectionMade = false;
       td.find('.attr-select').each(function() {
         var choiceElem = $(this);
-        
+
         choiceElem.find('li').each(function() {
           var sources = $(this).data('choice').sources;
-          if(!sources) return;
-          for(var i=0; i < sources.length; i++) {
-            if(sources[i] == source) {
+          if (!sources) return;
+          for (var i = 0; i < sources.length; i++) {
+            if (sources[i] == source) {
               $(this).click();
               selectionMade = true;
             }
@@ -165,13 +165,13 @@ define(['utils', 'instances', 'require'], function(utils, instances, require) {
       var matchingOption = null;
       td.find('.attr-select li').each(function() {
         optionElem = $(this);
-        if(optionElem.data('choice').value == value) {
+        if (optionElem.data('choice').value == value) {
           matchingOption = optionElem;
         }
       });
 
-      if(matchingOption) {
-        if(!matchingOption.data('choice').oldDataHolder) {
+      if (matchingOption) {
+        if (!matchingOption.data('choice').oldDataHolder) {
           this.oldDataHolder.hide();
         }
       } else {
@@ -197,17 +197,17 @@ define(['utils', 'instances', 'require'], function(utils, instances, require) {
       'showSource': true,
       'order': 0
     },
-    'name': { 
+    'name': {
       'en': 'Name',
       'type': 'text',
       'order': 1
     },
-    'email': { 
+    'email': {
       'en': 'Email',
       'type': 'text',
       'order': 2
     },
-    'gender': { 
+    'gender': {
       'en': 'Gender',
       'type': 'text',
       'defaults': {
@@ -217,22 +217,22 @@ define(['utils', 'instances', 'require'], function(utils, instances, require) {
       },
       'order': 3
     },
-    'age': { 
+    'age': {
       'en': 'Age',
       'type': 'int',
       'order': 4
     },
-    'location': { 
+    'location': {
       'en': 'Location',
       'type': 'text',
       'order': 5
     },
-    'image': { 
+    'image': {
       'en': 'Image',
       'type': 'image',
       'showSource': true,
       'order': 6
-    },
+    }
   };
 
   var knownAttributes = [];
@@ -241,16 +241,16 @@ define(['utils', 'instances', 'require'], function(utils, instances, require) {
     options = {};
     function opt(k, v) {
       if (!(k in options)) { options[k] = {}; }
-      if(v.value in options[k]) {
+      if (v.value in options[k]) {
         mapping = options[k][v.value];
         mapping.sources = mapping.sources.concat(v.sources);
       } else {
         options[k][v.value] = v;
       }
     }
-    
+
     knownAttributes = [];
-    for(attrName in attributeProperties) {
+    for (attrName in attributeProperties) {
       options[attrName] = {};
     }
 
@@ -267,14 +267,14 @@ define(['utils', 'instances', 'require'], function(utils, instances, require) {
           var optionInfo = {
             value: val,
             display: val,
-            sources: [ id.account_name ]
+            sources: [id.account_name]
           };
 
-          if(attributeProperties[attrName].showSource) {
+          if (attributeProperties[attrName].showSource) {
             optionInfo.sourceIcon = id.id_icon;
           }
 
-          if(attributeProperties[attrName].type == 'image') {
+          if (attributeProperties[attrName].type == 'image') {
             optionInfo.image = val;
           }
 
@@ -287,17 +287,17 @@ define(['utils', 'instances', 'require'], function(utils, instances, require) {
         value: id.account_name,
         display: idName,
         sourceIcon: id.id_icon,
-        sources: [ id.account_name ]
+        sources: [id.account_name]
       });
     });
   }
 
   function addDefaultAttributes(addOpt) {
-    for(var attrKey in attributeProperties) {
-      if(!('defaults' in attributeProperties[attrKey])) continue;
+    for (var attrKey in attributeProperties) {
+      if (!('defaults' in attributeProperties[attrKey])) continue;
 
       var defaults = attributeProperties[attrKey].defaults;
-      for(defaultOpt in defaults) {
+      for (defaultOpt in defaults) {
         addOpt(attrKey, {
           'value': defaultOpt,
           'display': defaults[defaultOpt].en,
@@ -338,7 +338,7 @@ define(['utils', 'instances', 'require'], function(utils, instances, require) {
     this.data = section.attributes;
     this.editData = {};
     this.assignedIdentity = null;
-    
+
     this.attributesElem = section.list.find('.attributes');
     this.attributesDiv = this.attributesElem.find('.box');
 
@@ -355,7 +355,7 @@ define(['utils', 'instances', 'require'], function(utils, instances, require) {
         var valueTD = row.find('.value');
         var choiceElem = row.find('.attr-select');
 
-        if(!(a.attr in me.data)) {
+        if (!(a.attr in me.data)) {
           choiceElem.trigger('reset');
           delete me.editData[a.attr];
         } else {
@@ -371,7 +371,7 @@ define(['utils', 'instances', 'require'], function(utils, instances, require) {
         }
         hideAttributes();
         return;
-      };
+      }
 
       resetAttributes();
       me.attributesDiv.hide();
@@ -402,12 +402,12 @@ define(['utils', 'instances', 'require'], function(utils, instances, require) {
       me.attributesTable.find('tr').each(function() {
         var row = $(this);
         var attrName = row.data('attr');
-        if(attrName == 'id') return;
+        if (attrName == 'id') return;
 
         var selection = row.find('.value');
-        
+
         knownAttributes.forEach(function(a) {
-          if(a.attr != attrName) return;
+          if (a.attr != attrName) return;
           a.controller.selectFromSource(selection, source);
         });
       });
@@ -421,7 +421,7 @@ define(['utils', 'instances', 'require'], function(utils, instances, require) {
         row.data('attr', a.attr);
 
         var baseSetter = function(value, sources) {
-          if(value == null) {
+          if (value == null) {
             delete me.editData[a.attr];
           } else {
             me.editData[a.attr] = value;
@@ -431,9 +431,9 @@ define(['utils', 'instances', 'require'], function(utils, instances, require) {
         };
 
         var setter = baseSetter;
-        if(a.attr == 'id') {
+        if (a.attr == 'id') {
           setter = function(value, sources) {
-            if(baseSetter(value, sources)) {
+            if (baseSetter(value, sources)) {
               me.assignedIdentity = value;
               selectFromSource(sources[0]);
             }
@@ -449,10 +449,10 @@ define(['utils', 'instances', 'require'], function(utils, instances, require) {
 
     this.setAssignedId = function(id) {
       me.attributesTable.find('tr').each(function() {
-        if($(this).data('attr') != 'id') return;
+        if ($(this).data('attr') != 'id') return;
 
         $(this).find('.value li').each(function() {
-          if($(this).data('choice').value != id) return;
+          if ($(this).data('choice').value != id) return;
           $(this).click();
         });
       });
@@ -478,9 +478,9 @@ define(['utils', 'instances', 'require'], function(utils, instances, require) {
   }
 
   function pushToInstance(inst) {
-    if (inst.launch && 
-        inst.launch.attributes && 
-        inst.launch.attributes.set) { 
+    if (inst.launch &&
+        inst.launch.attributes &&
+        inst.launch.attributes.set) {
       var data = require('sections').forInstance(inst).attributes;
       inst.launch.attributes.set.put(data, function() {
         if (inst.refreshCap) {

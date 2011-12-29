@@ -19,8 +19,10 @@ var MockWebServer = function() {
 };
 MockWebServer.prototype.clear = function() { this.urlMap = {}; };
 MockWebServer.prototype.setServer = function(server) { this.server = server; };
-MockWebServer.prototype.handle = function(url, func) { this.urlMap[url] = func; };
-MockWebServer.prototype.process = function(method, url, data, success, failure) {
+MockWebServer.prototype.handle =
+  function(url, func) { this.urlMap[url] = func; };
+MockWebServer.prototype.process =
+  function(method, url, data, success, failure) {
     if (!(url in this.urlMap)) {
       return failure();
     }
@@ -37,7 +39,7 @@ MockWebServer.prototype.process = function(method, url, data, success, failure) 
     else return failure();
 
     return success(response);
-}
+};
 MockWebServer.prototype.makeAjax = function() {
   var server = this;
 
@@ -86,7 +88,7 @@ MockWebServer.prototype.makeXhr = function() {
       function() {
         xhr.readyState = 4;
         xhr.status = 400;
-        xhr.statusText = "MockWebServer failure";
+        xhr.statusText = 'MockWebServer failure';
         xhr.onreadystatechange();
       }
     );
@@ -157,24 +159,25 @@ describe('CapServer', function() {
       i2.runsGetAndExpect(42);
     });
   });
-  
+
   describe('Radish servers (no instanceId)', function() {
     var radishServer;
     beforeEach(function() {
       radishServer = new CapServer();
-      radishServer.setResolver(function(i) { return capServer1.publicInterface; });
+      radishServer.setResolver(
+          function(i) { return capServer1.publicInterface; });
     });
-    
+
     it('should throw on bad instanceIds', function() {
       expect(function() { new CapServer(42); }).toThrow();
-      expect(function() { new CapServer("bob"); }).toThrow();
-      expect(function() { new CapServer(""); }).toThrow();
+      expect(function() { new CapServer('bob'); }).toThrow();
+      expect(function() { new CapServer(''); }).toThrow();
     });
-    
+
     it('should create a server with no instanceId', function() {
       expect(function() { new CapServer(); }).not.toThrow();
     });
-    
+
     it('should not grant caps', function() {
       var f = function() { return 42; };
       expect(function() { radishServer.grant(f); }).toThrow();
@@ -183,7 +186,7 @@ describe('CapServer', function() {
     it('should restore a working cap', function() {
       var f = function() { return 42; };
       var c1 = capServer1.grant(f);
-      
+
       var c2 = radishServer.restore(c1.serialize());
       var ir = new InvokeRunner(c2);
       ir.runsGetAndExpect(42);
@@ -192,14 +195,14 @@ describe('CapServer', function() {
     it('should dataPostProcess a working cap', function() {
       var f = function() { return 42; };
       var c1 = capServer1.grant(f);
-      var d1 = { name: 'bob', age: 12, cap: c1 }
+      var d1 = { name: 'bob', age: 12, cap: c1 };
       var s1 = capServer1.dataPreProcess(d1);
-      
+
       var d2 = radishServer.dataPostProcess(s1);
       expect(d2['name']).toEqual(d1['name']);
       expect(d2['age']).toEqual(d1['age']);
       expect(typeof d2['cap']).toEqual(typeof d1['cap']);
-      
+
       var c2 = d2.cap;
       var ir = new InvokeRunner(c2);
       ir.runsGetAndExpect(42);

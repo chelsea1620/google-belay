@@ -12,7 +12,7 @@ optimize:
 lint: lint-js
 
 lint-js:
-	gjslint --nojsdoc $(admin/projectfiles | grep '.js$')
+	admin/projectfiles | grep '\.js$$' | xargs gjslint --nojsdoc
 
 check-notices:
 	@admin/projectfiles | xargs admin/check-notice | sort

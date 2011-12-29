@@ -19,32 +19,32 @@ function createRemoteEnd(port) {
     return server.publicInterface;
   });
   server.setResolver(tunnel.remoteResolverProxy);
-  
+
   var invokeWithThreeCap = server.grant(function(v) {
     v.post(3);
     return 32;
   });
 
-  var invokeMyAsync = 
+  var invokeMyAsync =
     server.grant(function(remoteReceiveCap, sk, fk) {
       setTimeout(function() { remoteReceiveCap.post(999, sk, fk); }, 0);
     });
-  
-  var seedCap = server.grant(function(v) { 
-    if (v == "answer") { return 42; }
-    if (v == "invokeWithThree") { return invokeWithThreeCap; }
-    if (v == "remoteAsync") { return invokeMyAsync; }
+
+  var seedCap = server.grant(function(v) {
+    if (v == 'answer') { return 42; }
+    if (v == 'invokeWithThree') { return invokeWithThreeCap; }
+    if (v == 'remoteAsync') { return invokeMyAsync; }
     return undefined;
   });
 
   var seedAsyncCap = server.grant(function(v, sk, fk) {
     if (v == 'ignore') { return; }
     return;
-  })
+  });
 
   var outpost = {
       instanceId: server.instanceId,
-      seeds: [ seedCap, seedAsyncCap ]
+      seeds: [seedCap, seedAsyncCap]
   };
 
   setTimeout(function() {
@@ -53,7 +53,7 @@ function createRemoteEnd(port) {
 }
 
 if (!('MessageChannel' in window)) {
-  window.MessageChannel = (function(){
+  window.MessageChannel = (function() {
     // Implement a minimal MessageChannel and MessagePort, which should be all
     // CapTunnel depends on.
 
@@ -67,7 +67,7 @@ if (!('MessageChannel' in window)) {
       setTimeout(function() {
         if (dest.onmessage) {
           var e = { data: message };
-          dest.onmessage(e);          
+          dest.onmessage(e);
         }
       }, 0);
     };
@@ -79,7 +79,7 @@ if (!('MessageChannel' in window)) {
       this.port1._entangled = this.port2;
       this.port2._entangled = this.port1;
     };
-    
+
     return MessageChannel;
   })();
 }
@@ -89,7 +89,7 @@ describe('CapTunnels', function() {
 
   beforeEach(function() {
     var channel = new MessageChannel();
-    createRemoteEnd(channel.port1)
+    createRemoteEnd(channel.port1);
     tunnel = new CapTunnel(channel.port2);
   });
 

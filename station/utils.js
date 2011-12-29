@@ -13,7 +13,7 @@
 // limitations under the License.
 
 define([], function() {
-  
+
   function detachProto(elem) {
     var proto = elem.eq(0).detach();
     proto.removeClass('proto');
@@ -21,7 +21,7 @@ define([], function() {
   }
 
   return {
-    detachProto: detachProto,
-  }
+    detachProto: detachProto
+  };
 });
 

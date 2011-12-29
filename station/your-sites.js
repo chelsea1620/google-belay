@@ -17,7 +17,7 @@
 if (!window.belaytest) {
   window.belaytest = {
     ready: false
-  }
+  };
 }
 
 var belayBrowser; // common.js needs this global
@@ -26,14 +26,14 @@ var belayBrowser; // common.js needs this global
 
 // TODO(jasvir): These should be modules not scripts
 require([
-    "instances",
-    "sections",
-    "attributes",
-    "identities",
-    "order!lib/js/include-belay.js", 
-    "order!lib/js/caps.js", 
-    "order!lib/js/common.js"], 
-  function (instances, sections, attributes, identities) {
+    'instances',
+    'sections',
+    'attributes',
+    'identities',
+    'order!lib/js/include-belay.js',
+    'order!lib/js/caps.js',
+    'order!lib/js/common.js'],
+  function(instances, sections, attributes, identities) {
 
 var ui;
 var stationInfo;
@@ -66,11 +66,11 @@ function cmpInstByCreated(inst1, inst2) {
 var getSuggestions = function(location, success, failure) {
   var possibleInstances = [];
   instances.forEach(function(inst) {
-    if (domainOfInst(inst) == location && inst.state.section != "Trash") {
+    if (domainOfInst(inst) == location && inst.state.section != 'Trash') {
       possibleInstances.push(inst);
     }
   });
-  
+
   var suggestions = [];
   function processNext() {
     if (possibleInstances.length > 0) {
@@ -97,7 +97,7 @@ var getSuggestions = function(location, success, failure) {
 
 var initialize = function() {
   $(document.body).find('.ex').remove(); // remove layout examples
-  
+
   attributes.init(stationInfo.allIdentities);
   instances.init(capServer, stationInfo.instanceBase, isRunning);
   sections.init(capServer, stationInfo.allSections);
@@ -144,7 +144,7 @@ var initialize = function() {
     loadedInstances.push(inst);
   });
   loadedInstances.sort(cmpInstByCreated).forEach(instances.addInstance);
-  
+
   window.belaytest.ready = true;
 };
 
@@ -154,7 +154,7 @@ window.belay.onPortReady(function() {
   belayBrowserTunnel.setOutpostHandler(function(outpost) {
     capServer = new CapServer(outpost.instanceId);
     capServer.setResolver(instanceResolver);
-    
+
     expectPage = outpost.expectPage;
     belayBrowser = outpost.services;
     isRunning = outpost.isRunning;

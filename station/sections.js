@@ -14,7 +14,7 @@
 
 define(['utils', 'instances', 'attributes', 'pageManager'],
   function(utils, instances, attributes, pageManager) {
-  
+
   var capServer;
 
   var protoSection = null;
@@ -25,7 +25,7 @@ define(['utils', 'instances', 'attributes', 'pageManager'],
   var byName = Object.create(null);
   var sitesLabel = null; // jQuery
   var visible = [];
-  
+
   var dragData = {
     dragString: null,
     instanceId: null
@@ -33,7 +33,7 @@ define(['utils', 'instances', 'attributes', 'pageManager'],
 
   var Section = function(info) {
     var me = this;
-    
+
     // from the server
     this.name = info.name;
     this.data = info.data;
@@ -41,8 +41,8 @@ define(['utils', 'instances', 'attributes', 'pageManager'],
     this.attributes = info.attributes;
     this.attributesCap = info.attributesCap;
     this.hidden = info.hidden;
-    
-    // page elements (jQuery objects);    
+
+    // page elements (jQuery objects);
     this.label = protoNavSection.clone();
     this.label.text(this.name);
 
@@ -50,7 +50,7 @@ define(['utils', 'instances', 'attributes', 'pageManager'],
     var pid = pageManager.registerPage(this.label, showSection, hideSites);
 
     divider = $('#nav-sections .divider');
-    if(this.hidden) {
+    if (this.hidden) {
       this.label.insertAfter(divider);
     } else {
       this.label.insertBefore(divider);
@@ -63,7 +63,7 @@ define(['utils', 'instances', 'attributes', 'pageManager'],
     this.list.attr('id', 'section-' + this.name);
       // TODO(iainmcgin): what if name has a space?
     this.list.find('.header .name').text(this.name);
-    this.list.find('.header .show-all').click(function() { 
+    this.list.find('.header .show-all').click(function() {
       pageManager.showPage(pid);
     });
     this.list.appendTo($('#belay-items'));
@@ -105,7 +105,7 @@ define(['utils', 'instances', 'attributes', 'pageManager'],
         var data = contentElem.filter('span[data]').attr('data') ||
           contentElem.find('span[data]').attr('data');
 
-        if(dragData.dragString != data) {
+        if (dragData.dragString != data) {
           return true;
         }
 
@@ -121,7 +121,7 @@ define(['utils', 'instances', 'attributes', 'pageManager'],
 
     byName[this.name] = this;
 
-    if(this.name != "Trash") {
+    if (this.name != 'Trash') {
       this.attributesEditor = new attributes.SectionAttributesEditor(this);
     } else {
       this.list.find('.header .settings').remove();
@@ -131,10 +131,10 @@ define(['utils', 'instances', 'attributes', 'pageManager'],
       // as it is below.
 
       actionsGroup = this.list.find('.header .actions');
-      deleteAll = $('<span>clear</span>')
+      deleteAll = $('<span>clear</span>');
       deleteAll.click(function() {
         instances.forEach(function(instance) {
-          if(instance.state.section == me.name) {
+          if (instance.state.section == me.name) {
             deleteInstance(instance);
           }
         });
@@ -146,7 +146,7 @@ define(['utils', 'instances', 'attributes', 'pageManager'],
       me.showingFullList = false;
       me.list.show();
       me.list.find('.items tr:lt(' + me.shortListSize + ')').show();
-      me.list.find('.items tr:gt(' + (me.shortListSize-1) + ')').hide();
+      me.list.find('.items tr:gt(' + (me.shortListSize - 1) + ')').hide();
 
       me.updateActionsBar();
     };
@@ -160,7 +160,7 @@ define(['utils', 'instances', 'attributes', 'pageManager'],
     };
 
     this.showList = function() {
-      if(me.showingFullList) {
+      if (me.showingFullList) {
         me.showFullList();
       } else {
         me.showShortList();
@@ -168,7 +168,7 @@ define(['utils', 'instances', 'attributes', 'pageManager'],
     };
 
     this.updateList = function() {
-      if(me.list.css('display') == 'none') return;
+      if (me.list.css('display') == 'none') return;
       me.showList();
     };
 
@@ -179,8 +179,8 @@ define(['utils', 'instances', 'attributes', 'pageManager'],
     this.addInstance = function(inst) {
       inst.state.section = me.name;
       inst.row.prependTo(me.list.find('table.items').eq(0));
-      
-      // the fade in is only visible after a delete from another section, 
+
+      // the fade in is only visible after a delete from another section,
       // not when explicitly dragging between sections
       inst.row.fadeIn(400);
 
@@ -194,11 +194,11 @@ define(['utils', 'instances', 'attributes', 'pageManager'],
 
     this.updateActionsBar = function() {
       var showAllElem = me.list.find('.header .actions .show-all');
-      if(!me.showingFullList) {
+      if (!me.showingFullList) {
         var totalItems = me.list.find('.items tr').size();
         var numExtra = totalItems - me.shortListSize;
 
-        if(numExtra > 0) {
+        if (numExtra > 0) {
           showAllElem.show();
           showAllElem.text('show all (' + numExtra + ' more)');
         } else {
@@ -211,7 +211,7 @@ define(['utils', 'instances', 'attributes', 'pageManager'],
       actionsBar = me.list.find('.header .actions');
       actions = actionsBar.find('span');
 
-      if(actions.size() <= 0) return;
+      if (actions.size() <= 0) return;
 
       actions.detach();
       actionsBar.html('');
@@ -220,10 +220,10 @@ define(['utils', 'instances', 'attributes', 'pageManager'],
       actionsBar.append(lastAction);
 
       var i;
-      for(i=1; i < actions.size(); i++) {
+      for (i = 1; i < actions.size(); i++) {
         var action = $(actions.get(i));
-        if(lastAction.css('display') != 'none'
-            && action.css('display') != 'none') {
+        if (lastAction.css('display') != 'none' &&
+            action.css('display') != 'none') {
           actionsBar.append(' • ');
         }
 
@@ -231,31 +231,31 @@ define(['utils', 'instances', 'attributes', 'pageManager'],
       }
     };
 
-    this.updateAttributes = function() { 
-      if(this.attributesEditor) { this.attributesEditor.rebuild(); }
+    this.updateAttributes = function() {
+      if (this.attributesEditor) { this.attributesEditor.rebuild(); }
     };
 
     this.setAssignedId = function(id) {
-      if(this.attributesEditor) { this.attributesEditor.setAssignedId(id); }
+      if (this.attributesEditor) { this.attributesEditor.setAssignedId(id); }
     };
 
     this.assignIdCandidate = function() {
-      if(!this.attributesEditor) { return false; }
+      if (!this.attributesEditor) { return false; }
       return !(this.attributesEditor.hasAssignedId());
     }
 
     this.clearAssignedId = function() {
-      if(this.attributesEditor) { this.attributesEditor.clearAssignedId(); }
+      if (this.attributesEditor) { this.attributesEditor.clearAssignedId(); }
     }
   };
-  
-  
+
+
   function init(cs, allSections) {
     capServer = cs;
     protoSection = utils.detachProto($('#aux .section.proto'));
     protoItemRow = utils.detachProto(protoSection.find('table.items tr.proto'));
     protoNavSection = utils.detachProto($('#nav-sections .proto'));
-    
+
     sitesLabel = $('#nav-sections .head');
     // the "Sites" header is the default page, where all nav flows
     // should return to by default
@@ -264,13 +264,13 @@ define(['utils', 'instances', 'attributes', 'pageManager'],
     allSections.forEach(function(sectionInfo) { new Section(sectionInfo); });
     pageManager.showDefaultPage();
   }
-  
+
   function showSites() {
     // all visible, except for Recent
-    visible = []
+    visible = [];
     Object.keys(byName).forEach(function(k) {
       var sec = byName[k];
-      if(sec.hidden) {
+      if (sec.hidden) {
         sec.hideList();
       } else {
         sec.showShortList();
@@ -283,7 +283,7 @@ define(['utils', 'instances', 'attributes', 'pageManager'],
   function hideSites() {
     $('#belay-items').hide();
   }
-  
+
   function show(v) {
     v.showFullList();
     visible.forEach(function(sec) {
@@ -294,7 +294,7 @@ define(['utils', 'instances', 'attributes', 'pageManager'],
     visible = [v];
     $('#belay-items').show();
   }
-  
+
   function deleteInstance(inst) {
     // TODO (iainmcgin): this is the main 'delete' action for instances,
     // despite not living in the instances.js module. Responsibility for delete
@@ -306,25 +306,25 @@ define(['utils', 'instances', 'attributes', 'pageManager'],
       inst.row.detach();
 
       byName[inst.state.section].updateList();
-      if(inst.state.section == "Trash") {
+      if (inst.state.section == 'Trash') {
         instances.deleteInstance(inst.state.id);
         inst.storageCap.remove();
       } else {
-        moveInstanceToSection(inst, byName["Trash"])
-        byName["Trash"].updateList();
+        moveInstanceToSection(inst, byName['Trash']);
+        byName['Trash'].updateList();
       }
     });
   }
 
   function moveInstanceToSection(inst, section) {
-    if(inst.state.section == section.name) return;
+    if (inst.state.section == section.name) return;
     byName[inst.state.section].removeInstance(inst);
     byName[section.name].addInstance(inst);
-    
+
     instances.dirty(inst);
     attributes.pushToInstance(inst);
   }
-  
+
   function newInstance(inst) {
     var row = protoItemRow.clone();
 
@@ -340,7 +340,7 @@ define(['utils', 'instances', 'attributes', 'pageManager'],
     });
     function reprime() {
       var startId = newUUIDv4();
-      openPageBtn.attr('target', startId);      
+      openPageBtn.attr('target', startId);
       expectPage.post({
         startId: startId,
         ready: readyCap
@@ -364,16 +364,15 @@ define(['utils', 'instances', 'attributes', 'pageManager'],
       // for now.
       dragData.dragString = newUUIDv4();
       dragData.instanceId = inst.state.id;
-      content = '<span data="' + dragData.dragString + '">' 
-        + inst.state.name 
-        + '</span>';
+      content = '<span data="' + dragData.dragString + '">' +
+          inst.state.name + '</span>';
       realEvt.dataTransfer.setData('text/html', content);
       realEvt.dataTransfer.effectAllowed = 'move';
       row.addClass('dragging');
     });
     row.bind('dragend', function() {
       row.removeClass('dragging');
-    })
+    });
 
     inst.row = row;
     if (!(inst.state.section in byName)) {
@@ -383,29 +382,29 @@ define(['utils', 'instances', 'attributes', 'pageManager'],
     var section = byName[inst.state.section];
     section.addInstance(inst);
   }
-  
+
   function forInstance(inst) {
     return byName[inst.state.section];
   }
 
   function forEach(visitor) {
-    for(sectionName in byName) {
+    for (sectionName in byName) {
       visitor(byName[sectionName]);
     }
   }
 
   function updateAttributes(idData) {
     attributes.rebuild(idData);
-    for(sectionName in byName) {
+    for (sectionName in byName) {
       byName[sectionName].updateAttributes();
     }
   }
 
   function withoutAssignedId() {
     var sections = [];
-    for(var secName in byName) {
+    for (var secName in byName) {
       var section = byName[secName];
-      if(section.assignIdCandidate()) {
+      if (section.assignIdCandidate()) {
         sections.push(byName[secName]);
       }
     }
@@ -414,11 +413,11 @@ define(['utils', 'instances', 'attributes', 'pageManager'],
   }
 
   function forEach(visitor) {
-    for(var secName in byName) {
+    for (var secName in byName) {
       visitor(byName[secName]);
     }
   }
-  
+
   return {
     init: init,
     newInstance: newInstance,

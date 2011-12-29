@@ -267,6 +267,9 @@ function setUpClient() {
     else if ('finishLaunch' in instruction) {
       instruction.finishLaunch.post(navigation, setupLaunchedPage);
     }
+    else if ('setupLaunch' in instruction) {
+      setupLaunchedPage(instruction.setupLaunch);
+    }
     else {
       // unknown start instruction
     }    
@@ -283,13 +286,14 @@ function expectPage(expect) {
 
 var expectCap = iframeServer.grant(expectPage);
 
-function buildActivateCap(stage1Nav) {
+function buildActivateCap(stage1Nav, localNav) {
   return iframeServer.grant(function(args, success, failure) {
     if (args.close) {
       stage1Nav.closeCap.post();
       return;
     }
-    var finishCap = iframeServer.grant(function(stage2Nav) {
+    
+    function finish(stage2Nav) {
       success(stage2Nav.closeCap);
       var pending = {
         instanceId: args.instanceId,
@@ -309,13 +313,18 @@ function buildActivateCap(stage1Nav) {
         });
       };
       return pending;
-    });
+    }
     
     var startId = newUUIDv4();
-    router.storeStart(startId, { finishLaunch: finishCap });
+    router.storeStart(startId,
+      localNav ? { setupLaunch: finish(stage1Nav) }
+               : { finishLaunch: iframeServer.grant(finish) });
+    
     stage1Nav.navigateCap.post({url: args.pageUrl, startId: startId});
   });
 }
+
+var activateLocalCap = buildActivateCap(navigation, true);
 
 function setupLaunchedPage(pending) {
   if (pending.isStation) {
@@ -324,6 +333,7 @@ function setupLaunchedPage(pending) {
     pending.outpost.isRunning = isRunningCap;
   }
   pending.outpost.expectPage = expectCap;
+  pending.outpost.activateLocalPage = activateLocalCap;
 
   router.addInterface(pending.instanceId, clientTunnel.sendInterface);
   
@@ -356,6 +366,7 @@ function setupFreshPage() {
       });
     }),
     expectPage: expectCap,
+    activateLocalPage: activateLocalCap,
     services: highlightingCaps
   };
   

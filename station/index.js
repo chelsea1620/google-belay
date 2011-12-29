@@ -48,7 +48,7 @@ $(window).bind('storage', function(evt) {
         function(launchDescriptor) {
           var instanceId = newUUIDv4();
 
-          belay.outpost.activate.post({
+          belay.outpost.activateLocalPage.post({
             instanceId: instanceId,
             isStation: true,
             pageUrl: launchDescriptor.pageUrl || launchDescriptor.page.html,
@@ -72,7 +72,8 @@ function init() {
     var startId;
 
     var ready = capServer.grant(function(activate) {
-      var url = location.origin + login.launch;
+      var origin = location.protocol + '//' + location.host;
+      var url = origin + login.launch;
       capServer.restore(url).get(function(launchInfo) {
         var instanceId = newUUIDv4();
         activate.post({
@@ -113,7 +114,7 @@ function init() {
         $(window).unbind('message', checker);
       }
       $(window).bind('message', checker);
-      setTimeout(unchecker, 10000);
+      setTimeout(unchecker, 60000);
     });
     $('#login-id-list').append(loginElem);
   });

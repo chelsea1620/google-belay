@@ -8,3 +8,4 @@ chrome-ext/includes
 *.orig
 *.log
 built/*
+lib/js/include-belay.js

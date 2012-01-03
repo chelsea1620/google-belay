@@ -102,19 +102,6 @@ function(utils, sections, attributes, pageManager) {
       $('#id-add-list').append(addElem);
     });
 
-    // TODO (iainmcgin): when we remove an identity, what should we do with
-    // sections that were using that identity or individual attributes from
-    // the identity? Should the user be asked what to do, should we retain
-    // those values as "special" in some sense, or silently override the
-    // user's attribute selections?
-    var removeElem = $('#id-add-button').clone();
-    removeElem.attr('id', 'id-remove-button');
-    removeElem.text('Remove All Identities');
-    removeElem.click(function() {
-      identitiesCap.put([], clearIds);
-    });
-    navIdentityList.append(removeElem);
-
     $('#custom-profile-fields input, #custom-profile-fields select')
       .each(function() {
         var elem = this;
@@ -216,6 +203,12 @@ function(utils, sections, attributes, pageManager) {
 
     page.find('ul').replaceWith(buildAttributeListing(identity));
 
+    // TODO(iainmcgin): when we remove an identity, what should we do with
+    // sections that were using that identity or individual attributes from
+    // the identity? Should the user be asked what to do, should we retain
+    // those values as "special" in some sense, or silently override the
+    // user's attribute selections?
+    
     var deleteButton = page.find('#delete-id');
     deleteButton.unbind('click');
     deleteButton.click(function() {

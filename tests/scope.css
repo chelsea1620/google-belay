@@ -1,0 +1,152 @@
+/*
+Copyright 2011 Google Inc. All Rights Reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+
+* {
+  margin: 0;
+  padding: 0;
+}
+
+h1 {
+  margin: 0 0.25em;
+}
+
+#log {
+  background-color: #fcffd2;
+}
+
+#log p {
+  padding: 3px 1em;
+  border-top: 1px solid #bababa;
+  white-space: nowrap;
+  overflow: hidden;
+  height: 1.2em;
+}
+
+#log span {
+  margin-right: 1em;
+}
+
+#log span.timestamp {
+  font: 80% "Courier New", Courier, mono;
+  width: 4em;
+  display: inline-block;
+  text-align: right;
+}
+#log span.operation {
+  font-weight: bold;
+  width: 6em;
+  display: inline-block;
+}
+#log span.destination {
+  font-size: 80%;
+}
+
+#log p.ls-set {
+}
+#log p.ls-remove {
+  color: #969696;
+  /* background-color: #fdffe9; */
+}
+#log p.ls-clear {
+  background-color: #ffdcd6;
+  font-weight: bold;
+}
+
+#log .c01.cFirst {
+  background-color: #dbf5bf;
+}
+#log .c02.cFirst {
+  background-color: #bef4d8;
+}
+#log .c03.cFirst {
+  background-color: #bedaf4;
+}
+#log .c04.cFirst {
+  background-color: #c7f4c6;
+}
+#log .c05.cFirst {
+  background-color: #bef4f3;
+}
+#log .c06.cFirst {
+  background-color: #cecff4;
+}
+#log .c01 {
+  background-color: #e5f3d5;
+}
+#log .c02 {
+  background-color: #d5f3e5;
+}
+#log .c03 {
+  background-color: #d6e6f3;
+}
+#log .c04 {
+  background-color: #d7f3d7;
+}
+#log .c05 {
+  background-color: #d6f3f3;
+}
+#log .c06 {
+  background-color: #dfe0f3;
+}
+
+#log .bar {
+  float: left;
+  border-top: 1px solid #bababa;
+  border-left: 1px solid #bababa;
+  margin-bottom: -1px;
+}
+#log .bar p {
+  border-color: transparent;
+}
+
+#log p.msg-invoke span.operation:before {
+  content: '➔ ';
+  font-weight: normal;
+}
+#log p.msg-response span.operation:before {
+  content: '↩ ';
+  font-weight: normal;
+}
+
+#live {
+  width: 12em;
+  font-size: 80%;
+  border: 1px solid #bababa;
+  background-color: #ffde9d;
+  position: fixed;
+  right: -1px;
+  top: 2em;
+  padding: 0.5em 1em;
+}
+
+#live ul {
+  list-style-type: none;
+}
+
+#live .old {
+  color: #bd3d3f;
+}
+#live span {
+  margin-right: 1em;
+}
+
+#live span.timestamp {
+  font: 100% "Courier New", Courier, mono;
+  width: 4em;
+  display: inline-block;
+  text-align: right;
+}

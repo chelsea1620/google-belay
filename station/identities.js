@@ -22,18 +22,6 @@ function(utils, sections, attributes, pageManager) {
   var protoIdentity = null;
   var identities = null;
 
-  function hideDialog(dialog) {
-    $('.dark-screen').hide();
-    dialog.hide();
-  }
-
-  function showDialog(dialog) {
-    $('.dark-screen').show();
-    dialog.show();
-    dialog.css('top', ($(window).height() - dialog.outerHeight()) / 2 + 'px');
-    dialog.css('left', ($(window).width() - dialog.outerWidth()) / 2 + 'px');
-  }
-
   function init(cs, idData, idCap, idAdders, createProfile) {
     capServer = cs;
     identitiesCap = idCap;
@@ -41,13 +29,15 @@ function(utils, sections, attributes, pageManager) {
     protoIdentity = utils.detachProto(navIdentityList.find('.identity.proto'));
 
     var hideIdAddDialog = function() {
-      hideDialog($('#id-add-dialog'));
+      utils.hideDialog($('#id-add-dialog'));
       $('#custom-profile-fields input, #custom-profile-fields select')
         .each(function() { $(this).trigger('reset'); });
       $('#id-add-dialog .error').hide();
     }
 
-    $('#id-add-button').click(function() { showDialog($('#id-add-dialog')); });
+    $('#id-add-button').click(function() { 
+      utils.showDialog($('#id-add-dialog')); 
+    });
     $('#id-add-dialog .close').click(hideIdAddDialog);
 
     var protoButton = utils.detachProto($('#proto-add-id'));
@@ -102,48 +92,26 @@ function(utils, sections, attributes, pageManager) {
       $('#id-add-list').append(addElem);
     });
 
-    $('#custom-profile-fields input, #custom-profile-fields select')
-      .each(function() {
-        var elem = this;
-        var input = $(elem);
-        if (input.attr('type') == 'submit') return;
+    var allInputs = 
+      $('#custom-profile-fields input, #custom-profile-fields select');
+      
+    utils.initInputsWithEmbeddedLabels(allInputs);
 
-        var initialText = input.val();
-        input.bind('focus mousedown', function() {
-          if (elem.classList.contains('fresh')) {
-            elem.classList.remove('fresh');
-            input.val('');
-          }
-        });
-
-        input.focusout(function() {
-          if (input.val() == '' || input.val() == initialText) {
-            elem.classList.add('fresh');
-            input.val(initialText);
-          }
-        });
-
-        input.bind('reset', function() {
-          elem.classList.add('fresh');
-          input.val(initialText);
-        });
+    $('#custom-profile-fields select').each(function() {
+      var defaultOption = $(this).find('option[value=""]');
+      var initialText = defaultOption.text();
+      $(this).bind('focus mousedown', function() {
+        defaultOption.text('');
       });
 
-      $('#custom-profile-fields select').each(function() {
-        var defaultOption = $(this).find('option[value=""]');
-        var initialText = defaultOption.text();
-        $(this).bind('focus mousedown', function() {
-          defaultOption.text('');
-        });
-
-        $(this).focusout(function() {
-          defaultOption.text(initialText);
-        });
-
-        $(this).bind('reset', function() {
-          defaultOption.text(initialText);
-        });
+      $(this).focusout(function() {
+        defaultOption.text(initialText);
       });
+
+      $(this).bind('reset', function() {
+        defaultOption.text(initialText);
+      });
+    });
 
     $('#custom-profile-fields input[type="submit"]').click(function() {
       attrs = {};
@@ -309,13 +277,13 @@ function(utils, sections, attributes, pageManager) {
           section.setAssignedId(newId.account_name);
         });
 
-        hideDialog(newIdDialog);
+        utils.hideDialog(newIdDialog);
       });
 
       var closeButton = newIdDialog.find('.close');
       closeButton.unbind('click');
-      closeButton.click(function() { hideDialog(newIdDialog); });
-      showDialog(newIdDialog);
+      closeButton.click(function() { utils.hideDialog(newIdDialog); });
+      utils.showDialog(newIdDialog);
     });
   }
 

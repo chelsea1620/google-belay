@@ -43,7 +43,7 @@ id_icon_map = {
     },
     'email': {
         # TODO(iainmcgin): need an icon to distinguish verified from unverified
-        'other': 'unverified.png',
+        'other': 'unverified.gif',
     },
     'profile': {
         'other': 'profile.png'
@@ -86,6 +86,29 @@ def allIdentities(station):
   q.ancestor(station)
   return [ id_to_json(x) for x in q]
 
+def create_verified_email_id(station, email_address):
+    id = IdentityData(parent=station,
+        id_type='email',
+        id_provider='verified',
+        account_name=email_address,
+        display_name=email_address,
+        attributes=json.dumps({ 'email': [ email_address ] }))
+    id.put()
+    return id
+
+def find_station_by_email(email_address):
+    q = IdentityData.all()
+    q.filter('id_type =', 'email')
+    q.filter('id_provider =', 'verified')
+    q.filter('account_name =', email_address)
+
+    # TODO(iainmcgin): if more than one station matches this email address,
+    # we should return them all and allow the client code decide what to do
+    match = q.fetch(limit=1)
+    if match:
+        return match[0].parent()
+    
+    return None
 
 class IdentitiesHandler(CapHandler):
   def get(self):

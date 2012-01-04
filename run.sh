@@ -92,7 +92,7 @@ startapp() {
   local port=$1
   local app=$2
 
-  local cmd="python $APPE --skip_sdk_update_check -p $port $CLEAR $app"
+  local cmd="python $APPE --enable_sendmail --skip_sdk_update_check -p $port $CLEAR $app"
 
   mkdir -p $PIDS/$app
 
@@ -121,6 +121,13 @@ stopapp() {
 }
 
 startall() {
+  if [[ ! (-e /usr/bin/sendmail) ]]; then
+    echo ".-------------------------------------------------------------."
+    echo "| Could not find sendmail at /usr/bin/sendmail                |"
+    echo "| Please create a symlink at this location to sendmail if you |"
+    echo "| intend to utilize the email verification feature in station |"
+    echo ".-------------------------------------------------------------."
+  fi
 #  startapp 9010 built/belay
   startapp 9000 belay
   startapp 9001 station

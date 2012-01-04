@@ -20,8 +20,52 @@ define([], function() {
     return proto;
   }
 
+  function initInputsWithEmbeddedLabels(jqElems) {
+    jqElems.each(function() {
+      var elem = this;
+      var input = $(elem);
+
+      if (input.attr('type') == 'submit') return;
+
+      var initialText = input.val();
+      input.bind('focus mousedown', function() {
+        if (elem.classList.contains('fresh')) {
+          elem.classList.remove('fresh');
+          input.val('');
+        }
+      });
+
+      input.focusout(function() {
+        if (input.val() == '' || input.val() == initialText) {
+          elem.classList.add('fresh');
+          input.val(initialText);
+        }
+      });
+
+      input.bind('reset', function() {
+        elem.classList.add('fresh');
+        input.val(initialText);
+      });
+    });
+  }
+
+  function showDialog(dialog) {
+    $('body').append($('<div>', { 'class': 'dark-screen'}));
+    dialog.show();
+    dialog.css('top', ($(window).height() - dialog.outerHeight()) / 2 + 'px');
+    dialog.css('left', ($(window).width() - dialog.outerWidth()) / 2 + 'px');
+  }
+
+  function hideDialog(dialog) {
+    $('.dark-screen').remove();
+    dialog.hide();
+  }
+
   return {
-    detachProto: detachProto
+    detachProto: detachProto,
+    initInputsWithEmbeddedLabels: initInputsWithEmbeddedLabels,
+    showDialog: showDialog,
+    hideDialog: hideDialog
   };
 });
 

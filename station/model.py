@@ -57,3 +57,13 @@ class IdentityData(db.Model):
   attributes = db.TextProperty(default='{}')
     # JSON encoded map of attribute names to arrays of values
     # first value in the list is "primary"
+
+class VerifyData(db.Model):
+    """
+    Used as a part of a one-time capability to create or recover 
+    an account with a verified email address.
+    """
+    email_address = db.StringProperty()
+    verify_code = db.StringProperty()
+    expiry_time = db.IntegerProperty()
+    tries_left = db.IntegerProperty()

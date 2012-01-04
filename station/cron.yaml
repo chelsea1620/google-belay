@@ -16,3 +16,7 @@ cron:
 - description: hourly openid cleanup
   url: /cleanup
   schedule: every 1 hours
+
+- description: verification code cleanup
+  url: /verify/cleanup
+  schedule: every 1 hours

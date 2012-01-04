@@ -48,3 +48,9 @@ indexes:
   - name: salt
   - name: server_url
   - name: timestamp
+
+- kind: VerifyData
+  properties:
+  - name: email_address
+  - name: expiry_time
+    direction: desc

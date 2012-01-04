@@ -27,6 +27,10 @@ handlers:
   script: station.py
   secure: always
 
+- url: /verify/email
+  script: station.py
+  secure: always
+
 - url: /instances
   script: station.py
   secure: always
@@ -61,6 +65,10 @@ handlers:
 
 - url: /cleanup
   script: gae_openid_store.py
+  login: admin
+
+- url: /verify/cleanup
+  script: station.py
   login: admin
 
 admin_console:

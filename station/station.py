@@ -15,9 +15,11 @@
 #!/usr/bin/env python
 
 import datetime
+import time
 #import json # TODO(mzero): add back for Python27
 import logging
 import os
+import random
 import sys
 import uuid
 
@@ -27,6 +29,7 @@ from utils import *
 
 from django.utils import simplejson as json # TODO(mzero): remove for Python27
 
+from google.appengine.api import mail
 from google.appengine.ext import db
 from google.appengine.ext import webapp
 from google.appengine.ext.webapp.util import run_wsgi_app
@@ -128,6 +131,90 @@ class BelayGenerateHandler(BaseHandler):
     station_uuid = uuid.uuid4()
     station_id = str(station_uuid)
     self.bcapResponse(cap(launch_url(station_id)))
+
+
+class EmailVerifyHandler(BaseHandler):
+  def post(self):
+    email_addr = self.request.get('email')
+
+    if not mail.is_email_valid(email_addr):
+      self.error(400)
+      return
+    
+    existing_codes = VerifyData.all().filter("email_address =", email_addr)
+    existing_codes.order("-expiry_time")
+
+    # we use a 15 minute expiry time on verification codes
+    new_expiry = long(time.time() + 60 * 15)
+
+    last_code = existing_codes.fetch(limit=1)
+    if last_code and new_expiry - last_code[0].expiry_time < 60:
+        # if we generated a verification code within the last minute, then
+        # refuse to generate another
+        self.error(403)
+        return
+
+    verify_code = '%06d' % random.randint(0, 999999)
+    verify_data = VerifyData(email_address=email_addr, 
+        verify_code=verify_code,
+        expiry_time=new_expiry,
+        tries_left=5)
+    verify_data.put()
+
+    from_addr = "Google Web Station <no-reply@%s>" % os.environ['SERVER_NAME']
+    subject = "Verification code for your station"
+    body = ("""To log in to your station, copy the following code in to the
+    web station login page: %s
+
+    This code will expire in 15 minutes, and may only be used once.""" 
+      % verify_code)
+
+    mail.send_mail(from_addr, email_addr, subject, body)
+
+    self.bcapResponse(grant(VerificationCheckHandler, verify_data))
+
+
+class VerificationCheckHandler(CapHandler):
+  def post(self):
+    verify_data = self.get_entity()
+
+    if verify_data.expiry_time < long(time.time()):
+        revokeEntity(verify_data)
+        verify_data.delete()
+        self.error(403)
+        return
+
+    params = self.bcapRequest()
+    entered_code = params.get('code')
+
+    if verify_data.verify_code != entered_code:
+      verify_data.tries_left = verify_data.tries_left - 1
+      if verify_data.tries_left <= 0:
+        revokeEntity(verify_data)
+        verify_data.delete()
+      else:
+        verify_data.put()
+      self.error(403)
+      return
+
+    # TODO(iainmcgin): if there are multiple stations that match the email 
+    # address, we should warn the user and either allow them to select the 
+    # station they want or bail out.
+    station = identities.find_station_by_email(verify_data.email_address)
+    if not station:
+      station = StationData.create()
+      identities.create_verified_email_id(station, verify_data.email_address)
+
+    revokeEntity(verify_data)
+    verify_data.delete()
+    
+    self.bcapResponse(cap(launch_url(station.key())))
+
+
+class VerifyCleanup(BaseHandler):
+    def get(self):
+        q = VerifyData.all().filter('expiry_time <', time.time())
+        db.delete(q)
 
 
 class BelayLaunchHandler(BaseHandler):
@@ -242,6 +329,8 @@ application = webapp.WSGIApplication(
   [(r'/cap/.*', ProxyHandler),
    ('/belay/generate', BelayGenerateHandler),
    ('/belay/launch',   BelayLaunchHandler),
+   ('/verify/email', EmailVerifyHandler),
+   ('/verify/cleanup', VerifyCleanup),
    ('/instance', InstanceHandler),
    ('/instances',InstancesHandler),
    ('/login/openid/google/launch', identities_openid.GoogleLoginLaunchHandler),
@@ -259,6 +348,7 @@ set_handlers(
    ('section/attributes', AttributesHandler),
    ('identities', identities.IdentitiesHandler),
    ('ids/profile/add', identities.ProfileAddHandler),
+   ('verify', VerificationCheckHandler),
    ('openid/google/launch', identities_openid.GoogleLaunchHandler),
    ('openid/yahoo/launch', identities_openid.YahooLaunchHandler),
    ('openid/aol/launch', identities_openid.AolLaunchHandler),

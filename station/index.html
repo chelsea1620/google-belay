@@ -25,11 +25,13 @@ limitations under the License.
 </head>
 <body>
   <div class="grey"></div>
-  <h1><a href="/"><img src="https://www.google.com/images/logos/google_logo_41.png" alt="Google" style="width: 116px; height: 41px;"></a></h1>
+  <div class="x-box" id="new-box">New to Web Station? Just sign-in! <img src="res/images/sign-in-arrow.png" /></div>
+  <h1><a href="/"><img src="https://www.google.com/images/logos/google_logo_41.png" alt="Google" style="width: 116px; height: 41px;"></a>
+    </h1>
   <div>
     <div id="sign-in">
       <div class="idp-list">
-        <h2>Sign in with an existing account</h2>
+        <h2>Sign in with an existing account:</h2>
         <ol id='login-id-list'>
           <li id='proto-login-id' class="idp proto"><a href="javascript:void(0)"><span>Gmail</span></a></li>
           <li class="idp ex"><a href="javascript:void(0)"><span>Yahoo</span></a></li>
@@ -38,10 +40,14 @@ limitations under the License.
         </ol>
       </div>
       <div>
-        <h2>Or, have us send you confirmation code</h2>
-        <fieldset class="confirm-set" id="email-verify">
+        <h2>Or, send a confirmation code:</h2>
+        <fieldset class="confirm-set">
           <input name="email" type="email" value="Email address" class="fresh">
           <input type="submit" class="button button-submit" value="Send Email">
+        </fieldset>
+        <fieldset class="confirm-set">
+          <input name="phone" type="text" value="Phone number" class="fresh">
+          <input type="submit" class="button button-submit" value="Send SMS">
         </fieldset>
       </div>
     </div>
@@ -52,25 +58,5 @@ limitations under the License.
         the web. Blah blah woof woof.</p>
     </div>
     <div id="about">©2011 Google</div>
-  </div>
-  <div id="verify-code-dialog" class="dialog" style="display: none">
-    <div class="header">
-      <h1>Code Verification</h1>
-      <span class="close"></span>
-    </div>
-    <div class="main">
-      <p>
-      A code has been sent to the address you provided. Please check your email
-      and enter the code below:
-      </p>
-
-      <input type="text" id="code"></input>
-      <div class="error" style="display: none">
-      The provided code did not match the sent code, please try re-entering the
-      code.
-      </div>
-      <button id="verify-code" class="x-button">Verify</button>
-
-    </div>
   </div>
 </body>

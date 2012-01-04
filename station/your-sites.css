@@ -103,6 +103,10 @@ div.section.dropHover {
 	border-bottom: 1px solid #d5d5d5;
 }
 
+#nav #about {
+  text-align: center;
+}
+
 /* @end */
 
 div.section {
@@ -549,9 +553,20 @@ select.button {
   padding-left: 0.5em;
 }
 
+.attr-select.closed.no-value {
+  background-color: transparent;
+  border-color: rgba(153,153,153,0.5);
+}
+.attr-select.closed.no-value .indicator {
+  border-color: rgba(153,153,153,0.5);
+}
 .attr-select .no-value {
   font-style: italic;
   color: #888;
+}
+.attr-select.closed .no-value {
+  font-style: italic;
+  color: rgba(136,136,136,0.5);
 }
 
 .attr-select ul {
@@ -926,6 +941,16 @@ select.button {
 /* @end */
 /* @group signin */
 
+#new-box {
+  width: inherit;
+  position: relative;
+  padding-right: 45px;
+}
+#new-box img {
+  position: absolute;
+  right: -23px;
+  top: 6px;
+}
 #sign-in {
   color: #333;
   float: right;
@@ -941,6 +966,7 @@ select.button {
   padding-top: 1em;
 }
 #sign-in h2 {
+  margin-top: 0;
   font-size: 130%;
 }
 #sign-in .idp-list ol li {

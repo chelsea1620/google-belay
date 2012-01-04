@@ -62,6 +62,7 @@ define(['utils', 'instances', 'require'], function(utils, instances, require) {
       var me = this;
 
       function chooseNoValue() {
+        selectElem.addClass('no-value');
         currentSelectionElem.html('<span class="no-value">Keep private</span>');
         currentSelectionElem.data('choice', null);
         optionsElem.trigger('hide');
@@ -98,6 +99,7 @@ define(['utils', 'instances', 'require'], function(utils, instances, require) {
         } else {
           optionElem.click(function() {
             var choice = optionElem.data('choice');
+            selectElem.removeClass('no-value');
             currentSelectionElem.html(optionElem.html());
             currentSelectionElem.data('choice', choice);
             optionsElem.trigger('hide');
@@ -115,6 +117,8 @@ define(['utils', 'instances', 'require'], function(utils, instances, require) {
       currentSelectionElem.html('<span class="no-value">Keep private</span>');
       currentSelectionElem.data('choice', null);
 
+      selectElem.addClass('no-value');
+      selectElem.addClass('closed');
       selectElem.append(indicatorElem);
       selectElem.append(currentSelectionElem);
       selectElem.append(optionsElem);
@@ -122,6 +126,7 @@ define(['utils', 'instances', 'require'], function(utils, instances, require) {
       optionsElem.bind('show', function() {
         if (optionsElem.is(':animated')) return false;
         selectElem.addClass('expanded');
+        selectElem.removeClass('closed');
         optionsElem.css('width', selectElem.innerWidth());
         optionsElem.css('top', selectElem.outerHeight());
         optionsElem.slideDown('fast');
@@ -129,6 +134,7 @@ define(['utils', 'instances', 'require'], function(utils, instances, require) {
 
       optionsElem.bind('hide', function() {
         if (optionsElem.is(':animated')) return false;
+        selectElem.addClass('closed');
         selectElem.removeClass('expanded');
         optionsElem.slideUp('fast');
       });

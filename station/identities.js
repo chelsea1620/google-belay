@@ -176,7 +176,7 @@ function(utils, sections, attributes, pageManager) {
     // the identity? Should the user be asked what to do, should we retain
     // those values as "special" in some sense, or silently override the
     // user's attribute selections?
-    
+
     var deleteButton = page.find('#delete-id');
     deleteButton.unbind('click');
     deleteButton.click(function() {

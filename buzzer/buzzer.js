@@ -13,6 +13,7 @@
 // limitations under the License.
 
 onBelayReady(function() {
+  var buzzerContent = $('#buzzer-content');
   ui.resize(150, 200, true);
 
   belay.dirty = function() {
@@ -68,17 +69,17 @@ onBelayReady(function() {
   capServer.setReviver(capReviver);
 
   var reload = function() {
-    topDiv.load(launchInfo.editor_cap.serialize(), function() {
-      var forms = topDiv.find('.buzzer-thing form');
-      topDiv.find('.buzzer-thing form').submit(function(ev) {
+    buzzerContent.load(launchInfo.editor_cap.serialize(), function() {
+      var forms = buzzerContent.find('.buzzer-thing form');
+      buzzerContent.find('.buzzer-thing form').submit(function(ev) {
         formAjax(ev.target, reload);
         ev.preventDefault();
         return false;
       });
-      ui.capDraggable(topDiv.find('.buzzer-reader-chit'), rcBelayGen,
+      ui.capDraggable(buzzerContent.find('.buzzer-reader-chit'), rcBelayGen,
           launchInfo.reader_gen_cap,
           launchInfo.readChitURL);
-      ui.capDraggable(topDiv.find('.buzzer-post-chit'), rcPost,
+      ui.capDraggable(buzzerContent.find('.buzzer-post-chit'), rcPost,
           capServer.grant(function(selectedRC) {
               return {
                 post: capServer.grantKey(selectedRC),

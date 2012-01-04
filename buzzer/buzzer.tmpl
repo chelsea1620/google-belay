@@ -15,7 +15,6 @@ limitations under the License.
 -->
 
 <div class="buzzer-thing">
-  <style scoped="scoped">@import url({{ css_url }});</style>
   {% if need_profile %}
     <div class="buzzer-profile">
       <p>It's easy to get going!</p>
@@ -26,31 +25,36 @@ limitations under the License.
       </form>
     </div>
   {% else %}
-    <div class="buzzer-header">
-      {% if include_post %}
-        <div class="buzzer-chit buzzer-reader-chit" title="a read only version"
-          style="width:26px;height:24px;background:url({{ chit_read_url }}) no-repeat 0 0;"></div>
-        <div class="buzzer-chit buzzer-post-chit" title="post to this buzzer"
-          style="width:26px;height:24px;background:url({{ chit_post_url }}) no-repeat 0 0;"></div>
-      {% endif %}
-      <p id="buzzer-name">{{feed.title}}
-      {% if has_subtitle %}
-        <br /><small>—
+      <div class="maia-col-12">
+      <h1 id="buzzer-name" class="maia-super">
+        {{feed.title}}
+        <span class="poster-info">
+        {% if has_subtitle %}
           {% if has_name %} by <i class="poster-name">{{ feed.name }}</i> {% endif %}
           {% if has_location %} from <i class="poster-location">{{ feed.location }}</i> {% endif %}
-        </small>
-      {% endif %}
-      </p>
+        {% endif %}
+        </span>
+        <div class="chits">
+        <div class="buzzer-chit buzzer-reader-chit" title="a read only version"
+          style="background:url({{ chit_read_url }}) no-repeat 0 0;"></div>
+        <div class="buzzer-chit buzzer-post-chit" title="post to this buzzer"
+          style="background:url({{ chit_post_url }}) no-repeat 0 0;"></div>
+        </div>
+      </h1>
+      
+      </div>
       {% if include_post %}
       <form action="{{ post_url }}" method="POST">
-        <div>
+        <div class="maia-col-10">
           <textarea name="body" id="body">is...</textarea>
         </div>
-        <input type="submit" value="BZR!" />
+        <div class="maia-col-2">
+          <input type="submit" id="post-button" class="maia-button" value="Buzz now!" />
+        </div>
       </form>
       {% endif %}
     </div>
-    <div class="buzzer-items">
+    <div class="buzzer-items maia-col-12">
       {% if items %}
         {% for item in items %}
         <div class="buzzer-item">
@@ -62,7 +66,14 @@ limitations under the License.
         </div>
         {% endfor %}
       {% else %}
-        <p class="buzzer-hint">Get going: Post something now!</p>
+        
+        <p class="buzzer-hint">
+        {% if include_post %}
+        Get going: Post something now!
+        {% else %}
+        No posts yet.
+        {% endif %}
+        </p>
       {% endif %}
     </div>  
   {% endif %}

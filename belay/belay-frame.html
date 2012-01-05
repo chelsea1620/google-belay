@@ -21,19 +21,6 @@ limitations under the License.
   <script src="caprouter.js"></script>
 <style type='text/css'>
 
-#log {
- font-family: Consolas, fixed;
- font-size: 10pt;
- background-color: black;
- color: white;
- max-height: 200px;
- overflow-y: scroll;
-}
-
-#log div {
-  border-bottom: 1px solid gray;
-}
-
 .suggestButton {
   padding-left: 0.5em;
   padding-right: 0.5em;
@@ -56,33 +43,10 @@ body {
 <span id="closeButton">&otimes;</span>
 <div id="suggestButtons"></div>
 <div id="debug" style="display: none">
-  <button id="clearButton">Clear localStorage</button>
-  <div id="log"></div>
 </div>
 <script>
 
 'use strict';
-
-function log(args) {
-  if (!(args instanceof Array)) {
-    args = [args];
-  }
-
-  var arr = [];
-
-  for (var i = 0; i < args.length; i++) {
-    arr.push(typeof args[i] === 'string' ? args[i] 
-                                        : JSON.stringify(args[i]));
-  }
-
-  var txt = document.createTextNode(arr.join(' '));
-  var li = document.createElement('div');
-  li.appendChild(txt);
-  var logElt = document.getElementById('log');
-  logElt.appendChild(li);
-  console.log.apply(console, args);
-  logElt.scrollTop = logElt.scrollHeight;
-}
 
 
 var iframeInstanceId = newUUIDv4();
@@ -419,10 +383,6 @@ function checkForSuggestions(location, showSuggestions, navigate) {
 
 document.getElementById('closeButton').addEventListener('click',
   function() { actionPort.postMessage('hideButterBar'); });
-document.getElementById('clearButton').addEventListener('click',
-  function() { 
-    delete localStorage['belay'];
-  });
 
 setUpClient();
 

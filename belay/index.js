@@ -31,6 +31,9 @@ require([
     function disable(n) { n.attr('disabled', 'disabled'); }
     function setEnabled(n, state) { state ? enable(n) : disable(n) }
 
+    function setUpGetAStationButton(elem) {
+      elem.attr('href', window.belay.STATION);
+    }
     function setUpLaunchButton(elem, action) {
       var startId = newUUIDv4();
       elem.attr('href', 'redirect.html');
@@ -39,13 +42,34 @@ require([
         { startId: startId, ready: capServer.grant(action) });
     }
 
+
     onBelayReady(function() {
-      var belayData = capServer.dataPostProcess(localStorage['belay']) || { };
-      var hasStation;
-      var stationCapString;
+
+      var launchCapKey = 'launchCap';
+
+      function getLaunchCap() {
+        return localStorage.getItem(launchCapKey);
+      }
+
+      function setLaunchCap(cap) {
+        if (cap) {
+          localStorage.setItem(launchCapKey, cap);
+        }
+        else {
+          localStorage.removeItem(launchCapKey);
+        }
+        resetUI();
+      }
+
+      window.addEventListener('storage', function(ev) {
+        if (ev.storageArea === localStorage && ev.key == launchCapKey) {
+          resetUI();
+        }
+      });
+
 
       function openStation(activate) {
-        belayData.stationLaunchCap.post({ version: 'new' },
+        capServer.restore(getLaunchCap()).post(null,
           function(launchDescriptor) {
             var instanceId = newUUIDv4();
 
@@ -62,16 +86,8 @@ require([
           function(err) { alert("Your station isn't on-line."); });
       }
 
-      function createAndOpenStation(activate) {
-        var genCap = capServer.restore($('#advanced .gen:eq(0) input').val());
-        genCap.get(function(launchCap) {
-          setLaunchCap(launchCap);
-          openStation(activate);
-        });
-      }
-
       setUpLaunchButton($('#open-button a'), openStation);
-      setUpLaunchButton($('#create-button a'), createAndOpenStation);
+      setUpGetAStationButton($('#create-button a'));
 
       $('#open-button a').click(function() {
         // if the user clicks the launch button, we need to reinitialise
@@ -80,12 +96,12 @@ require([
         setUpLaunchButton($('#open-button a'), openStation);
       });
 
+      var stationCapString;
+
       function resetUI() {
-        hasStation = belayData &&
-            'stationLaunchCap' in belayData &&
-            belayData.stationLaunchCap != null;
-        stationCapString =
-            hasStation ? belayData.stationLaunchCap.serialize() : '';
+        var launchCap = getLaunchCap();
+        var hasStation = launchCap != null;
+        stationCapString = hasStation ? launchCap : '';
 
         if (hasStation) {
           $('#open-button').show();
@@ -100,12 +116,6 @@ require([
         setEnabled($('#station-clear'), hasStation);
       }
 
-      function setLaunchCap(cap) {
-        belayData.stationLaunchCap = cap;
-        localStorage['belay'] = capServer.dataPreProcess(belayData);
-        resetUI();
-      }
-
       $('#advanced h2').click(function() {
         if (visible($('#advanced .content'))) {
           $('#advanced .control').text('▸');
@@ -118,9 +128,7 @@ require([
 
       $('#station-clear').click(function() { setLaunchCap(null); });
       $('#station-set').click(function() {
-        var newVal = $('#station-cap').val().trim();
-        var cap = newVal != '' ? capServer.restore(newVal) : null;
-        setLaunchCap(cap);
+        setLaunchCap($('#station-cap').val().trim());
       });
 
 
@@ -134,16 +142,9 @@ require([
         $(this).find('button').click(function() {
           var gen = capServer.restore(input.val());
           gen.get(
-            function(newLaunch) { setLaunchCap(newLaunch); },
+            function(newLaunch) { setLaunchCap(newLaunch.serialize()); },
             function(err) { alert('Generation failed.'); });
         });
-      });
-
-      window.addEventListener('storage', function(ev) {
-        if (ev.storageArea === localStorage && ev.key == 'belay') {
-          belayData = capServer.dataPostProcess(localStorage['belay']);
-          resetUI();
-        }
       });
 
       resetUI();

@@ -162,7 +162,7 @@ fi
 
 if [[ $OP == "start" || $OP == "restart"
    || $OP == "cleanstart" || $OP == "cleanrestart" ]]; then
-  ./setbelaybase.sh 'http://localhost:9000'
+  ./setbelaybase.sh 'http://localhost:9000' 'http://localhost:9001'
   startall
 fi
 

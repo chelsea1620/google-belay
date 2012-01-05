@@ -219,18 +219,15 @@ class VerifyCleanup(BaseHandler):
 
 class BelayLaunchHandler(BaseHandler):
   def get(self):
-    return self.launch('new')
+    return self.launch()
   
   def post(self):
-    params = self.bcapRequest()
-    return self.launch(params.get('version', 'new'))
+    return self.launch()
 
-  def launch(self, type):
+  def launch(self):
     station = self.validate_station()
 
     html = "/your-sites.html"
-    if (type == "old"):
-      html = "/your-stuff.html"
       
     reply = {
       'page': { 'html': server_url(html) },

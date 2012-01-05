@@ -312,19 +312,15 @@ class LoginCallbackHandler(CallbackHandler):
   def buildStationPage(self, header, message, stationKey):
     return '''<html>
     <head>
-    	<title>{header}</title>
-    	<script src="/lib/js/include-belay.js"></script>
+      <title>{header}</title>
+      <script src="/lib/js/include-belay.js"></script>
     </head>
     <body><h1>{header}</h1>
     <p>{message}</p>
     <script>
-      window.addEventListener('storage', function(e) {{
-      	if (e.key = 'station-launch-time') {{
-        	window.close();
-      	}}
-      }}, false);
-      window.localStorage.removeItem('launchCap');
-      window.localStorage.setItem('launchCap', '{url}');
+      localStorage.setItem('launchCap', '{url}');
+      localStorage.setItem('launchCap-authenticated-time', Date.now());
+      window.close();
     </script></body>
     </html>'''.format(
       header=header, message=message, url=launch_url(stationKey))

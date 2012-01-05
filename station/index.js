@@ -59,16 +59,29 @@ function launchStation(launchCap) {
   );
 }
 
+function launchIfStored()
+{
+  var launchCap = localStorage.getItem('launchCap');
+  if (launchCap != null) {
+    launchStation(capServer.restore(launchCap));
+  }
+}
+
+function launchAndStoreStation(launchCap)
+{
+  localStorage.setItem('launchCap', launchCap);
+  launchStation(launchCap);
+}
+
 $(window).bind('storage', function(evt) {
-  if (evt.originalEvent.key == 'launchCap') {
-    var launchCap = evt.originalEvent.newValue;
-    if (launchCap != null) {
-      launchStation(capServer.restore(launchCap));
-    }
+  if (evt.originalEvent.key == 'launchCap-authenticated-time') {
+    launchIfStored();
   }
 });
 
 function init() {
+  if (launchIfStored()) { return; }
+
   loginMethods.forEach(function(login) {
     function refresh() {
     }
@@ -128,30 +141,30 @@ function init() {
   var emailVerifyBtn = $('#email-verify input[type="submit"]');
   var emailInput = $('#email-verify input[name="email"]');
   emailVerifyBtn.click(function() {
-    $.post('/verify/email', 
+    $.post('/verify/email',
       { email: emailInput.val() },
       function(data, status) {
         var verifyCap = capServer.dataPostProcess(data);
         $('#verify-code').unbind('click');
         $('#verify-code').click(function() {
           verifyCap.post({'code': $('#code').val() }, function(launch) {
-            launchStation(launch);
+            launchAndStoreStation(launch);
             utils.hideDialog($('#verify-code-dialog'));
           }, function(err) {
             var errorElem = $('#verify-code-dialog .error');
-            if(err.status == 404) {
+            if (err.status == 404) {
               errorElem.
-                text("Too many attempts have been made to verify this code " +
-                "incorrectly. Please close this dialog and request a new code " +
-                "if you believe this to be in error.");
-            } else if(err.status == 403) {
+                text('Too many attempts have been made to verify this code ' +
+                'incorrectly. Please close this dialog and request a new ' +
+                'code if you believe this to be in error.');
+            } else if (err.status == 403) {
               errorElem.
-                text("The provided code did not match the sent code, please " +
-                     "try re-entering the code.");
+                text('The provided code did not match the sent code, please ' +
+                     'try re-entering the code.');
             } else {
               errorElem.
-                text("An unexpected error occurred. Please try submitting " +
-                     "the code again.");
+                text('An unexpected error occurred. Please try submitting ' +
+                     'the code again.');
             }
 
             errorElem.show();
@@ -162,13 +175,13 @@ function init() {
         $('#verify-code-dialog .error').hide();
         utils.showDialog($('#verify-code-dialog'));
       }).fail(function(resp) {
-        if(resp.status == 400) {
-          alert("The email address entered was not valid.");
-        } else if(resp.status == 403) {
-          alert("A verification code was generated too recently. Please wait " +
-                "at least one minute before trying again.");
+        if (resp.status == 400) {
+          alert('The email address entered was not valid.');
+        } else if (resp.status == 403) {
+          alert('A verification code was generated too recently. Please wait ' +
+                'at least one minute before trying again.');
         }
-      })
+      });
   });
 
   $('#verify-code-dialog .close').click(function() {

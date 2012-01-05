@@ -38,6 +38,10 @@ body div.grey {
   right: 0;
 }
 
+.x-box {
+  width: inherit;
+}
+
 /* @end */
 
 .ex, .proto {
@@ -942,7 +946,6 @@ select.button {
 /* @group signin */
 
 #new-box {
-  width: inherit;
   position: relative;
   padding-right: 45px;
 }
@@ -1032,6 +1035,17 @@ select.button {
 #sign-in input.fresh {
 	color: #999;
 	font-style: italic;
+}
+
+#sign-out,
+#sign-out:visited {
+	color: #91959c;
+}
+
+#sign-out:focus,
+#sign-out:hover,
+#sign-out:active {
+	color: #47494c;
 }
 
 /* @end */

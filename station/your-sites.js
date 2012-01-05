@@ -145,6 +145,19 @@ var initialize = function() {
   });
   loadedInstances.sort(cmpInstByCreated).forEach(instances.addInstance);
 
+  $('#sign-out').click(function() {
+    var msg = 'You have no identities associated with this account. ' +
+          'Signing out will give you no way to get back to this station.\n' +
+          '\nReally sign out?';
+
+    if (identities.hasSignInIdentity() || window.confirm(msg)) {
+      localStorage.removeItem('launchCap');
+    }
+    else {
+      return false;
+    }
+  });
+
   window.belaytest.ready = true;
 };
 
@@ -168,7 +181,6 @@ window.belay.onPortReady(function() {
       capDroppable: common.makeCapDroppable(capServer, function() {})
     };
     initialize();
-    localStorage.setItem('station-launch-time', Date.now());
   });
 });
 

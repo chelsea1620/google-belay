@@ -35,8 +35,8 @@ function(utils, sections, attributes, pageManager) {
       $('#id-add-dialog .error').hide();
     }
 
-    $('#id-add-button').click(function() { 
-      utils.showDialog($('#id-add-dialog')); 
+    $('#id-add-button').click(function() {
+      utils.showDialog($('#id-add-dialog'));
     });
     $('#id-add-dialog .close').click(hideIdAddDialog);
 
@@ -92,9 +92,9 @@ function(utils, sections, attributes, pageManager) {
       $('#id-add-list').append(addElem);
     });
 
-    var allInputs = 
+    var allInputs =
       $('#custom-profile-fields input, #custom-profile-fields select');
-      
+
     utils.initInputsWithEmbeddedLabels(allInputs);
 
     $('#custom-profile-fields select').each(function() {
@@ -330,8 +330,18 @@ function(utils, sections, attributes, pageManager) {
     sections.updateAttributes(idData);
   }
 
+  function hasSignInIdentity() {
+    for (var k in identities) {
+      if (identities[k].id_type != 'profile') {
+        return true;
+      }
+    }
+    false;
+  }
+
   return {
-    init: init
+    init: init,
+    hasSignInIdentity: hasSignInIdentity
   };
 });
 

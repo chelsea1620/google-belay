@@ -148,13 +148,19 @@ window.addEventListener('storage', function(e) {
 
 // TODO(mzero): These Comms functions are identical to the ones in
 // belay-port.js and should be factored out once we have a build system.
-function MessageChannelComms(remoteWindow, origin, handleInit, firstEvent) {
+function MessageChannelComms(remoteWindow, origin, handleInit) {
   if (handleInit) {
-    handleInit({
-      belayPort: firstEvent.ports[0],
-      actionPort: firstEvent.ports[1],
-      initData: firstEvent.data
-    })
+    var connect = function(e) {
+      if (e.source != remoteWindow) { return; }
+      if (e.origin != origin && origin != '*') { return; }
+      window.removeEventListener('message', connect);
+      handleInit({
+        belayPort: e.ports[0],
+        actionPort: e.ports[1],
+        initData: e.data
+      });
+    };
+    window.addEventListener('message', connect);
   } else {
     var belayChan = new MessageChannel();
     var actionChan = new MessageChannel();
@@ -173,7 +179,7 @@ function MessageChannelComms(remoteWindow, origin, handleInit, firstEvent) {
   }
 }
 
-function MultiplexedComms(remoteWindow, origin, handleInit, firstEvent) {
+function MultiplexedComms(remoteWindow, origin, handleInit) {
   var ConcentratedPort = function(id) {
     this.id = id;
     this.onmessage = null;
@@ -181,12 +187,12 @@ function MultiplexedComms(remoteWindow, origin, handleInit, firstEvent) {
   ConcentratedPort.prototype.postMessage = function(data) {
     remoteWindow.postMessage({ id: this.id, data: data }, origin);
   };
-  
+
   var ports = {
     belay: new ConcentratedPort('belay'),
     action: new ConcentratedPort('action')
-  }
-  
+  };
+
   function handleEvent(e) {
     if (e.source != remoteWindow) { return; }
     if (e.origin != origin && origin != '*') { return; }
@@ -203,18 +209,19 @@ function MultiplexedComms(remoteWindow, origin, handleInit, firstEvent) {
     }
     e.stopPropagation();
   }
-  
-  window.addEventListener('message', handleEvent, false);
+
+  window.addEventListener('message', handleEvent);
   if (handleInit) {
-    handleEvent(firstEvent)
+    // Nothing to do: Just wait for the init event,
+    // and handleEvent will call handleInit.
   } else {
     return {
       belayPort: ports.belay,
       actionPort: ports.action,
       postInit: function(msg) {
-        remoteWindow.postMessage({ id: 'init', data: msg }, origin)            
+        remoteWindow.postMessage({ id: 'init', data: msg }, origin);
       }
-    }        
+    };
   }
 }
 

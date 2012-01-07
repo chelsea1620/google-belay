@@ -416,8 +416,7 @@ class BelayStationPage(BelayEnabledPage):
         id_add_dialog.find_element_by_name("email").send_keys(email)
 
         id_add_dialog.find_element_by_class_name("widget-keyhole-button").click()
-        overlay = self.driver.find_element_by_class_name('dark-screen')
-        self.wait_for(lambda drv: not overlay.is_displayed())
+        self.wait_for(lambda drv: not drv.find_elements_by_class_name('dark-screen'))
 
 
 class BuzzerLandingPage(BelayEnabledPage):

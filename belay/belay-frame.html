@@ -1,0 +1,392 @@
+<!--
+Copyright 2011 Google Inc. All Rights Reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+
+<!DOCTYPE html>
+<html>
+<head>
+  <script src="lib/js/caps.js"></script>
+  <script src="caprouter.js"></script>
+<style type='text/css'>
+
+.suggestButton {
+  padding-left: 0.5em;
+  padding-right: 0.5em;
+  -webkit-appearance: square-button;
+}
+
+#closeButton {
+  float: right;
+  font-size: larger;
+}
+
+body {
+  background-color: #ffffcc;
+}
+
+</style>
+</head>
+
+<body>
+<span id="closeButton">&otimes;</span>
+<div id="suggestButtons"></div>
+<div id="debug" style="display: none">
+</div>
+<script>
+
+'use strict';
+
+
+var iframeInstanceId = newUUIDv4();
+var iframeServer = new CapServer(iframeInstanceId);
+
+var clientTunnel;
+var actionPort;
+
+
+var router = new CapRouter();
+router.addInterface(iframeInstanceId, iframeServer.publicInterface);
+iframeServer.setResolver(router.resolver);
+
+var navigation = {
+  navigateCap: iframeServer.grant(function(args) { 
+    actionPort.postMessage({ op: 'navigate', args: args });
+  }),
+  closeCap: iframeServer.grant(function() {
+    actionPort.postMessage('close');
+  })
+};
+
+
+var isRunningCap = iframeServer.grant(function(instanceId) {
+  return router.isRoutable(instanceId);
+});
+
+var setStationCallbacksCap = iframeServer.grant(function(stationCallbacks) {
+  function newInstHandler(v) {
+    if ('newInstHandler' in stationCallbacks) {
+      stationCallbacks.newInstHandler.post({
+        instanceDescription: v.instanceDescription,
+        activate: buildActivateCap(v.navigation)
+      });
+    }
+    else {
+      // TODO(mzero): station can't handle this - what now?
+    }
+  }
+  
+  function getSuggestions(location, success, failure) {
+    if ('getSuggestions' in stationCallbacks) {
+      stationCallbacks.getSuggestions.post(location, function(suggestions) {
+        success({
+          suggestions: suggestions,
+          doLaunchActivate: iframeServer.grant(function(v) {
+            v.doLaunch.post(buildActivateCap(v.navigation));
+          })
+        });
+      },
+      failure);
+    }
+    else {
+      // TODO(mzero): station can't handle this - what now?
+      success({suggestions:[]});
+    }
+  }
+  
+  localStorage.setItem('station.newInstHandler',
+    iframeServer.grant(newInstHandler).serialize());
+  localStorage.setItem('station.getSuggestions',
+    iframeServer.grant(getSuggestions).serialize());
+});
+
+var failureCap = iframeServer.grant(function(v, success, failure) {
+  failure({status: 404 });
+});
+
+function stationCap(key) {
+  var ser = localStorage.getItem('station.' + key);
+  return ser ? iframeServer.restore(ser) : failureCap;
+}
+
+
+var highlightingCaps = {
+  highlightByRC: iframeServer.grant(function(v) {
+    localStorage.setItem('highlight', JSON.stringify(v));
+    actionPort.postMessage({ op: 'highlight', args: v });
+  }),
+  unhighlight: iframeServer.grant(function() {
+    localStorage.removeItem('highlight');
+    actionPort.postMessage('unhighlight');
+  })
+};
+
+window.addEventListener('storage', function(e) {
+  // NOTE: setting localStorage doesn't fire events on setting document,
+  // so code above must make these same calls as well.
+  if (e.key == 'highlight') {
+    if (e.newValue) {
+      var v = JSON.parse(e.newValue);
+      actionPort.postMessage({ op: 'highlight', args: v });
+    }
+    else {
+      actionPort.postMessage('unhighlight');
+    }
+  }
+}, false);
+
+// TODO(mzero): These Comms functions are identical to the ones in
+// belay-port.js and should be factored out once we have a build system.
+function MessageChannelComms(remoteWindow, origin, handleInit, firstEvent) {
+  if (handleInit) {
+    handleInit({
+      belayPort: firstEvent.ports[0],
+      actionPort: firstEvent.ports[1],
+      initData: firstEvent.data
+    })
+  } else {
+    var belayChan = new MessageChannel();
+    var actionChan = new MessageChannel();
+
+    return {
+      belayPort: belayChan.port1,
+      actionPort: actionChan.port1,
+      postInit: function(msg) {
+        remoteWindow.postMessage(
+          msg,
+          // two following args. backward for Chrome and Safari
+          [belayChan.port2, actionChan.port2],
+          origin);
+      }
+    };
+  }
+}
+
+function MultiplexedComms(remoteWindow, origin, handleInit, firstEvent) {
+  var ConcentratedPort = function(id) {
+    this.id = id;
+    this.onmessage = null;
+  };
+  ConcentratedPort.prototype.postMessage = function(data) {
+    remoteWindow.postMessage({ id: this.id, data: data }, origin);
+  };
+  
+  var ports = {
+    belay: new ConcentratedPort('belay'),
+    action: new ConcentratedPort('action')
+  }
+  
+  function handleEvent(e) {
+    if (e.source != remoteWindow) { return; }
+    if (e.origin != origin && origin != '*') { return; }
+    if (e.data.id in ports) {
+      var onmessage = ports[e.data.id].onmessage;
+      if (onmessage) { onmessage({ data: e.data.data }); }
+    }
+    else if (handleInit && e.data.id == 'init') {
+      handleInit({
+        belayPort: ports.belay,
+        actionPort: ports.action,
+        initData: e.data.data
+      });
+    }
+    e.stopPropagation();
+  }
+  
+  window.addEventListener('message', handleEvent, false);
+  if (handleInit) {
+    handleEvent(firstEvent)
+  } else {
+    return {
+      belayPort: ports.belay,
+      actionPort: ports.action,
+      postInit: function(msg) {
+        remoteWindow.postMessage({ id: 'init', data: msg }, origin)            
+      }
+    }        
+  }
+}
+
+
+function setUpClient() {
+  var comms = ('MessageChannel' in window
+      ? MessageChannelComms
+      : MultiplexedComms)(window.parent, '*');
+
+  clientTunnel = new CapTunnel(comms.belayPort);
+  clientTunnel.setLocalResolver(router.resolver);
+
+  actionPort = comms.actionPort;
+  actionPort.onmessage = function(event) {
+    var clientData = event.data;
+    window.DEBUG = clientData.DEBUG;
+    if (window.DEBUG) {
+      actionPort.postMessage('showButterBar'); 
+      document.getElementById('debug').style.display = 'block';
+    }
+
+    var instruction = router.retrieveStart(clientData.startId);
+    if (instruction === null) {
+      setupFreshPage();
+      checkForSuggestions(clientData.location);
+    }
+    else if ('startLaunch' in instruction) {
+      instruction.startLaunch.post(navigation);
+    }
+    else if ('finishLaunch' in instruction) {
+      instruction.finishLaunch.post(navigation, setupLaunchedPage);
+    }
+    else if ('setupLaunch' in instruction) {
+      setupLaunchedPage(instruction.setupLaunch);
+    }
+    else {
+      // unknown start instruction
+    }    
+  }
+  comms.postInit(null);
+}
+
+function expectPage(expect) {
+  var startCap = iframeServer.grant(function(navigate) {
+    expect.ready.post(buildActivateCap(navigate));
+  });
+  router.storeStart(expect.startId, { startLaunch: startCap });
+}
+
+var expectCap = iframeServer.grant(expectPage);
+
+function buildActivateCap(stage1Nav, localNav) {
+  return iframeServer.grant(function(args, success, failure) {
+    if (args.close) {
+      stage1Nav.closeCap.post();
+      return;
+    }
+    
+    function finish(stage2Nav) {
+      success(stage2Nav.closeCap);
+      var pending = {
+        instanceId: args.instanceId,
+        temporaryInstance: false,
+        outpost: args.outpostData,
+        isStation: args.isStation || false,
+      };
+      
+      if('relaunch' in args) {
+        var relaunch = args.relaunch;
+        pending.relaunch = iframeServer.grant(function(relaunchNav) {
+          setTimeout(function() {
+            relaunch.post(buildActivateCap(relaunchNav));            
+          }, 1500);
+          // TODO(mzero): remove this need to wait for liveness to expire,
+          // perhaps by expiring the liveness directly at this point?
+        });
+      };
+      return pending;
+    }
+    
+    var startId = newUUIDv4();
+    router.storeStart(startId,
+      localNav ? { setupLaunch: finish(stage1Nav) }
+               : { finishLaunch: iframeServer.grant(finish) });
+    
+    stage1Nav.navigateCap.post({url: args.pageUrl, startId: startId});
+  });
+}
+
+var activateLocalCap = buildActivateCap(navigation, true);
+
+function setupLaunchedPage(pending) {
+  if (pending.isStation) {
+    pending.outpost.setStationCallbacks = setStationCallbacksCap;
+    pending.outpost.services = highlightingCaps;
+    pending.outpost.isRunning = isRunningCap;
+  }
+  pending.outpost.expectPage = expectCap;
+  pending.outpost.activateLocalPage = activateLocalCap;
+
+  router.addInterface(pending.instanceId, clientTunnel.sendInterface);
+  
+  if('relaunch' in pending) {
+    window.sessionStorage['relaunch'] = pending.relaunch.serialize();
+  }
+  clientTunnel.sendOutpost(pending.outpost);
+}
+
+function setupFreshPage() {
+  if('relaunch' in window.sessionStorage) {
+    var relaunch = iframeServer.restore(window.sessionStorage['relaunch']);
+    delete (window.sessionStorage)['relaunch']
+    relaunch.post(navigation);
+      // TODO(iainmcgin): should handle failure here and do something nice
+    return;
+  }
+
+  // client might want to become an instance or the station
+  var tempInstanceId = newUUIDv4();
+  router.addInterface(tempInstanceId, clientTunnel.sendInterface);
+  
+  var outpost = {
+    instanceId: tempInstanceId,
+    temporaryInstance: true,
+    becomeInstance: iframeServer.grant(function(instanceDescription) {
+      stationCap('newInstHandler').post({
+        instanceDescription: instanceDescription,
+        navigation: navigation
+      });
+    }),
+    expectPage: expectCap,
+    activateLocalPage: activateLocalCap,
+    services: highlightingCaps
+  };
+  
+  clientTunnel.sendOutpost(outpost);
+}
+
+
+function checkForSuggestions(location, showSuggestions, navigate) {
+  var m = location.match('^https?://[^/]*');
+  if (m === null) return;
+  location = m[0];
+
+  stationCap('getSuggestions').post(location, function(v) {
+    if (v.suggestions.length == 0) return;
+    
+    var buttonContainer = document.getElementById('suggestButtons');
+    Object.keys(v.suggestions).forEach(function(k) {
+      var suggestion = v.suggestions[k];
+      var btn = document.createElement('button');
+      btn.className = 'suggestButton';
+      btn.appendChild(document.createTextNode(suggestion.name));
+      buttonContainer.appendChild(btn);
+      btn.addEventListener('click', function() {
+        v.doLaunchActivate.post({
+          doLaunch: suggestion.doLaunch,
+          navigation: navigation
+        });
+      });
+    });
+    actionPort.postMessage('showButterBar');
+  });
+}
+
+
+document.getElementById('closeButton').addEventListener('click',
+  function() { actionPort.postMessage('hideButterBar'); });
+
+setUpClient();
+
+</script>
+</body>
+
+</html>

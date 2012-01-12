@@ -9,3 +9,4 @@ chrome-ext/includes
 *.log
 built/*
 lib/js/include-belay.js
+java/*/target

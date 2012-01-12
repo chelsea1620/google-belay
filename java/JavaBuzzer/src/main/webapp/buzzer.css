@@ -1,0 +1,16 @@
+.post {
+	margin-bottom: 0.5em;
+	border-bottom: 1px solid #EBEBEB;
+}
+
+.post .time {
+	display: inline;
+	font-style: italic;
+	color: #91959C;
+}
+
+.post .via {
+	display: inline;
+	font-style: italic;
+	color: #91959C;
+}

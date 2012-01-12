@@ -16,11 +16,11 @@ onBelayReady(function() {
   var buzzerContent = $('#buzzer-content');
   ui.resize(150, 200, true);
 
-  belay.dirty = function() {
+  capServer.setSyncNotifier(function(state) {
     if (belay.outpost.info.snapshot_cap) {
-      belay.outpost.info.snapshot_cap.put(capServer.snapshot());
+      belay.outpost.info.snapshot_cap.put(state);
     }
-  };
+  });
 
   var formAjax = function(form, callback) {
     var data = {};

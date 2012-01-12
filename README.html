@@ -1,0 +1,89 @@
+<html>
+<head>
+<link rel="stylesheet" href="lib/css/go.css"></link>
+</head>
+
+<body>
+  <h1>Installing Belay</h1>
+
+  <ol>
+
+  <li> <p> The Belay demo has a number of  Google AppEngine web servers that
+  drive Belay Station and the applications in the demo.  If you don't have Google
+  AppEngine for Python, get it at the <a
+  href="http://code.google.com/appengine/downloads.html">downloads page</a>.
+  </p>
+  </li>
+
+  <li> Once you have AppEngine, your startup will vary depending on
+your platform.  If you are on a Mac, you can load the applications
+into the AppEngine launcher to start them. (Your launcher should
+look like <a href="art/appengine-config.png">like this</a>.) There are four
+directories you should load: station/,
+buzzer/, emote/, and bfriendr/.
+
+If you are on a Linux machine, there is a script, <code>run.sh</code>, in the main
+directory of the repository, that takes the path to your AppEngine installation's
+<code>dev_appserver.py</code> script and starts each application in its own terminal.
+For example, I have AppEngine installed in <code>/home/joe/src/google_appengine</code>,
+so I run:
+
+
+<pre>
+bob@bob-laptop:~/src/belay$ ./run.sh /home/bob/src/google_appengine/dev_appserver.py
+Started belay, pid in /tmp/belay/pids/belay/pid, log in /tmp/belay/logs/belay
+Started station, pid in /tmp/belay/pids/station/pid, log in /tmp/belay/logs/station
+Started buzzer, pid in /tmp/belay/pids/buzzer/pid, log in /tmp/belay/logs/buzzer
+Started emote, pid in /tmp/belay/pids/emote/pid, log in /tmp/belay/logs/emote
+Started bfriendr, pid in /tmp/belay/pids/bfriendr/pid, log in /tmp/belay/logs/bfriendr
+</pre>
+
+<p>
+To get more information on using the startup script and restarting, just run
+<code>./run.sh</code> (with no arguments).
+
+</p>
+</li>
+</ol>
+
+<h1>Exploring The Belay Demo</h1>
+
+<p>Visit <a href="https://belay-belay.appspot.com" target="_blank">https://belay-belay.appspot.com</a>
+(or <a href="http://localhost:9000" target="_blank">http://localhost:9000</a>
+when running a development instance) to enter Belay Station. 
+The primary purpose of Belay Station is
+to hold references to the user's items. When you first launch Belay,
+this item list is empty. Belay Station also contains links to create
+certain well-known items. For example, click on the "Buzzer" and
+"Emote" buttons to create instances of each. You can create as many as
+you wish; they are all independent.</p>
+
+<p>Emote is an emoticon-posting application that requires a capability
+to post to a Buzzer. You can drag the
+<img src="art/buzzer-post-chit.png"/> icon from a Buzzer onto an Emote
+to give it the capability to post to that Buzzer.  Posting continues
+to work even if you pop out Emote and Buzzer instances into their own
+windows.</p>
+
+<p>Bfriendr is an instant-messaging application that support sendings
+capabilities as messages. Unlike the other applications in the demo,
+bfriendr is launched by
+visiting <a href="http://belay-bfriendr.appspot.com" target="_blank">https://belay-bfriendr.appspot.com</a> 
+(or <a href="http://localhost:9009" target="_blank">http://localhost:9009</a> when running
+a development instance).
+Enter a name, etc. and click "get going"; notice that Belay Station
+has a reference to this bfriendr account.  If you
+visit <a href="http://belay-bfriendr.appspot.com" target="_blank">bfriendr</a> 
+(<a href="http://localhost:9009" target="_blank">local development</a>)
+again, you can re-launch your account, or create a new, independent
+account.</p>
+
+<p>Drag the <img src="art/bfriendr-me.png"/> icon from one bfriendr
+onto the invite pane of another bfriendr to introduce them to each
+other. These bfriendr's can send messages to each other that include
+capabilities.</p>
+
+
+</body>
+</html>
+

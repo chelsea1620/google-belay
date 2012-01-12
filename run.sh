@@ -131,8 +131,6 @@ startall() {
 #  startapp 9010 built/belay
   startapp 9000 belay
   startapp 9001 station
-#  startapp 9002 hello
-#  startapp 9003 stickies
   startapp 9004 buzzer
   startapp 9005 emote
   startapp 9009 bfriendr
@@ -142,8 +140,6 @@ stopall() {
 #  stopapp built/belay
   stopapp belay
   stopapp station
-#  stopapp hello
-#  stopapp stickies
   stopapp buzzer
   stopapp emote
   stopapp bfriendr

@@ -712,7 +712,7 @@ describe('CapServer', function() {
           c4 = capServer1.grant(f400URL, 'f400URL');
           s4 = c4.serialize();
           capServer1.revoke(s2);
-          snapshot = capServer1.snapshot();
+          snapshot = capServer1._snapshot();
           capServer1.revokeAll();
           mkRunner(c1).runsGetAndExpectFailure();
           mkRunner(c4).runsGetAndExpectFailure();
@@ -890,14 +890,14 @@ describe('CapServer', function() {
     describe('Synchronization', function() {
       it('should synchronize on grants', function() {
         var sync = false;
-        capServer1.setSyncNotifier(function() { sync = true; });
+        capServer1.setSyncNotifier(function(state) { sync = true; });
         capServer1.grant(function() {});
         expect(sync).toBe(true);
       });
 
       it('should synchronize on revoke', function() {
         var syncCount = 0;
-        capServer1.setSyncNotifier(function() { syncCount++; });
+        capServer1.setSyncNotifier(function(state) { syncCount++; });
         capServer1.grant(function() {}, 'somekey');
         capServer1.revoke('somekey');
         expect(syncCount).toBe(2);
@@ -905,10 +905,19 @@ describe('CapServer', function() {
 
       it('should synchronize on revokeAll', function() {
         var syncCount = 0;
-        capServer1.setSyncNotifier(function() { syncCount++; });
+        capServer1.setSyncNotifier(function(state) { syncCount++; });
         capServer1.grant(function() {}, 'somekey');
         capServer1.revokeAll();
         expect(syncCount).toBe(2);
+      });
+
+      it('should only accept functions for notifiers', function() {
+        var expectedError = 'the sync notifier must be a function that takes ' +
+            'at least one argument';
+        expect(function() { capServer1.setSyncNotifier("not a function") }).
+          toThrow(expectedError);
+        expect(function() { capServer1.setSyncNotifier(function() {})}).
+          toThrow(expectedError);
       });
     });
 

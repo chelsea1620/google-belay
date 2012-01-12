@@ -304,7 +304,7 @@ describe('CapServer', function() {
 
   describe('Build', function() {
     var buildAndExpect = function(item, method, value, expected) {
-      var impl = capServer1.build(item);
+      var impl = capServer1._build(item);
       var called = false;
       impl.invoke(method, capServer1.dataPreProcess(value),
         function(r) {
@@ -320,7 +320,7 @@ describe('CapServer', function() {
     var buildAndExpectError = function(item, expectedError) {
       var built = false;
       try {
-        capServer1.build(item);
+        capServer1._build(item);
         built = true;
       }
       catch (e) {
@@ -398,8 +398,8 @@ describe('CapServer', function() {
 
     it('should be the identity on other handlers', function() {
       var c1 = capServer1.grant(function() { return 22; });
-      var handler1 = capServer1.build(c1);
-      var handler2 = capServer2.build(handler1);
+      var handler1 = capServer1._build(c1);
+      var handler2 = capServer2._build(handler1);
       expect(handler1).toBe(handler2);
     });
 
@@ -421,13 +421,13 @@ describe('CapServer', function() {
     });
 
     it('should give a deadImpl on null', function() {
-      checkDead(capServer1.build(null));
+      checkDead(capServer1._build(null));
     });
 
     it('should give a deadImpl on undefined, numbers, and bools', function() {
-      checkDead(capServer1.build());
-      checkDead(capServer1.build(22));
-      checkDead(capServer1.build(true));
+      checkDead(capServer1._build());
+      checkDead(capServer1._build(22));
+      checkDead(capServer1._build(true));
     });
   });
 
@@ -724,9 +724,9 @@ describe('CapServer', function() {
         };
         var setNewReviver = function() {
           capServer1.setReviver(function(role) {
-            if (role === 'f300') { return capServer1.build(f200); }
-            if (role === 'f500') { return capServer1.build(f500); }
-            if (role === 'f400URL') { return capServer1.build(f400URL); }
+            if (role === 'f300') { return f200; }
+            if (role === 'f500') { return f500; }
+            if (role === 'f400URL') { return f400URL; }
             return null;
           });
         };

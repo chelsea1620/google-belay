@@ -52,7 +52,7 @@ onBelayReady(function() {
 
   var capReviver = function(resClass) {
     if (resClass == rcPost && launchInfo.post_cap) {
-      var poster = function(data) {
+      return function(data) {
         launchInfo.post_cap.post(
           {
             body: data.body,
@@ -61,7 +61,6 @@ onBelayReady(function() {
           reload
         );
       };
-      return capServer.buildSyncFunction(poster);
     }
     return null;
   };

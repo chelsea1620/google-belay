@@ -48,11 +48,12 @@ Arguments:
   cleanrestart: Same as stop followed by cleanstart
 
 The applications are started with these port mappings:
-    belay:    9000
-    station:  9001
-    buzzer:   9004
-    emote:    9005
-    bfriendr: 9009
+    belay:      9000
+    station:    9001
+    buzzer:     9004
+    emote:      9005
+    bfriendr:   9009
+    JavaBuzzer: 9003
 END
 
   exit $exitval
@@ -82,17 +83,20 @@ checkargs() {
     usage "ERROR: Can't find AppEngine at the given path: $APPE"
   fi
 
+  if [[ ! (-d $GAE_JAVA_HOME) ]]; then
+    echo "WARNING: environment variable GAE_JAVA_HOME not set, Java demos won't run"
+  fi
+
   case $OP in
     ""|start|restart|stop|cleanstart|cleanrestart) ;;
     *)  usage "ERROR: Unrecognized command: $OP" ;;
   esac
 }
 
-startapp() {
+start() {
   local port=$1
   local app=$2
-
-  local cmd="python $APPE --enable_sendmail --skip_sdk_update_check -p $port $CLEAR $app"
+  local cmd=$3
 
   mkdir -p $PIDS/$app
 
@@ -102,10 +106,31 @@ startapp() {
     exit 1
   fi
 
-  $cmd 2> $LOGS/$app &
+  $cmd &> $LOGS/$app &
 
   echo $! > $PIDS/$app/pid
   echo "Started $app, pid in $PIDS/$app/pid, log in $LOGS/$app, site at http://localhost:$port"
+}
+
+startappjava() {
+  local port=$1
+  local app=$2
+
+  if [[ ! (-d $GAE_JAVA_HOME) ]]; then
+    return
+  fi
+
+  local cmd="mvn -f java/$app/pom.xml gae:start -Dgae.home=$GAE_JAVA_HOME -Dgae.port=$port -Dgae.wait=true"
+  start $port $app "$cmd"
+}
+
+startapp() {
+  local port=$1
+  local app=$2
+
+  local cmd="python $APPE --enable_sendmail --skip_sdk_update_check -p $port $CLEAR $app"
+
+  start $port $app "$cmd"
 }
 
 stopapp() {
@@ -131,6 +156,7 @@ startall() {
 #  startapp 9010 built/belay
   startapp 9000 belay
   startapp 9001 station
+  startappjava 9003 JavaBuzzer
   startapp 9004 buzzer
   startapp 9005 emote
   startapp 9009 bfriendr
@@ -140,6 +166,7 @@ stopall() {
 #  stopapp built/belay
   stopapp belay
   stopapp station
+  stopapp JavaBuzzer
   stopapp buzzer
   stopapp emote
   stopapp bfriendr

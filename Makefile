@@ -21,4 +21,9 @@ help:
 	@echo 'make lint-js        -- runs the linter on js files'
 	@echo 'make check-notices  -- checks for copyright notices'
 	@echo 'make pull-libraries -- updates third party libraries'
+	@echo 'make java           -- builds java library and demos'
 
+java:
+	mvn verify install -f java/pom.xml
+
+.PHONY: java

@@ -9,6 +9,12 @@ CODING CONVENTIONS
 This code strives to follow the Google style conventions:
   JavaScript: http://google-styleguide.googlecode.com/svn/trunk/javascriptguide.xml
   Python:     http://google-styleguide.googlecode.com/svn/trunk/pyguide.html
+  Java:
+    we use the original Sun Java code conventions, with some exceptions.
+    The Sun conventions document can be found here:
+      http://www.oracle.com/technetwork/java/codeconvtoc-136057.html
+    The exceptions: no tabs, 2 space indent. These conventions are enforced
+    by the checkstyle configurations in the maven builds for each project.
 
 For JavaScript, we use Google's closure-linter (gjslint): 
   http://code.google.com/p/closure-linter/
@@ -30,6 +36,18 @@ http://nodejs.org/#download
 
 If you're on a Mac, use the package installer:
 https://sites.google.com/site/nodejsmacosx/
+
+To build the Java code, you will need:
+- Java App Engine SDK 1.6 or higher:
+  http://code.google.com/appengine/downloads.html#Google_App_Engine_SDK_for_Java
+- Maven 3.x:
+  http://maven.apache.org/download.html
+
+In order to build the Java code, either run
+  make java
+in the root of the project, or run
+  mvn install
+within the java subdirectory.
 
 UNIT TESTING
 ============

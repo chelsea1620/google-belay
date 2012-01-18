@@ -230,10 +230,10 @@ class ImageHandler(CapServer.CapHandler):
     card = self.get_entity()
     self.xhr_response()
     if card.imageType:
-      self.response.headers['Content-Type'] = card.imageType
-      self.response.out.write(card.image)
+      self.response.content_type = card.imageType
+      self.response.body = card.image
     else:
-      self.response.set_status(404)
+      self.response.status = 404
 
 class ImageUploadHandler(CapServer.CapHandler):
   def post(self):
@@ -475,11 +475,3 @@ CapServer.set_handlers(
    ('friend/introduceYourself', IntroduceYourselfHandler)
   ])
 
-
-
-def main():
-  logging.getLogger().setLevel(logging.DEBUG)
-  run_wsgi_app(application)
-
-if __name__ == "__main__":
-  main()

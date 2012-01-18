@@ -12,8 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-#import json # TODO(mzero): add back for Python27
-from django.utils import simplejson as json # TODO(mzero): remove for Python27
+import json
 
 from model import *
 from lib.py.belay import *

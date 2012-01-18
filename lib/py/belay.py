@@ -18,10 +18,8 @@ import logging
 import os
 import uuid
 import urlparse
-#import json # TODO(mzero): add back for Python27
+import json
 import re
-
-from django.utils import simplejson as json # TODO(mzero): remove for Python27
 
 from google.appengine.api import urlfetch
 from google.appengine.ext import db
@@ -113,7 +111,7 @@ def _invokeCapURL(capURL, meth, data=""):
       # TODO(jpolitz): is this sufficient wrapping?
       class Wrapper(object):
         def __init__(self):
-          self.content = result.out.getvalue()
+          self.content = result.body
           self.content_was_truncated = False
           self.status_code = 200 
           self.headers = result.headers
@@ -121,7 +119,7 @@ def _invokeCapURL(capURL, meth, data=""):
 
       return Wrapper()
     else:
-      return dataPostProcess(result.out.getvalue())
+      return dataPostProcess(result.body)
   else:
     result = urlfetch.fetch(capURL, method=meth, payload=data) 
     if result.status_code >= 400 and request.status_code <= 600:
@@ -179,11 +177,9 @@ def dataPreProcess(data):
 
   try:
     return json.dumps({'value': data}, cls=Decapitator)
-  # TODO(mzero): use better exception handler when on Python 2.7
-  #  except TypeError as exn:
-  #    logging.debug(str(exn))
-  except TypeError:
-    logging.debug("Unserializable: " + str(data))
+  except TypeError as exn:
+    logging.debug(str(exn))
+    raise
 
 def dataPostProcess(serialized):
   """Transforms a JSON string into a Python object, detecting any
@@ -198,11 +194,9 @@ def dataPostProcess(serialized):
       return obj
   try:
     return json.loads(serialized, object_hook=capitate)['value']
-  # TODO(mzero): use better exception handler when on Python 2.7
-  #  except ValueError as exn:
-  #    logging.debug(str(exn))
-  except ValueError:
-    logging.debug("Unloadable: " + str(serialized))
+  except ValueError as exn:
+    logging.debug(str(exn))
+    raise
       
 class BcapHandler(webapp.RequestHandler):
   """A base class which implements the details of the BCAP protocol binding 
@@ -218,7 +212,7 @@ class BcapHandler(webapp.RequestHandler):
   """
   
   def xhr_response(self):
-    self.response.headers.add_header("Access-Control-Allow-Origin", "*")
+    self.response.headers["Access-Control-Allow-Origin"] = "*"
 
   def xhr_content(self, content, content_type):
     """Responds to the request with the provided content and content_type,
@@ -228,10 +222,10 @@ class BcapHandler(webapp.RequestHandler):
 
     """
     self.xhr_response()
-    self.response.out.write(content)
-    self.response.headers.add_header("Cache-Control", "no-cache")
-    self.response.headers.add_header("Content-Type", content_type)
-    self.response.headers.add_header("Expires", "Fri, 01 Jan 1990 00:00:00 GMT")
+    self.response.headers["Cache-Control"] = "no-cache"
+    self.response.headers["Expires"] = "Fri, 01 Jan 1990 00:00:00 GMT"
+    self.response.content_type = content_type
+    self.response.body = content
 
   def bcapRequest(self):
     """Convenience method which can be used to decode a JSON request
@@ -322,9 +316,6 @@ class ProxyHandler(BcapHandler):
         handler_class.default_internal_url = url
       klass.__url_mapping__[url] = handler_class
 
-  def __init__(self):
-    pass
-
   def init_cap_handler(self):
     # Strip the '/caps/' prefix off self.request.path
     cap_id = self.request.path_info[self.__class__.prefix_strip_length:]
@@ -333,9 +324,9 @@ class ProxyHandler(BcapHandler):
 
     if len(grants) == 0:
       self.bcapNullResponse()
-      self.response.set_status(404)
-      self.response.out.write("ProxyHandler.init_cap_handler: " + \
-                              "Cap not found: %s\n" % cap_id)
+      self.response.status = 404
+      self.response.body = "ProxyHandler.init_cap_handler: " + \
+                              "Cap not found: %s\n" % cap_id
       return
     if len(grants) > 1:
       # TODO(arjun): appropriate error in response

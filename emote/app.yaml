@@ -14,8 +14,9 @@
 
 application: belay-emote
 version: 1
-runtime: python
+runtime: python27
 api_version: 1
+threadsafe: true
 
 handlers:
 
@@ -25,13 +26,14 @@ handlers:
   secure: always
 
 - url: /generate
-  script: emote.py
+  script: emote.application
   secure: always
 
 - url: /cap/.*
-  script: emote.py
+  script: emote.application
   secure: always
 
 - url: /(.*\.(html|css|js|png))
-  script: lib/py/CORSstatic.py
+  static_files: \1
+  upload: (.*\.(html|css|js|png))
   secure: always

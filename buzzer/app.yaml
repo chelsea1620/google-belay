@@ -14,8 +14,9 @@
 
 application: belay-buzzer
 version: 1
-runtime: python
+runtime: python27
 api_version: 1
+threadsafe: true
 
 handlers:
 
@@ -25,13 +26,14 @@ handlers:
   secure: always
 
 - url: /generate
-  script: buzzer.py
+  script: buzzer.application
   secure: always
 
 - url: /cap/.*
-  script: buzzer.py
+  script: buzzer.application
   secure: always
 
 - url: /(.*\.(html|css|js|png))
-  script: lib/py/CORSstatic.py
+  static_files: \1
+  upload: (.*\.(html|css|js|png))
   secure: always

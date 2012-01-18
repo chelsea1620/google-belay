@@ -14,43 +14,43 @@
 
 application: belay-station
 version: 1
-runtime: python
+runtime: python27
 api_version: 1
+threadsafe: true
 
 handlers:
 
 - url: /belay/generate
-  script: station.py
+  script: station.application
   secure: always
 
 - url: /belay/launch
-  script: station.py
+  script: station.application
   secure: always
 
 - url: /verify/email
-  script: station.py
+  script: station.application
   secure: always
 
 - url: /instances
-  script: station.py
+  script: station.application
   secure: always
 
 - url: /instance
-  script: station.py
+  script: station.application
   secure: always
 
 - url: /login/.*
-  script: station.py
+  script: station.application
   secure: always
 
 - url: /cap/.*
-  script: station.py
+  script: station.application
   secure: always
 
 - url: /(.*\.(html|css|js|png|gif|ico))
   static_files: \1
   upload: (.*\.(html|css|js|png|gif|ico))
-#  script: lib/py/CORSstatic.py
   secure: always
 
 - url: /
@@ -58,21 +58,20 @@ handlers:
   upload: index.html
   secure: always
 
-- url: /test
-  script: lib/py/test.py
-  secure: always
-  login: admin
-
 - url: /cleanup
-  script: gae_openid_store.py
+  script: gae_openid_store.application
   login: admin
 
 - url: /verify/cleanup
-  script: station.py
+  script: station.application
   login: admin
 
 admin_console:
   pages:
   - name: Server Info
     url: /test
+
+libraries:
+- name: lxml
+  version: latest
 

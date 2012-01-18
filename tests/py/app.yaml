@@ -14,19 +14,20 @@
 
 application: test-capserver
 version: 1
-runtime: python
+runtime: python27
 api_version: 1
+threadsafe: true
 
 handlers:
 
 - url: /ping
-  script: test_capserver.py
+  script: test_capserver.application
   
 - url: /caps/.*
-  script: test_capserver.py
+  script: test_capserver.application
 
 - url: /test_entry/.*
-  script: test_capserver.py
+  script: test_capserver.application
 
 - url: /
   static_files: www/index.html 

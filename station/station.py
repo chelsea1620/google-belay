@@ -16,7 +16,7 @@
 
 import datetime
 import time
-#import json # TODO(mzero): add back for Python27
+import json
 import logging
 import os
 import random
@@ -26,8 +26,6 @@ import uuid
 from model import *
 from lib.py.belay import *
 from utils import *
-
-from django.utils import simplejson as json # TODO(mzero): remove for Python27
 
 from google.appengine.api import mail
 from google.appengine.ext import db
@@ -127,7 +125,7 @@ class BelayGenerateHandler(BaseHandler):
 
 class EmailVerifyHandler(BaseHandler):
   def post(self):
-    email_addr = self.request.get('email')
+    email_addr = self.request.POST['email']
 
     if not mail.is_email_valid(email_addr):
       self.error(400)
@@ -346,9 +344,3 @@ set_handlers(
    ('openid/aol/callback', identities_openid.AolCallbackHandler),
   ])
 
-def main():
-  logging.getLogger().setLevel(logging.DEBUG)
-  run_wsgi_app(application)
-
-if __name__ == "__main__":
-  main()

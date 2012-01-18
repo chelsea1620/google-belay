@@ -14,8 +14,8 @@
 
 import uuid
 
-#import json # TODO(mzero): add back for Python27
-from django.utils import simplejson as json # TODO(mzero): remove for Python27
+import json
+
 from lib.py.belay import *
 
 from google.appengine.ext import db

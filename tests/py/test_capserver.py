@@ -35,7 +35,7 @@ class TestModel(db.Model):
 class PingHandler(webapp.RequestHandler):
   
   def get(self):
-    self.response.out.write('{ "value": "pong" }')
+    self.response.body = '{ "value": "pong" }'
 
 
 class TestCapHandler(CapHandler):
@@ -92,7 +92,7 @@ class DirectCapServerTestCase(Defaults):
     handler.set_entity(self.entity)
     handler.initialize(req, resp)
     handler.get()
-    self.assertEqual(handler.response.out.getvalue(), \
+    self.assertEqual(handler.response.body, \
       json.dumps({"value": {"success": True}}))
 
   def testCapRequest(self):
@@ -106,7 +106,7 @@ class DirectCapServerTestCase(Defaults):
     handler = ProxyHandler()
     handler.initialize(req, resp)
     handler.get()
-    self.assertEqual(handler.response.out.getvalue(), \
+    self.assertEqual(handler.response.body, \
       json.dumps({"value": {"success": True}}))
       
   def testInvokeCapURLLocal(self):
@@ -137,19 +137,13 @@ class GrantStringHandler(BcapHandler):
     self.bcapResponse(ser_cap)
 
 
-def main():
-  logging.getLogger().setLevel(logging.DEBUG)
-  
-  application = webapp.WSGIApplication(
-    [('/ping', PingHandler),
-     ('/test_entry/grant', GrantHandler),
-     ('/test_entry/grantWithString', GrantStringHandler),
-     (r'^/caps/.*', ProxyHandler),
-    ], debug=True)
-  
-  set_handlers('/caps/', [ ('internal_url', TestCapHandler) ])
+logging.getLogger().setLevel(logging.DEBUG)
 
-  run_wsgi_app(application)
+application = webapp.WSGIApplication(
+  [('/ping', PingHandler),
+   ('/test_entry/grant', GrantHandler),
+   ('/test_entry/grantWithString', GrantStringHandler),
+   (r'^/caps/.*', ProxyHandler),
+  ], debug=True)
 
-if __name__ == "__main__":
-  main()
+set_handlers('/caps/', [ ('internal_url', TestCapHandler) ])

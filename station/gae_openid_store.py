@@ -133,9 +133,3 @@ class CleanupHandler(webapp.RequestHandler):
 
 
 application = webapp.WSGIApplication([(r'/cleanup', CleanupHandler)])
-
-def main():
-  run_wsgi_app(application)
-
-if __name__ == "__main__":
-  main()

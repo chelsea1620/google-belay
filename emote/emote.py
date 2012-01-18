@@ -77,12 +77,3 @@ belay.set_handlers(
   '/cap',
   [ ('/belay/launch', LaunchHandler),
   ])
-
-
-def main():
-  logging.getLogger().setLevel(logging.DEBUG)
-  run_wsgi_app(application)
-
-
-if __name__ == "__main__":
-  main()

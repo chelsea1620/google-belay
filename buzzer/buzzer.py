@@ -15,12 +15,10 @@
 #!/usr/bin/env python
 
 import datetime
-#import json # TODO(mzero): add back for Python27
+import json
 import logging
 import os
 import sys
-
-from django.utils import simplejson as json # TODO(mzero): remove for Python27
 
 from google.appengine.ext import db
 from google.appengine.ext import webapp
@@ -69,7 +67,7 @@ class ItemData(db.Model):
 class GenerateHandler(belay.BcapHandler):
   def post(self):
     feed = FeedData()
-    feed.title = self.request.get('title')
+    feed.title = self.request.POST['title']
     feed.put()
     snapshot = SnapshotData(parent=feed)
     snapshot.put()
@@ -268,12 +266,3 @@ belay.set_handlers(
     ('/data/snapshot', SnapshotHandler),
     ('/data/attributes', SetAttributesHandler),
   ])
-
-
-def main():
-  logging.getLogger().setLevel(logging.DEBUG)
-  run_wsgi_app(application)
-
-
-if __name__ == "__main__":
-  main()

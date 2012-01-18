@@ -18,6 +18,7 @@ from model import *
 from lib.py.belay import *
 from utils import *
 
+from openid import fetchers
 from openid.consumer import consumer
 from openid.extensions import ax
 from gae_openid_store import AppEngineOpenIDStore
@@ -26,6 +27,34 @@ import datetime
 import logging
 
 import identities
+
+from google.appengine.api import urlfetch
+
+
+class UrlfetchFetcher(fetchers.HTTPFetcher):
+    """An C{L{HTTPFetcher}} that uses AppEngine's urlfetch.
+    """
+    def fetch(self, url, body=None, headers={}):
+        headers.setdefault(
+            'User-Agent',
+            "%s Python-urlfetch" % (fetchers.USER_AGENT))
+
+        f = urlfetch.fetch(url, 
+                method=(urlfetch.POST if body else urlfetch.GET),
+                headers=headers,
+                payload=body,
+                validate_certificate=True)
+
+        resp = fetchers.HTTPResponse()
+        resp.body = f.content
+        resp.final_url = f.final_url or url
+        resp.headers = f.headers
+        resp.status = f.status_code
+        
+        return resp
+
+fetchers.setDefaultFetcher(UrlfetchFetcher())
+
 
 EMAIL_ATTR = 'http://axschema.org/contact/email'
 VERIFIED_EMAIL_ATTR = 'http://axschema.org/contact/verifiedemail'
@@ -198,10 +227,10 @@ class CallbackHandler(CapHandler):
     self.writeOutPage(page);
 
   def writeOutPage(self, page):
-    self.response.out.write(page)
-    self.response.headers.add_header("Cache-Control", "no-cache")
-    self.response.headers.add_header("Content-Type", "text/html;charset=UTF-8")
-    self.response.headers.add_header("Expires", "Fri, 01 Jan 1990 00:00:00 GMT")
+    self.response.headers["Cache-Control"] = "no-cache"
+    self.response.headers["Expires"] = "Fri, 01 Jan 1990 00:00:00 GMT"
+    self.response.content_type = "text/html;charset=UTF-8"
+    self.response.body = page
 
   def addIdentity(self, identity_url, ax_response):
     station = self.get_entity()

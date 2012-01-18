@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
+import os
 import optparse
 import sys
 # Install the Python unittest2 package before you run this script.
@@ -32,6 +32,8 @@ def main(sdk_path, test_path):
     sys.path.append(test_path + '/station')
     import dev_appserver
     dev_appserver.fix_sys_path()
+    os.environ['SERVER_NAME'] = 'testrunner.example.com'
+    os.environ['SERVER_PORT'] = '80'
     suite = unittest2.loader.TestLoader().discover(test_path)
     unittest2.TextTestRunner(verbosity=2).run(suite)
 

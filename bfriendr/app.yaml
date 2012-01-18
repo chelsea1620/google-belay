@@ -14,8 +14,9 @@
 
 application: belay-bfriendr
 version: 1
-runtime: python
+runtime: python27
 api_version: 1
+threadsafe: true
 
 handlers:
 
@@ -25,17 +26,18 @@ handlers:
   secure: always
   
 - url: /belay/generate
-  script: bfriendr.py
+  script: bfriendr.application
   secure: always
 
 - url: /generate-account
-  script: bfriendr.py
+  script: bfriendr.application
   secure: always
 
 - url: /cap/.*
-  script: bfriendr.py
+  script: bfriendr.application
   secure: always
 
 - url: /(.*\.(html|css|js|png))
-  script: lib/py/CORSstatic.py
+  static_files: \1
+  upload: (.*\.(html|css|js|png))
   secure: always

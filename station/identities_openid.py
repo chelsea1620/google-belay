@@ -34,7 +34,9 @@ from google.appengine.api import urlfetch
 class UrlfetchFetcher(fetchers.HTTPFetcher):
     """An C{L{HTTPFetcher}} that uses AppEngine's urlfetch.
     """
-    def fetch(self, url, body=None, headers={}):
+    def fetch(self, url, body=None, headers=None):
+        if headers is None:
+            headers = {}
         headers.setdefault(
             'User-Agent',
             "%s Python-urlfetch" % (fetchers.USER_AGENT))

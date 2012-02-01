@@ -76,12 +76,12 @@ class LaunchHandler(CapHandler):
     auth_request.addExtension(self.buildAttributeRequest())
     
     callback = self.callbackUrl()
-    realm = server_url('')
+    realm = self.server_url('')
 
     form = auth_request.formMarkup(realm, callback, False, {})
 
     reply = {
-      'page': { 'html': server_url('/addOpenId.html') },
+      'page': { 'html': self.server_url('/addOpenId.html') },
       'info': {
         'formContent': form
       }
@@ -90,7 +90,7 @@ class LaunchHandler(CapHandler):
 
   def callbackUrl(self):
     station = self.get_entity()
-    return regrant(self.callbackClass(), station).serialize()
+    return self.cap_server.regrant(self.callbackClass(), station).serialize()
 
   def buildAttributeRequest(self):
     ax_request = ax.FetchRequest()
@@ -209,7 +209,7 @@ class CallbackHandler(CapHandler):
 
   def handleOpenIdResponse(self, args):
     c = consumer.Consumer({}, AppEngineOpenIDStore())
-    result = c.complete(args, server_url(self.requestPath()))
+    result = c.complete(args, self.server_url(self.requestPath()))
 
     if result.status == consumer.SUCCESS:
         ax_response = ax.FetchResponse.fromSuccessResponse(result)
@@ -354,7 +354,7 @@ class LoginCallbackHandler(CallbackHandler):
       window.close();
     </script></body>
     </html>'''.format(
-      header=header, message=message, url=launch_url(stationKey))
+      header=header, message=message, url=self.server_url(launch_path(stationKey)))
 
   def buildMultipleStationPage(self):
     return '''<html>
@@ -368,17 +368,17 @@ class LoginCallbackHandler(CallbackHandler):
 # TODO(mzero): these callbackUrl() calls must match the map in station.py
 class GoogleLoginLaunchHandler(GoogleLaunchHandler):
   def callbackUrl(self):
-    return server_url("/login/openid/google/callback")
+    return self.server_url("/login/openid/google/callback")
 
 
 class YahooLoginLaunchHandler(YahooLaunchHandler):
   def callbackUrl(self):
-    return server_url("/login/openid/yahoo/callback")
+    return self.server_url("/login/openid/yahoo/callback")
 
 
 class AolLoginLaunchHandler(AolLaunchHandler):
   def callbackUrl(self):
-    return server_url("/login/openid/aol/callback")
+    return self.server_url("/login/openid/aol/callback")
 
 
 class GoogleLoginCallbackHandler(LoginCallbackHandler):

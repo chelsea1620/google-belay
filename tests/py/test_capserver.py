@@ -20,7 +20,6 @@ from google.appengine.ext import testbed
 from google.appengine.ext import webapp
 from lib.py.belay import *
 from lib.py.belay import _Grant
-from lib.py.belay import _invokeCapURL
 
 from google.appengine.ext.webapp import Request
 from google.appengine.ext.webapp import Response
@@ -37,86 +36,10 @@ class PingHandler(webapp.RequestHandler):
   def get(self):
     self.response.body = '{ "value": "pong" }'
 
-
 class TestCapHandler(CapHandler):
   
   def get(self):
     self.bcapResponse({ 'success': True })
-  
-
-class Defaults(unittest.TestCase):
-
-  def setUp(self):
-    self.testbed = testbed.Testbed()
-    self.testbed.activate()
-    self.testbed.init_datastore_v3_stub()
-    self.entity = TestModel()
-    self.entity.put()
-
-  def tearDown(self):
-    self.testbed.deactivate()
-    ProxyHandler.__url_mapping__ = None
-
-
-class DirectCapServerTestCase(Defaults):
-
-  def setUp(self):
-    super(DirectCapServerTestCase, self).setUp()
-    self.entity = TestModel()
-    self.entity.put()
-
-  def testCreateGrant(self):
-    TestCapHandler.default_internal_url = 'internal_url'
-    cap = grant(TestCapHandler, self.entity)
-    self.assertEqual(1, len(_Grant.all().fetch(2)))
-
-  def testRegrant(self):
-    TestCapHandler.default_internal_url = 'internal_url'
-    cap = grant(TestCapHandler, self.entity)
-    cap2 = regrant(TestCapHandler, self.entity)
-    self.assertEqual(cap.serialize(), cap2.serialize())
-    self.assertEqual(1, len(_Grant.all().fetch(2)))
-
-  def testRegrantStr(self):
-    cap = grant('internal', self.entity)
-    cap2 = regrant('internal', self.entity)
-    self.assertEqual(cap.serialize(), cap2.serialize())
-    self.assertEqual(1, len(_Grant.all().fetch(2)))
-
-  def testInternalCapRequest(self):
-    TestCapHandler.default_internal_url = 'internal_url'
-    
-    req = Request.blank('/internal_url')
-    resp = Response()
-    handler = TestCapHandler()
-    handler.set_entity(self.entity)
-    handler.initialize(req, resp)
-    handler.get()
-    self.assertEqual(handler.response.body, \
-      json.dumps({"value": {"success": True}}))
-
-  def testCapRequest(self):
-    set_handlers('/caps/', [ ('internal_url', TestCapHandler) ])
-
-    extern_url = grant(TestCapHandler, self.entity).serialize()
-     
-    req = Request.blank(extern_url)
-    resp = Response()
-    
-    handler = ProxyHandler()
-    handler.initialize(req, resp)
-    handler.get()
-    self.assertEqual(handler.response.body, \
-      json.dumps({"value": {"success": True}}))
-      
-  def testInvokeCapURLLocal(self):
-    set_handlers('/caps/', [ ('internal_url', TestCapHandler) ])
-    extern_url = grant(TestCapHandler, self.entity).serialize()
-
-    result = _invokeCapURL(extern_url, 'GET')
-
-    self.assertEqual(result, {"success": True})
- 
 
 class GrantHandler(BcapHandler):
   
@@ -124,7 +47,7 @@ class GrantHandler(BcapHandler):
     test_entity = TestModel()
     test_entity.put()
     
-    ser_cap = grant(TestCapHandler, test_entity)
+    ser_cap = self.cap_server.grant(TestCapHandler, test_entity)
     self.bcapResponse(ser_cap)
 
 class GrantStringHandler(BcapHandler):
@@ -133,7 +56,7 @@ class GrantStringHandler(BcapHandler):
     test_entity = TestModel()
     test_entity.put()
 
-    ser_cap = grant('internal_url', test_entity)
+    ser_cap = self.cap_server.grant('internal_url', test_entity)
     self.bcapResponse(ser_cap)
 
 
@@ -147,3 +70,63 @@ application = webapp.WSGIApplication(
   ], debug=True)
 
 set_handlers('/caps/', [ ('internal_url', TestCapHandler) ])
+
+class Defaults(unittest.TestCase):
+
+  def setUp(self):
+    self.testbed = testbed.Testbed()
+    self.testbed.activate()
+    self.testbed.init_datastore_v3_stub()
+    self.entity = TestModel()
+    self.entity.put()
+
+  def tearDown(self):
+    self.testbed.deactivate()
+
+class DirectCapServerTestCase(Defaults):
+
+  def setUp(self):
+    super(DirectCapServerTestCase, self).setUp()
+    self.entity = TestModel()
+    self.entity.put()
+    self.cap_server = CapServer('http://cap.example.com/cap/')
+
+  def testCreateGrant(self):
+    cap = self.cap_server.grant(TestCapHandler, self.entity)
+    self.assertEqual(1, len(_Grant.all().fetch(2)))
+
+  def testRegrant(self):
+    cap = self.cap_server.grant(TestCapHandler, self.entity)
+    cap2 = self.cap_server.regrant(TestCapHandler, self.entity)
+    self.assertEqual(cap.serialize(), cap2.serialize())
+    self.assertEqual(1, len(_Grant.all().fetch(2)))
+
+  def testRegrantStr(self):
+    cap = self.cap_server.grant('internal', self.entity)
+    cap2 = self.cap_server.regrant('internal', self.entity)
+    self.assertEqual(cap.serialize(), cap2.serialize())
+    self.assertEqual(1, len(_Grant.all().fetch(2)))
+
+
+class CapOperationsTestCase(Defaults):
+
+  def testGrant(self):
+    req = Request.blank('http://testrunner.example.com/test_entry/grant')
+    rsp = req.get_response(application)
+    self.assertEqual(rsp.status_int, 200)
+    d = json.loads(rsp.body)
+    self.assertIn('value', d)
+    self.assertIn('@', d['value'])
+    cap = d['value']['@']
+    self.assertRegexpMatches(cap, r'^http://testrunner.example.com/caps/')
+
+  def testInvoke(self):
+    req = Request.blank('http://testrunner.example.com/test_entry/grant')
+    rsp = req.get_response(application)
+    self.assertEqual(rsp.status_int, 200)
+    cap = json.loads(rsp.body)['value']['@']
+    
+    req2 = Request.blank(cap)
+    rsp2 = req2.get_response(application)
+    self.assertEqual(rsp2.body, \
+      json.dumps({"value": {"success": True}}))

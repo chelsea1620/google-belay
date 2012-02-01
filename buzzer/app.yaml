@@ -37,3 +37,7 @@ handlers:
   static_files: \1
   upload: (.*\.(html|css|js|png))
   secure: always
+
+libraries:
+- name: django
+  version: latest

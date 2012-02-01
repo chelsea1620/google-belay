@@ -37,28 +37,18 @@ import identities_openid
 
 
 
-def defaultTools():
-  return [
-    { 'name': 'Emote',
-      'icon': tool_url(9005, '/tool-emote.png'),
-      'generate': cap(tool_url(9005, '/belay/generate'))
-    }
-  ]
- 
-
-
-def allInstances(station):
+def allInstances(station, cap_server, handler):
   q = InstanceData.all()
   q.ancestor(station)
   allInstances = []
   for instance in q:
     allInstances.append({
-      'data': dataPostProcess(instance.data),
-      'cap': cap(instance_url(station.key(), instance.key()))
+      'data': cap_server.data_post_process(instance.data),
+      'cap': cap(handler.server_url(instance_path(station.key(), instance.key())))
     })
   return allInstances
 
-def allSections(station):
+def allSections(station, cap_server):
   q = SectionData.all()
   q.ancestor(station)
   allSections = []
@@ -67,7 +57,7 @@ def allSections(station):
       'name': section.name,
       'hidden': section.hidden,
       'attributes': json.loads(section.attributes or '{}'),
-      'attributesCap': regrant(AttributesHandler, section)
+      'attributesCap': cap_server.regrant(AttributesHandler, section)
     })
   return allSections
 
@@ -120,7 +110,7 @@ class BelayGenerateHandler(BaseHandler):
   def get(self):
     station_uuid = uuid.uuid4()
     station_id = str(station_uuid)
-    self.bcapResponse(cap(launch_url(station_id)))
+    self.bcapResponse(cap(self.server_url(launch_path(station_id))))
 
 
 class EmailVerifyHandler(BaseHandler):
@@ -161,7 +151,7 @@ class EmailVerifyHandler(BaseHandler):
 
     mail.send_mail(from_addr, email_addr, subject, body)
 
-    self.bcapResponse(grant(VerificationCheckHandler, verify_data))
+    self.bcapResponse(self.cap_server.grant(VerificationCheckHandler, verify_data))
 
 
 class VerificationCheckHandler(CapHandler):
@@ -169,7 +159,7 @@ class VerificationCheckHandler(CapHandler):
     verify_data = self.get_entity()
 
     if verify_data.expiry_time < long(time.time()):
-        revokeEntity(verify_data)
+        self.cap_server.revoke_entity(verify_data)
         verify_data.delete()
         self.error(403)
         return
@@ -180,7 +170,7 @@ class VerificationCheckHandler(CapHandler):
     if verify_data.verify_code != entered_code:
       verify_data.tries_left = verify_data.tries_left - 1
       if verify_data.tries_left <= 0:
-        revokeEntity(verify_data)
+        self.cap_server.revoke_entity(verify_data)
         verify_data.delete()
       else:
         verify_data.put()
@@ -195,10 +185,10 @@ class VerificationCheckHandler(CapHandler):
       station = StationData.create()
       identities.create_verified_email_id(station, verify_data.email_address)
 
-    revokeEntity(verify_data)
+    self.cap_server.revoke_entity(verify_data)
     verify_data.delete()
     
-    self.bcapResponse(cap(launch_url(station.key())))
+    self.bcapResponse(cap(self.server_url(launch_path(station.key()))))
 
 
 class VerifyCleanup(BaseHandler):
@@ -220,28 +210,27 @@ class BelayLaunchHandler(BaseHandler):
     html = "/your-sites.html"
       
     reply = {
-      'page': { 'html': server_url(html) },
+      'page': { 'html': self.server_url(html) },
         'info': {
-          'instances': cap(instances_url(station.key())),
-          'instanceBase': instance_url(station.key(), ''),
-          'defaultTools': defaultTools(),
-          'section': regrant(SectionHandler, station),
-          'allInstances': allInstances(station),
-          'allSections': allSections(station),
-          'identities': regrant(identities.IdentitiesHandler, station),
+          'instances': cap(self.server_url(instances_path(station.key()))),
+          'instanceBase': self.server_url(instance_path(station.key(), '')),
+          'section': self.cap_server.regrant(SectionHandler, station),
+          'allInstances': allInstances(station, self.cap_server, self),
+          'allSections': allSections(station, self.cap_server),
+          'identities': self.cap_server.regrant(identities.IdentitiesHandler, station),
           'allIdentities': identities.allIdentities(station),
           'addIdentityLaunchers': [
               { 'title': 'Add Gmail',
-                'launch': regrant(identities_openid.GoogleLaunchHandler, station),
+                'launch': self.cap_server.regrant(identities_openid.GoogleLaunchHandler, station),
                 'image': '/res/images/gmail.png' },
               { 'title': 'Add Yahoo',
-                'launch': regrant(identities_openid.YahooLaunchHandler, station),
+                'launch': self.cap_server.regrant(identities_openid.YahooLaunchHandler, station),
                 'image': '/res/images/yahoo.png' },
               { 'title': 'Add AOL',
-                'launch': regrant(identities_openid.AolLaunchHandler, station),
+                'launch': self.cap_server.regrant(identities_openid.AolLaunchHandler, station),
                 'image': '/res/images/aol.png' },
             ],
-          'createProfile': regrant(identities.ProfileAddHandler, station)
+          'createProfile': self.cap_server.regrant(identities.ProfileAddHandler, station)
       }
     }
 
@@ -251,12 +240,12 @@ class BelayLaunchHandler(BaseHandler):
 class InstanceHandler(BaseHandler):
   def get(self):
     instance = self.validate_instance()
-    self.bcapResponse(dataPostProcess(instance.data))
+    self.bcapResponse(self.cap_server.data_post_process(instance.data))
       
   def post(self):
     capValue = self.bcapRequest()
     instance = self.validate_instance()
-    instance.data = db.Text(dataPreProcess(capValue), 'UTF-8')
+    instance.data = db.Text(self.cap_server.data_pre_process(capValue), 'UTF-8')
     instance.put()
     self.bcapResponse(True)
   
@@ -274,7 +263,7 @@ class InstancesHandler(BaseHandler):
     q.ancestor(station)
     ids = []
     for instanceKey in q:
-      identities.append(cap(instance_url(station.key(), instanceKey)))
+      identities.append(cap(server_url(instance_path(station.key(), instanceKey))))
     
     self.bcapResponse(ids)
 
@@ -295,7 +284,7 @@ class SectionHandler(CapHandler):
     self.bcapResponse({
       'name': section.name,
       'hidden': section.hidden,
-      'attributes': regrant(AttributesHandler, section),
+      'attributes': self.cap_server.regrant(AttributesHandler, section),
     })
 
   

@@ -25,10 +25,6 @@ from google.appengine.ext.webapp.util import run_wsgi_app
 from lib.py import belay
 
 
-os.environ['DJANGO_SETTINGS_MODULE'] = 'settings'
-from django.template.loader import render_to_string
-
-
 class EmoteData(db.Model):
   postCap = db.TextProperty()
   nameCap = db.TextProperty()
@@ -42,8 +38,8 @@ class GenerateHandler(belay.BcapHandler):
     emote.nameCap = bzrInfo['nameCap'].serialize()
     emote.put()
     self.bcapResponse({
-      'launch': belay.regrant(LaunchHandler, emote),
-      'icon': belay.server_url("/tool-emote.png"), 
+      'launch': self.cap_server.regrant(LaunchHandler, emote),
+      'icon': self.server_url("/tool-emote.png"), 
       'name': 'Emote to ' + bzrInfo['name']
     })
 
@@ -52,12 +48,12 @@ class LaunchHandler(belay.CapHandler):
   def get(self):
     self.bcapResponse({
         'page': {
-          'html': belay.server_url("/"),
+          'html': self.server_url("/"),
           'window': { 'width': 300, 'height': 250 }
         },
         'gadget': {
-          'html': belay.server_url("/view/gadget"),
-          'scripts': [ belay.server_url("/emote.js") ]
+          'html': self.server_url("/view/gadget"),
+          'scripts': [ self.server_url("/emote.js") ]
         },
         'info': { 
           'post': self.get_entity().postCap,

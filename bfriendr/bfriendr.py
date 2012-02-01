@@ -18,14 +18,14 @@ import datetime
 import logging
 import os
 
-import lib.py.belay as CapServer
+from lib.py import belay
 
 from google.appengine.ext import db
 from google.appengine.ext import webapp
 from google.appengine.ext.webapp.util import run_wsgi_app
   
 def delete_entity(entity):
-  CapServer.revokeEntity(entity)
+  belay.CapServer.revoke_entity(entity)
   entity.delete()
 
 
@@ -37,14 +37,14 @@ class CardData(db.Model):
   notes = db.StringProperty()
   # TODO(mzero): needs a refresh_cap property at some point
   
-  def toJSON(self):
+  def toJSON(self, cap_server):
     cardJSON = {
       'name':       self.name,
       'email':      self.email,
       'notes':      self.notes,
     }
     if self.imageType:
-      cardJSON['image'] = CapServer.regrant(ImageHandler, self).serialize()
+      cardJSON['image'] = cap_server.regrant(ImageHandler, self).serialize()
     return cardJSON
 
   
@@ -91,14 +91,14 @@ class MessageData(db.Model):
   def deleteAll(self):
     delete_entity(self)
 
-  def toJSON(self):
+  def toJSON(self, cap_server):
     if self.capability is None or self.resource_class is None:
       return {'message': self.message,
               'when': str(self.when) }
     else:
       return {'message': self.message,
               'when': str(self.when),
-              'capability': CapServer.Capability(self.capability),
+              'capability': cap_server.restore(self.capability),
               'resource_class': str(self.resource_class)}
 
 class AccountData(db.Model):
@@ -119,19 +119,19 @@ def new_account():
   account.put()
   return account
 
-class GenerateHandler(CapServer.CapHandler): pass
-class LaunchHandler(CapServer.CapHandler): pass
-class AccountInfoHandler(CapServer.CapHandler): pass
-class FriendsListHandler(CapServer.CapHandler): pass
-class FriendInfoHandler(CapServer.CapHandler): pass
-class StreamReadHandler(CapServer.CapHandler): pass
-class StreamPostHandler(CapServer.CapHandler): pass
-class MessageInfoHandler(CapServer.CapHandler): pass
-class IntroduceYourselfHandler(CapServer.CapHandler): pass
+class GenerateHandler(belay.CapHandler): pass
+class LaunchHandler(belay.CapHandler): pass
+class AccountInfoHandler(belay.CapHandler): pass
+class FriendsListHandler(belay.CapHandler): pass
+class FriendInfoHandler(belay.CapHandler): pass
+class StreamReadHandler(belay.CapHandler): pass
+class StreamPostHandler(belay.CapHandler): pass
+class MessageInfoHandler(belay.CapHandler): pass
+class IntroduceYourselfHandler(belay.CapHandler): pass
 
-class GenerateHandler(CapServer.BcapHandler):
+class GenerateHandler(belay.BcapHandler):
   def get(self):
-    self.bcapResponse(CapServer.grant(LaunchHandler, new_account()))
+    self.bcapResponse(self.cap_server.grant(LaunchHandler, new_account()))
 
   def post(self):
     account = new_account()
@@ -148,53 +148,53 @@ class GenerateHandler(CapServer.BcapHandler):
 
     card.put()
     response = {
-      'launch': CapServer.grant(LaunchHandler, account),
-      'icon': CapServer.server_url('/person.png'),
+      'launch': self.cap_server.grant(LaunchHandler, account),
+      'icon': self.server_url('/person.png'),
       'name': 'bfriendr for ' + card.name
     }
     self.bcapResponse(response)
 
-class GenerateAccountHandler(CapServer.BcapHandler):
+class GenerateAccountHandler(belay.BcapHandler):
   def get(self):
-    self.bcapResponse(CapServer.grant(AccountInfoHandler, new_account()))
+    self.bcapResponse(self.cap_server.grant(AccountInfoHandler, new_account()))
 
 
-class LaunchHandler(CapServer.CapHandler):
+class LaunchHandler(belay.CapHandler):
   def get(self):
     account = self.get_entity()
     response = {
       'page': {
-        'html': CapServer.server_url('/bfriendr-belay.html'),
+        'html': self.server_url('/bfriendr-belay.html'),
         'window': {'height': 800, 'width': 350}
       },
       'x-gadget': {
-        'html': CapServer.server_url('/bfriendr.html'),
-        'scripts': [ CapServer.server_url('/bfriendr.js') ]
+        'html': self.server_url('/bfriendr.html'),
+        'scripts': [ self.server_url('/bfriendr.js') ]
       },
       'info': {
-        'friends':  CapServer.regrant(FriendsListHandler, account),
-        'myCard':  CapServer.regrant(CardInfoHandler, account.my_card),
-        'introduceYourself': CapServer.regrant(IntroduceYourselfHandler, account),
-        'introduceMeTo': CapServer.regrant(IntroduceMeToHandler, account),
-        'chitURL': CapServer.server_url('/chit.png'),
+        'friends':  self.cap_server.regrant(FriendsListHandler, account),
+        'myCard':  self.cap_server.regrant(CardInfoHandler, account.my_card),
+        'introduceYourself': self.cap_server.regrant(IntroduceYourselfHandler, account),
+        'introduceMeTo': self.cap_server.regrant(IntroduceMeToHandler, account),
+        'chitURL': self.server_url('/chit.png'),
         # TODO(mzero): or should this be just the following?
-        'account':  CapServer.regrant(AccountInfoHandler, account),
+        'account':  self.cap_server.regrant(AccountInfoHandler, account),
       }
     }
 
     self.bcapResponse(response)
 
 
-class AccountInfoHandler(CapServer.CapHandler):
+class AccountInfoHandler(belay.CapHandler):
   def get(self):
     account = self.get_entity()
-    introduceYS = CapServer.regrant(IntroduceYourselfHandler, account)
-    introduceMT = CapServer.regrant(IntroduceMeToHandler, account)
+    introduceYS = self.cap_server.regrant(IntroduceYourselfHandler, account)
+    introduceMT = self.cap_server.regrant(IntroduceMeToHandler, account)
     self.bcapResponse({
-      'friends':  CapServer.regrant(FriendsListHandler, account),
+      'friends':  self.cap_server.regrant(FriendsListHandler, account),
       'introduceYourself': introduceYS,
       'introduceMeTo': introduceMT,
-      'myCard':  CapServer.regrant(CardInfoHandler, account.my_card),
+      'myCard':  self.cap_server.regrant(CardInfoHandler, account.my_card),
     })
 
   def delete(self):
@@ -203,11 +203,11 @@ class AccountInfoHandler(CapServer.CapHandler):
     self.bcapNullResponse()
     
     
-class CardInfoHandler(CapServer.CapHandler):
+class CardInfoHandler(belay.CapHandler):
   def get(self):
     card = self.get_entity()
-    cardJSON = card.toJSON()
-    cardJSON['uploadImage'] = CapServer.regrant(ImageUploadHandler, card).serialize()
+    cardJSON = card.toJSON(self.cap_server)
+    cardJSON['uploadImage'] = self.cap_server.regrant(ImageUploadHandler, card).serialize()
     self.bcapResponse(cardJSON)
   
   def put(self):
@@ -225,7 +225,7 @@ class CardInfoHandler(CapServer.CapHandler):
     card.deleteAll()
     self.bcapNullResponse()
 
-class ImageHandler(CapServer.CapHandler):
+class ImageHandler(belay.CapHandler):
   def get(self):
     card = self.get_entity()
     self.xhr_response()
@@ -235,7 +235,7 @@ class ImageHandler(CapServer.CapHandler):
     else:
       self.response.status = 404
 
-class ImageUploadHandler(CapServer.CapHandler):
+class ImageUploadHandler(belay.CapHandler):
   def post(self):
     card = self.get_entity()
     image = self.request.POST['imageFile']
@@ -244,12 +244,12 @@ class ImageUploadHandler(CapServer.CapHandler):
     card.put()
     # TODO(mzero): Revoking the cap is a hack, and will break some clients for
     # no good reason. Really ImageHandler should do ETags on the image data.
-    CapServer.revoke(ImageHandler, card)
+    self.cap_server.revoke(ImageHandler, card)
     self.xhr_response()
 
 
 
-class FriendsListHandler(CapServer.CapHandler):
+class FriendsListHandler(belay.CapHandler):
   def get(self):
     account = self.get_entity()
 
@@ -257,23 +257,23 @@ class FriendsListHandler(CapServer.CapHandler):
     q.ancestor(account)
     friends = []
     for friendKey in q:
-      friends.append(CapServer.regrant(FriendInfoHandler, friendKey))
+      friends.append(self.cap_server.regrant(FriendInfoHandler, friendKey))
         # NOTE(mzero): regrant should re-use any existing granted cap
         # NOTE(mzero): 2nd arg should accept a key as well as an entity
     self.bcapResponse(friends)
 
 
-class FriendInfoHandler(CapServer.CapHandler):
+class FriendInfoHandler(belay.CapHandler):
   def get(self):
     friend = self.get_entity()
 
-    read_my_stream = CapServer.regrant(StreamReadHandler, friend)
-    write_my_stream = CapServer.regrant(StreamPostHandler, friend)
-    read_conversation = CapServer.regrant(ConversationReadHandler, friend)
+    read_my_stream = self.cap_server.regrant(StreamReadHandler, friend)
+    write_my_stream = self.cap_server.regrant(StreamPostHandler, friend)
+    read_conversation = self.cap_server.regrant(ConversationReadHandler, friend)
 
     self.bcapResponse({
-      'card': friend.card.toJSON(),
-      'readTheirStream': CapServer.Capability(friend.read_their_stream),
+      'card': friend.card.toJSON(self.cap_server),
+      'readTheirStream': self.cap_server.restore(friend.read_their_stream),
       'readMyStream': read_my_stream,
       'postToMyStream': write_my_stream,
       'readConversation': read_conversation
@@ -289,7 +289,7 @@ class FriendInfoHandler(CapServer.CapHandler):
     self.bcapNullResponse()
       # NOTE(mzero)
 
-class StreamPostHandler(CapServer.CapHandler):
+class StreamPostHandler(belay.CapHandler):
   def post(self):
     friend_info = self.get_entity()
     request = self.bcapRequest()
@@ -305,12 +305,12 @@ class StreamPostHandler(CapServer.CapHandler):
     # TODO(jpolitz): handle capabilities in messages
     self.bcapResponse({'success': True})
 
-class ConversationReadHandler(CapServer.CapHandler):
+class ConversationReadHandler(belay.CapHandler):
   def get(self):
     friend_info = self.get_entity()
 
-    readMine = CapServer.regrant(StreamReadHandler, friend_info)
-    readTheirs = CapServer.Capability(friend_info.read_their_stream)
+    readMine = self.cap_server.regrant(StreamReadHandler, friend_info)
+    readTheirs = self.cap_server.restore(friend_info.read_their_stream)
 
     mine = readMine.invoke('GET')['items']
     theirs = readTheirs.invoke('GET')['items']
@@ -327,8 +327,8 @@ class ConversationReadHandler(CapServer.CapHandler):
 
     when = request['when']
 
-    readMine = CapServer.regrant(StreamReadHandler, friend_info)
-    readTheirs = CapServer.Capability(friend_info.read_their_stream)
+    readMine = self.cap_server.regrant(StreamReadHandler, friend_info)
+    readTheirs = self.cap_server.restore(friend_info.read_their_stream)
 
     mine = readMine.invoke('GET')['items']
     theirs = readTheirs.invoke('GET')['items']
@@ -340,19 +340,19 @@ class ConversationReadHandler(CapServer.CapHandler):
     self.bcapResponse({'items': combined})
 
 
-class StreamReadHandler(CapServer.CapHandler):
+class StreamReadHandler(belay.CapHandler):
   def get(self):
     friend_info = self.get_entity()
     q = MessageData.all().ancestor(friend_info)
     # TODO(jpolitz): more than 10 messages
     json_messages = []
     for m in q:
-      json_messages.append(m.toJSON())
+      json_messages.append(m.toJSON(self.cap_server))
 
     self.bcapResponse({'items': json_messages})
 
 
-class MessageInfoHandler(CapServer.CapHandler):
+class MessageInfoHandler(belay.CapHandler):
   def get(self):
     message = self.get_entity();
     self.bcapResponse({
@@ -367,10 +367,10 @@ class MessageInfoHandler(CapServer.CapHandler):
     message.deleteAll()
     self.bcapNullResponse()
 
-class IntroduceYourselfHandler(CapServer.CapHandler):
+class IntroduceYourselfHandler(belay.CapHandler):
   def get(self):
     account = self.get_entity()
-    self.bcapResponse(account.my_card.toJSON())
+    self.bcapResponse(account.my_card.toJSON(self.cap_server))
 
   def post(self):
     account = self.get_entity()
@@ -387,7 +387,7 @@ class IntroduceYourselfHandler(CapServer.CapHandler):
                           parent=account)
     # TODO(jpolitz): should images be modeled as caps or no?
     if 'image' in card_data:
-      response = CapServer.Capability(card_data['image']).invoke('GET')
+      response = self.cap_server.restore(card_data['image']).invoke('GET')
       their_card.image = db.Blob(response.content)
       their_card.imageType = response.headers['Content-Type']
     their_card.put()
@@ -397,12 +397,12 @@ class IntroduceYourselfHandler(CapServer.CapHandler):
       them.read_their_stream = stream.serialize()
     them.put()
 
-    stream_for_them = CapServer.regrant(StreamReadHandler, them)
+    stream_for_them = self.cap_server.regrant(StreamReadHandler, them)
 
-    self.bcapResponse({'card': account.my_card.toJSON(),
+    self.bcapResponse({'card': account.my_card.toJSON(self.cap_server),
                        'streamForYou': stream_for_them })
 
-class IntroduceMeToHandler(CapServer.CapHandler):
+class IntroduceMeToHandler(belay.CapHandler):
   def post(self):
     account = self.get_entity()
     request = self.bcapRequest()
@@ -413,13 +413,13 @@ class IntroduceMeToHandler(CapServer.CapHandler):
     new_friend = FriendData(parent=account, card=blank_card)
     new_friend.put()
 
-    stream = CapServer.regrant(StreamReadHandler, new_friend)
+    stream = self.cap_server.regrant(StreamReadHandler, new_friend)
 
     cap = request['introductionCap']
 
     # TODO(jpolitz): useful abstraction so card.toJSON is unnecessary
     intro_info = cap.invoke('POST',
-                            {'card': card.toJSON(),
+                            {'card': card.toJSON(self.cap_server),
                              'streamForYou': stream})
 
     card_data = intro_info['card']
@@ -428,7 +428,7 @@ class IntroduceMeToHandler(CapServer.CapHandler):
                            notes=card_data['notes'])
     # TODO(jpolitz): should images be modeled as caps or no?
     if 'image' in card_data:
-      response = CapServer.Capability(card_data['image']).invoke('GET')
+      response = self.cap_server.restore(card_data['image']).invoke('GET')
       friend_card.image = db.Blob(response.content)
       friend_card.imageType = response.headers['Content-Type']
     friend_card.put()
@@ -441,20 +441,20 @@ class IntroduceMeToHandler(CapServer.CapHandler):
 
     new_friend.put()
     self.bcapResponse({
-        'friend': CapServer.regrant(FriendInfoHandler, new_friend)
+        'friend': self.cap_server.regrant(FriendInfoHandler, new_friend)
     })
 
 
 # Externally Visible URL Paths
 application = webapp.WSGIApplication(
-  [(r'/cap/.*', CapServer.ProxyHandler),
+  [(r'/cap/.*', belay.ProxyHandler),
    ('/belay/generate', GenerateHandler),
    ('/generate-account', GenerateAccountHandler),
   ],
   debug=True)
 
 # Internal Cap Paths
-CapServer.set_handlers(
+belay.set_handlers(
   '/cap',
   [('station/launch',           LaunchHandler),
    ('friend/account',           AccountInfoHandler),

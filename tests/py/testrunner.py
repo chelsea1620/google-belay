@@ -34,6 +34,7 @@ def main(sdk_path, test_path):
     dev_appserver.fix_sys_path()
     os.environ['SERVER_NAME'] = 'testrunner.example.com'
     os.environ['SERVER_PORT'] = '80'
+    os.environ['APPENGINE_RUNTIME'] = 'python27'
     suite = unittest2.loader.TestLoader().discover(test_path)
     unittest2.TextTestRunner(verbosity=2).run(suite)
 

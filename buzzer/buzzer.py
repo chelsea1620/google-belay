@@ -73,8 +73,8 @@ class GenerateHandler(belay.BcapHandler):
     snapshot.put()
     
     response = {
-      'launch': belay.regrant(LaunchHandler, feed),
-      'icon': belay.server_url("/tool-buzzer.png"),
+      'launch': self.cap_server.regrant(LaunchHandler, feed),
+      'icon': self.server_url("/tool-buzzer.png"),
       'name': feed.title
     }
 
@@ -85,9 +85,9 @@ class GenerateReaderHandler(belay.CapHandler):
   def get(self):
     feed = self.get_entity()
     response = {
-        'launch': belay.regrant(LaunchReaderHandler, feed),
+        'launch': self.cap_server.regrant(LaunchReaderHandler, feed),
         'name': 'buzz about ' + feed.title,
-        'icon': belay.server_url('/tool-buzzer.png')
+        'icon': self.server_url('/tool-buzzer.png')
     };
     self.bcapResponse(response)
 
@@ -99,24 +99,24 @@ class LaunchHandler(belay.CapHandler):
 
     response = {
       'page': {
-        'html': belay.server_url('/buzzer-belay.html'),
+        'html': self.server_url('/buzzer-belay.html'),
         'window': { 'width': 300, 'height': 400 } 
       },
       'gadget': {
-        'html': belay.regrant(EditorViewHandler, feed).serialize(),
-        'scripts': [ belay.server_url("/buzzer.js") ]
+        'html': self.cap_server.regrant(EditorViewHandler, feed).serialize(),
+        'scripts': [ self.server_url("/buzzer.js") ]
       },
       'info': {
-        'post_cap': belay.regrant(DataPostHandler, feed),
-        'snapshot_cap': belay.regrant(SnapshotHandler, snapshot),
+        'post_cap': self.cap_server.regrant(DataPostHandler, feed),
+        'snapshot_cap': self.cap_server.regrant(SnapshotHandler, snapshot),
         'snapshot': snapshot.snapshot,
-        'reader_gen_cap': belay.regrant(GenerateReaderHandler, feed),
-        'editor_cap': belay.regrant(EditorViewHandler, feed),
-        'readChitURL': belay.server_url("/chit-24.png"),
-        'postChitURL': belay.server_url("/chit-25.png")
+        'reader_gen_cap': self.cap_server.regrant(GenerateReaderHandler, feed),
+        'editor_cap': self.cap_server.regrant(EditorViewHandler, feed),
+        'readChitURL': self.server_url("/chit-24.png"),
+        'postChitURL': self.server_url("/chit-25.png")
       },
       'attributes': {
-        'set': belay.regrant(SetAttributesHandler, feed)
+        'set': self.cap_server.regrant(SetAttributesHandler, feed)
       }
     }
 
@@ -129,15 +129,15 @@ class LaunchReaderHandler(belay.CapHandler):
 
     response = {
       'page': {
-        'html': belay.server_url('/buzzer-belay.html'),
+        'html': self.server_url('/buzzer-belay.html'),
         'window': { 'width': 300, 'height': 400 } 
       },
       'gadget': {
-        'html': belay.regrant(ReaderViewHandler, feed).serialize(),
-        'scripts': [ belay.server_url("/buzzer.js") ]
+        'html': self.cap_server.regrant(ReaderViewHandler, feed).serialize(),
+        'scripts': [ self.server_url("/buzzer.js") ]
       },
       'info': {
-        'editor_cap': belay.regrant(ReaderViewHandler, feed),
+        'editor_cap': self.cap_server.regrant(ReaderViewHandler, feed),
       }
     }
 
@@ -157,11 +157,11 @@ class ViewHandler(belay.CapHandler):
     items = q.fetch(10);
     
     self.render_to_response('buzzer.tmpl',
-      { 'css_url': belay.server_url('/buzzer.css'),
-        'chit_read_url': belay.server_url('/chit-24.png'),
-        'chit_post_url': belay.server_url('/chit-25.png'),
-        'post_url': belay.regrant(DataPostHandler, feed).serialize(),
-        'profile_url': belay.regrant(DataProfileHandler, feed).serialize(),
+      { 'css_url': self.server_url('/buzzer.css'),
+        'chit_read_url': self.server_url('/chit-24.png'),
+        'chit_post_url': self.server_url('/chit-25.png'),
+        'post_url': self.cap_server.regrant(DataPostHandler, feed).serialize(),
+        'profile_url': self.cap_server.regrant(DataProfileHandler, feed).serialize(),
         'include_post': self.include_post(),
         'need_profile': need_profile,
         'feed': feed,
@@ -173,6 +173,7 @@ class ViewHandler(belay.CapHandler):
       })
 
   def render_to_response(self, tmpl_filename, dictionary):
+    os.environ['DJANGO_SETTINGS_MODULE'] = 'settings'
     """Note that this is different than Django's similarly named function"""
     content = render_to_string(tmpl_filename, dictionary)
     # django is misguided here - it doesn't read the file as UTF-8

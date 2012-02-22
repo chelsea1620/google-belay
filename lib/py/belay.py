@@ -86,6 +86,9 @@ class Capability(object):
   def _invoke_local(self, method, data=""):
     handler = ProxyHandler()
     req = webapp.Request.blank(self.url)
+    req.route = webapp.BaseRoute(None)
+    req.route_args = ()
+    req.route_kwargs = {}
     req.method = method
     if data != None:
       req.body = data

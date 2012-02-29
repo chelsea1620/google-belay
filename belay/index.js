@@ -21,11 +21,10 @@
 
 // TODO(jasvir): These should be modules not scripts
 require([
-    'lib/js/include-belay.js',
     'lib/js/caps',
     'lib/js/common',
     'lib/js/belay-client.js'],
-  function(includeBelay, caps, common, belayClient) {
+  function(caps, common, belayClient) {
     function visible(n) { return n.css('display') != 'none'; };
     function enable(n) { n.removeAttr('disabled'); }
     function disable(n) { n.attr('disabled', 'disabled'); }

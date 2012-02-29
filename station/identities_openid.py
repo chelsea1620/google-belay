@@ -186,16 +186,23 @@ def permuteAttributes(ax):
     else:
         attrs['gender'] = ['other']
 
-  if BIRTH_DATE_ATTR in ax.data:
-    bdate = datetime.date(BIRTH_DATE_ATTR)
-    now = datetime.today()
+  v = []
+  v.extend(ax.data.get(BIRTH_DATE_ATTR, []))
+  if v:
+    ages = []
+    for d in v:
+      try:
+        bdate = datetime.datetime.strptime(d, "%Y-%m-%d")
+        now = datetime.datetime.today()
 
-    age = now.year - bdate.year
-    if (now.month < bdate.month or 
-        (now.month == bdate.month and now.day < bdate.day)):
-      age -= 1
-    
-    attrs['age'] = [str(age)]
+        age = now.year - bdate.year
+        if (now.month < bdate.month or 
+            (now.month == bdate.month and now.day < bdate.day)):
+          age -= 1
+        ages.append(str(age))
+      except:
+        pass
+    attrs['age'] = ages
   
   return attrs
 

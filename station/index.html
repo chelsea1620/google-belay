@@ -41,13 +41,9 @@ limitations under the License.
       </div>
       <div>
         <h2>Or, send a confirmation code:</h2>
-        <fieldset class="confirm-set">
+        <fieldset class="confirm-set" id="email-verify">
           <input name="email" type="email" value="Email address" class="fresh">
           <input type="submit" class="button button-submit" value="Send Email">
-        </fieldset>
-        <fieldset class="confirm-set">
-          <input name="phone" type="text" value="Phone number" class="fresh">
-          <input type="submit" class="button button-submit" value="Send SMS">
         </fieldset>
       </div>
     </div>
@@ -58,5 +54,25 @@ limitations under the License.
         the web. Blah blah woof woof.</p>
     </div>
     <div id="about">©2011 Google</div>
+  </div>
+  <div id="verify-code-dialog" class="dialog" style="display: none">
+    <div class="header">
+      <h1>Code Verification</h1>
+      <span class="close"></span>
+    </div>
+    <div class="main">
+      <p>
+      A code has been sent to the address you provided. Please check your email
+      and enter the code below:
+      </p>
+
+      <input type="text" id="code"></input>
+      <div class="error" style="display: none">
+      The provided code did not match the sent code, please try re-entering the
+      code.
+      </div>
+      <button id="verify-code" class="x-button">Verify</button>
+
+    </div>
   </div>
 </body>

@@ -222,7 +222,7 @@ function(utils, sections, attributes, pageManager) {
             .reduce(function(a, b) {
               if (a == '') return b;
               else return a + ', ' + b;
-            });
+            }, '');
             attrValueElem.text(valueString);
       }
 

@@ -27,6 +27,7 @@ from model import *
 from lib.py.belay import *
 from utils import *
 
+from google.appengine.api import app_identity
 from google.appengine.api import mail
 from google.appengine.ext import db
 from google.appengine.ext import webapp
@@ -141,7 +142,8 @@ class EmailVerifyHandler(BaseHandler):
         tries_left=5)
     verify_data.put()
 
-    from_addr = "Google Web Station <no-reply@%s>" % os.environ['SERVER_NAME']
+    from_addr = ("Google Web Station <no-reply@%s.appspotmail.com>"
+        % app_identity.get_application_id())
     subject = "Verification code for your station"
     body = ("""To log in to your station, copy the following code in to the
     web station login page: %s

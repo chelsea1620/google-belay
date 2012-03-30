@@ -20,7 +20,14 @@ body {
 
 .emote-thing {
   text-align: center;
-  margin: 3em auto;
+  margin: 2em auto;
+}
+
+h1 {
+  margin-bottom: 0;
+}
+
+p.tagline {
 }
 
 .emote-thing p {
@@ -35,7 +42,7 @@ body {
 }
 
 .emote-posters {
-  padding: 14px 0 0;
+  padding: 14px 0 1em;
   font: bold 18px/1.5 "Courier New", Courier, mono;
 }
 
@@ -46,9 +53,9 @@ body {
 }
 
 .emote-message {
-  margin: 0;
   background-color: #95c0fd;
   color: #fff;
   font-weight: bold;
   font-style: italic;
+  padding: 0.25em 0;
 }

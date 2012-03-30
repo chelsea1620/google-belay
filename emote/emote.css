@@ -1,0 +1,54 @@
+/*
+Copyright 2011 Google Inc. All Rights Reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+body {
+  background-color: #dceafe;
+}
+
+.emote-thing {
+  text-align: center;
+  margin: 3em auto;
+}
+
+.emote-thing p {
+  margin: 0;
+}
+#emote-invite {
+  color: #a9a9a9;
+  text-shadow: #c0c0c0 0 1px 1px;
+  font-size: 136%;
+  font-weight: bold;
+  margin: 8px;
+}
+
+.emote-posters {
+  padding: 14px 0 0;
+  font: bold 18px/1.5 "Courier New", Courier, mono;
+}
+
+.emote-post {
+  text-decoration: none;
+  background-color: #fdfb7f;
+  white-space: nowrap;
+}
+
+.emote-message {
+  margin: 0;
+  background-color: #95c0fd;
+  color: #fff;
+  font-weight: bold;
+  font-style: italic;
+}

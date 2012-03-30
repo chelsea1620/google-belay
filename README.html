@@ -1,0 +1,157 @@
+<html>
+<head>
+<title>Google Belay - Readme</title>
+<link rel="stylesheet" href="lib/css/opensans.css">
+<link rel="stylesheet" href="http://www.google.com/css/maia.css"></link>
+</head>
+
+<body>
+<div class="maia-header" id="maia-header">
+  <div class="maia-aux">
+  <h1>
+    <a href="/"><img alt="Google" src=
+    "https://www.google.com/images/logos/google_logo_41.png"> Belay</a>
+  </h1>
+  <h2>
+    Getting Started
+  </h2>
+  </div>
+</div>
+<div id="maia-main">
+  <h1>Installing Belay</h1>
+
+  <ol>
+
+  <li>The Belay demo launches a number of Python Google AppEngine web servers that
+  drive Belay Station and the applications in the demo.  If you don't have Google
+  AppEngine for Python, get it at the <a
+  href="http://code.google.com/appengine/downloads.html">downloads page</a>.
+  </li>
+  <li>Additionally, Belay can also be used with the Java variant of Google
+  AppEngine. If you wish to use this, get it at the <a
+  href="http://code.google.com/appengine/downloads.html">downloads page</a>.
+  Once installed, set the environment variable <code>GAE_JAVA_HOME</code> to
+  the install directory, e.g. 
+  <code>export GAE_JAVA_HOME=~/development/tools/appengine-java-sdk-1.6.1</code>
+  </li>
+
+  <li> Once you have AppEngine, your startup will vary depending on
+your platform.  If you are on a Mac, you can load the applications
+into the AppEngine launcher to start them. (Your launcher should
+look like <a href="art/appengine-config.png">like this</a>.) There are five
+directories you should load: <code>belay/</code>, <code>station/</code>,
+<code>buzzer/</code>, <code>emote/</code>, and <code>bfriendr/</code>.
+
+<p>
+If you are on a Linux/Mac machine, the script <code>run.sh</code> in 
+the main directory of the repository can be used to start the demos. 
+Running this script without any parameters outlines how to use the script. 
+If the dev_appserver.py script provided by the Python variant of Google App E
+ngine is on your path, then simply executing <code>run.sh restart</code> will 
+start all the necessary infrastructure for belay development along with the 
+demo applications:
+</p>
+
+<pre>
+google-belay$ ./run.sh restart
+Stopping belay...
+Stopping station...
+Stopping buzzer...
+Stopping emote...
+Stopping chat...
+Stopping bfriendr...
+Started belay, pid in /tmp/belay/pids/belay/pid, log in /tmp/belay/logs/belay, site at http://localhost:9000
+Started station, pid in /tmp/belay/pids/station/pid, log in /tmp/belay/logs/station, site at http://localhost:9001
+Started buzzer, pid in /tmp/belay/pids/buzzer/pid, log in /tmp/belay/logs/buzzer, site at http://localhost:9004
+Started emote, pid in /tmp/belay/pids/emote/pid, log in /tmp/belay/logs/emote, site at http://localhost:9005
+Started chat, pid in /tmp/belay/pids/chat/pid, log in /tmp/belay/logs/chat, site at http://localhost:9006
+Started bfriendr, pid in /tmp/belay/pids/bfriendr/pid, log in /tmp/belay/logs/bfriendr, site at http://localhost:9009
+</pre>
+
+<p>
+Alternatively, the path to <code>dev_appserver.py</code> can be passed as the
+first argument to <code>run.sh</code>. To get more information on using the 
+startup script and restarting, just run <code>./run.sh</code> (with no 
+arguments).
+</p>
+
+<p>On Windows machines, we recommend using <a href="http://www.cygwin.com/">Cygwin</a> to
+allow the use of the same script.</p>
+</li>
+</ol>
+
+<h1>Exploring The Belay Demos</h1>
+
+<p>Visit <a href="https://belay-station.appspot.com" target="_blank">https://belay-station.appspot.com</a>
+(or <a href="http://localhost:9001" target="_blank">http://localhost:9001</a>
+when running a development instance) to enter Belay Station. 
+The primary purpose of Belay Station is
+to hold references to the user's application instances. Stations can be created
+for a user either by logging in using an OpenID identity from Yahoo or AOL, or
+their Google+ identity. When you first launch 
+Belay, this item list is empty.</p>
+<p>It is currently a requirement that the user's station be open at all times
+while they are interacting with other Belay enabled applications. This
+constraint will be addressed in future versions of Belay.</p>
+
+<h2>Buzzer</h2>
+
+<p>Buzzer is a simple micro-blog web application, which demonstrates the
+ability to grant third parties with the ability to view the blog and to post
+to the blog on the user's behalf (but only while the user has their buzzer
+instance open). The live version can be found at 
+<a href="https://belay-buzzer.appspot.com" target="_blank">https://belay-buzzer.appspot.com</a>
+and the development version can be found at <a href="http://localhost:9004">http://localhost:9004</a>.
+</p>
+
+<h2>Emote</h2>
+
+<p>Emote is an emoticon-posting application that utilizes a capability
+granted from a Buzzer instance. You can drag-and-drop the
+<img src="art/buzzer-post-chit.png"/> icon from a Buzzer instance onto an Emote
+instance to give it the capability to post to that Buzzer. The live version
+can be found at
+<a href="//https://belay-emote.appspot.com" target="_blank">https://belay-emote.appspot.com</a>
+and the development version can be found at <a href="http://localhost:9005">http://localhost:9005</a>.
+</p>
+
+<h2>Bfriendr</h2>
+
+<p>Bfriendr is an instant-messaging application that support sending
+capabilities as messages. The live version can be found at
+<a href="http://belay-bfriendr.appspot.com" target="_blank">https://belay-bfriendr.appspot.com</a> 
+and the development version can be found at <a href="http://localhost:9009" target="_blank">http://localhost:9009</a>.
+
+Enter a name, etc. and click "get going".  If you
+visit <a href="http://belay-bfriendr.appspot.com" target="_blank">bfriendr</a> 
+(<a href="http://localhost:9009" target="_blank">local development</a>)
+again, you can re-launch your account, or create a new, independent
+account.</p>
+
+<p>Drag the <img src="art/bfriendr-me.png"/> icon from one bfriendr
+onto the invite pane of another bfriendr to introduce them to each
+other. These bfriendr's can send messages to each other that include
+capabilities.</p>
+
+<h1>Building the Java infrastructure and demos</h1>
+<p>In order to build the Java source code and demo applications, in addition
+to the Java AppEngine SDK you will require Maven 3.x, which can be downloaded
+<a href="http://maven.apache.org/download.html">here</a>. On a Linux/Mac, one
+can then just run <code>make java</code> from the root folder, or run
+<code>mvn install</code> from within the Java folder. Additionally, Eclipse
+can be used to build the code with the help of the 
+<a href="http://eclipse.org/m2e/">m2eclipse plugin</a>.
+
+</div>
+<div id="maia-signature"></div>
+<div class="maia-footer" id="maia-footer">
+<div id="maia-footer-global">
+  <div class="maia-aux">
+    <ul>
+      <li>© <a href="https://www.google.com/">Google</a></li>
+    </ul>
+  </div>
+</div>
+</body>
+</html>
+

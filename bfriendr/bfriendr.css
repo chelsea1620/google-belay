@@ -1,0 +1,282 @@
+/*
+Copyright 2011 Google Inc. All Rights Reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+/* @group basics */
+.bfriendr {
+  width: 100%;
+  height: 100%;
+  background-color: #fff;
+  position: relative;
+  font-size: 11px;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.bfriendr * {
+  margin: 0;
+  padding: 0;
+}
+
+body#bfriendr {
+  padding: 0;
+}
+
+.bfriendr h1 {
+  padding: 0.25em;
+  font-size: 12pt;
+  font-weight: bold;
+  position: relative;
+}
+.bfriendr textarea {
+  width: 99%;
+}
+.bfriendr button {
+  width: 100%;
+  -webkit-appearance: square-button;
+  text-align: center;
+  padding: 0.25em 0.5em;
+  font-size: 10pt;
+}
+.bfriendr button b {
+  font-weight: normal;
+  font-style: normal;
+}
+.bfriendr .bfriendr-logo {
+  font: bold 12pt "Helvetica Neue", Arial, Helvetica, Geneva, sans-serif;
+}
+.bfriendr .bfriendr-red {
+  color: #de4612;
+}
+
+.bfriendr a.bfriendr-nav {
+  text-decoration: none;
+  color: #2537fb;
+  font-size: 18pt;
+  font-weight: bold;
+}
+
+.bfriendr a.bfriendr-nav:hover {
+  color: #000;
+}
+
+.bfriendr .bfriendr-cardimg {
+  width: 48px;
+  height: 48px;
+  float: left;
+  background-color: #f5f5f5;
+  border: 1px solid #d5d5d5;
+  margin-right: 6px;
+}
+.bfriendr .bfriendr-cardimg img {
+  width: 100%;
+  height: 100%;
+}
+.bfriendr .bfriendr-clear {
+  clear: both;
+}
+
+.bfriendr li {
+  margin: 0 0.5em;
+  padding: 1em 0;
+  display: block;
+  position: relative;
+}
+
+.bfriendr li + li {
+  border-top: 1px solid #c0c0c0;
+}
+.bfriendr li h3 {
+  font-size: 9pt;
+  font-weight: bold;
+  color: #84550c;
+}
+.bfriendr li p + * {
+  margin-top: 1em;
+}
+.bfriendr .bfriendr-instructions {
+  color: #797979;
+  font-weight: bold;
+}
+.bfriendr p.bfriendr-date {
+  font-size: 0.75em;
+  color: #919191;
+  position: absolute;
+  top: 1px;
+  right: 0;
+}
+.bfriendr .bfriendr-clear {
+  clear: both;
+}
+/* @end */
+/* @group header */
+.bfriendr .bfriendr-header {
+  width: 100%;
+  height: 3em;
+  background-color: #fcf8c2;
+  border-bottom: 1px solid #c0c0c0;
+}
+.bfriendr .bfriendr-header .bfriendr-nav {
+  width: 50px;
+  height: 30px;
+  background: url(nav.png) no-repeat 0 -4px;
+  position: absolute;
+  right: 0;
+  top: 4px;
+  z-index: 2000;
+}
+/* @end */
+/* @group mycard */
+.bfriendr .bfriendr-mycard {
+  border: 1px solid #000;
+  background-color: #f3f3f3;
+  z-index: 1000;
+}
+.bfriendr-gadget .bfriendr-mycard {
+  margin: -8px 4px 0;
+  position: relative;
+}
+.bfriendr-page .bfriendr-mycard {
+  margin: -12px 12px 0 8px;
+  position: absolute;
+  width: 80%;
+  right: 0;
+  top: 3em;
+  box-shadow: 0 0 4px 4px #666;
+  -webkit-box-shadow: 0 0 4px 4px #666;
+  -moz-box-shadow: 0 0 4px 4px #666;  
+}
+.bfriendr .bfriendr-mycard h1 {
+  display: none;
+}
+.bfriendr .bfriendr-mycard .bfriendr-cardimg {
+  background-image: url(person-add.png);
+  background-repeat: no-repeat;
+}
+.bfriendr .bfriendr-mycard p + textarea {
+  margin-top: 0;
+}
+.bfriendr .bfriendr-mycard input {
+  width: 10em;
+}
+/* @end */
+/* @group layout */
+.bfriendr-gadget .bfriendr-content {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+.bfriendr-gadget .bfriendr-content-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.bfriendr-gadget .bfriendr-content-inner > div {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+}
+.bfriendr-gadget  .bfriendr-content .bfriendr-messages {
+  left: 100%;
+}
+
+.bfriendr-page .bfriendr-content {
+  position: relative;
+  min-height: 400px;
+}
+.bfriendr-page .bfriendr-cards.narrow {
+  border-right: 1px solid #c0c0c0;
+  width: 50%;
+  background-color: #f5f5f5;
+}
+.bfriendr-page .bfriendr-cards.narrow .bfriendr-nav {
+  display: none;
+}
+.bfriendr-page .bfriendr-cards.narrow .bfriendr-card-active {
+  background: #fff;
+  margin-left: 0;
+  padding-left: 0.5em;
+  margin-right: -0.5em;
+  padding-right: 0.5em;
+}
+.bfriendr-page .bfriendr-cards.narrow .bfriendr-card-active .bfriendr-nav {
+  display: block;
+}
+
+.bfriendr-page .bfriendr-messages {
+  position: absolute;
+  top: 0;
+  left: 100%;
+  width: 50%;
+  overflow: auto;
+}
+
+.bfriendr-page .bfriendr-messages h1 {
+  display: none;
+}
+/* @end */
+/* @group items */
+.bfriendr .bfriendr-card .bfriendr-cardimg {
+  background-image: url(person.png);
+  background-repeat: no-repeat;
+}
+
+.bfriendr .bfriendr-card a.bfriendr-nav {
+  width: 50px;
+  height: 30px;
+  background: url(nav.png) no-repeat -50px -4px;
+  position: absolute;
+  right: 0;
+  top: 0.55em;
+}
+
+.bfriendr-welcome .bfriendr-content {
+  margin: 1em 3em;
+}
+
+.bfriendr-welcome p {
+  margin: 1em 0;
+}
+
+.bfriendr .bfriendr-message img {
+  width: 24px;
+  height: 24px;
+  float: right;
+  padding-left: 4px;
+  padding-bottom: 4px;
+  margin: 0;
+}
+.bfriendr .bfriendr-messages h1 { 
+  background-color: #fcf8c2;
+  border-bottom: 1px solid #c0c0c0;
+}
+
+.bfriendr .bfriendr-messages a.bfriendr-nav {
+  float: left;
+  position: relative;
+  top: -2px;
+  left: 0;
+  width: 50px;
+  height: 30px;
+  background: url(nav.png) no-repeat -50px -64px;
+}
+/* @end */

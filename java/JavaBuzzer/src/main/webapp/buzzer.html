@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Belay Buzzer</title>
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700&amp;subset=latin" rel="stylesheet">
+  <link rel="stylesheet" href="https://www.google.com/css/maia.css">
+  <link rel="stylesheet" href="buzzer.css">
+  <script src="js/include-belay.js"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.js"></script>
+  <script src="js/caps.js"></script>
+  <script src="js/common.js"></script>
+  <script src="js/belay-client.js"></script>
+  <script src="buzzer-instance.js"></script>
+</head>
+<body>
+<div class="maia-header" id="maia-header">
+  <div class="maia-aux">
+  <h1>
+    <a href="/"><img alt="Google" src=
+    "https://www.google.com/images/logos/google_logo_41.png"> Belay</a>
+  </h1>
+  <h2>
+    Buzzer (Java)
+  </h2>
+  </div>
+</div>
+<div class="maia-aux">
+  <div class="maia-article">
+    <h1 id="buzzer-title" class="maia-super"></h1>
+    <h1 id="buzzer-author" style="display: none"></h1>
+    <div id="notification-area" class="maia-col-12" style="display: none">
+      <div class="maia-notification"></div>
+    </div>
+    <div class="maia-col-11">
+      <textarea id="post-content" name="content" style="width: 100%">is...</textarea>
+      <p class="maia-form-error-msg" style="display: none"></p>
+    </div>
+    <div class="maia-col-1">
+      <button id="post-button" class="maia-button">Buzz!</button>
+    </div>
+    <div class="maia-col-12">Previous posts:</div>
+    <div class="previous-posts maia-col-12"></div>
+  </div>
+</div>
+<div id="maia-signature"></div>
+<div class="maia-footer" id="maia-footer">
+<div id="maia-footer-global">
+  <div class="maia-aux">
+    <ul>
+      <li>© <a href="https://www.google.com/">Google</a></li>
+    </ul>
+  </div>
+</div>
+</body>
+</html>

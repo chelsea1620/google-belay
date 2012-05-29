@@ -629,6 +629,73 @@ describe('CapServer', function() {
     });
   });
 
+  describe('Named Grants', function() {
+    it('should grant by name', function() {
+      capServer1.setNamedHandler('doubler', function() {
+        return function(v) { return 2*v; };
+      });
+      var c1 = capServer1.grantNamed('doubler');
+      mkRunner(c1).runsPostAndExpect(21, 42);
+    });
+
+    it('should grant by name with one argument', function() {
+      capServer1.setNamedHandler('multiplier', function(m) {
+        return function(v) { return m*v; };
+      });
+      var cx7 = capServer1.grantNamed('multiplier', 7);
+      var cx10 = capServer1.grantNamed('multiplier', 10);
+      mkRunner(cx7).runsPostAndExpect(4, 28);
+      mkRunner(cx10).runsPostAndExpect(7, 70);
+    });
+
+    it('should grant by name with multiple arguments', function() {
+      capServer1.setNamedHandler('matcher', function(m, x) {
+        return function(v) { return v===m ? x : 0; };
+      });
+      var cDuck = capServer1.grantNamed('matcher', 'duck', 21);
+      var cBlimp = capServer1.grantNamed('matcher', 'blimp', 100);
+      mkRunner(cDuck).runsPostAndExpect('platypus', 0);
+      mkRunner(cDuck).runsPostAndExpect('duck', 21);
+      mkRunner(cBlimp).runsPostAndExpect('dirigible', 0);
+      mkRunner(cBlimp).runsPostAndExpect('blimp', 100);
+    });
+
+    it('should grant by name, and fail if no handler', function() {
+      var cNone = capServer1.grantNamed('none', 1, 2, 3);
+      mkRunner(cNone).runsGetAndExpectFailure();
+    });
+
+    it('should grant by name, work if handler set after', function() {
+      var cLater = capServer1.grantNamed('later', 'gator');
+      mkRunner(cLater).runsGetAndExpectFailure();
+      runs(function() {
+        capServer1.setNamedHandler('later', function(n) {
+          return function() { return n; };
+        });
+      });
+      mkRunner(cLater).runsGetAndExpect('gator');
+    });
+
+    it('should support multiple named handlers', function() {
+      capServer1.setNamedHandler('adder', function(n) {
+        return function(v) { return v+n; };
+      });
+      capServer1.setNamedHandler('multiplier', function(n) {
+        return function(v) { return v*n; };
+      });
+      var cAdd10 = capServer1.grantNamed('adder', 10);
+      var cMult10 = capServer1.grantNamed('multiplier', 10);
+      mkRunner(cAdd10).runsPostAndExpect(5, 15);
+      mkRunner(cMult10).runsPostAndExpect(5, 50);
+    });
+
+    // extra grant args, missing grant args
+    // revocation
+    // handlers that return other kinds of items
+    //  - continuations
+    //  - unknown item type
+  });
+
   describe('Serialization', function() {
     describe('Restoring', function() {
       var servers, ids;

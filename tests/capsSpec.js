@@ -103,6 +103,43 @@ jQuery.ajax = mockWebServer.makeAjax();
 
 XMLHttpRequest = mockWebServer.makeXhr();
 
+describe('Belay hashing', function() {
+  it('should perform the algorithm', function() {
+    /* NOTE(jpolitz): these were done out out "by hand" in the Python REPL, using
+     > import uuid
+     > import hashlib
+     > p = uuid.uuid4()
+     > str(p) # arg to newInstanceId
+     > hashlib.sha256(p.bytes).hexdigest() # expected result
+    */
+    expect(newInstanceId('20079a21-1ee8-4523-ad65-d8c4736276af')).toBe('debc56d8a87287861914bdbf4d0850a7');
+    expect(newInstanceId('f50b4dab-0701-4008-8281-68c4c3ff9d6e')).toBe('8fe5d63019007e79b7516a62385a7b28');
+    expect(newInstanceId('3c89bdda-ff70-4389-8870-2630e768c25d')).toBe('a40a9308790b58b76674d1ba1cb9e7fb');
+  });
+  
+  it('should throw on non-strings', function() {
+    expect(function() { newInstanceId(); }).toThrow(); 
+    expect(function() { newInstanceId({}); }).toThrow();
+    expect(function() { newInstanceId(55); }).toThrow();
+    expect(function() { newInstanceId(0xf50b4dab07014008828168c4c3ff9d6e); }).toThrow(); 
+    expect(function() { newInstanceId(null); }).toThrow(); 
+  });
+  
+  it('should throw on non-uuids', function() {
+    expect(function() { newInstanceId(''); }).toThrow();
+    
+    expect(function() { newInstanceId('5uperman'); }).toThrow();
+    
+    expect(function() { newInstanceId('f50b4dab-0701-4008-0281-68c4c3ff9d6e'); }).toThrow();
+    // The careted hex value has to be in [ab89]          ^
+    
+    expect(function() { newInstanceId('f50b4dab-0701-3008-8281-68c4c3ff9d6e'); }).toThrow();
+    // The careted hex value has to be 4             ^
+    
+    expect(function() { newInstanceId('f50b4dab07014008828168c4c3ff9d6e'); }).toThrow(); 
+  });
+  
+});
 
 describe('CapServer', function() {
   var capServer1;
@@ -169,9 +206,10 @@ describe('CapServer', function() {
     });
 
     it('should throw on bad instanceIds', function() {
+      expect(function() { new CapServer(null); }).toThrow();
       expect(function() { new CapServer(42); }).toThrow();
-      expect(function() { new CapServer('bob'); }).toThrow();
       expect(function() { new CapServer(''); }).toThrow();
+      expect(function() { new CapServer('bob'); }).toThrow();
     });
 
     it('should create a server with no instanceId', function() {

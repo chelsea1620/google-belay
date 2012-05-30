@@ -16,83 +16,85 @@ onBelayReady(function() {
   var buzzerContent = $('#buzzer-content');
   ui.resize(150, 200, true);
 
-  capServer.setSyncNotifier(function(state) {
-    if (belay.outpost.info.snapshot_cap) {
-      belay.outpost.info.snapshot_cap.put(state);
-    }
-  });
-
-  var formAjax = function(form, callback) {
-    var data = {};
-    for (var i = 0; i < form.elements.length; ++i) {
-      var input = form.elements[i];
-      if (input.type == 'text' || input.type == 'textarea') {
-        data[input.name] = input.value;
+  belay.route(launchInfo.client_preimg, function(capServer) {
+    capServer.setSyncNotifier(function(state) {
+      if (belay.outpost.info.snapshot_cap) {
+        belay.outpost.info.snapshot_cap.put(state);
       }
-      else if (input.type == 'submit') {
-        // do nothing
-      }
-      else {
-        alert('Unhandled type of form input: ' +
-                 input.type + ' named ' + input.name);
-      }
-    }
-    capServer.restore(form.action).invoke(
-      form.method.toUpperCase() || 'GET',
-      data,
-      callback,
-      function(error) {
-        alert('form update failed: ' + error.message +
-            ' (' + error.status + ')');
-      });
-  };
-
-  var rcPost = 'urn:x-belay://resource-class/social-feed/postable';
-  var rcBelayGen = 'belay/generate';
-
-  var capReviver = function(resClass) {
-    if (resClass == rcPost && launchInfo.post_cap) {
-      return function(data) {
-        launchInfo.post_cap.post(
-          {
-            body: data.body,
-            via: data.via
-          },
-          reload
-        );
-      };
-    }
-    return null;
-  };
-
-  capServer.setReviver(capReviver);
-
-  var reload = function() {
-    buzzerContent.load(launchInfo.editor_cap.serialize(), function() {
-      var forms = buzzerContent.find('.buzzer-thing form');
-      buzzerContent.find('.buzzer-thing form').submit(function(ev) {
-        formAjax(ev.target, reload);
-        ev.preventDefault();
-        return false;
-      });
-      ui.capDraggable(buzzerContent.find('.buzzer-reader-chit'), rcBelayGen,
-          launchInfo.reader_gen_cap,
-          launchInfo.readChitURL);
-      ui.capDraggable(buzzerContent.find('.buzzer-post-chit'), rcPost,
-          capServer.grant(function(selectedRC) {
-              return {
-                post: capServer.grantKey(selectedRC),
-                name: capServer.grant(function() {
-                    return $('#buzzer-name').text().trim();
-                  })
-              };
-          }),
-          launchInfo.postChitURL);
-      window.belaytest.ready = true;
     });
-  };
 
-  reload();
+    var formAjax = function(form, callback) {
+      var data = {};
+      for (var i = 0; i < form.elements.length; ++i) {
+        var input = form.elements[i];
+        if (input.type == 'text' || input.type == 'textarea') {
+          data[input.name] = input.value;
+        }
+        else if (input.type == 'submit') {
+          // do nothing
+        }
+        else {
+          alert('Unhandled type of form input: ' +
+                   input.type + ' named ' + input.name);
+        }
+      }
+      capServer.restore(form.action).invoke(
+        form.method.toUpperCase() || 'GET',
+        data,
+        callback,
+        function(error) {
+          alert('form update failed: ' + error.message +
+              ' (' + error.status + ')');
+        });
+    };
 
-  belay.outpost.setRefresh.put(capServer.grant(reload));
+    var rcPost = 'urn:x-belay://resource-class/social-feed/postable';
+    var rcBelayGen = 'belay/generate';
+
+    var capReviver = function(resClass) {
+      if (resClass == rcPost && launchInfo.post_cap) {
+        return function(data) {
+          launchInfo.post_cap.post(
+            {
+              body: data.body,
+              via: data.via
+            },
+            reload
+          );
+        };
+      }
+      return null;
+    };
+
+    capServer.setReviver(capReviver);
+
+    var reload = function() {
+      buzzerContent.load(launchInfo.editor_cap.serialize(), function() {
+        var forms = buzzerContent.find('.buzzer-thing form');
+        buzzerContent.find('.buzzer-thing form').submit(function(ev) {
+          formAjax(ev.target, reload);
+          ev.preventDefault();
+          return false;
+        });
+        ui.capDraggable(buzzerContent.find('.buzzer-reader-chit'), rcBelayGen,
+            launchInfo.reader_gen_cap,
+            launchInfo.readChitURL);
+        ui.capDraggable(buzzerContent.find('.buzzer-post-chit'), rcPost,
+            capServer.grant(function(selectedRC) {
+                return {
+                  post: capServer.grantKey(selectedRC),
+                  name: capServer.grant(function() {
+                      return $('#buzzer-name').text().trim();
+                    })
+                };
+            }),
+            launchInfo.postChitURL);
+        window.belaytest.ready = true;
+      });
+    };
+
+    reload();
+
+    belay.outpost.setRefresh.put(capServer.grant(reload));
+  });
 });

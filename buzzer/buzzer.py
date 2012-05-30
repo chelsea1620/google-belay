@@ -19,6 +19,7 @@ import json
 import logging
 import os
 import sys
+import uuid
 
 from google.appengine.ext import db
 from google.appengine.ext import webapp
@@ -33,6 +34,7 @@ class FeedData(db.Model):
   title = db.StringProperty()
   name = db.StringProperty()
   location = db.StringProperty()
+  client_preimg = db.StringProperty()
 
 
 class SnapshotData(db.Model):
@@ -68,6 +70,7 @@ class GenerateHandler(belay.BcapHandler):
   def post(self):
     feed = FeedData()
     feed.title = self.request.POST['title']
+    feed.client_preimg = str(uuid.uuid4())
     feed.put()
     snapshot = SnapshotData(parent=feed)
     snapshot.put()
@@ -107,6 +110,7 @@ class LaunchHandler(belay.CapHandler):
         'scripts': [ self.server_url("/buzzer.js") ]
       },
       'info': {
+        'client_preimg': feed.client_preimg,
         'post_cap': self.cap_server.regrant(DataPostHandler, feed),
         'snapshot_cap': self.cap_server.regrant(SnapshotHandler, snapshot),
         'snapshot': snapshot.snapshot,
@@ -137,6 +141,7 @@ class LaunchReaderHandler(belay.CapHandler):
         'scripts': [ self.server_url("/buzzer.js") ]
       },
       'info': {
+        'client_preimg': str(uuid.uuid4()),
         'editor_cap': self.cap_server.regrant(ReaderViewHandler, feed),
       }
     }

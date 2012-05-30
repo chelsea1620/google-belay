@@ -317,16 +317,11 @@ describe('CapServer', function() {
       expect(called).toBe(true);
     };
 
-    var buildAndExpectError = function(item, expectedError) {
-      var built = false;
-      try {
-        capServer1._build(item);
-        built = true;
-      }
-      catch (e) {
-        expect(e).toEqual(expectedError);
-      }
-      expect(built).toBe(false);
+    var buildAndExpectError = function(item) {
+      if (arguments.length === 0)
+        expect(function() { capServer1._build(); }).toThrow();
+      else
+        expect(function() { capServer1._build(item); }).toThrow();
     };
 
     var checkDead = function(impl) {
@@ -411,23 +406,24 @@ describe('CapServer', function() {
       var badHandler3 = {put: function(v) {},
                          remove: function(s, f) {}};
 
-      buildAndExpectError(badHandler1, 'Inconsistent handlers');
-      buildAndExpectError(badHandler2, 'Inconsistent handlers');
-      buildAndExpectError(badHandler3, 'Inconsistent handlers');
+      buildAndExpectError(badHandler1);
+      buildAndExpectError(badHandler2);
+      buildAndExpectError(badHandler3);
     });
 
     it('should error on empty handlers', function() {
-      buildAndExpectError({}, 'build() given an object with no handlers');
+      buildAndExpectError({});
     });
 
     it('should give a deadImpl on null', function() {
       checkDead(capServer1._build(null));
     });
 
-    it('should give a deadImpl on undefined, numbers, and bools', function() {
-      checkDead(capServer1._build());
-      checkDead(capServer1._build(22));
-      checkDead(capServer1._build(true));
+    it('should throw on undefined, numbers, and bools', function() {
+      buildAndExpectError();
+      buildAndExpectError(22);
+      buildAndExpectError(true);
+      buildAndExpectError(undefined);
     });
   });
 
@@ -689,11 +685,77 @@ describe('CapServer', function() {
       mkRunner(cMult10).runsPostAndExpect(5, 50);
     });
 
-    // extra grant args, missing grant args
+    it('should support named grants with more or less arguments', function() {
+      capServer1.setNamedHandler('countBound', function(a, b) {
+        if (typeof(a) === 'undefined') return function() { return 0; }
+        if (typeof(b) === 'undefined') return function() { return 1; }
+        return function() { return 2; }
+      });
+      var c0 = capServer1.grantNamed('countBound');
+      var c1 = capServer1.grantNamed('countBound', true);
+      var c2 = capServer1.grantNamed('countBound', true, 'yo');
+      var c3 = capServer1.grantNamed('countBound', true, 'yo', 42);
+      mkRunner(c0).runsGetAndExpect(0);
+      mkRunner(c1).runsGetAndExpect(1);
+      mkRunner(c2).runsGetAndExpect(2);
+      mkRunner(c3).runsGetAndExpect(2);
+    });
+
+    it('should support named grants with arbitrary arguments', function() {
+      capServer1.setNamedHandler('index', function() {
+        var stuff = Array.prototype.slice.call(arguments);
+        return function(v) { return stuff[0+v]; };
+      });
+      var cDays = capServer1.grantNamed('index',
+                    'Mon', 'Tue', 'Wed', 'Thr', 'Fri', 'Sat', 'Sun');
+      mkRunner(cDays).runsPostAndExpect(1, 'Tue');
+      mkRunner(cDays).runsPostAndExpect(5, 'Sat');
+      mkRunner(cDays).runsPostAndExpect(9, undefined);
+    });
+
+    it('should support named grants to async handlers', function() {
+      capServer1.setNamedHandler('later', function(x) {
+        return function(v, sk, fk) {
+          setTimeout(function() { sk(x); }, 0);
+        };
+      });
+      var cLater = capServer1.grantNamed('later', 'gator');
+      mkRunner(cLater).runsGetAndExpect('gator');
+    });
+
+    it('should support named grants to object handlers', function() {
+      capServer1.setNamedHandler('box', function(initialValue) {
+        var boxedValue = initialValue;
+        return {
+          get: function() { return boxedValue; },
+          put: function(newValue) { boxedValue = newValue; },
+          post: function(addValue) { return boxedValue += addValue; },
+          remove: function() { boxedValue = initialValue; }
+        };
+      });
+      var cThing = capServer1.grantNamed('box', 7);
+      var r = mkRunner(cThing);
+      r.runsGetAndExpect(7);
+      r.runsPut(9);   r.runsExpectSuccess();
+      r.runsGetAndExpect(9);
+      r.runsPostAndExpect(11, 20);
+      r.runsDelete(); r.runsExpectSuccess();
+      r.runsGetAndExpect(7);
+    });
+
+    it('should throw when setting bad named handlers', function() {
+      expect(function() {
+        capServer1.setNamedHandler('bad', 42);
+      }).toThrow();
+
+      capServer1.setNamedHandler('worse', function() { return 42; });
+      var cSad = capServer1.grantNamed('worse');
+      var r = mkRunner(cSad);
+      r.runsGet();
+      r.runsExpectFailure();
+    });
+
     // revocation
-    // handlers that return other kinds of items
-    //  - continuations
-    //  - unknown item type
   });
 
   describe('Serialization', function() {

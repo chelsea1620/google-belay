@@ -31,7 +31,7 @@ var ROUTER_EXPORTS = (function() {
   var now = ('now' in Date) ? Date.now : function() { return +(new Date); };
 
   var decodeInstanceId = function(ser) {
-    var m = ser.match(/^urn:x-cap:([-0-9a-f]{36}):([-0-9a-f]{36})$/);
+    var m = ser.match(/^urn:x-cap:([-0-9a-f]{32,36}):([-0-9a-f]{36})$/);
     return m ? m[1] : null;
   };
 

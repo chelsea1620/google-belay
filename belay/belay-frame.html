@@ -17,6 +17,7 @@ limitations under the License.
 <!DOCTYPE html>
 <html>
 <head>
+  <script src="lib/js/sjcl.js"></script>
   <script src="lib/js/caps.js"></script>
   <script src="caprouter.js"></script>
 <style type='text/css'>
@@ -131,6 +132,12 @@ var highlightingCaps = {
     actionPort.postMessage('unhighlight');
   })
 };
+
+var routeCap = iframeServer.grant(function(id) {
+  var hashedInstanceId = newInstanceId(id);
+  router.addInterface(hashedInstanceId, clientTunnel.sendInterface);
+  return hashedInstanceId;
+});
 
 window.addEventListener('storage', function(e) {
   // NOTE: setting localStorage doesn't fire events on setting document,
@@ -321,6 +328,7 @@ function setupLaunchedPage(pending) {
   }
   pending.outpost.expectPage = expectCap;
   pending.outpost.activateLocalPage = activateLocalCap;
+  pending.outpost.routeWithHash = routeCap;
 
   router.addInterface(pending.instanceId, clientTunnel.sendInterface);
   
@@ -354,7 +362,8 @@ function setupFreshPage() {
     }),
     expectPage: expectCap,
     activateLocalPage: activateLocalCap,
-    services: highlightingCaps
+    services: highlightingCaps,
+    routeWithHash: routeCap
   };
   
   clientTunnel.sendOutpost(outpost);

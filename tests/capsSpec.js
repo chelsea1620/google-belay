@@ -297,9 +297,6 @@ describe('CapServer', function() {
       r.runsExpectException();
       runs(function() { expect(fnCalledWith).toEqual('not-yet-called'); });
     });
-
-
-
   });
 
   describe('Build', function() {
@@ -755,7 +752,84 @@ describe('CapServer', function() {
       r.runsExpectFailure();
     });
 
-    // revocation
+    it('should revoke named caps when grant preceeds setNamedHandler', function() {
+      var c1 = capServer1.grantNamed('stuff', 21);
+      var c2 = capServer1.grantNamed('stuff', 42);
+      var c3 = capServer1.grantNamed('stuff', 84);
+      
+      // revoke before setNamedHandler is called
+      runs(function() { capServer1.revoke(c1.serialize()); });
+      mkRunner(c1).runsPostAndExpectFailure(50);
+
+      runs(function() {
+        capServer1.setNamedHandler('stuff', function(n) {
+          return function(v) { return v > n; };
+        });
+      });
+
+      // the revoked one should still be dead
+      mkRunner(c1).runsPostAndExpectFailure(50);
+
+      // revoke after setNamedHandler, but before use
+      runs(function() { capServer1.revoke(c2.serialize()); });
+      mkRunner(c2).runsPostAndExpectFailure(50);
+
+      // revoke after setNamedHandler, and use
+      mkRunner(c3).runsPostAndExpect(50, false);
+      runs(function() { capServer1.revoke(c3.serialize()); });
+      mkRunner(c3).runsPostAndExpectFailure(50);
+    });
+
+    it('should revoke named caps when grant and invoke preceeds setNamedHandler', function() {
+      var c1 = capServer1.grantNamed('stuff', 21);
+      var c2 = capServer1.grantNamed('stuff', 42);
+      var c3 = capServer1.grantNamed('stuff', 84);
+
+      // invoke them all once, then test as above
+      mkRunner(c1).runsPostAndExpectFailure(50);
+      mkRunner(c2).runsPostAndExpectFailure(50);
+      mkRunner(c3).runsPostAndExpectFailure(50);
+
+      // revoke before setNamedHandler is called
+      runs(function() { capServer1.revoke(c1.serialize()); });
+      mkRunner(c1).runsPostAndExpectFailure(50);
+
+      runs(function() {
+        capServer1.setNamedHandler('stuff', function(n) {
+          return function(v) { return v > n; };
+        });
+      });
+
+      // the revoked one should still be dead
+      mkRunner(c1).runsPostAndExpectFailure(50);
+
+      // revoke after setNamedHandler, but before use
+      runs(function() { capServer1.revoke(c2.serialize()); });
+      mkRunner(c2).runsPostAndExpectFailure(50);
+
+      // revoke after setNamedHandler, and use
+      mkRunner(c3).runsPostAndExpect(50, false);
+      runs(function() { capServer1.revoke(c3.serialize()); });
+      mkRunner(c3).runsPostAndExpectFailure(50);
+    });
+
+    it('should revoke named caps when setNamedHandler preceeds grant', function() {
+      capServer1.setNamedHandler('stuff', function(n) {
+        return function(v) { return v > n; };
+      });
+
+      var c1 = capServer1.grantNamed('stuff', 21);
+      var c2 = capServer1.grantNamed('stuff', 42);
+
+      // revoke before use
+      runs(function() { capServer1.revoke(c1.serialize()); });
+      mkRunner(c1).runsPostAndExpectFailure(50);
+
+      // revoke after use
+      mkRunner(c2).runsPostAndExpect(50, true);
+      runs(function() { capServer1.revoke(c2.serialize()); });
+      mkRunner(c2).runsPostAndExpectFailure(50);
+    });
   });
 
   describe('Serialization', function() {
@@ -1049,7 +1123,5 @@ describe('CapServer', function() {
           toThrow(expectedError);
       });
     });
-
-
   });
 });

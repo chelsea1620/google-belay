@@ -830,6 +830,68 @@ describe('CapServer', function() {
       runs(function() { capServer1.revoke(c2.serialize()); });
       mkRunner(c2).runsPostAndExpectFailure(50);
     });
+
+    it('should revoke named caps based on a vaildator function', function() {
+      capServer1.setNamedHandler('info', function(who, key, value) {
+        return function() { return value; };
+      });
+      capServer1.setNamedHandler('data', function(who, key, value) {
+        return function() { return value; };
+      });
+
+      var c0 = capServer1.grantNamed('data', 'zen', 'age', 0);
+      var c1 = capServer1.grantNamed('info', 'amy', 'age', 42);
+      var c2 = capServer1.grantNamed('info', 'amy', 'car', 'tesla');
+      var c3 = capServer1.grantNamed('info', 'bob', 'age', 34);
+      var c4 = capServer1.grantNamed('info', 'bob', 'car', 'prius');
+      var c5 = capServer1.grantNamed('info', 'cam', 'age', 21);
+      var c6 = capServer1.grantNamed('info', 'cam', 'car', 'camaro');
+
+      var revoked = {};
+
+      function expectWorking(e1, e2, e3, e4, e5, e6) {
+        var cs = [c0, c1, c2, c3, c4, c5, c6];
+        var es = [0, e1, e2, e3, e4, e5, e6];
+        while (cs.length) {
+          (function(c, e) {
+            // var n = 6 - cs.length;
+            // runs(function() { jasmine.log('looking at c' + n + ', e = ' + e); });
+            if (e !== revoked) {
+              mkRunner(c).runsGetAndExpect(e);
+            } else {
+              mkRunner(c).runsGetAndExpectFailure();
+            }
+          })(cs.shift(), es.shift());
+        }
+      }
+      
+      // runs(function() { jasmine.log('all should work'); });
+      expectWorking(42, 'tesla', 34, 'prius', 21, 'camaro');
+
+      // runs(function() { jasmine.log('removing amy\'s car'); });
+      runs(function() {
+        capServer1.revokeNamed('info', function(w, k, v) {
+          return w === 'amy' && k ==='car';
+        });
+      });
+      expectWorking(42, revoked, 34, 'prius', 21, 'camaro');
+
+      // runs(function() { jasmine.log('removing age under 40'); });
+      runs(function() {
+        capServer1.revokeNamed('info', function(w, k, v) {
+          return k ==='age' && v < 40;
+        });
+      });
+      expectWorking(42, revoked, revoked, 'prius', revoked, 'camaro');
+
+      // runs(function() { jasmine.log('removing all'); });
+      runs(function() {
+        capServer1.revokeNamed('info', function(w, k, v) {
+          return true;
+        });
+      });
+      expectWorking(revoked, revoked, revoked, revoked, revoked, revoked);
+    });
   });
 
   describe('Serialization', function() {

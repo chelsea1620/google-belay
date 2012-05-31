@@ -23,12 +23,13 @@ limitations under the License.
   <script src="../../lib/js/common.js"></script>
   <script src="../../lib/js/belay-client.js"></script>
   <script>
-  belay.start(function(capServer, util) {
-    window.parent.clientReady(capServer.grant(function(args, success, failure) {
-      var cap = capServer.restore(args.ser);
-  		cap.post(args.arg, success, failure);
-    }));
-  });
+    var preImg = newUUIDv4();
+    belay.route(preImg, function(capServer) {
+      var theCap = capServer.grant(function(arg) {
+        return {arg: arg, name: "route-only"};
+      });
+      window.parent.handoff(theCap.serialize());
+    });
   </script>
 </head>
 <body>

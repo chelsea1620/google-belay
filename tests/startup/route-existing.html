@@ -23,12 +23,11 @@ limitations under the License.
   <script src="../../lib/js/common.js"></script>
   <script src="../../lib/js/belay-client.js"></script>
   <script>
-    onBelayReady(function() {
+    belay.start(function(capServer, util) {
       var startup = JSON.parse(window.location.hash.substring(1));
-      var ident = startup.preImg;
+      var preImg = startup.preImg;
       var snapshot = JSON.parse(startup.snapshot);
-      
-  	  belay.route(ident, function(capServerId) {
+  	  belay.route(preImg, function(capServerId) {
   	    capServerId.setReviver(function(key) {
   	      if (key === 'sharedkey') {
     	      return function(arg) {
@@ -38,7 +37,11 @@ limitations under the License.
   	    });
   	    capServerId.reviveMap = snapshot.map;
         window.parent.handoff(true);
-  	  });
+  	  }, function(error) {
+        window.parent.handoff({
+          error: error
+        })
+      });
     });
   </script>
 </head>

@@ -55,7 +55,7 @@ describe("Startup and Routing Interface", function() {
     
     runs(function() {
       mkRunner(clientInvoke).runsPostAndExpect({
-          ser: handoffData.serialize(),
+          ser: handoffData,
           arg: testData
         }, {
           arg: testData,
@@ -64,7 +64,7 @@ describe("Startup and Routing Interface", function() {
     })
 	});
 	
-	it("should work with the new invoke", function() {
+	it("should work with the new route", function() {
     
     server = makeFrame('startup/route-new.html');
 	  waitsFor(function() { return handoffData; }, "handoff data", 2000);
@@ -76,7 +76,7 @@ describe("Startup and Routing Interface", function() {
 	    expect(newInstanceId(handoffData.preImg)).toBe(handoffData.routeServerInstId);
 	    
       mkRunner(clientInvoke).runsPostAndExpect({
-      	  ser: handoffData.cap.serialize(),
+      	  ser: handoffData.cap,
       	  arg: testData
       	}, {
           arg: testData,
@@ -85,6 +85,52 @@ describe("Startup and Routing Interface", function() {
   	});
   	
 	});
+
+  it("should work with just a call to route", function() {
+    server = makeFrame('startup/route-only.html');
+    waitsFor(function() { return handoffData; }, "handoff data", 2000);
+    runs(function() {
+      mkRunner(clientInvoke).runsPostAndExpect({
+          ser: handoffData,
+          arg: testData
+        }, {
+          arg: testData,
+          name: "route-only"
+        });
+    });
+  });
+
+  it("should allow multiple calls to route", function() {
+    server = makeFrame('startup/route-twice.html');
+    waitsFor(function() { return handoffData; }, "handoff data", 2000);
+    runs(function() {
+      expect(handoffData.cs1Id).not.toBe(handoffData.cs2Id);
+      mkRunner(clientInvoke).runsPostAndExpect({
+          ser: handoffData.cap1,
+        }, {
+          name: "route-twice-cap-1"
+        });
+      mkRunner(clientInvoke).runsPostAndExpect({
+          ser: handoffData.cap2,
+        }, {
+          name: "route-twice-cap-2"
+        });
+    });
+  });
+
+  it("should fail on multiple calls to route with same ident", function() {
+    server = makeFrame('startup/route-twice-same.html');
+    waitsFor(function() { return handoffData; }, "handoff data", 2000);
+    runs(function() {
+      expect(typeof handoffData.error).toBe('object');
+      expect(handoffData.error.status).toBe(500);
+      mkRunner(clientInvoke).runsPostAndExpect({
+          ser: handoffData.cap,
+        }, {
+          name: "route-twice-same-cap"
+        });
+    });
+  });
 	
 	it("should work if you shut down and restart the page", function() {
 	  var preImg= null;
@@ -100,7 +146,7 @@ describe("Startup and Routing Interface", function() {
 	    // This should fail because the server no longer exists
 	    var runner = mkRunner(clientInvoke);
 	    runner.runsPost({
-	      ser: originalCap.serialize(),
+	      ser: originalCap,
 	      arg: testData,
 	      name: "route-new"
 	    });
@@ -117,7 +163,7 @@ describe("Startup and Routing Interface", function() {
     runs(function() {
   	  // Now invoke the *original* cap at the client	  
   	  mkRunner(clientInvoke).runsPostAndExpect({
-    	    ser: originalCap.serialize(),
+    	    ser: originalCap,
     	    arg: testData
     	  }, {
     	    arg: testData,
@@ -126,8 +172,7 @@ describe("Startup and Routing Interface", function() {
   	});
 	});
 	
-	// TODO(jpolitz): Figure out what behavior this should have, and test for that
-	xit("should route to ???", function() {
+	it("should fail when double-routing in different frames", function() {
 	  var preImg= null;
 	  var originalCap = null;
 	  var revivedServer = null;
@@ -144,10 +189,12 @@ describe("Startup and Routing Interface", function() {
 	  waitsFor(function() { return handoffData; });
 
     runs(function() {
-  	  // Now invoke the *original* cap at the client
-  	  // It should route through route-existing, which made the most recent call
+      // The handoffData should show an error from the revivedServer:
+      expect(handoffData.error.status).toBe(500);
+
+  	  // Now invoke the *original* cap, which should still work at route-new
   	  mkRunner(clientInvoke).runsPostAndExpect({
-    	    ser: originalCap.serialize(),
+    	    ser: originalCap,
     	    arg: testData
     	  }, {
     	    arg: testData,
@@ -155,7 +202,38 @@ describe("Startup and Routing Interface", function() {
     	  });
   	});
   	runs(function() {
+      //cleanup
   	  document.body.removeChild(revivedServer);
   	})
 	});
+
+  it("should start()", function() {
+    server = makeFrame("startup/start.html");
+    waitsFor(function() { return handoffData; }, "handoff data", 2000);
+    runs(function() {
+      mkRunner(clientInvoke).runsPostAndExpect({
+        ser: handoffData,
+        arg: testData
+      }, {
+        arg: testData,
+        name: "start"
+      })
+    });
+  });
+
+  it("should start() twice", function() {
+    server = makeFrame("startup/start-twice.html");
+    waitsFor(function() { return handoffData; }, "handoff data", 2000);
+    runs(function() {
+      expect(handoffData.originalServerId).toBe(handoffData.secondServerId);
+      mkRunner(clientInvoke).runsPostAndExpect({
+        ser: handoffData.cap,
+        arg: testData
+      }, {
+        arg: testData,
+        name: "start-twice"
+      })
+    });
+  });
+
 });

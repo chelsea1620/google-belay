@@ -23,12 +23,26 @@ limitations under the License.
   <script src="../../lib/js/common.js"></script>
   <script src="../../lib/js/belay-client.js"></script>
   <script>
-  belay.start(function(capServer, util) {
-    window.parent.clientReady(capServer.grant(function(args, success, failure) {
-      var cap = capServer.restore(args.ser);
-  		cap.post(args.arg, success, failure);
-    }));
-  });
+    var testStr = "should be assigned first then overwritten to enforce ordering";
+    var start = "something other than testStr";
+    var originalServer;
+    belay.start(function(capServer, util, launchInfo) {
+      originalServer = capServer;
+      start = testStr;
+    });
+    belay.start(function(capServer, util, launchInfo) {
+      if (start === testStr) {
+        start = "start";
+      }
+      var theCap = capServer.grant(function(arg) {
+        return {arg: arg, name: start + "-twice"};
+      });
+      window.parent.handoff({
+        cap: theCap.serialize(),
+        originalServerId: originalServer.instanceId,
+        secondServerId: capServer.instanceId
+      });
+    });
   </script>
 </head>
 <body>

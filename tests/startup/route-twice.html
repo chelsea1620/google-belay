@@ -23,12 +23,28 @@ limitations under the License.
   <script src="../../lib/js/common.js"></script>
   <script src="../../lib/js/belay-client.js"></script>
   <script>
-  belay.start(function(capServer, util) {
-    window.parent.clientReady(capServer.grant(function(args, success, failure) {
-      var cap = capServer.restore(args.ser);
-  		cap.post(args.arg, success, failure);
-    }));
-  });
+    var preImg1 = newUUIDv4();
+    var preImg2 = newUUIDv4();
+    var cap1;
+    // NOTE(jpolitz): No ordering check, because the underlying
+    // call to belay is asynchronous, and could call the continuations
+    // in any order
+    belay.route(preImg1, function(capServer1) {
+      cap1 = capServer1.grant(function() {
+        return {name: "route-twice-cap-1" };
+      });
+      belay.route(preImg2, function(capServer2) {
+        var cap2 = capServer2.grant(function(arg) {
+          return {name: "route-twice-cap-2"};
+        });
+        window.parent.handoff({
+          cap1: cap1.serialize(),
+          cap2: cap2.serialize(),
+          cs1Id: capServer1.instanceId,
+          cs2Id: capServer2.instanceId
+        });
+      });
+    });
   </script>
 </head>
 <body>

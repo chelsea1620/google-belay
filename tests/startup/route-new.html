@@ -23,7 +23,7 @@ limitations under the License.
   <script src="../../lib/js/common.js"></script>
   <script src="../../lib/js/belay-client.js"></script>
   <script>
-    onBelayReady(function() {
+    belay.start(function(capServer, util) {
   	  var ident = newUUIDv4();
   	    
   	  belay.route(ident, function(capServerId) {
@@ -35,7 +35,7 @@ limitations under the License.
           routeServerInstId: capServerId.instanceId,
           snapshot: capServerId._snapshot(),
           preImg: ident,
-          cap: theCap
+          cap: theCap.serialize()
         });
   	  });
     });

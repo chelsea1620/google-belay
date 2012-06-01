@@ -217,7 +217,7 @@ describe("Startup and Routing Interface", function() {
       }, {
         arg: testData,
         name: "start"
-      })
+      });
     });
   });
 
@@ -232,8 +232,47 @@ describe("Startup and Routing Interface", function() {
       }, {
         arg: testData,
         name: "start-twice"
-      })
+      });
     });
   });
+
+  it("should startForLaunch", function() {
+    var preImg = newUUIDv4();
+    server = makeFrame("startup/launcher.html#" +
+      JSON.stringify({url: "start-launch.html", preImage: preImg, testName: "start-launch"}));
+    waitsFor(function() { return handoffData; }, "handoff data", 2000);
+    runs(function() {
+      mkRunner(clientInvoke).runsPostAndExpect({
+        ser: handoffData,
+        arg: testData
+      }, {
+        arg: testData,
+        name: "start-launch"
+      });
+    });
+  });
+
+  it("should give an error if the key doesn't exist in startForLaunch", function() {
+    var preImg = newUUIDv4();
+    server = makeFrame("startup/launcher.html#" +
+      JSON.stringify({url: "start-launch.html", NOT_THE_RIGHT_KEY: preImg, name: "start-launch"}));
+    waitsFor(function() { return handoffData; }, "handoff data", 2000);
+    runs(function() {
+      expect(typeof handoffData.message).toBe('string');
+      expect(handoffData.status).toBe(404);
+    });
+  });
+
+  it("should give an error if the instanceId is already routed to in startForLaunch", function() {
+    var preImg = newUUIDv4();
+    server = makeFrame("startup/launcher.html#" +
+      JSON.stringify({url: "start-failed-launch.html", preImage: preImg, name: "start-launch"}));
+    waitsFor(function() { return handoffData; }, "handoff data", 2000);
+    runs(function() {
+      expect(typeof handoffData.message).toBe('string');
+      expect(handoffData.status).toBe(500);
+    });
+  });
+
 
 });

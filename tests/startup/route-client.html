@@ -23,11 +23,8 @@ limitations under the License.
   <script src="../../lib/js/common.js"></script>
   <script src="../../lib/js/belay-client.js"></script>
   <script>
-  console.log('yo dawg, route-client here');
   onBelayReady(function() {
-    console.log('yo dawg, route-client has belay ready');
     window.parent.clientReady(capServer.grant(function(args, success, failure) {
-      console.log('yo dawg, my client got called');
       var cap = capServer.restore(args.ser);
   		cap.post(args.arg, success, failure);
     }));

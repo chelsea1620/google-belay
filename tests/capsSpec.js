@@ -335,9 +335,6 @@ describe('CapServer', function() {
       r.runsExpectException();
       runs(function() { expect(fnCalledWith).toEqual('not-yet-called'); });
     });
-
-
-
   });
 
   describe('Build', function() {
@@ -355,16 +352,11 @@ describe('CapServer', function() {
       expect(called).toBe(true);
     };
 
-    var buildAndExpectError = function(item, expectedError) {
-      var built = false;
-      try {
-        capServer1._build(item);
-        built = true;
-      }
-      catch (e) {
-        expect(e).toEqual(expectedError);
-      }
-      expect(built).toBe(false);
+    var buildAndExpectError = function(item) {
+      if (arguments.length === 0)
+        expect(function() { capServer1._build(); }).toThrow();
+      else
+        expect(function() { capServer1._build(item); }).toThrow();
     };
 
     var checkDead = function(impl) {
@@ -449,23 +441,24 @@ describe('CapServer', function() {
       var badHandler3 = {put: function(v) {},
                          remove: function(s, f) {}};
 
-      buildAndExpectError(badHandler1, 'Inconsistent handlers');
-      buildAndExpectError(badHandler2, 'Inconsistent handlers');
-      buildAndExpectError(badHandler3, 'Inconsistent handlers');
+      buildAndExpectError(badHandler1);
+      buildAndExpectError(badHandler2);
+      buildAndExpectError(badHandler3);
     });
 
     it('should error on empty handlers', function() {
-      buildAndExpectError({}, 'build() given an object with no handlers');
+      buildAndExpectError({});
     });
 
     it('should give a deadImpl on null', function() {
       checkDead(capServer1._build(null));
     });
 
-    it('should give a deadImpl on undefined, numbers, and bools', function() {
-      checkDead(capServer1._build());
-      checkDead(capServer1._build(22));
-      checkDead(capServer1._build(true));
+    it('should throw on undefined, numbers, and bools', function() {
+      buildAndExpectError();
+      buildAndExpectError(22);
+      buildAndExpectError(true);
+      buildAndExpectError(undefined);
     });
   });
 
@@ -667,6 +660,278 @@ describe('CapServer', function() {
     });
   });
 
+  describe('Named Grants', function() {
+    it('should grant by name', function() {
+      capServer1.setNamedHandler('doubler', function() {
+        return function(v) { return 2*v; };
+      });
+      var c1 = capServer1.grantNamed('doubler');
+      mkRunner(c1).runsPostAndExpect(21, 42);
+    });
+
+    it('should grant by name with one argument', function() {
+      capServer1.setNamedHandler('multiplier', function(m) {
+        return function(v) { return m*v; };
+      });
+      var cx7 = capServer1.grantNamed('multiplier', 7);
+      var cx10 = capServer1.grantNamed('multiplier', 10);
+      mkRunner(cx7).runsPostAndExpect(4, 28);
+      mkRunner(cx10).runsPostAndExpect(7, 70);
+    });
+
+    it('should grant by name with multiple arguments', function() {
+      capServer1.setNamedHandler('matcher', function(m, x) {
+        return function(v) { return v===m ? x : 0; };
+      });
+      var cDuck = capServer1.grantNamed('matcher', 'duck', 21);
+      var cBlimp = capServer1.grantNamed('matcher', 'blimp', 100);
+      mkRunner(cDuck).runsPostAndExpect('platypus', 0);
+      mkRunner(cDuck).runsPostAndExpect('duck', 21);
+      mkRunner(cBlimp).runsPostAndExpect('dirigible', 0);
+      mkRunner(cBlimp).runsPostAndExpect('blimp', 100);
+    });
+
+    it('should grant by name, and fail if no handler', function() {
+      var cNone = capServer1.grantNamed('none', 1, 2, 3);
+      mkRunner(cNone).runsGetAndExpectFailure();
+    });
+
+    it('should grant by name, work if handler set after', function() {
+      var cLater = capServer1.grantNamed('later', 'gator');
+      mkRunner(cLater).runsGetAndExpectFailure();
+      runs(function() {
+        capServer1.setNamedHandler('later', function(n) {
+          return function() { return n; };
+        });
+      });
+      mkRunner(cLater).runsGetAndExpect('gator');
+    });
+
+    it('should support multiple named handlers', function() {
+      capServer1.setNamedHandler('adder', function(n) {
+        return function(v) { return v+n; };
+      });
+      capServer1.setNamedHandler('multiplier', function(n) {
+        return function(v) { return v*n; };
+      });
+      var cAdd10 = capServer1.grantNamed('adder', 10);
+      var cMult10 = capServer1.grantNamed('multiplier', 10);
+      mkRunner(cAdd10).runsPostAndExpect(5, 15);
+      mkRunner(cMult10).runsPostAndExpect(5, 50);
+    });
+
+    it('should support named grants with more or less arguments', function() {
+      capServer1.setNamedHandler('countBound', function(a, b) {
+        if (typeof(a) === 'undefined') return function() { return 0; }
+        if (typeof(b) === 'undefined') return function() { return 1; }
+        return function() { return 2; }
+      });
+      var c0 = capServer1.grantNamed('countBound');
+      var c1 = capServer1.grantNamed('countBound', true);
+      var c2 = capServer1.grantNamed('countBound', true, 'yo');
+      var c3 = capServer1.grantNamed('countBound', true, 'yo', 42);
+      mkRunner(c0).runsGetAndExpect(0);
+      mkRunner(c1).runsGetAndExpect(1);
+      mkRunner(c2).runsGetAndExpect(2);
+      mkRunner(c3).runsGetAndExpect(2);
+    });
+
+    it('should support named grants with arbitrary arguments', function() {
+      capServer1.setNamedHandler('index', function() {
+        var stuff = Array.prototype.slice.call(arguments);
+        return function(v) { return stuff[0+v]; };
+      });
+      var cDays = capServer1.grantNamed('index',
+                    'Mon', 'Tue', 'Wed', 'Thr', 'Fri', 'Sat', 'Sun');
+      mkRunner(cDays).runsPostAndExpect(1, 'Tue');
+      mkRunner(cDays).runsPostAndExpect(5, 'Sat');
+      mkRunner(cDays).runsPostAndExpect(9, undefined);
+    });
+
+    it('should support named grants to async handlers', function() {
+      capServer1.setNamedHandler('later', function(x) {
+        return function(v, sk, fk) {
+          setTimeout(function() { sk(x); }, 0);
+        };
+      });
+      var cLater = capServer1.grantNamed('later', 'gator');
+      mkRunner(cLater).runsGetAndExpect('gator');
+    });
+
+    it('should support named grants to object handlers', function() {
+      capServer1.setNamedHandler('box', function(initialValue) {
+        var boxedValue = initialValue;
+        return {
+          get: function() { return boxedValue; },
+          put: function(newValue) { boxedValue = newValue; },
+          post: function(addValue) { return boxedValue += addValue; },
+          remove: function() { boxedValue = initialValue; }
+        };
+      });
+      var cThing = capServer1.grantNamed('box', 7);
+      var r = mkRunner(cThing);
+      r.runsGetAndExpect(7);
+      r.runsPut(9);   r.runsExpectSuccess();
+      r.runsGetAndExpect(9);
+      r.runsPostAndExpect(11, 20);
+      r.runsDelete(); r.runsExpectSuccess();
+      r.runsGetAndExpect(7);
+    });
+
+    it('should throw when setting bad named handlers', function() {
+      expect(function() {
+        capServer1.setNamedHandler('bad', 42);
+      }).toThrow();
+
+      capServer1.setNamedHandler('worse', function() { return 42; });
+      var cSad = capServer1.grantNamed('worse');
+      var r = mkRunner(cSad);
+      r.runsGet();
+      r.runsExpectFailure();
+    });
+
+    it('should revoke named caps when grant preceeds setNamedHandler', function() {
+      var c1 = capServer1.grantNamed('stuff', 21);
+      var c2 = capServer1.grantNamed('stuff', 42);
+      var c3 = capServer1.grantNamed('stuff', 84);
+      
+      // revoke before setNamedHandler is called
+      runs(function() { capServer1.revoke(c1.serialize()); });
+      mkRunner(c1).runsPostAndExpectFailure(50);
+
+      runs(function() {
+        capServer1.setNamedHandler('stuff', function(n) {
+          return function(v) { return v > n; };
+        });
+      });
+
+      // the revoked one should still be dead
+      mkRunner(c1).runsPostAndExpectFailure(50);
+
+      // revoke after setNamedHandler, but before use
+      runs(function() { capServer1.revoke(c2.serialize()); });
+      mkRunner(c2).runsPostAndExpectFailure(50);
+
+      // revoke after setNamedHandler, and use
+      mkRunner(c3).runsPostAndExpect(50, false);
+      runs(function() { capServer1.revoke(c3.serialize()); });
+      mkRunner(c3).runsPostAndExpectFailure(50);
+    });
+
+    it('should revoke named caps when grant and invoke preceeds setNamedHandler', function() {
+      var c1 = capServer1.grantNamed('stuff', 21);
+      var c2 = capServer1.grantNamed('stuff', 42);
+      var c3 = capServer1.grantNamed('stuff', 84);
+
+      // invoke them all once, then test as above
+      mkRunner(c1).runsPostAndExpectFailure(50);
+      mkRunner(c2).runsPostAndExpectFailure(50);
+      mkRunner(c3).runsPostAndExpectFailure(50);
+
+      // revoke before setNamedHandler is called
+      runs(function() { capServer1.revoke(c1.serialize()); });
+      mkRunner(c1).runsPostAndExpectFailure(50);
+
+      runs(function() {
+        capServer1.setNamedHandler('stuff', function(n) {
+          return function(v) { return v > n; };
+        });
+      });
+
+      // the revoked one should still be dead
+      mkRunner(c1).runsPostAndExpectFailure(50);
+
+      // revoke after setNamedHandler, but before use
+      runs(function() { capServer1.revoke(c2.serialize()); });
+      mkRunner(c2).runsPostAndExpectFailure(50);
+
+      // revoke after setNamedHandler, and use
+      mkRunner(c3).runsPostAndExpect(50, false);
+      runs(function() { capServer1.revoke(c3.serialize()); });
+      mkRunner(c3).runsPostAndExpectFailure(50);
+    });
+
+    it('should revoke named caps when setNamedHandler preceeds grant', function() {
+      capServer1.setNamedHandler('stuff', function(n) {
+        return function(v) { return v > n; };
+      });
+
+      var c1 = capServer1.grantNamed('stuff', 21);
+      var c2 = capServer1.grantNamed('stuff', 42);
+
+      // revoke before use
+      runs(function() { capServer1.revoke(c1.serialize()); });
+      mkRunner(c1).runsPostAndExpectFailure(50);
+
+      // revoke after use
+      mkRunner(c2).runsPostAndExpect(50, true);
+      runs(function() { capServer1.revoke(c2.serialize()); });
+      mkRunner(c2).runsPostAndExpectFailure(50);
+    });
+
+    it('should revoke named caps based on a vaildator function', function() {
+      capServer1.setNamedHandler('info', function(who, key, value) {
+        return function() { return value; };
+      });
+      capServer1.setNamedHandler('data', function(who, key, value) {
+        return function() { return value; };
+      });
+
+      var c0 = capServer1.grantNamed('data', 'zen', 'age', 0);
+      var c1 = capServer1.grantNamed('info', 'amy', 'age', 42);
+      var c2 = capServer1.grantNamed('info', 'amy', 'car', 'tesla');
+      var c3 = capServer1.grantNamed('info', 'bob', 'age', 34);
+      var c4 = capServer1.grantNamed('info', 'bob', 'car', 'prius');
+      var c5 = capServer1.grantNamed('info', 'cam', 'age', 21);
+      var c6 = capServer1.grantNamed('info', 'cam', 'car', 'camaro');
+
+      var revoked = {};
+
+      function expectWorking(e1, e2, e3, e4, e5, e6) {
+        var cs = [c0, c1, c2, c3, c4, c5, c6];
+        var es = [0, e1, e2, e3, e4, e5, e6];
+        while (cs.length) {
+          (function(c, e) {
+            // var n = 6 - cs.length;
+            // runs(function() { jasmine.log('looking at c' + n + ', e = ' + e); });
+            if (e !== revoked) {
+              mkRunner(c).runsGetAndExpect(e);
+            } else {
+              mkRunner(c).runsGetAndExpectFailure();
+            }
+          })(cs.shift(), es.shift());
+        }
+      }
+      
+      // runs(function() { jasmine.log('all should work'); });
+      expectWorking(42, 'tesla', 34, 'prius', 21, 'camaro');
+
+      // runs(function() { jasmine.log('removing amy\'s car'); });
+      runs(function() {
+        capServer1.revokeNamed('info', function(w, k, v) {
+          return w === 'amy' && k ==='car';
+        });
+      });
+      expectWorking(42, revoked, 34, 'prius', 21, 'camaro');
+
+      // runs(function() { jasmine.log('removing age under 40'); });
+      runs(function() {
+        capServer1.revokeNamed('info', function(w, k, v) {
+          return k ==='age' && v < 40;
+        });
+      });
+      expectWorking(42, revoked, revoked, 'prius', revoked, 'camaro');
+
+      // runs(function() { jasmine.log('removing all'); });
+      runs(function() {
+        capServer1.revokeNamed('info', function(w, k, v) {
+          return true;
+        });
+      });
+      expectWorking(revoked, revoked, revoked, revoked, revoked, revoked);
+    });
+  });
+
   describe('Serialization', function() {
     describe('Restoring', function() {
       var servers, ids;
@@ -741,13 +1006,13 @@ describe('CapServer', function() {
       describe('after instance shutdown', function() {
         var c1, c2, c3, c4, s1, s2, s3, s4, snapshot;
         beforeEach(function() {
-          c1 = capServer1.grant(f300, 'f300');
+          c1 = capServer1.grantNamed('f100');
           s1 = c1.serialize();
-          c2 = capServer1.grant(f100, 'f100');
+          c2 = capServer1.grantNamed('f200');
           s2 = c2.serialize();
-          c3 = capServer1.grant(f500, 'f500');
+          c3 = capServer1.grantNamed('f300');
           s3 = c3.serialize();
-          c4 = capServer1.grant(f400URL, 'f400URL');
+          c4 = capServer1.grantNamed('f400URL');
           s4 = c4.serialize();
           capServer1.revoke(s2);
           snapshot = capServer1._snapshot();
@@ -760,73 +1025,60 @@ describe('CapServer', function() {
           servers[0] = capServer1 = new CapServer(newUUIDv4(), snapshot);
           capServer1.setResolver(instanceResolver);
         };
-        var setNewReviver = function() {
-          capServer1.setReviver(function(role) {
-            if (role === 'f300') { return f200; }
-            if (role === 'f500') { return f500; }
-            if (role === 'f400URL') { return f400URL; }
-            return null;
-          });
+        var setupHandlers = function() {
+          capServer1.setNamedHandler('f100', function() { return f100; });
+          capServer1.setNamedHandler('f300', function() { return f300; });
+          capServer1.setNamedHandler('f400URL', function() { return f400URL; });
         };
 
-        it('should revive the cap after instance restart', function() {
+        it('should revive caps after instance restart', function() {
           makeNewServer();
-          setNewReviver();
+          setupHandlers();
           var c1restored = capServer2.restore(s1);
-          var c4restored = capServer2.restore(s4);
-
-          mkRunner(c1restored).runsGetAndExpect(200);
-          mkRunner(c4restored).runsGetAndExpect(400);
-        });
-
-        it('should revive async caps after instance restart', function() {
-          makeNewServer();
-          setNewReviver();
-
           var c3restored = capServer2.restore(s3);
-          var checkResult2 = false;
-
-          mkRunner(c3restored).runsGetAndExpect(500);
-        });
-
-        it('should restore a cap, even before the reviver is set', function() {
-          makeNewServer();
-          var c1restored = capServer2.restore(s1);
           var c4restored = capServer2.restore(s4);
-          mkRunner(c1restored).runsGetAndExpectFailure();
-          mkRunner(c4restored).runsGetAndExpectFailure();
-          runs(function() { setNewReviver(); });
-          mkRunner(c1restored).runsGetAndExpect(200);
+          mkRunner(c1restored).runsGetAndExpect(100);
+          mkRunner(c3restored).runsGetAndExpect(300);
           mkRunner(c4restored).runsGetAndExpect(400);
         });
 
-        it('should restore an async cap, even before the reviver is set',
-          function() {
-            makeNewServer();
-            var c3restored = capServer2.restore(s3);
-            var checkResult2 = false;
-            setNewReviver();
-
-            mkRunner(c3restored).runsGetAndExpect(500);
+        it('should restore caps, even before handlers are set', function() {
+          makeNewServer();
+          var c1restored = capServer2.restore(s1);
+          var c3restored = capServer2.restore(s3);
+          var c4restored = capServer2.restore(s4);
+          mkRunner(c1restored).runsGetAndExpectFailure();
+          mkRunner(c3restored).runsGetAndExpectFailure();
+          mkRunner(c4restored).runsGetAndExpectFailure();
+          runs(function() { setupHandlers(); });
+          mkRunner(c1restored).runsGetAndExpect(100);
+          mkRunner(c3restored).runsGetAndExpect(300);
+          mkRunner(c4restored).runsGetAndExpect(400);
         });
 
-        it('should restore a cap, even before the instance is restarted',
-            function() {
-          var c1restored = capServer2.restore(s1);
-          mkRunner(c1restored).runsGetAndExpectFailure();
-          runs(function() {
-            makeNewServer();
-            setNewReviver();
-          });
-          mkRunner(c1restored).runsGetAndExpect(200);
+        it('should restore caps, even before the instance is restarted',
+          function() {
+            var c1restored = capServer2.restore(s1);
+            var c3restored = capServer2.restore(s3);
+            var c4restored = capServer2.restore(s4);
+            mkRunner(c1restored).runsGetAndExpectFailure();
+            mkRunner(c3restored).runsGetAndExpectFailure();
+            mkRunner(c4restored).runsGetAndExpectFailure();
+            runs(function() {
+              makeNewServer();
+              setupHandlers();
+            });
+            mkRunner(c1restored).runsGetAndExpect(100);
+            mkRunner(c3restored).runsGetAndExpect(300);
+            mkRunner(c4restored).runsGetAndExpect(400);
         });
 
         it('should restore a revoked cap as dead after instance restart',
-            function() {
-          makeNewServer();
-          setNewReviver();
-          var c2restored = capServer2.restore(s2);
-          mkRunner(c2restored).runsGetAndExpectFailure();
+          function() {
+            makeNewServer();
+            setupHandlers();
+            var c2restored = capServer2.restore(s2);
+            mkRunner(c2restored).runsGetAndExpectFailure();
         });
       });
 
@@ -958,7 +1210,5 @@ describe('CapServer', function() {
           toThrow(expectedError);
       });
     });
-
-
   });
 });

@@ -27,20 +27,17 @@ limitations under the License.
       var startup = JSON.parse(window.location.hash.substring(1));
       var preImg = startup.preImg;
       var snapshot = JSON.parse(startup.snapshot);
-  	  belay.route(preImg, function(capServerId) {
-  	    capServerId.setReviver(function(key) {
-  	      if (key === 'sharedkey') {
-    	      return function(arg) {
-      			  return {arg: arg, name: "route-existing"};
-      	    };
-    	    }
-  	    });
-  	    capServerId.reviveMap = snapshot.map;
+      
+      belay.route(preImg, function(capServerId) {
+        capServerId.setNamedHandler('sharedkey', function() {
+          return function(arg) {
+            return {arg: arg, name: "route-existing"};
+          };
+        });
+        capServerId.reviveMap = snapshot.map;
         window.parent.handoff(true);
-  	  }, function(error) {
-        window.parent.handoff({
-          error: error
-        })
+      }, function(error) {
+        window.parent.handoff({ error: error });
       });
     });
   </script>

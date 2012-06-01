@@ -36,7 +36,7 @@ class TestJavascript(BelayTest):
 
     def test_spec_runner(self):
         self.driver.get("file:" + sys.path[0] + "/SpecRunner.html")
-        self.wait_for(lambda drv: self.get_result() != None)
+        self.wait_for(lambda drv: self.get_result() != None, 20)
         self.assertTrue(self.get_result(), "SpecRunner tests failed")
     
     def test_app_spec_runner(self):

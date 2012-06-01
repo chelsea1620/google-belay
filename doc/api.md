@@ -202,15 +202,15 @@ A `startError` is one of:
   iframe doesn't agree with the origin claimed in a `request for
   `startForOrigin` call. Echoes back the failed parameters.
 
-Globals
-=======
+UUID Generation
+===============
 
 The `belayclient.js` library introduces some global convenience functions.
 
-newUUIDv4
----------
+belay.newUUIDv4
+---------------
 
-    newUUIDv4() -> UUID
+    belay.newUUIDv4() -> UUID
 
 Creates a UUID version 4 (as a string), using built-in browser randomization
 primitives. Several functions in `belay` and `capServer` expect random nonces or
@@ -309,7 +309,7 @@ CapServer
 capServer.grant
 ---------------
 
-    capServer.grant(item, key) -> a_bcap
+    capServer.grant(item) -> a_bcap
 
 Grant creates a new BCAP that when invoked, will call the `item`. There are
 several kinds of item:
@@ -411,17 +411,53 @@ capServer.revokeAll
   Revokes all BCAPs ever issued by this CapServer. Note that invocations in
   progress may continue to be processed, or may fail.
  
-capServer.grantKey
-------------------
-
-capServer.setReviver
+capServer.grantNamed
 --------------------
+
+    capServer.grantNamed(name, [a0, a1, ...])
+
+  Grant a persistable BCAP. The function of the BCAP is described by the name
+  parameter and the optional, variable arguments. The arguments must all be
+  BCAP-JSON, as they may be serailized and persisted.
+
+capServer.setNamedHandler
+-------------------------
+
+    capServer.setNamedHandler(name, handler([a0, a1, ...]) -> item)
+
+  Associates an item with a given name used for persistable BCAPs. The function
+  is passed any optional arguments from the named grant, and should return an
+  item (see grant()) to implement the BCAP. In this way, a persistent BCAP can
+  close over those aruements, and this handler is used to return an item that
+  uses them.
+  
+  The capServer will call this function at least once before such a cap is
+  invoked. It may continue to reuse the resulting item for subsequent invokes,
+  or it may request the item anew each time.
+
+capServer.revokeNamed
+---------------------
+
+    capServer.revokeNamed(name, validator([a0, a1, ...]) -> boolean)
+
+  Revokes named caps for a given name, where the function over the optional
+  arguments returns true.
 
 capServer.restore
 -----------------
 
-capServer.setSyncNotifier
+    capServer.restore(serialization)
+
+capServer.serialize
+-------------------
+
+    capServer.serialize() -> string
+
+capServer.setPersistifier
 -------------------------
+
+    capServer.setPersistifier(saver(), [maxInterval])
+    
 
 capServer.dataPreProcessor
 --------------------------

@@ -27,9 +27,12 @@ limitations under the License.
   	  var ident = newUUIDv4();
   	    
   	  belay.route(ident, function(capServerId) {
-  	    var theCap = capServerId.grant(function(arg) {
-  			  return {arg: arg, name: "route-new"};
-  	    }, 'sharedkey');
+        capServerId.setNamedHandler('sharedkey', function() {
+          return function(arg) {
+            return {arg: arg, name: "route-new"};
+          };
+        });
+  	    var theCap = capServerId.grantNamed('sharedkey');
         window.parent.handoff({
           normalServerInstId: capServer.instanceId,
           routeServerInstId: capServerId.instanceId,

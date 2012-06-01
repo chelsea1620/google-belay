@@ -1006,13 +1006,13 @@ describe('CapServer', function() {
       describe('after instance shutdown', function() {
         var c1, c2, c3, c4, s1, s2, s3, s4, snapshot;
         beforeEach(function() {
-          c1 = capServer1.grant(f300, 'f300');
+          c1 = capServer1.grantNamed('f100');
           s1 = c1.serialize();
-          c2 = capServer1.grant(f100, 'f100');
+          c2 = capServer1.grantNamed('f200');
           s2 = c2.serialize();
-          c3 = capServer1.grant(f500, 'f500');
+          c3 = capServer1.grantNamed('f300');
           s3 = c3.serialize();
-          c4 = capServer1.grant(f400URL, 'f400URL');
+          c4 = capServer1.grantNamed('f400URL');
           s4 = c4.serialize();
           capServer1.revoke(s2);
           snapshot = capServer1._snapshot();
@@ -1025,73 +1025,60 @@ describe('CapServer', function() {
           servers[0] = capServer1 = new CapServer(newUUIDv4(), snapshot);
           capServer1.setResolver(instanceResolver);
         };
-        var setNewReviver = function() {
-          capServer1.setReviver(function(role) {
-            if (role === 'f300') { return f200; }
-            if (role === 'f500') { return f500; }
-            if (role === 'f400URL') { return f400URL; }
-            return null;
-          });
+        var setupHandlers = function() {
+          capServer1.setNamedHandler('f100', function() { return f100; });
+          capServer1.setNamedHandler('f300', function() { return f300; });
+          capServer1.setNamedHandler('f400URL', function() { return f400URL; });
         };
 
-        it('should revive the cap after instance restart', function() {
+        it('should revive caps after instance restart', function() {
           makeNewServer();
-          setNewReviver();
+          setupHandlers();
           var c1restored = capServer2.restore(s1);
-          var c4restored = capServer2.restore(s4);
-
-          mkRunner(c1restored).runsGetAndExpect(200);
-          mkRunner(c4restored).runsGetAndExpect(400);
-        });
-
-        it('should revive async caps after instance restart', function() {
-          makeNewServer();
-          setNewReviver();
-
           var c3restored = capServer2.restore(s3);
-          var checkResult2 = false;
-
-          mkRunner(c3restored).runsGetAndExpect(500);
-        });
-
-        it('should restore a cap, even before the reviver is set', function() {
-          makeNewServer();
-          var c1restored = capServer2.restore(s1);
           var c4restored = capServer2.restore(s4);
-          mkRunner(c1restored).runsGetAndExpectFailure();
-          mkRunner(c4restored).runsGetAndExpectFailure();
-          runs(function() { setNewReviver(); });
-          mkRunner(c1restored).runsGetAndExpect(200);
+          mkRunner(c1restored).runsGetAndExpect(100);
+          mkRunner(c3restored).runsGetAndExpect(300);
           mkRunner(c4restored).runsGetAndExpect(400);
         });
 
-        it('should restore an async cap, even before the reviver is set',
-          function() {
-            makeNewServer();
-            var c3restored = capServer2.restore(s3);
-            var checkResult2 = false;
-            setNewReviver();
-
-            mkRunner(c3restored).runsGetAndExpect(500);
+        it('should restore caps, even before handlers are set', function() {
+          makeNewServer();
+          var c1restored = capServer2.restore(s1);
+          var c3restored = capServer2.restore(s3);
+          var c4restored = capServer2.restore(s4);
+          mkRunner(c1restored).runsGetAndExpectFailure();
+          mkRunner(c3restored).runsGetAndExpectFailure();
+          mkRunner(c4restored).runsGetAndExpectFailure();
+          runs(function() { setupHandlers(); });
+          mkRunner(c1restored).runsGetAndExpect(100);
+          mkRunner(c3restored).runsGetAndExpect(300);
+          mkRunner(c4restored).runsGetAndExpect(400);
         });
 
-        it('should restore a cap, even before the instance is restarted',
-            function() {
-          var c1restored = capServer2.restore(s1);
-          mkRunner(c1restored).runsGetAndExpectFailure();
-          runs(function() {
-            makeNewServer();
-            setNewReviver();
-          });
-          mkRunner(c1restored).runsGetAndExpect(200);
+        it('should restore caps, even before the instance is restarted',
+          function() {
+            var c1restored = capServer2.restore(s1);
+            var c3restored = capServer2.restore(s3);
+            var c4restored = capServer2.restore(s4);
+            mkRunner(c1restored).runsGetAndExpectFailure();
+            mkRunner(c3restored).runsGetAndExpectFailure();
+            mkRunner(c4restored).runsGetAndExpectFailure();
+            runs(function() {
+              makeNewServer();
+              setupHandlers();
+            });
+            mkRunner(c1restored).runsGetAndExpect(100);
+            mkRunner(c3restored).runsGetAndExpect(300);
+            mkRunner(c4restored).runsGetAndExpect(400);
         });
 
         it('should restore a revoked cap as dead after instance restart',
-            function() {
-          makeNewServer();
-          setNewReviver();
-          var c2restored = capServer2.restore(s2);
-          mkRunner(c2restored).runsGetAndExpectFailure();
+          function() {
+            makeNewServer();
+            setupHandlers();
+            var c2restored = capServer2.restore(s2);
+            mkRunner(c2restored).runsGetAndExpectFailure();
         });
       });
 

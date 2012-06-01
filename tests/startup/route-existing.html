@@ -29,13 +29,11 @@ limitations under the License.
       var snapshot = JSON.parse(startup.snapshot);
       
   	  belay.route(ident, function(capServerId) {
-  	    capServerId.setReviver(function(key) {
-  	      if (key === 'sharedkey') {
-    	      return function(arg) {
-      			  return {arg: arg, name: "route-existing"};
-      	    };
-    	    }
-  	    });
+        capServerId.setNamedHandler('sharedkey', function() {
+          return function(arg) {
+            return {arg: arg, name: "route-existing"};
+          };
+        });
   	    capServerId.reviveMap = snapshot.map;
         window.parent.handoff(true);
   	  });

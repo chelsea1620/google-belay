@@ -35,7 +35,6 @@ describe("Startup and Routing Interface", function() {
   window.clientReady = function(invoke) {
     clientInvoke = invoke;
   }
-  window.showMeTheClient = function() { return clientInvoke; }
 	  
   beforeEach(function() {
     handoffData = clientInvoke = null;

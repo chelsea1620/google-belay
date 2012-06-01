@@ -51,22 +51,17 @@ onBelayReady(function() {
     var rcPost = 'urn:x-belay://resource-class/social-feed/postable';
     var rcBelayGen = 'belay/generate';
 
-    var capReviver = function(resClass) {
-      if (resClass == rcPost && launchInfo.post_cap) {
-        return function(data) {
-          launchInfo.post_cap.post(
-            {
-              body: data.body,
-              via: data.via
-            },
-            reload
-          );
-        };
-      }
-      return null;
-    };
-
-    capServer.setReviver(capReviver);
+    capServer.setNamedHandler(rcPost, function() {
+      return function(data) {
+        launchInfo.post_cap.post(
+          {
+            body: data.body,
+            via: data.via
+          },
+          reload
+        );
+      };    
+    });
 
     var reload = function() {
       buzzerContent.load(launchInfo.editor_cap.serialize(), function() {
@@ -82,7 +77,7 @@ onBelayReady(function() {
         ui.capDraggable(buzzerContent.find('.buzzer-post-chit'), rcPost,
             capServer.grant(function(selectedRC) {
                 return {
-                  post: capServer.grantKey(selectedRC),
+                  post: capServer.grantNamed(selectedRC),
                   name: capServer.grant(function() {
                       return $('#buzzer-name').text().trim();
                     })

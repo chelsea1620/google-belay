@@ -112,5 +112,9 @@ InvokeRunner.prototype.runsPostAndExpect = function(data, expectedResult) {
       expect(result).toEqual(expectedResult);
   });
 };
+InvokeRunner.prototype.runsPostAndExpectFailure = function(data) {
+  this.runsPost(data);
+  this.runsExpectFailure();
+};
 
 var mkRunner = function(c) { return new InvokeRunner(c); };

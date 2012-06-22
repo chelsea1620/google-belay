@@ -17,12 +17,8 @@ limitations under the License.
 <!DOCTYPE html>
 <html>
 <head>
-  <script src="../../lib/js/sjcl.js"></script>
-  <script src="../../lib/js/caps.js"></script>
-  <script src="../../lib/js/include-belay.js"></script>
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.js"></script>
-  <script src="../../lib/js/common.js"></script>
-  <script src="../../lib/js/belay-client.js"></script>
+  <script src="../../lib/js/belay-client.js"
+    data-belayFrame="../../belay/belay-frame.html"></script>
   <script>
     belay.startForLaunch('preImage', function(capServer, util, launchInfo) {
       var theCap = capServer.grant(function(arg) {

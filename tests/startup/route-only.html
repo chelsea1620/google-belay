@@ -17,13 +17,10 @@ limitations under the License.
 <!DOCTYPE html>
 <html>
 <head>
-  <script src="../../lib/js/caps.js"></script>
-  <script src="../../lib/js/include-belay.js"></script>
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.js"></script>
-  <script src="../../lib/js/common.js"></script>
-  <script src="../../lib/js/belay-client.js"></script>
+  <script src="../../lib/js/belay-client.js"
+    data-belayFrame="../../belay/belay-frame.html"></script>
   <script>
-    var preImg = newUUIDv4();
+    var preImg = '91ee32ab-5b04-401f-94d7-b45e4e0a5dfd';
     belay.route(preImg, function(capServer) {
       var theCap = capServer.grant(function(arg) {
         return {arg: arg, name: "route-only"};

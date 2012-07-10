@@ -20,8 +20,6 @@ if (!window.belaytest) {
   };
 }
 
-var belayBrowser; // common.js needs this global
-
 // "use strict";
 
 // TODO(jasvir): These should be modules not scripts
@@ -29,29 +27,12 @@ require([
     'instances',
     'sections',
     'attributes',
-    'identities',
-    'order!lib/js/include-belay.js',
-    'order!lib/js/caps.js',
-    'order!lib/js/common.js'],
+    'identities'],
   function(instances, sections, attributes, identities) {
 
-var ui;
-var stationInfo;
-var isRunning;
-var capServer;
-var belayBrowserTunnel;
+belay.start(function(capServer, belayUtil, stationInfo) {
 
 var defaultIcon = '/res/images/tool.png';
-
-//
-// CapServers
-//
-var instanceResolver = function(id) {
-  if (id === capServer.instanceId) {
-    return capServer.publicInterface;
-  }
-  return belayBrowserTunnel.sendInterface;
-};
 
 
 function domainOfInst(inst) {
@@ -63,7 +44,7 @@ function cmpInstByCreated(inst1, inst2) {
 }
 
 
-var getSuggestions = function(location, success, failure) {
+function getSuggestions(location, success, failure) {
   var possibleInstances = [];
   instances.forEach(function(inst) {
     if (domainOfInst(inst) == location && inst.state.section != 'Trash') {
@@ -75,7 +56,7 @@ var getSuggestions = function(location, success, failure) {
   function processNext() {
     if (possibleInstances.length > 0) {
       var inst = possibleInstances.shift();
-      isRunning.post(inst.state.id, function(r) {
+      belayUtil.isRunning.post(inst.state.id, function(r) {
         if (!r) {
           suggestions.push({
             name: inst.state.name,
@@ -94,94 +75,77 @@ var getSuggestions = function(location, success, failure) {
 };
 
 
-
-var initialize = function() {
-  $(document.body).find('.ex').remove(); // remove layout examples
-
-  attributes.init(stationInfo.allIdentities);
-  instances.init(capServer, stationInfo.instanceBase, isRunning);
-  sections.init(capServer, stationInfo.allSections);
-  identities.init(capServer,
-    stationInfo.allIdentities,
-    stationInfo.identities,
-    stationInfo.addIdentityLaunchers,
-    stationInfo.createProfile);
-
-  // TODO(mzero): refactor the two addInstance functions and the newInstHandler
-  var addInstanceFromGenerate = function(genCap) {
-    genCap.get(function(data) {
-        var newId = newUUIDv4();
-        var inst = {
-          storageCap: capServer.grant(stationInfo.instanceBase + newId),
-            // TODO(arjun) still a hack. Should we be concatenaing URLs here?
-          state: {
-            id: newId,
-            belayInstance: data.launch,
-            name: data.name,
-            icon: data.icon,
-            info: undefined,
-            created: (new Date()).valueOf()
-          }
-        };
-        instances.addInstance(inst);
-        instances.dirty(inst);
-      },
-      function(error) {
-        alert('Failed to addInstanceFromGenerate, error = ' + error);
-      }
-    );
-  };
-
-  var itemsDiv = $('#belay-items');
-  ui.capDroppable(itemsDiv, 'belay/generate', addInstanceFromGenerate);
-
-  var loadedInstances = [];
-  stationInfo.allInstances.forEach(function(i) {
-    var inst = {
-      storageCap: i.cap,
-      state: i.data
-    };
-    loadedInstances.push(inst);
-  });
-  loadedInstances.sort(cmpInstByCreated).forEach(instances.addInstance);
-
-  $('#sign-out').click(function() {
-    var msg = 'You have no identities associated with this account. ' +
-          'Signing out will give you no way to get back to this station.\n' +
-          '\nReally sign out?';
-
-    if (identities.hasSignInIdentity() || window.confirm(msg)) {
-      localStorage.removeItem('launchCap');
+// TODO(mzero): refactor the two addInstance functions and the newInstHandler
+function addInstanceFromGenerate(genCap) {
+  genCap.get(function(data) {
+      var newId = belay.newUUIDv4();
+      var inst = {
+        storageCap: capServer.grant(stationInfo.instanceBase + newId),
+          // TODO(arjun) still a hack. Should we be concatenaing URLs here?
+        state: {
+          id: newId,
+          belayInstance: data.launch,
+          name: data.name,
+          icon: data.icon,
+          info: undefined,
+          created: (new Date()).valueOf()
+        }
+      };
+      instances.addInstance(inst);
+      instances.dirty(inst);
+    },
+    function(error) {
+      alert('Failed to addInstanceFromGenerate, error = ' + error);
     }
-    else {
-      return false;
-    }
-  });
-
-  window.belaytest.ready = true;
+  );
 };
 
-window.belay.onPortReady(function() {
-  belayBrowserTunnel = new CapTunnel(window.belay.port);
-  belayBrowserTunnel.setLocalResolver(instanceResolver);
-  belayBrowserTunnel.setOutpostHandler(function(outpost) {
-    capServer = new CapServer(outpost.instanceId);
-    capServer.setResolver(instanceResolver);
 
-    expectPage = outpost.expectPage;
-    belayBrowser = outpost.services;
-    isRunning = outpost.isRunning;
-    stationInfo = outpost.info;
-    outpost.setStationCallbacks.put({
-      newInstHandler: capServer.grant(instances.newInstHandler),
-      getSuggestions: capServer.grant(getSuggestions)
-    });
-    ui = {
-      capDraggable: common.makeCapDraggable(capServer, function() {}),
-      capDroppable: common.makeCapDroppable(capServer, function() {})
-    };
-    initialize();
-  });
+belayUtil.setStationCallbacks.put({
+  newInstHandler: capServer.grant(instances.newInstHandler),
+  getSuggestions: capServer.grant(getSuggestions)
 });
 
+$(document.body).find('.ex').remove(); // remove layout examples
+
+attributes.init(stationInfo.allIdentities);
+instances.init(capServer, stationInfo.instanceBase, belayUtil.isRunning);
+sections.init(capServer, stationInfo.allSections, belayUtil.expectPage);
+identities.init(capServer,
+  belayUtil,
+  stationInfo.allIdentities,
+  stationInfo.identities,
+  stationInfo.addIdentityLaunchers,
+  stationInfo.createProfile);
+
+
+var itemsDiv = $('#belay-items');
+belayUtil.ui.capDroppable(itemsDiv, 'belay/generate', addInstanceFromGenerate);
+
+var loadedInstances = [];
+stationInfo.allInstances.forEach(function(i) {
+  var inst = {
+    storageCap: i.cap,
+    state: i.data
+  };
+  loadedInstances.push(inst);
+});
+loadedInstances.sort(cmpInstByCreated).forEach(instances.addInstance);
+
+$('#sign-out').click(function() {
+  var msg = 'You have no identities associated with this account. ' +
+        'Signing out will give you no way to get back to this station.\n' +
+        '\nReally sign out?';
+
+  if (identities.hasSignInIdentity() || window.confirm(msg)) {
+    localStorage.removeItem('launchCap');
+  }
+  else {
+    return false;
+  }
+});
+
+window.belaytest.ready = true;
+
+});
 });

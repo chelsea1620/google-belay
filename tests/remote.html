@@ -17,51 +17,51 @@ limitations under the License.
 <!DOCTYPE html>
 <html>
 <head>
-  <script src="../lib/js/caps.js"></script>
-  <script src="../belay/caprouter.js"></script>
+  <script src="../lib/js/require.js"></script>
 </head>
 <body>
   <script>
+  require(['../lib/js/utils', '../lib/js/CapServer', '../lib/js/CapRouter'],
+  function(utils, CapServer, CapRouter) {
+    var router = new CapRouter();
+    var instanceId = utils.newUUIDv4();
+    var server = new CapServer(instanceId);
+    router.addInterface(instanceId, server.publicInterface);
+    server.setResolver(router.resolver);
 
-var router = new CapRouter();
-var instanceId = newUUIDv4();
-var server = new CapServer(instanceId);
-router.addInterface(instanceId, server.publicInterface);
-server.setResolver(router.resolver);
+    function simple(v) { 
+      if (v == "answer") { return 42; }
+      if (v == "question") { return "?"; }
+      return undefined;
+    }
 
-function simple(v) { 
-  if (v == "answer") { return 42; }
-  if (v == "question") { return "?"; }
-  return undefined;
-}
+    function simpleAsync(v, sk, fk) {
+      if (v == "answer") { sk(42); }
+      else if (v == "question") { sk("?"); }
+      else if (v == "defer") { setTimeout(function() { sk(99); }, 100); }
+      else if (v == 'fail') { fk({ status: 500, message: 'asked to fail' }); }
+      else if (v == 'ignore') { return; }
+    }
 
-function simpleAsync(v, sk, fk) {
-  if (v == "answer") { sk(42); }
-  else if (v == "question") { sk("?"); }
-  else if (v == "defer") { setTimeout(function() { sk(99); }, 100); }
-  else if (v == 'fail') { fk({ status: 500, message: 'asked to fail' }); }
-  else if (v == 'ignore') { return; }
-}
+    function callBackWithThree(v) {
+      v.post(3);
+      return 32;
+    }
 
-function callBackWithThree(v) {
-  v.post(3);
-  return 32;
-}
+    function callBackLaterWithNine(v, sk, fk) {
+        setTimeout(function() { v.post(9, sk, fk); }, 0);
+    }
 
-function callBackLaterWithNine(v, sk, fk) {
-    setTimeout(function() { v.post(9, sk, fk); }, 0);
-}
-
-var startId = window.name;
-var start = router.retrieveStart(startId);
-start.announce.put({
-  instanceId: instanceId,
-  simple: server.grant(simple),
-  simpleAsync: server.grant(simpleAsync),
-  callBackWithThree: server.grant(callBackWithThree),
-  callBackLaterWithNine: server.grant(callBackLaterWithNine),
-});
-
+    var startId = window.name;
+    var start = router.retrieveStart(startId);
+    start.announce.put({
+      instanceId: instanceId,
+      simple: server.grant(simple),
+      simpleAsync: server.grant(simpleAsync),
+      callBackWithThree: server.grant(callBackWithThree),
+      callBackLaterWithNine: server.grant(callBackLaterWithNine),
+    });
+  });
   </script>
 </body>
 

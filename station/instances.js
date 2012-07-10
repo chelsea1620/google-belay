@@ -126,7 +126,7 @@ define(['require'], function(require) {
 
   // Called when a Web page that wants to morph into an instance.
   var newInstHandler = function(args) {
-    var instanceId = newUUIDv4();
+    var instanceId = belay.newUUIDv4();
     var inst = {
       storageCap: capServer.grant(instanceBase + instanceId),
       // TODO(arjun) still a hack. Should we be concatenaing URLs here?

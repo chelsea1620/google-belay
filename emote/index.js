@@ -38,7 +38,7 @@ var showPanel = function(postCap, nameCap) {
   });
 };
 
-onBelayReady(function() {
+belay.onBelayReady(function() {
 
   if (!belay.outpost.temporaryInstance) {
     // we are a configured instance of emote, configure the

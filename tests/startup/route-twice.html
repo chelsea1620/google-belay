@@ -17,14 +17,11 @@ limitations under the License.
 <!DOCTYPE html>
 <html>
 <head>
-  <script src="../../lib/js/caps.js"></script>
-  <script src="../../lib/js/include-belay.js"></script>
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.js"></script>
-  <script src="../../lib/js/common.js"></script>
-  <script src="../../lib/js/belay-client.js"></script>
+  <script src="../../lib/js/belay-client.js"
+    data-belayFrame="../../belay/belay-frame.html"></script>
   <script>
-    var preImg1 = newUUIDv4();
-    var preImg2 = newUUIDv4();
+    var preImg1 = '8eab1e7d-6538-4438-a683-939d446151f1';
+    var preImg2 = '93f14bb6-aab8-4bc3-b1a4-2b111bdf260b';
     var cap1;
     // NOTE(jpolitz): No ordering check, because the underlying
     // call to belay is asynchronous, and could call the continuations

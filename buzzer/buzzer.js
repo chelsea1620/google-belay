@@ -12,14 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-onBelayReady(function() {
-  var buzzerContent = $('#buzzer-content');
-  ui.resize(150, 200, true);
-
-  belay.route(launchInfo.client_preimg, function(capServer) {
+(function() {
+  belay.startForLaunch('client_preimg', function(capServer, util, launchInfo) {
     capServer.setSyncNotifier(function(state) {
-      if (belay.outpost.info.snapshot_cap) {
-        belay.outpost.info.snapshot_cap.put(state);
+      if (launchInfo.snapshot_cap) {
+        launchInfo.snapshot_cap.put(state);
       }
     });
 
@@ -64,6 +61,8 @@ onBelayReady(function() {
     });
 
     var reload = function() {
+      var buzzerContent = $('#buzzer-content');
+
       buzzerContent.load(launchInfo.editor_cap.serialize(), function() {
         var forms = buzzerContent.find('.buzzer-thing form');
         buzzerContent.find('.buzzer-thing form').submit(function(ev) {
@@ -88,8 +87,8 @@ onBelayReady(function() {
       });
     };
 
-    reload();
+    $(reload);
 
-    belay.outpost.setRefresh.put(capServer.grant(reload));
+    util.setRefresh.put(capServer.grant(reload));
   });
-});
+})();

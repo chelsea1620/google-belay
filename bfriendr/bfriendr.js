@@ -182,9 +182,6 @@ var initCardUI = function(friendsCap, container, messageUI) {
 };
 
 var initialize = function() {
-  // ui.resize('300', '480', true);
-  ui.resize('80', '80', true);
-
   var inPage = topDiv.hasClass('bfriendr-page');
 
   var header = topDiv.find('.bfriendr-header');

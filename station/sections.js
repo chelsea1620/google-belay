@@ -16,6 +16,7 @@ define(['utils', 'instances', 'attributes', 'pageManager'],
   function(utils, instances, attributes, pageManager) {
 
   var capServer;
+  var expectPage;
 
   var protoSection = null;
   var protoItemRow = null;
@@ -250,8 +251,10 @@ define(['utils', 'instances', 'attributes', 'pageManager'],
   };
 
 
-  function init(cs, allSections) {
+  function init(cs, allSections, ep) {
     capServer = cs;
+    expectPage = ep;
+
     protoSection = utils.detachProto($('#aux .section.proto'));
     protoItemRow = utils.detachProto(protoSection.find('table.items tr.proto'));
     protoNavSection = utils.detachProto($('#nav-sections .proto'));
@@ -339,7 +342,7 @@ define(['utils', 'instances', 'attributes', 'pageManager'],
       instances.launchInstance(inst, activate);
     });
     function reprime() {
-      var startId = newUUIDv4();
+      var startId = belay.newUUIDv4();
       openPageBtn.attr('target', startId);
       expectPage.post({
         startId: startId,
@@ -362,7 +365,7 @@ define(['utils', 'instances', 'attributes', 'pageManager'],
       // other than text/plain and text/html. Ideally this should be a
       // custom mime type, like text/x-belay-instance, but use text/plain
       // for now.
-      dragData.dragString = newUUIDv4();
+      dragData.dragString = belay.newUUIDv4();
       dragData.instanceId = inst.state.id;
       content = '<span data="' + dragData.dragString + '">' +
           inst.state.name + '</span>';

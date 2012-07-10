@@ -22,7 +22,7 @@ function(utils, sections, attributes, pageManager) {
   var protoIdentity = null;
   var identities = null;
 
-  function init(cs, idData, idCap, idAdders, createProfile) {
+  function init(cs, belayUtils, idData, idCap, idAdders, createProfile) {
     capServer = cs;
     identitiesCap = idCap;
     navIdentityList = $('#nav-ids');
@@ -47,7 +47,7 @@ function(utils, sections, attributes, pageManager) {
 
       var ready = capServer.grant(function(activate) {
         adder.launch.get(function(launchInfo) {
-          var instanceId = newUUIDv4();
+          var instanceId = belay.newUUIDv4();
           activate.post({
             instanceId: instanceId,
             pageUrl: launchInfo.page.html,
@@ -60,8 +60,8 @@ function(utils, sections, attributes, pageManager) {
       });
 
       function reprime() {
-        startId = newUUIDv4();
-        expectPage.post({
+        startId = belay.newUUIDv4();
+        belayUtils.expectPage.post({
           startId: startId,
           ready: ready
         });

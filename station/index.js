@@ -12,17 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
-// "use strict";
-
-// TODO(jasvir): These should be modules not scripts
-require([
-    'utils',
-    'order!lib/js/include-belay.js',
-    'order!lib/js/caps.js',
-    'order!lib/js/common.js',
-    'order!lib/js/belay-client.js'],
-  function(utils) {
+require(['utils'], function(utils) {
+'use strict';
 
 var protoButton = utils.detachProto($('#proto-login-id'));
 $(document.body).find('.ex').remove(); // remove layout examples
@@ -40,10 +31,12 @@ var loginMethods = [
       'image': '/res/images/aol.png' }
   ];
 
+belay.start(function(capServer){
+
 function launchStation(launchCap) {
   launchCap.post({ version: 'new' },
     function(launchDescriptor) {
-      var instanceId = newUUIDv4();
+      var instanceId = belay.newUUIDv4();
 
       belay.outpost.activateLocalPage.post({
         instanceId: instanceId,
@@ -92,7 +85,7 @@ function init() {
       var origin = location.protocol + '//' + location.host;
       var url = origin + login.launch;
       capServer.restore(url).get(function(launchInfo) {
-        var instanceId = newUUIDv4();
+        var instanceId = belay.newUUIDv4();
         activate.post({
           instanceId: instanceId,
           pageUrl: launchInfo.page.html,
@@ -105,7 +98,7 @@ function init() {
     });
 
     function reprime() {
-      startId = newUUIDv4();
+      startId = belay.newUUIDv4();
       belay.outpost.expectPage.post({
         startId: startId,
         ready: ready
@@ -189,9 +182,9 @@ function init() {
   });
 }
 
-onBelayReady(function() {
-  init();
-  window.belaytest.ready = true;
+init();
+window.belaytest.ready = true;
+
 });
 
 });

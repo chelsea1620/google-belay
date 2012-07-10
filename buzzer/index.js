@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-onBelayReady(function() {
+belay.start(function(capServer) {
   var form = $('#profileForm');
   form.submit(function(evt) {
     var title = form.find('[name="title"]').val();

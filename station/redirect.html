@@ -18,12 +18,10 @@ limitations under the License.
 <html>
 <head>
 	<title>Loading...</title>
-	<script src="lib/js/include-belay.js"></script>
+    <script src="lib/js/belay-client.js"
+        data-belayframe="http://localhost:9000/belay-frame.html"></script>
 	<script>
-	  window.belay.onPortReady(function() {});
-	  // include-belay.js requires that a page supply an onPortReady function so
-	  // that it knows for sure the page has been told about belay port (and can
-	  // create a CapTunnel on it before belay-frame sends an outpost message.) 
+	  belay.start(function() {});
 	</script>
 </head>
 <body>

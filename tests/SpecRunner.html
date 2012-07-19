@@ -35,11 +35,13 @@ require(['../lib/js/utils', '../lib/js/CapServer', '../lib/js/CapTunnel', '../li
     window.CapServer = CapServer;
     window.CapTunnel = CapTunnel;
 
-    require(['testUtils',
+    require([
+        'testUtils',
         'capsSpec',
         'tunnelSpec',
         'capRouterSpec',
-        'belayStartupSpec'
+        'belayStartupSpec',
+        'utilsSpec'
         ], function() {
       jasmine.getEnv().addReporter(new jasmine.TrivialReporter());
       jasmine.getEnv().execute();

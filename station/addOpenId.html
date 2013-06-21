@@ -19,11 +19,9 @@ limitations under the License.
 <head>
   <meta charset="utf-8">
   <title>Belay Station</title>
-  <script src="lib/js/include-belay.js"></script>
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.js"></script>
-  <script src="lib/js/caps.js"></script>
-  <script src="lib/js/common.js"></script>
-  <script src="lib/js/belay-client.js"></script>
+  <script src="lib/js/require-jquery.js"></script>
+  <script src="lib/js/belay-client.js"
+    data-belayframe="http://localhost:9000/belay-frame.html"></script>
 </head>
 <body>
   <h1>OpenID</h1>
@@ -31,11 +29,11 @@ limitations under the License.
   <form>
   </form>
   <script>
-onBelayReady(function() {
-  var form = $(launchInfo.formContent);
-  $('form').replaceWith(form);
-  form.css('visibility', 'hidden');
-  form.submit();
-});
+    belay.start(function() {
+      var form = $(launchInfo.formContent);
+      $('form').replaceWith(form);
+      form.css('visibility', 'hidden');
+      form.submit();
+    });
   </script>
 </body>
